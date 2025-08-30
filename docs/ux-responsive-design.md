@@ -2,12 +2,12 @@
 
 **Date:** 2025-08-30
 **Created by:** UX Design Session via Claude Code
-**Framework:** React + TypeScript + Ant Design v5
+**Framework:** Angular + TypeScript + Angular Material v17
 **Approach:** Mobile-First Progressive Enhancement
 
 ## Overview
 
-This document outlines responsive design patterns and implementation guidelines for RegularTravelManager, ensuring optimal user experience across all devices and screen sizes. The design follows mobile-first principles while leveraging Ant Design's responsive grid system.
+This document outlines responsive design patterns and implementation guidelines for RegularTravelManager, ensuring optimal user experience across all devices and screen sizes. The design follows mobile-first principles while leveraging Angular Flex Layout and CSS Grid.
 
 ## Breakpoint Strategy
 

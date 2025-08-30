@@ -1,0 +1,23 @@
+{
+  "name": "@rtm/project-management",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Project Management Domain Logic",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@rtm/shared": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^18.18.0",
+    "vitest": "^1.0.0"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@rtm/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared Types and Utilities",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^18.18.0",
+    "vitest": "^1.0.0"
+  }
+}

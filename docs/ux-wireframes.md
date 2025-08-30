@@ -7,7 +7,7 @@
 
 This document presents wireframes for all core screens in the RegularTravelManager application, organized by user type and workflow stage. Each wireframe includes layout specifications, component placement, and responsive considerations.
 
-**Design System:** Ant Design v5
+**Design System:** Angular Material v17
 **Grid System:** 24-column grid with responsive breakpoints
 **Breakpoints:** xs (< 576px), sm (≥ 576px), md (≥ 768px), lg (≥ 992px), xl (≥ 1200px), xxl (≥ 1600px)
 
@@ -75,12 +75,12 @@ This document presents wireframes for all core screens in the RegularTravelManag
 ```
 
 **Components:**
-- `Form` (Ant Design)
-- `Input` with icons
-- `Input.Password`
-- `Checkbox` for remember me
-- `Button` type="primary" for sign in
-- `Link` for forgot password
+- `mat-form-field` (Angular Material)
+- `mat-input` with icons
+- `input[matInput]` type="password"
+- `mat-checkbox` for remember me
+- `button[mat-raised-button]` color="primary" for sign in
+- `a[mat-button]` for forgot password
 
 **Responsive Behavior:**
 - Mobile: Full width form, larger touch targets
@@ -124,13 +124,13 @@ This document presents wireframes for all core screens in the RegularTravelManag
 ```
 
 **Components:**
-- `Layout` with Header, Content
-- `Drawer` for mobile navigation
-- `Statistic` components for quick stats
-- `List` for recent requests
-- `Badge` for status indicators
-- `Button` for actions
-- `Card` for content sections
+- `mat-toolbar` with navigation
+- `mat-sidenav` for mobile navigation
+- `mat-card` with statistics
+- `mat-list` for recent requests
+- `mat-chip` for status indicators
+- `mat-button` for actions
+- `mat-card` for content sections
 
 **Responsive Behavior:**
 - Mobile: Stack cards vertically, hamburger menu, bottom action button
@@ -411,7 +411,7 @@ This document presents wireframes for all core screens in the RegularTravelManag
 ## Next Steps
 
 1. **Interactive Prototypes** - Create clickable prototypes using design tools
-2. **Component Library** - Build Ant Design component specifications
+2. **Component Library** - Build Angular Material component specifications
 3. **Design Tokens** - Define color palette, typography, spacing system
 4. **User Testing** - Validate wireframes with actual users
 5. **Development Handoff** - Create detailed specifications for developers

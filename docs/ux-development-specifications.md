@@ -14,24 +14,24 @@ This document provides comprehensive UI development specifications for implement
 ```json
 {
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "@angular/core": "^17.0.0",
+    "@angular/common": "^17.0.0",
+    "@angular/material": "^17.0.0",
+    "@angular/cdk": "^17.0.0",
+    "@angular/router": "^17.0.0",
     "typescript": "^5.0.0",
-    "antd": "^5.12.0",
-    "@ant-design/icons": "^5.2.0",
-    "react-router-dom": "^6.8.0",
     "dayjs": "^1.11.0",
     "classnames": "^2.3.0",
-    "@ant-design/colors": "^7.0.0"
+    "rxjs": "^7.0.0"
   },
   "devDependencies": {
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
+    "@angular/cli": "^17.0.0",
+    "@angular/compiler-cli": "^17.0.0",
     "sass": "^1.58.0",
-    "@storybook/react": "^6.5.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/jest-dom": "^5.16.0",
-    "eslint-plugin-jsx-a11y": "^6.7.0"
+    "@storybook/angular": "^7.0.0",
+    "@angular/testing": "^17.0.0",
+    "jasmine": "^4.5.0",
+    "karma": "^6.4.0"
   }
 }
 ```
@@ -49,10 +49,10 @@ src/
 │   ├── employee/       # Employee-specific pages
 │   └── manager/        # Manager-specific pages
 ├── styles/             # Global styles and themes
-│   ├── themes/         # Ant Design theme customization
+│   ├── themes/         # Angular Material theme customization
 │   ├── components/     # Component-specific styles
 │   └── globals.scss    # Global style definitions
-├── hooks/              # Custom React hooks
+├── services/           # Angular services and utilities
 ├── utils/              # Utility functions
 ├── types/              # TypeScript type definitions
 └── assets/             # Static assets

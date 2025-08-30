@@ -367,7 +367,7 @@ This document outlines the complete user journeys for both Employee and Manager 
 ## Next Steps for UI Design
 
 1. **Wireframe Creation** - Low-fidelity layouts for each journey stage
-2. **Component Specification** - Detailed Ant Design component usage
+2. **Component Specification** - Detailed Angular Material component usage
 3. **Responsive Breakpoints** - Mobile, tablet, and desktop layouts
 4. **Interaction Patterns** - Hover states, transitions, and animations
 5. **Accessibility Compliance** - WCAG 2.1 AA standard adherence

@@ -1,52 +1,58 @@
-# Ant Design Component Specifications - RegularTravelManager
+# Angular Material Component Specifications - RegularTravelManager
 
 **Date:** 2025-08-30
 **Created by:** UX Design Session via Claude Code
-**Design System:** Ant Design v5.x
-**Framework:** React 18+ with TypeScript
+**Design System:** Angular Material v17.x
+**Framework:** Angular 17+ with TypeScript
 
 ## Overview
 
-This document provides detailed component specifications for the RegularTravelManager application using Ant Design. Each component includes configuration, styling, behavior, and implementation examples aligned with the wireframes and user journeys.
+This document provides detailed component specifications for the RegularTravelManager application using Angular Material. Each component includes configuration, styling, behavior, and implementation examples aligned with the wireframes and user journeys.
 
 ## Design Token System
 
 ### Color Palette
 ```typescript
-const theme = {
-  token: {
-    // Primary brand colors
-    colorPrimary: '#1677ff',        // Ant Design blue
-    colorSuccess: '#52c41a',        // Green for approved
-    colorWarning: '#faad14',        // Orange for pending
-    colorError: '#ff4d4f',          // Red for rejected
-    
-    // Semantic colors
-    colorBgContainer: '#ffffff',    // Card backgrounds
-    colorBgLayout: '#f5f5f5',       // Page background
-    colorText: '#262626',           // Primary text
-    colorTextSecondary: '#8c8c8c',  // Secondary text
-    
-    // Swiss CHF brand accent
-    colorLink: '#0066cc',           // Professional blue
-    
-    // Spacing system
-    margin: 16,
-    marginLG: 24,
-    marginXL: 32,
-    padding: 16,
-    paddingLG: 24,
-    
-    // Border radius
-    borderRadius: 6,
-    borderRadiusLG: 8,
-    
-    // Typography
-    fontSize: 14,
-    fontSizeLG: 16,
-    fontSizeXL: 20,
-  }
-};
+// Custom Angular Material Theme
+@use '@angular/material' as mat;
+
+$primary-palette: mat.define-palette(mat.$blue-palette, 600);
+$accent-palette: mat.define-palette(mat.$orange-palette, A200);
+$warn-palette: mat.define-palette(mat.$red-palette);
+
+$theme: mat.define-light-theme((
+  color: (
+    primary: $primary-palette,
+    accent: $accent-palette,
+    warn: $warn-palette,
+  ),
+  typography: mat.define-typography-config(),
+  density: 0,
+));
+
+// Custom CSS variables for Swiss business theme
+:root {
+  --color-primary: #1976d2;        // Material blue
+  --color-success: #4caf50;        // Green for approved
+  --color-warning: #ff9800;        // Orange for pending
+  --color-error: #f44336;          // Red for rejected
+  
+  // Semantic colors
+  --color-bg-container: #ffffff;   // Card backgrounds
+  --color-bg-layout: #fafafa;      // Page background
+  --color-text-primary: #212121;   // Primary text
+  --color-text-secondary: #757575; // Secondary text
+  
+  // Swiss CHF brand accent
+  --color-link: #0066cc;           // Professional blue
+  
+  // Spacing system (following Material Design 8px grid)
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
 ```
 
 ### Typography Scale
@@ -1073,4 +1079,4 @@ describe('TravelRequestForm', () => {
 - [ ] Mobile experience refinement
 - [ ] User testing and feedback integration
 
-This comprehensive component specification provides a solid foundation for implementing the RegularTravelManager user interface with Ant Design, ensuring consistency, accessibility, and optimal user experience across all devices and user types.
+This comprehensive component specification provides a solid foundation for implementing the RegularTravelManager user interface with Angular Material, ensuring consistency, accessibility, and optimal user experience across all devices and user types.

@@ -18,13 +18,14 @@ This unified approach combines what would traditionally be separate backend and 
 
 | Date | Version | Description | Author |
 |------|---------|-------------|--------|
-| 2025-08-30 | 1.0 | Initial architecture document | Business Analyst Mary |
+| 2025-08-30 | 1.1 | Updated to use Angular insterad of react | Architect Winston |
+| 2025-08-30 | 1.0 | Initial architecture document | Architect Winston |
 
 ## High Level Architecture
 
 ### Technical Summary
 
-RegularTravelManager will use **AWS serverless architecture** with a React-based frontend hosted on S3/CloudFront and a Node.js serverless backend using Lambda + API Gateway. **Amazon Cognito** handles authentication for employees and managers, while **RDS PostgreSQL** with PostGIS extension manages relational data and geographic calculations. **AWS SES** provides email notifications for the request-approval workflow. The architecture leverages **AWS CDK** for infrastructure-as-code, ensuring enterprise-grade security, scalability, and compliance suitable for Swiss business requirements.
+RegularTravelManager will use **AWS serverless architecture** with an Angular-based frontend hosted on S3/CloudFront and a Node.js serverless backend using Lambda + API Gateway. **Amazon Cognito** handles authentication for employees and managers, while **RDS PostgreSQL** with PostGIS extension manages relational data and geographic calculations. **AWS SES** provides email notifications for the request-approval workflow. The architecture leverages **AWS CDK** for infrastructure-as-code, ensuring enterprise-grade security, scalability, and compliance suitable for Swiss business requirements.
 
 ### Platform and Infrastructure Choice
 
@@ -60,7 +61,7 @@ RegularTravelManager will use **AWS serverless architecture** with a React-based
 ```mermaid
 graph TB
     User[👤 Employee/Manager] --> CF[☁️ CloudFront CDN]
-    CF --> S3[📦 S3 Static Hosting<br/>React App]
+    CF --> S3[📦 S3 Static Hosting<br/>Angular App]
     
     S3 --> API[🚀 API Gateway<br/>REST API]
     API --> Lambda[⚡ Lambda Functions<br/>Node.js/TypeScript]
@@ -92,7 +93,7 @@ graph TB
 ### Architectural Patterns
 
 - **Serverless Architecture:** Lambda functions with API Gateway for backend logic - _Rationale:_ Auto-scaling, pay-per-request, minimal infrastructure management for business applications
-- **Component-Based UI:** Reusable React components with TypeScript - _Rationale:_ Maintainability and type safety for forms-heavy travel management interface
+- **Component-Based UI:** Reusable Angular components with TypeScript - _Rationale:_ Superior form handling and enterprise features for forms-heavy travel management interface
 - **Infrastructure as Code:** AWS CDK for all resource provisioning - _Rationale:_ Version-controlled infrastructure, consistent deployments, easy environment replication
 - **Event-Driven Notifications:** Lambda triggers for email notifications on request status changes - _Rationale:_ Decoupled notification system, reliable delivery via SES
 - **Geographic Database Functions:** PostGIS extension in RDS for distance calculations - _Rationale:_ Server-side geographic calculations ensure accuracy and consistency
@@ -106,9 +107,9 @@ This is the **definitive technology selection** for RegularTravelManager. All de
 | Category | Technology | Version | Purpose | Rationale |
 |----------|------------|---------|---------|-----------|
 | Frontend Language | TypeScript | 5.3+ | Type-safe frontend development | Essential for DDD value objects and domain models shared across layers |
-| Frontend Framework | React | 18.2+ | UI component framework | Mature ecosystem, excellent TypeScript support, component-based architecture aligns with DDD |
-| UI Component Library | Ant Design | 5.12+ | Swiss-business appropriate UI components | Professional business forms, tables, and layouts for employee/manager interfaces |
-| State Management | Zustand | 4.4+ | Lightweight state management | Simple store pattern that works well with DDD command/query separation |
+| Frontend Framework | Angular | 17+ | Full-featured frontend framework | Enterprise-grade framework with built-in DI, forms, routing, and TypeScript-first approach ideal for business applications |
+| UI Component Library | Angular Material | 17+ | Swiss-business appropriate UI components | Professional Material Design components with excellent form controls and accessibility for employee/manager interfaces |
+| State Management | NgRx | 17+ | Enterprise state management | Redux-based pattern with excellent TypeScript support, perfect for DDD command/query separation and complex business workflows |
 | Backend Language | TypeScript | 5.3+ | Unified language across stack | Shared domain models between frontend/backend, consistent DDD implementation |
 | Backend Framework | AWS Lambda + Fastify | Lambda Runtime v20, Fastify 4.24+ | Serverless HTTP framework | Fast startup times for Lambda, excellent TypeScript support, minimal overhead |
 | API Style | REST | OpenAPI 3.0 | HTTP API design | Clear contract definition, excellent tooling, aligns with AWS API Gateway |
@@ -116,10 +117,10 @@ This is the **definitive technology selection** for RegularTravelManager. All de
 | Cache | Amazon ElastiCache Redis | 7.0+ | Session and query caching | Fast lookup for employee data and project information |
 | File Storage | Amazon S3 | Current | Document storage for attachments | Reliable file storage for request documentation if needed |
 | Authentication | Amazon Cognito | Current | User management and authentication | Managed service for employee/manager authentication, integrates with Lambda |
-| Frontend Testing | Vitest + React Testing Library | Vitest 1.0+, RTL 14+ | Unit and integration testing | Fast test runner, excellent React component testing |
+| Frontend Testing | Jest + Angular Testing Utilities | Jest 29+, Angular 17+ | Unit and integration testing | Angular's built-in testing framework with excellent component and service testing |
 | Backend Testing | Vitest + Supertest | Vitest 1.0+, Supertest 6+ | API and domain logic testing | Unified test runner across stack, excellent for testing DDD command handlers |
 | E2E Testing | Playwright | 1.40+ | End-to-end user workflows | Reliable browser automation for testing request-approval workflows |
-| Build Tool | Vite | 5.0+ | Fast frontend builds | Excellent TypeScript support, fast HMR for development |
+| Build Tool | Angular CLI | 17+ | Angular development toolchain | Integrated build system with TypeScript, testing, and deployment tools optimized for Angular |
 | Bundler | esbuild | 0.19+ | Fast JavaScript bundling | Used by Vite and AWS Lambda for optimal bundle sizes |
 | IaC Tool | AWS CDK | 2.100+ | Infrastructure as code | TypeScript-based infrastructure matching application language |
 | CI/CD | GitHub Actions | Current | Automated testing and deployment | Integrates well with AWS CDK, good monorepo support |
@@ -554,6 +555,33 @@ CREATE TABLE employees (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Projects table for organizing work locations
+CREATE TABLE projects (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    default_cost_per_km DECIMAL(10,2) NOT NULL CHECK (default_cost_per_km > 0),
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Subprojects table for specific work locations  
+CREATE TABLE subprojects (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID NOT NULL REFERENCES projects(id),
+    name VARCHAR(255) NOT NULL,
+    street_address VARCHAR(255) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    postal_code VARCHAR(20) NOT NULL,
+    country VARCHAR(100) NOT NULL DEFAULT 'Switzerland',
+    location GEOMETRY(POINT, 4326) NOT NULL,
+    cost_per_km DECIMAL(10,2) NOT NULL CHECK (cost_per_km > 0),
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Travel requests table (main aggregate)
 CREATE TABLE travel_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -574,6 +602,50 @@ CREATE TABLE travel_requests (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Employee address history for audit trail
+CREATE TABLE employee_address_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    employee_id UUID NOT NULL REFERENCES employees(id),
+    previous_street VARCHAR(255) NOT NULL,
+    previous_city VARCHAR(100) NOT NULL,
+    previous_postal_code VARCHAR(20) NOT NULL,
+    previous_country VARCHAR(100) NOT NULL,
+    previous_location GEOMETRY(POINT, 4326) NOT NULL,
+    new_street VARCHAR(255) NOT NULL,
+    new_city VARCHAR(100) NOT NULL,
+    new_postal_code VARCHAR(20) NOT NULL,
+    new_country VARCHAR(100) NOT NULL,
+    new_location GEOMETRY(POINT, 4326) NOT NULL,
+    change_reason TEXT,
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    changed_by UUID NOT NULL REFERENCES employees(id)
+);
+
+-- Request status history for audit trail  
+CREATE TABLE request_status_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    travel_request_id UUID NOT NULL REFERENCES travel_requests(id),
+    previous_status VARCHAR(20),
+    new_status VARCHAR(20) NOT NULL,
+    comment TEXT,
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    changed_by UUID NOT NULL REFERENCES employees(id)
+);
+
+-- Database indexes for performance
+CREATE INDEX idx_employees_manager_id ON employees(manager_id);
+CREATE INDEX idx_employees_location ON employees USING GIST (home_location);
+CREATE INDEX idx_projects_is_active ON projects(is_active);
+CREATE INDEX idx_subprojects_project_id ON subprojects(project_id);
+CREATE INDEX idx_subprojects_location ON subprojects USING GIST (location);
+CREATE INDEX idx_subprojects_is_active ON subprojects(is_active);
+CREATE INDEX idx_travel_requests_employee_id ON travel_requests(employee_id);
+CREATE INDEX idx_travel_requests_manager_id ON travel_requests(manager_id);
+CREATE INDEX idx_travel_requests_status ON travel_requests(status);
+CREATE INDEX idx_travel_requests_submitted_at ON travel_requests(submitted_at);
+CREATE INDEX idx_employee_address_history_employee_id ON employee_address_history(employee_id);
+CREATE INDEX idx_request_status_history_travel_request_id ON request_status_history(travel_request_id);
+
 -- Function to calculate distance using PostGIS
 CREATE OR REPLACE FUNCTION calculate_travel_distance(
     employee_location GEOMETRY,
@@ -592,43 +664,82 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 
 ### Component Architecture
 
-React components organized by domain following DDD principles:
+Angular components organized by feature modules following DDD principles:
 
 ```
 apps/web/src/
-├── components/
-│   ├── forms/
-│   │   ├── TravelRequestForm.tsx
-│   │   └── EmployeeSearchForm.tsx
-│   ├── tables/
-│   │   ├── RequestsTable.tsx
-│   │   └── PendingApprovalsTable.tsx
-│   └── layout/
-├── pages/
-│   ├── employee/
-│   │   ├── Dashboard.tsx
-│   │   └── NewRequest.tsx
-│   ├── manager/
-│   │   ├── Dashboard.tsx
-│   │   └── Approvals.tsx
-├── stores/
-│   ├── authStore.ts
-│   └── requestStore.ts
-└── services/
-    ├── travel-requests.ts
-    └── projects.ts
+├── app/
+│   ├── features/
+│   │   ├── employee/
+│   │   │   ├── components/
+│   │   │   │   ├── dashboard/
+│   │   │   │   ├── new-request/
+│   │   │   │   └── travel-request-form/
+│   │   │   ├── employee.module.ts
+│   │   │   └── employee-routing.module.ts
+│   │   ├── manager/
+│   │   │   ├── components/
+│   │   │   │   ├── dashboard/
+│   │   │   │   ├── approvals/
+│   │   │   │   └── pending-approvals-table/
+│   │   │   ├── manager.module.ts
+│   │   │   └── manager-routing.module.ts
+│   ├── shared/
+│   │   ├── components/
+│   │   │   ├── forms/
+│   │   │   └── tables/
+│   │   └── services/
+│   │       ├── travel-request.service.ts
+│   │       └── project.service.ts
+│   ├── core/
+│   │   ├── services/
+│   │   │   ├── auth.service.ts
+│   │   │   └── notification.service.ts
+│   │   └── guards/
+│   └── store/
+│       ├── travel-request/
+│       └── auth/
 ```
 
 ### State Management
 
-Zustand stores following domain separation:
+NgRx stores following domain separation and feature-based organization:
 
 ```typescript
-interface RequestState {
+// Travel Request State
+export interface TravelRequestState {
   requests: TravelRequest[];
+  selectedRequest: TravelRequest | null;
   loading: boolean;
-  submitRequest: (dto: CreateTravelRequestDto) => Promise<TravelRequest>;
-  approveRequest: (requestId: string) => Promise<void>;
+  error: string | null;
+}
+
+// Travel Request Actions
+export const TravelRequestActions = createActionGroup({
+  source: 'Travel Request',
+  events: {
+    'Submit Request': props<{ dto: CreateTravelRequestDto }>(),
+    'Submit Request Success': props<{ request: TravelRequest }>(),
+    'Submit Request Failure': props<{ error: string }>(),
+    'Approve Request': props<{ requestId: string }>(),
+    'Load Requests': emptyProps(),
+  },
+});
+
+// Travel Request Effects
+@Injectable()
+export class TravelRequestEffects {
+  submitRequest$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TravelRequestActions.submitRequest),
+      switchMap(({ dto }) =>
+        this.travelRequestService.submitRequest(dto).pipe(
+          map(request => TravelRequestActions.submitRequestSuccess({ request })),
+          catchError(error => of(TravelRequestActions.submitRequestFailure({ error })))
+        )
+      )
+    )
+  );
 }
 ```
 
@@ -661,27 +772,48 @@ apps/api/src/
 AWS Cognito integration with JWT validation:
 
 ```typescript
-export const authorizerHandler: APIGatewayTokenAuthorizerHandler = async (event) => {
-  const token = event.authorizationToken.replace('Bearer ', '');
-  const payload = await jwtVerifier.verify(token);
-  
-  return {
-    principalId: payload.sub,
-    policyDocument: {
-      Version: '2012-10-17',
-      Statement: [{
-        Action: 'execute-api:Invoke',
-        Effect: 'Allow',
-        Resource: event.methodArn
-      }]
-    },
-    context: {
-      sub: payload.sub,
-      email: payload.email,
-      isManager: payload['cognito:groups']?.includes('managers') || false
+// Angular Auth Guard
+@Injectable()
+export class AuthGuard implements CanActivate {
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  canActivate(): Observable<boolean> {
+    return this.authService.isAuthenticated$.pipe(
+      tap(isAuth => {
+        if (!isAuth) {
+          this.router.navigate(['/login']);
+        }
+      })
+    );
+  }
+}
+
+// Angular Auth Service
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  public currentUser$ = this.currentUserSubject.asObservable();
+  public isAuthenticated$ = this.currentUser$.pipe(map(user => !!user));
+
+  constructor(private http: HttpClient) {
+    const token = localStorage.getItem('token');
+    if (token) {
+      this.validateToken(token);
     }
-  };
-};
+  }
+
+  login(credentials: LoginCredentials): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>('/api/auth/login', credentials).pipe(
+      tap(response => {
+        localStorage.setItem('token', response.token);
+        this.currentUserSubject.next(response.user);
+      })
+    );
+  }
+}
 ```
 
 ## Unified Project Structure
@@ -707,7 +839,7 @@ RegularTravelManager/
 │   │   │   │   └── queries/
 │   │   │   └── infrastructure/       # Infrastructure adapters
 ├── apps/                             # Application Layer
-│   ├── web/                         # React Frontend
+│   ├── web/                         # Angular Frontend
 │   └── api/                         # Lambda Functions
 ├── packages/                        # Shared packages
 │   ├── shared/                      # Shared types
@@ -733,7 +865,8 @@ npm run setup
 
 # Development commands
 npm run dev        # Start all services
-npm run dev:web    # Frontend only
+ng serve          # Angular frontend
+npm run dev:web    # Alternative frontend start
 npm run dev:api    # Backend only
 npm run test       # Run all tests
 ```
@@ -741,10 +874,13 @@ npm run test       # Run all tests
 ### Environment Configuration
 
 ```bash
-# Frontend (.env.local)
-VITE_API_URL=http://localhost:3001/v1
-VITE_COGNITO_USER_POOL_ID=eu-central-1_xxxxx
-VITE_COGNITO_CLIENT_ID=xxxxx
+# Frontend (environment.ts)
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:3001/v1',
+  cognitoUserPoolId: 'eu-central-1_xxxxx',
+  cognitoClientId: 'xxxxx'
+};
 
 # Backend (.env)
 DB_HOST=localhost
@@ -759,9 +895,9 @@ AWS_REGION=eu-central-1
 ### Deployment Strategy
 
 **Frontend Deployment:**
-- Platform: Vercel/AWS S3 + CloudFront
-- Build Command: `npm run build:web`
-- Output Directory: `apps/web/dist`
+- Platform: AWS S3 + CloudFront
+- Build Command: `ng build --configuration production`
+- Output Directory: `apps/web/dist/web`
 
 **Backend Deployment:**
 - Platform: AWS Lambda + API Gateway
@@ -816,13 +952,14 @@ AWS_REGION=eu-central-1
        /                    \
     Integration Tests (API + DB)
    /                            \
-Frontend Unit (Vitest + RTL)  Backend Unit (Vitest)
+Frontend Unit (Jest + Angular)  Backend Unit (Vitest)
 ```
 
 ### Test Organization
 
 **Frontend Tests:**
-- Component tests with React Testing Library
+- Component tests with Angular Testing Utilities
+- Service tests with Angular TestBed
 - Integration tests for complete user workflows
 - E2E tests for critical business processes
 
@@ -845,8 +982,9 @@ Frontend Unit (Vitest + RTL)  Backend Unit (Vitest)
 
 | Element | Frontend | Backend | Example |
 |---------|----------|---------|---------|
-| Components | PascalCase | - | `UserProfile.tsx` |
-| Hooks | camelCase with 'use' | - | `useAuth.ts` |
+| Components | PascalCase | - | `UserProfileComponent` |
+| Services | PascalCase + 'Service' | - | `AuthService` |
+| Directives | camelCase | - | `appHighlight` |
 | API Routes | - | kebab-case | `/api/user-profile` |
 | Database Tables | - | snake_case | `user_profiles` |
 
@@ -869,14 +1007,29 @@ interface ApiError {
 ### Frontend Error Handling
 
 ```typescript
-export const handleApiError = (error: AxiosError) => {
-  if (error.response?.status === 401) {
-    useAuthStore.getState().logout();
-    window.location.href = '/login';
-  } else if (error.response?.status >= 500) {
-    message.error('Server error. Please try again later.');
+// Angular Error Interceptor
+@Injectable()
+export class ErrorInterceptor implements HttpInterceptor {
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private snackBar: MatSnackBar
+  ) {}
+
+  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    return next.handle(req).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 401) {
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        } else if (error.status >= 500) {
+          this.snackBar.open('Server error. Please try again later.', 'Close');
+        }
+        return throwError(error);
+      })
+    );
   }
-};
+}
 ```
 
 ## Monitoring and Observability

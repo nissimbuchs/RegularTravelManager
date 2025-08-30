@@ -1,0 +1,31 @@
+{
+  "name": "@rtm/api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RegularTravelManager Node.js API",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc && npm run build:lambda",
+    "build:lambda": "esbuild src/**/*.ts --bundle --platform=node --target=node18 --outdir=dist --format=cjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.400.0",
+    "@aws-sdk/client-dynamodb": "^3.400.0",
+    "@aws-sdk/lib-dynamodb": "^3.400.0",
+    "@rtm/shared": "*",
+    "aws-lambda": "^1.0.7"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.0",
+    "@types/node": "^18.18.0",
+    "esbuild": "^0.19.0",
+    "supertest": "^6.3.0",
+    "tsx": "^4.0.0",
+    "vitest": "^1.0.0"
+  }
+}

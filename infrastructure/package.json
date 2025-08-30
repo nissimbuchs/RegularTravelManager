@@ -1,0 +1,32 @@
+{
+  "name": "@rtm/infrastructure",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AWS CDK Infrastructure as Code",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "cdk": "cdk",
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy",
+    "synth": "cdk synth",
+    "bootstrap": "cdk bootstrap",
+    "diff": "cdk diff",
+    "lint": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-apigatewayv2-alpha": "^2.100.0-alpha.0",
+    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.100.0-alpha.0",
+    "aws-cdk-lib": "^2.100.0",
+    "constructs": "^10.3.0",
+    "source-map-support": "^0.5.21"
+  },
+  "devDependencies": {
+    "@types/node": "^18.18.0",
+    "aws-cdk": "^2.100.0",
+    "ts-node": "^10.9.0",
+    "vitest": "^1.0.0"
+  }
+}
