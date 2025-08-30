@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { HTTP_STATUS } from '@rtm/shared';
 
 export const healthHandler = async (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   return {

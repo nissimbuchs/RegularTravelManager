@@ -49,5 +49,8 @@
     "typescript"
   ],
   "author": "Development Team",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "dependencies": {
+    "ESlint": "npm:eslint@^8.57.1"
+  }
 }

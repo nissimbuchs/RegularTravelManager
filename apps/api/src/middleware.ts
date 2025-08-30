@@ -1,6 +1,9 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
-export type Handler = (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>;
+export type Handler = (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _event: APIGatewayProxyEvent
+) => Promise<APIGatewayProxyResult>;
 
 export const corsMiddleware = (handler: Handler): Handler => {
   return async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
