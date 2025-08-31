@@ -196,6 +196,9 @@ And most importantly: **What are your top 3 priority features** that you'd want 
 Nissim:
 looks all right. top three priority featers are 1,5,6
 
+BMAD-PO:
+created the PRD.md file out of the brainstorming-session-result.md
+
 BMAD-Architect:
 after some back and forth, he creates an Architecture.md, with an React application running on AWS using cloudFront, S3 and Lambda Functions in node.js
 
@@ -292,6 +295,17 @@ Excellent choice! Let me update the repository structure to follow Domain-Driven
 This DDD structure will make your travel allowance system much more maintainable and aligned with business concepts!
 ## Your Turn!
 
+BMAD-SM:
+created the epics and user stories out of the PRD.md the UX and the Architecture.md files
+
+BMAD-dev:
+started implementing the stories 1.1 to 1.5
+
+BMAD-qa:
+reviewed the implementation of each story and
+
+Nissim:
+set the story to done after manual testing it.
 
 
 

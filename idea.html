@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RegularTravelManager - Project Ideas & Development Journey</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fafafa;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            padding-left: 10px;
+            border-left: 4px solid #3498db;
+        }
+        
+        h3 {
+            color: #2980b9;
+            margin-top: 25px;
+        }
+        
+        .agent-name {
+            background: #3498db;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        
+        .user-input {
+            background: #e8f4fd;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        
+        .feature-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .feature-list ol, .feature-list ul {
+            margin: 0;
+        }
+        
+        .architecture-section {
+            background: #fff5f5;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .deployment-info {
+            background: #f0fff4;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .test-users {
+            background: #fff8e1;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #f39c12;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .url-link {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .url-link:hover {
+            text-decoration: underline;
+        }
+        
+        .priority-features {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .workflow-steps {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        code {
+            background: #f1f1f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        pre {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 3px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RegularTravelManager - Project Development Journey</h1>
+        
+        <h2>Project Overview</h2>
+        <p>A web application for managing regular travel allowances for employees based on distance calculations between home and project locations in Swiss francs.</p>
+
+        <h2>Initial Brainstorming Session</h2>
+        
+        <div class="agent-name">BMAD-Analyst</div>
+        <p>I can help you brainstorm new Ideas</p>
+        
+        <div class="user-input">
+            <strong>Nissim:</strong> I would like to create a small web application that lets me manage regular travel allowances for my employees. I would like to brainstorm, on what features this application would need
+        </div>
+
+        <h3>Context Questions & Answers</h3>
+        <div class="feature-list">
+            <p><strong>1. What are we brainstorming about?</strong><br>
+            Daily allowances for standardized travel stipends</p>
+            
+            <p><strong>2. Constraints:</strong><br>
+            Regular travel allowances given per project and sub-project, calculated based on distance between employee's home town and project work location</p>
+            
+            <p><strong>3. Goal:</strong><br>
+            Focus on core functionalities</p>
+            
+            <p><strong>4. Documentation:</strong><br>
+            Yes - structured document output needed</p>
+        </div>
+
+        <h3>Fundamental Building Blocks Identified</h3>
+        <div class="feature-list">
+            <ol>
+                <li><strong>Employee location data</strong> (home addresses)</li>
+                <li><strong>Project data:</strong> name, subprojects, location of each subproject, cost per kilometer in Swiss francs</li>
+                <li><strong>Employee request system:</strong> request new regular travel allowance with project, subproject and number of days per week</li>
+                <li><strong>Manager search & view:</strong> search for employees and see requested/approved allowances</li>
+                <li><strong>Manager approval system:</strong> approve new regular travel requests</li>
+                <li><strong>Employee notifications:</strong> informed when request is approved</li>
+                <li><strong>Manager notifications:</strong> informed when new request is raised</li>
+            </ol>
+        </div>
+
+        <h3>Key System Details</h3>
+        <div class="workflow-steps">
+            <ul>
+                <li><strong>Distance calculation:</strong> Straight-line basis</li>
+                <li><strong>Rejection workflow:</strong> Reject → Notify Employee → Employee can Resubmit/Modify or Withdraw</li>
+                <li><strong>Manager assignment:</strong> Employee types in manager's name</li>
+                <li><strong>No recurring requests:</strong> Each period needs separate approval</li>
+                <li><strong>Focus:</strong> Employee-Manager workflow only</li>
+            </ul>
+        </div>
+
+        <h2>User Experience Requirements</h2>
+        
+        <h3>Employee Perspective</h3>
+        <div class="feature-list">
+            <ul>
+                <li>Define which manager to direct request to</li>
+                <li>View status of all existing requests</li>
+                <li>See approved travel allowance amounts</li>
+                <li>Simple manager selection by typing name</li>
+                <li>No reminders needed</li>
+            </ul>
+        </div>
+
+        <h3>Manager Perspective</h3>
+        <div class="feature-list">
+            <ul>
+                <li>View calculated allowance amount and distance</li>
+                <li>See employee's current total weekly allowances</li>
+                <li>Require employee justification for travel need</li>
+                <li>Bulk approve multiple requests</li>
+                <li>Add comments when rejecting</li>
+                <li>Manual approval control (no auto-approve)</li>
+                <li>No project budget impact tracking needed</li>
+            </ul>
+        </div>
+
+        <h2>Feature Prioritization</h2>
+        
+        <div class="priority-features">
+            <h3>Top 3 Priority Features:</h3>
+            <ol>
+                <li><strong>Submit travel allowance request</strong> (project, subproject, days/week, manager name, justification)</li>
+                <li><strong>Manager search & view</strong> employees and their requests (pending & approved)</li>
+                <li><strong>Manager approve/reject</strong> requests with comments</li>
+            </ol>
+        </div>
+
+        <h3>Core Features (Must-Have for MVP)</h3>
+        <div class="feature-list">
+            <p><strong>Employee Functions:</strong></p>
+            <ol>
+                <li>Submit travel allowance request</li>
+                <li>View personal request dashboard with status and approved amounts</li>
+                <li>Resubmit/modify rejected requests</li>
+                <li>Withdraw pending requests</li>
+            </ol>
+            
+            <p><strong>Manager Functions:</strong></p>
+            <ol start="5">
+                <li>Search employees and view their requests</li>
+                <li>Approve/reject requests with comments</li>
+                <li>View calculated allowance amounts and distances</li>
+                <li>See employee's total current weekly allowances</li>
+                <li>Bulk approve multiple requests</li>
+            </ol>
+            
+            <p><strong>System Functions:</strong></p>
+            <ol start="10">
+                <li>Store employee home addresses</li>
+                <li>Store project/subproject data with locations and CHF per km rates</li>
+                <li>Calculate straight-line distances</li>
+                <li>Send notifications (approval/rejection to employee, new request to manager)</li>
+            </ol>
+        </div>
+
+        <h2>Technology Evolution</h2>
+        
+        <h3>Frontend Framework Decision</h3>
+        <div class="architecture-section">
+            <p><strong>Initial Choice:</strong> React</p>
+            <p><strong>Final Decision:</strong> Angular 17+ (replaced React)</p>
+            
+            <p><strong>Reasons for Angular:</strong></p>
+            <ul>
+                <li><strong>Enterprise Features:</strong> Built-in dependency injection, Angular CLI</li>
+                <li><strong>Form Handling:</strong> Reactive Forms superior for complex travel requests</li>
+                <li><strong>DDD Alignment:</strong> Feature modules align with Domain-Driven Design</li>
+                <li><strong>Swiss Business Context:</strong> Angular Material theming, i18n support</li>
+                <li><strong>Better PWA capabilities</strong> for mobile employees</li>
+            </ul>
+        </div>
+
+        <h3>Architecture Progression</h3>
+        <div class="architecture-section">
+            <h4>Initial Architecture (Supabase)</h4>
+            <p>User → React + TypeScript → Vercel Edge → Supabase API → PostgreSQL + Real-time notifications</p>
+            
+            <h4>Final Architecture (AWS)</h4>
+            <p>User → CloudFront CDN → S3 Static Hosting (Angular) → API Gateway → Lambda Functions (Node.js/TypeScript) → RDS PostgreSQL + Cognito + SES</p>
+        </div>
+
+        <h3>Design System Integration</h3>
+        <div class="feature-list">
+            <p><strong>Design System:</strong> Oblique Design System</p>
+            <p><strong>URL:</strong> <a href="https://oblique.bit.admin.ch/introductions/welcome" class="url-link">https://oblique.bit.admin.ch/introductions/welcome</a></p>
+            <p>Swiss government design system for professional business applications</p>
+        </div>
+
+        <h2>Domain-Driven Design Structure</h2>
+        <div class="architecture-section">
+            <h3>DDD Benefits Implemented</h3>
+            <ul>
+                <li><strong>Domain Isolation:</strong> travel-allowance, employee-management, project-management</li>
+                <li><strong>Clear Boundaries:</strong> Bounded contexts prevent business logic leakage</li>
+                <li><strong>Business-Focused:</strong> Domain entities reflect business concepts</li>
+                <li><strong>Scalable Team Organization:</strong> Different teams can own different domains</li>
+            </ul>
+            
+            <h3>Key DDD Patterns</h3>
+            <ul>
+                <li><strong>Aggregates:</strong> TravelRequestAggregate manages request lifecycle</li>
+                <li><strong>Value Objects:</strong> Distance, Currency, RequestStatus (immutable and self-validating)</li>
+                <li><strong>Domain Services:</strong> DistanceCalculator and AllowanceCalculator</li>
+                <li><strong>Command/Query Separation:</strong> Clear separation between write and read operations</li>
+                <li><strong>Repository Pattern:</strong> Abstract data access with domain-focused interfaces</li>
+            </ul>
+        </div>
+
+        <h2>Deployment Information</h2>
+        
+        <div class="test-users">
+            <h3>🔐 Configured Test Users</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Email</th>
+                        <th>Password</th>
+                        <th>Access</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Admin</td>
+                        <td>admin@company.com</td>
+                        <td>TempPass123!</td>
+                        <td>Project management</td>
+                    </tr>
+                    <tr>
+                        <td>Manager</td>
+                        <td>manager1@company.com</td>
+                        <td>TempPass123!</td>
+                        <td>Approvals, employees</td>
+                    </tr>
+                    <tr>
+                        <td>Employee</td>
+                        <td>employee1@company.com</td>
+                        <td>TempPass123!</td>
+                        <td>Submit requests</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="deployment-info">
+            <h3>🎉 Production Deployment Complete!</h3>
+            
+            <h4>✅ Production URLs:</h4>
+            <ul>
+                <li><strong>Primary (CloudFront):</strong> <a href="https://d2upsy2u9gmj8c.cloudfront.net" class="url-link">https://d2upsy2u9gmj8c.cloudfront.net</a></li>
+                <li><strong>S3 Direct:</strong> <a href="http://rtm-frontend-prod.s3-website.eu-central-1.amazonaws.com" class="url-link">http://rtm-frontend-prod.s3-website.eu-central-1.amazonaws.com</a></li>
+                <li><strong>API:</strong> <a href="https://sqosxx4mo6.execute-api.eu-central-1.amazonaws.com/dev/" class="url-link">https://sqosxx4mo6.execute-api.eu-central-1.amazonaws.com/dev/</a></li>
+            </ul>
+            
+            <h4>✅ What's Deployed:</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <p><strong>Frontend:</strong></p>
+                    <ul>
+                        <li>Angular 17 application with updated API URL</li>
+                        <li>CloudFront CDN with global distribution</li>
+                        <li>S3 static hosting with SPA routing</li>
+                        <li>HTTPS enabled with proper caching</li>
+                    </ul>
+                </div>
+                <div>
+                    <p><strong>Backend:</strong></p>
+                    <ul>
+                        <li>Lambda function rtm-api-dev</li>
+                        <li>API Gateway with CORS enabled</li>
+                        <li>DynamoDB tables for projects & subprojects</li>
+                        <li>Cognito authentication integration</li>
+                        <li>CloudWatch logging enabled</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h4>🚀 Deployment Commands:</h4>
+            <pre><code># Backend
+cd apps/api
+npm run build
+npm run deploy:dev
+
+# Frontend  
+cd apps/web
+npm run build:prod
+npm run deploy</code></pre>
+        </div>
+
+        <h2>Development Journey Summary</h2>
+        <div class="workflow-steps">
+            <ol>
+                <li><strong>Brainstorming:</strong> Identified core features through user perspective analysis</li>
+                <li><strong>Architecture Design:</strong> Evolved from Supabase to AWS architecture</li>
+                <li><strong>Technology Selection:</strong> Migrated from React to Angular for better enterprise features</li>
+                <li><strong>DDD Implementation:</strong> Restructured repository for Domain-Driven Design</li>
+                <li><strong>Design System Integration:</strong> Adopted Oblique design system for Swiss business context</li>
+                <li><strong>Full Deployment:</strong> Complete AWS infrastructure with production URLs</li>
+            </ol>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+            <p><strong>Your full-stack RegularTravelManager is now production-ready on AWS! 🎊</strong></p>
+        </div>
+    </div>
+</body>
+</html>
