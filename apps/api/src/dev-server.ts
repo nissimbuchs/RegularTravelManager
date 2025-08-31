@@ -12,7 +12,53 @@ const mockProjects = [
     defaultCostPerKm: 0.70,
     isActive: true,
     createdAt: new Date('2025-01-01').toISOString(),
-    subprojects: []
+    subprojects: [
+      {
+        id: 'subproj-1',
+        projectId: 'proj-1',
+        name: 'Zurich Office Modernization',
+        locationStreet: 'Bahnhofstrasse 45',
+        locationCity: 'Zurich',
+        locationPostalCode: '8001',
+        locationCoordinates: {
+          latitude: 47.3769,
+          longitude: 8.5417
+        },
+        costPerKm: 0.70,
+        isActive: true,
+        createdAt: new Date('2025-01-01').toISOString()
+      },
+      {
+        id: 'subproj-2',
+        projectId: 'proj-1',
+        name: 'Geneva Branch Integration',
+        locationStreet: 'Rue du Rhône 112',
+        locationCity: 'Geneva',
+        locationPostalCode: '1204',
+        locationCoordinates: {
+          latitude: 46.2044,
+          longitude: 6.1432
+        },
+        costPerKm: 0.75,
+        isActive: true,
+        createdAt: new Date('2025-01-05').toISOString()
+      },
+      {
+        id: 'subproj-3',
+        projectId: 'proj-1',
+        name: 'Basel Research Center',
+        locationStreet: 'Steinentorstrasse 30',
+        locationCity: 'Basel',
+        locationPostalCode: '4051',
+        locationCoordinates: {
+          latitude: 47.5596,
+          longitude: 7.5886
+        },
+        costPerKm: null, // Will inherit from project
+        isActive: true,
+        createdAt: new Date('2025-01-10').toISOString()
+      }
+    ]
   },
   {
     id: 'proj-2', 
@@ -21,7 +67,35 @@ const mockProjects = [
     defaultCostPerKm: 0.75,
     isActive: true,
     createdAt: new Date('2025-01-15').toISOString(),
-    subprojects: []
+    subprojects: [
+      {
+        id: 'subproj-4',
+        projectId: 'proj-2',
+        name: 'Bern Data Center',
+        locationStreet: 'Bundesplatz 3',
+        locationCity: 'Bern',
+        locationPostalCode: '3003',
+        locationCoordinates: {
+          latitude: 46.9480,
+          longitude: 7.4474
+        },
+        costPerKm: 0.80,
+        isActive: true,
+        createdAt: new Date('2025-01-16').toISOString()
+      },
+      {
+        id: 'subproj-5',
+        projectId: 'proj-2',
+        name: 'Lausanne Office Network',
+        locationStreet: 'Place de la Gare 10',
+        locationCity: 'Lausanne',
+        locationPostalCode: '1003',
+        locationCoordinates: null, // Not geocoded yet
+        costPerKm: null, // Will inherit from project
+        isActive: false,
+        createdAt: new Date('2025-01-20').toISOString()
+      }
+    ]
   }
 ];
 
@@ -215,9 +289,103 @@ app.get('/projects/:id/references', (req, res) => {
   }
 });
 
+// Mock employee data for development
+const mockEmployees = {
+  'test-user-id': {
+    id: 'test-user-id',
+    cognito_user_id: 'test-user-id',
+    email: 'employee@example.com',
+    first_name: 'John',
+    last_name: 'Doe',
+    employee_id: 'EMP001',
+    home_street: 'Bahnhofstrasse 45',
+    home_city: 'Zurich',
+    home_postal_code: '8001',
+    home_country: 'Switzerland',
+    home_location: {
+      latitude: 47.3769,
+      longitude: 8.5417
+    },
+    created_at: new Date('2025-01-01').toISOString(),
+    updated_at: new Date('2025-01-15').toISOString()
+  },
+  // Add some test user IDs to handle auth scenarios
+  'user-123': {
+    id: 'user-123',
+    cognito_user_id: 'user-123',
+    email: 'demo@company.com',
+    first_name: 'Demo',
+    last_name: 'User',
+    employee_id: 'EMP002',
+    home_street: '',
+    home_city: '',
+    home_postal_code: '',
+    home_country: 'Switzerland',
+    home_location: null,
+    created_at: new Date('2025-01-01').toISOString(),
+    updated_at: new Date('2025-01-01').toISOString()
+  }
+};
+
+// Employee endpoints
+app.get('/employees/:id', (req, res) => {
+  try {
+    const employee = mockEmployees[req.params.id];
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+    res.json(employee);
+  } catch (error) {
+    console.error('Get employee error:', error);
+    res.status(500).json({ error: 'Failed to load employee' });
+  }
+});
+
+app.put('/employees/:id/address', (req, res) => {
+  try {
+    const employee = mockEmployees[req.params.id];
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+    
+    const { home_street, home_city, home_postal_code, home_country } = req.body;
+    
+    // Simple validation
+    if (!home_street || !home_city || !home_postal_code || !home_country) {
+      return res.status(422).json({ error: 'All address fields are required' });
+    }
+    
+    // Mock geocoding for Swiss cities
+    const mockCoordinates = {
+      'Zurich': { latitude: 47.3769, longitude: 8.5417 },
+      'Geneva': { latitude: 46.2044, longitude: 6.1432 },
+      'Basel': { latitude: 47.5596, longitude: 7.5886 },
+      'Bern': { latitude: 46.9480, longitude: 7.4474 },
+      'Lausanne': { latitude: 46.5197, longitude: 6.6323 }
+    };
+    
+    // Update employee
+    mockEmployees[req.params.id] = {
+      ...employee,
+      home_street,
+      home_city,
+      home_postal_code,
+      home_country,
+      home_location: mockCoordinates[home_city] || { latitude: 46.9480, longitude: 7.4474 },
+      updated_at: new Date().toISOString()
+    };
+    
+    res.json(mockEmployees[req.params.id]);
+  } catch (error) {
+    console.error('Update employee address error:', error);
+    res.status(500).json({ error: 'Failed to update employee address' });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Development API server running at http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`📦 Projects API: http://localhost:${PORT}/projects`);
+  console.log(`👤 Employees API: http://localhost:${PORT}/employees`);
 });

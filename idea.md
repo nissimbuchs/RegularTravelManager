@@ -395,9 +395,9 @@ npx @composio/mcp@latest setup "https://mcp.composio.dev/partner/composio/figma/
 
   ✅ Production URLs:
 
-  - Frontend (CloudFront): https://d1lzpodnv745nx.cloudfront.net
-  - Frontend (S3): https://rtm-frontend-prod.s3-website-eu-central-1.amazonaws.com
-  - API Gateway: https://sqosxx4mo6.execute-api.eu-central-1.amazonaws.com/dev/
+  - Primary (CloudFront): https://d2upsy2u9gmj8c.cloudfront.net
+  - S3 Direct: http://rtm-frontend-prod.s3-website.eu-central-1.amazonaws.com
+  - API: https://sqosxx4mo6.execute-api.eu-central-1.amazonaws.com/dev/
 
   ✅ What's Deployed:
 
@@ -416,7 +416,7 @@ npx @composio/mcp@latest setup "https://mcp.composio.dev/partner/composio/figma/
 
   🚀 Your App is Live!
 
-  Visit https://d1lzpodnv745nx.cloudfront.net to access your production application. You can now:
+  Visit http://rtm-frontend-prod.s3-website.eu-central-1.amazonaws.com to access your production application. You can now:
 
   1. Login with your test users:
     - employee1@company.com / TempPass123!

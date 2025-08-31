@@ -12,9 +12,10 @@ export interface Subproject {
   id: string;
   project_id: string;
   name: string;
-  location_street?: string;
-  location_city?: string;
-  location_postal_code?: string;
+  street_address?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
   location_coordinates?: { latitude: number; longitude: number };
   cost_per_km?: number;
   is_active: boolean;
@@ -31,9 +32,10 @@ export interface CreateProjectCommand {
 export interface CreateSubprojectCommand {
   project_id: string;
   name: string;
-  location_street?: string;
-  location_city?: string;
-  location_postal_code?: string;
+  street_address?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
   cost_per_km?: number;
 }
 

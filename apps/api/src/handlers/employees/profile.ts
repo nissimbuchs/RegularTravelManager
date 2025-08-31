@@ -4,7 +4,7 @@ import { formatResponse } from '../../middleware/response-formatter';
 import { ValidationError, NotFoundError } from '../../middleware/error-handler';
 import { validateRequest } from '../../middleware/request-validator';
 import { db } from '../../database/connection';
-import { EmployeeService, UpdateEmployeeAddressCommand } from '../../../../domains/employee-management/EmployeeService';
+import { EmployeeService, UpdateEmployeeAddressCommand, CreateEmployeeCommand } from '../../../../domains/employee-management/EmployeeService';
 import { GeocodingService, GeocodeResult } from '../../services/geocoding-service';
 import { getUserContextFromEvent } from '../auth/auth-utils';
 

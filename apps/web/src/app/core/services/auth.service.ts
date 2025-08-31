@@ -43,8 +43,19 @@ export class AuthService {
         this.currentUserSubject.next(userData);
       }
     } catch (error) {
-      // User not authenticated, which is fine for initialization
-      this.currentUserSubject.next(null);
+      // For development, provide a mock user if no real auth is available
+      if (window.location.hostname === 'localhost') {
+        const mockUser: User = {
+          id: 'test-user-id',
+          email: 'demo@company.com',
+          name: 'Demo User',
+          role: 'employee',
+          groups: ['employees']
+        };
+        this.currentUserSubject.next(mockUser);
+      } else {
+        this.currentUserSubject.next(null);
+      }
     }
   }
 

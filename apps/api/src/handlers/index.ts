@@ -50,7 +50,11 @@ import {
   createSubproject as createSubprojectHandler,
   getActiveProjects as getActiveProjectsHandler,
   getSubprojectsForProject as getSubprojectsForProjectHandler,
-  searchProjects as searchProjectsHandler
+  searchProjects as searchProjectsHandler,
+  updateProject as updateProjectHandler,
+  deleteProject as deleteProjectHandler,
+  toggleProjectStatus as toggleProjectStatusHandler,
+  checkProjectReferences as checkProjectReferencesHandler
 } from './projects/management';
 
 export const createProject = errorHandler(
@@ -85,6 +89,34 @@ export const searchProjects = errorHandler(
   corsMiddleware(async (event, context) => {
     await ensureDatabaseInitialized();
     return searchProjectsHandler(event, context);
+  })
+);
+
+export const updateProject = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return updateProjectHandler(event, context);
+  })
+);
+
+export const deleteProject = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return deleteProjectHandler(event, context);
+  })
+);
+
+export const toggleProjectStatus = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return toggleProjectStatusHandler(event, context);
+  })
+);
+
+export const checkProjectReferences = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return checkProjectReferencesHandler(event, context);
   })
 );
 
