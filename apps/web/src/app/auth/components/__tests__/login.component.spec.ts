@@ -1,0 +1,167 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { of, throwError } from 'rxjs';
+
+import { LoginComponent } from '../login.component';
+import { AuthService } from '../../../core/services/auth.service';
+import { LoadingService } from '../../../core/services/loading.service';
+
+describe('LoginComponent', () => {
+  let component: LoginComponent;
+  let fixture: ComponentFixture<LoginComponent>;
+  let mockAuthService: jasmine.SpyObj<AuthService>;
+  let mockLoadingService: jasmine.SpyObj<LoadingService>;
+  let mockRouter: jasmine.SpyObj<Router>;
+  let mockSnackBar: jasmine.SpyObj<MatSnackBar>;
+
+  beforeEach(async () => {
+    const authServiceSpy = jasmine.createSpyObj('AuthService', ['login', 'getCurrentUser'], {
+      isAuthenticated$: of(false)
+    });
+
+    const loadingServiceSpy = jasmine.createSpyObj('LoadingService', ['setLoading'], {
+      loading$: of(false)
+    });
+
+    const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    const snackBarSpy = jasmine.createSpyObj('MatSnackBar', ['open']);
+
+    await TestBed.configureTestingModule({
+      imports: [
+        LoginComponent,
+        ReactiveFormsModule,
+        NoopAnimationsModule
+      ],
+      providers: [
+        { provide: AuthService, useValue: authServiceSpy },
+        { provide: LoadingService, useValue: loadingServiceSpy },
+        { provide: Router, useValue: routerSpy },
+        { provide: MatSnackBar, useValue: snackBarSpy }
+      ]
+    }).compileComponents();
+
+    mockAuthService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
+    mockLoadingService = TestBed.inject(LoadingService) as jasmine.SpyObj<LoadingService>;
+    mockRouter = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    mockSnackBar = TestBed.inject(MatSnackBar) as jasmine.SpyObj<MatSnackBar>;
+
+    fixture = TestBed.createComponent(LoginComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+
+  it('should initialize with invalid form', () => {
+    expect(component.loginForm.valid).toBeFalsy();
+  });
+
+  it('should require email and password', () => {
+    const emailControl = component.loginForm.get('email');
+    const passwordControl = component.loginForm.get('password');
+
+    expect(emailControl?.hasError('required')).toBeTruthy();
+    expect(passwordControl?.hasError('required')).toBeTruthy();
+  });
+
+  it('should validate email format', () => {
+    const emailControl = component.loginForm.get('email');
+    
+    emailControl?.setValue('invalid-email');
+    expect(emailControl?.hasError('email')).toBeTruthy();
+    
+    emailControl?.setValue('valid@email.com');
+    expect(emailControl?.hasError('email')).toBeFalsy();
+  });
+
+  it('should validate password minimum length', () => {
+    const passwordControl = component.loginForm.get('password');
+    
+    passwordControl?.setValue('short');
+    expect(passwordControl?.hasError('minlength')).toBeTruthy();
+    
+    passwordControl?.setValue('longenoughpassword');
+    expect(passwordControl?.hasError('minlength')).toBeFalsy();
+  });
+
+  it('should not submit invalid form', () => {
+    component.onSubmit();
+    
+    expect(mockAuthService.login).not.toHaveBeenCalled();
+  });
+
+  it('should normalize email input (trim and lowercase)', () => {
+    const emailControl = component.loginForm.get('email');
+    
+    emailControl?.setValue('  TEST@EXAMPLE.COM  ');
+    // Allow time for the valueChanges subscription to process
+    fixture.detectChanges();
+    
+    expect(emailControl?.value).toBe('test@example.com');
+  });
+
+  it('should handle login error correctly', () => {
+    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User', role: 'employee' as const, groups: [] };
+    mockAuthService.login.and.returnValue(throwError(() => new Error('Invalid credentials')));
+    mockAuthService.getCurrentUser.and.returnValue(of(mockUser));
+
+    component.loginForm.patchValue({
+      email: 'test@example.com',
+      password: 'testpassword123'
+    });
+
+    component.onSubmit();
+
+    expect(mockLoadingService.setLoading).toHaveBeenCalledWith(true);
+    expect(mockLoadingService.setLoading).toHaveBeenCalledWith(false);
+    expect(mockSnackBar.open).toHaveBeenCalledWith(
+      'Invalid credentials',
+      'Close',
+      jasmine.objectContaining({
+        duration: 5000,
+        panelClass: ['error-snackbar']
+      })
+    );
+    
+    // Password should be cleared but email preserved
+    expect(component.loginForm.get('password')?.value).toBe('');
+    expect(component.loginForm.get('email')?.value).toBe('test@example.com');
+    
+    // Form should be marked as untouched and pristine for retry
+    expect(component.loginForm.untouched).toBeTruthy();
+    expect(component.loginForm.pristine).toBeTruthy();
+  });
+
+  it('should handle successful login', () => {
+    const mockResponse = {
+      user: { id: '1', email: 'test@example.com', name: 'Test User', role: 'employee' as const, groups: [] },
+      accessToken: 'mock-token'
+    };
+    mockAuthService.login.and.returnValue(of(mockResponse));
+    mockAuthService.getCurrentUser.and.returnValue(of(mockResponse.user));
+
+    component.loginForm.patchValue({
+      email: 'test@example.com',
+      password: 'testpassword123'
+    });
+
+    component.onSubmit();
+
+    expect(mockLoadingService.setLoading).toHaveBeenCalledWith(true);
+    expect(mockLoadingService.setLoading).toHaveBeenCalledWith(false);
+    expect(mockSnackBar.open).toHaveBeenCalledWith(
+      'Welcome back, Test User!',
+      'Close',
+      jasmine.objectContaining({
+        duration: 3000,
+        panelClass: ['success-snackbar']
+      })
+    );
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/employee/dashboard']);
+  });
+});

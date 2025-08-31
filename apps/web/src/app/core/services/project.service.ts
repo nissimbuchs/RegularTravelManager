@@ -1,0 +1,150 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+import { 
+  Project, 
+  Subproject, 
+  ProjectCreateRequest, 
+  ProjectUpdateRequest,
+  SubprojectCreateRequest,
+  SubprojectUpdateRequest,
+  ProjectSearchFilters,
+  GeocodingResult
+} from '../models/project.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ProjectService {
+  private readonly baseUrl = `${environment.apiUrl}/projects`;
+  private projectsSubject = new BehaviorSubject<Project[]>([]);
+  public projects$ = this.projectsSubject.asObservable();
+
+  constructor(private http: HttpClient) {}
+
+  // Project CRUD Operations
+  getProjects(filters?: ProjectSearchFilters): Observable<Project[]> {
+    let params = new HttpParams();
+    
+    if (filters) {
+      if (filters.search) params = params.set('search', filters.search);
+      if (filters.isActive !== undefined) params = params.set('isActive', filters.isActive.toString());
+      if (filters.minCostPerKm) params = params.set('minCostPerKm', filters.minCostPerKm.toString());
+      if (filters.maxCostPerKm) params = params.set('maxCostPerKm', filters.maxCostPerKm.toString());
+      if (filters.createdAfter) params = params.set('createdAfter', filters.createdAfter);
+      if (filters.createdBefore) params = params.set('createdBefore', filters.createdBefore);
+    }
+
+    return this.http.get<Project[]>(this.baseUrl, { params }).pipe(
+      tap(projects => this.projectsSubject.next(projects))
+    );
+  }
+
+  getProject(id: string): Observable<Project> {
+    return this.http.get<Project>(`${this.baseUrl}/${id}`);
+  }
+
+  createProject(project: ProjectCreateRequest): Observable<Project> {
+    return this.http.post<Project>(this.baseUrl, project).pipe(
+      tap(() => this.refreshProjects())
+    );
+  }
+
+  updateProject(id: string, project: ProjectUpdateRequest): Observable<Project> {
+    return this.http.put<Project>(`${this.baseUrl}/${id}`, project).pipe(
+      tap(() => this.refreshProjects())
+    );
+  }
+
+  deleteProject(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(
+      tap(() => this.refreshProjects())
+    );
+  }
+
+  toggleProjectStatus(id: string): Observable<Project> {
+    return this.http.patch<Project>(`${this.baseUrl}/${id}/toggle-status`, {}).pipe(
+      tap(() => this.refreshProjects())
+    );
+  }
+
+  // Subproject CRUD Operations
+  getSubprojects(projectId: string): Observable<Subproject[]> {
+    return this.http.get<Subproject[]>(`${this.baseUrl}/${projectId}/subprojects`);
+  }
+
+  getSubproject(projectId: string, subprojectId: string): Observable<Subproject> {
+    return this.http.get<Subproject>(`${this.baseUrl}/${projectId}/subprojects/${subprojectId}`);
+  }
+
+  createSubproject(subproject: SubprojectCreateRequest): Observable<Subproject> {
+    return this.http.post<Subproject>(`${this.baseUrl}/${subproject.projectId}/subprojects`, subproject).pipe(
+      tap(() => this.refreshProjects())
+    );
+  }
+
+  updateSubproject(projectId: string, subprojectId: string, subproject: SubprojectUpdateRequest): Observable<Subproject> {
+    return this.http.put<Subproject>(`${this.baseUrl}/${projectId}/subprojects/${subprojectId}`, subproject).pipe(
+      tap(() => this.refreshProjects())
+    );
+  }
+
+  deleteSubproject(projectId: string, subprojectId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${projectId}/subprojects/${subprojectId}`).pipe(
+      tap(() => this.refreshProjects())
+    );
+  }
+
+  toggleSubprojectStatus(projectId: string, subprojectId: string): Observable<Subproject> {
+    return this.http.patch<Subproject>(`${this.baseUrl}/${projectId}/subprojects/${subprojectId}/toggle-status`, {}).pipe(
+      tap(() => this.refreshProjects())
+    );
+  }
+
+  // Geocoding
+  geocodeAddress(address: string): Observable<GeocodingResult> {
+    const params = new HttpParams().set('address', address);
+    return this.http.get<GeocodingResult>(`${this.baseUrl}/geocode`, { params });
+  }
+
+  // Utility methods
+  getActiveProjects(): Observable<Project[]> {
+    return this.getProjects({ isActive: true });
+  }
+
+  getActiveSubprojects(projectId: string): Observable<Subproject[]> {
+    return this.getSubprojects(projectId).pipe(
+      map(subprojects => subprojects.filter(sp => sp.isActive))
+    );
+  }
+
+  checkProjectReferences(projectId: string): Observable<{ canDelete: boolean; referencesCount: number }> {
+    return this.http.get<{ canDelete: boolean; referencesCount: number }>(`${this.baseUrl}/${projectId}/references`);
+  }
+
+  private refreshProjects(): void {
+    this.getProjects().subscribe();
+  }
+
+  // Validation helpers
+  validateCostRate(rate: number): boolean {
+    return rate > 0 && Number.isFinite(rate);
+  }
+
+  formatCHF(amount: number): string {
+    return new Intl.NumberFormat('de-CH', {
+      style: 'currency',
+      currency: 'CHF',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  }
+
+  parseCHF(value: string): number | null {
+    const cleaned = value.replace(/[^\d.,]/g, '').replace(',', '.');
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? null : parsed;
+  }
+}

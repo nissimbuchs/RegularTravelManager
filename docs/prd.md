@@ -252,20 +252,21 @@ so that **I can validate the complete technology stack and have a foundation for
 
 **Epic Goal:** Enable employees to submit travel allowance requests with automatic distance and allowance calculations, providing immediate feedback on calculated amounts. This epic delivers the core business value by automating manual calculation processes and establishing the primary employee workflow, allowing employees to submit requests, see calculated allowances in CHF, and track their request status through an intuitive web interface.
 
-### Story 2.1: Employee Home Address Management
+### Story 2.6: Frontend Angular Application Foundation
 
-As an **employee**,
-I want **to set and update my home address with geographic coordinates**,
-so that **the system can accurately calculate travel distances for my allowance requests**.
+As a **user**,
+I want **a responsive Angular application with authentication and role-based navigation**,
+so that **I can access employee features securely across desktop and mobile devices**.
 
 #### Acceptance Criteria
-1. Employee profile page allows input of street address, city, postal code, and country with Switzerland as default
-2. Address validation ensures all required fields are completed with proper format constraints
-3. Geocoding service converts address to latitude/longitude coordinates and stores in PostGIS format
-4. Employee can view and edit their current home address with confirmation dialog for changes
-5. Address updates trigger recalculation of any pending travel request distances and allowances
-6. Error handling provides clear feedback if geocoding fails or address cannot be validated
-7. Database stores address history for audit purposes with timestamps and change tracking
+1. Angular application created with TypeScript, Angular CLI build system, and Angular Material component library
+2. Authentication flow integrates with Cognito for login, logout, and token refresh functionality
+3. Role-based routing redirects employees to appropriate dashboard and restricts manager-only features
+4. Responsive design works correctly on mobile, tablet, and desktop screen sizes with touch-friendly interfaces
+5. Navigation component provides clear indication of current user role and available features
+6. Loading states and error boundaries provide smooth user experience during API calls and failures
+7. Application deployed and accessible through CloudFront CDN with proper HTTPS configuration
+8. Authentication integration provides foundation for role-based access in subsequent employee and admin features
 
 ### Story 2.2: Project and Subproject Data Management
 
@@ -297,6 +298,22 @@ so that **employees receive immediate, accurate cost estimates for their travel 
 6. Calculation audit trail stores original values for historical accuracy and compliance
 7. Error handling provides meaningful messages when calculations cannot be performed
 
+### Story 2.1: Employee Home Address Management
+
+As an **employee**,
+I want **to set and update my home address with geographic coordinates**,
+so that **the system can accurately calculate travel distances for my allowance requests**.
+
+#### Acceptance Criteria
+1. Employee profile page allows input of street address, city, postal code, and country with Switzerland as default
+2. Address validation ensures all required fields are completed with proper format constraints
+3. Geocoding service converts address to latitude/longitude coordinates and stores in PostGIS format
+4. Employee can view and edit their current home address with confirmation dialog for changes
+5. Address updates trigger recalculation of any pending travel request distances and allowances
+6. Error handling provides clear feedback if geocoding fails or address cannot be validated
+7. Database stores address history for audit purposes with timestamps and change tracking
+8. Address management interface integrates with existing Angular application routing and authentication
+
 ### Story 2.4: Travel Request Submission Form
 
 As an **employee**,
@@ -311,6 +328,7 @@ so that **I can see the daily and weekly allowance amounts before submitting my 
 5. Form validation prevents submission with missing required fields or invalid data
 6. Successful submission displays confirmation with request ID and calculated allowance summary
 7. Form auto-saves draft data to prevent loss during session interruptions
+8. Form integrates with calculation engine from Story 2.3 for real-time feedback
 
 ### Story 2.5: Employee Request Dashboard
 
@@ -326,21 +344,7 @@ so that **I can track request progress and see my approved allowances**.
 5. Approved requests clearly display daily allowance amount and weekly total with CHF formatting
 6. Pagination or infinite scroll handles large numbers of requests efficiently
 7. Dashboard updates automatically when request status changes without requiring page refresh
-
-### Story 2.6: Frontend Angular Application Foundation
-
-As a **user**,
-I want **a responsive Angular application with authentication and role-based navigation**,
-so that **I can access employee features securely across desktop and mobile devices**.
-
-#### Acceptance Criteria
-1. Angular application created with TypeScript, Angular CLI build system, and Angular Material component library
-2. Authentication flow integrates with Cognito for login, logout, and token refresh functionality
-3. Role-based routing redirects employees to appropriate dashboard and restricts manager-only features
-4. Responsive design works correctly on mobile, tablet, and desktop screen sizes with touch-friendly interfaces
-5. Navigation component provides clear indication of current user role and available features
-6. Loading states and error boundaries provide smooth user experience during API calls and failures
-7. Application deployed and accessible through CloudFront CDN with proper HTTPS configuration
+8. Dashboard displays data from all previous Epic 2 features in unified interface
 
 ## Epic 3: Manager Approval Workflow
 

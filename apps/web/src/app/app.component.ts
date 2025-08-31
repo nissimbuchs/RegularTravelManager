@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MaterialModule } from './material.module';
+import { configureAmplify } from './core/config/amplify.config';
 
 @Component({
   selector: 'app-root',
@@ -9,6 +10,10 @@ import { MaterialModule } from './material.module';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'RegularTravelManager';
+
+  ngOnInit(): void {
+    configureAmplify();
+  }
 }
