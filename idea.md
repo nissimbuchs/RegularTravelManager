@@ -400,6 +400,15 @@ npx @composio/mcp@latest setup "https://mcp.composio.dev/partner/composio/figma/
 
   Your RegularTravelManager application is now fully deployed to production with both frontend and backend connected:
 
+apps/api
+npm run build
+npm run deploy:dev
+
+apps/web
+npm run build:prod
+npm run deploy
+
+
   ✅ Production URLs:
 
   - Primary (CloudFront): https://d2upsy2u9gmj8c.cloudfront.net
@@ -422,6 +431,8 @@ npx @composio/mcp@latest setup "https://mcp.composio.dev/partner/composio/figma/
   - ✅ CloudWatch logging enabled
 
   🚀 Your App is Live!
+
+
 
   Visit http://rtm-frontend-prod.s3-website.eu-central-1.amazonaws.com to access your production application. You can now:
 

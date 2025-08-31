@@ -9,7 +9,7 @@
 ### S3 Bucket Setup
 ```bash
 # Create S3 bucket for static website hosting
-aws s3 mb s3://rtm-frontend-prod --region us-east-1
+aws s3 mb s3://rtm-frontend-prod --region eu-central-1
 
 # Configure bucket for static website hosting
 aws s3 website s3://rtm-frontend-prod --index-document index.html --error-document index.html
@@ -40,7 +40,7 @@ aws cloudfront create-invalidation --distribution-id YOUR_DISTRIBUTION_ID --path
 ### Environment Configuration
 The application uses different API endpoints based on the build environment:
 - Development: http://localhost:3000
-- Production: https://api.your-domain.com
+- Production: https://sqosxx4mo6.execute-api.eu-central-1.amazonaws.com/dev/
 
 ### Security Headers
 CloudFront should be configured to add security headers:
