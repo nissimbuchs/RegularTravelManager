@@ -16,7 +16,7 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: '/employee/dashboard',
+        loadComponent: () => import('./shared/components/role-redirect.component').then(m => m.RoleRedirectComponent),
         pathMatch: 'full'
       },
       {
@@ -43,7 +43,7 @@ export const routes: Routes = [
         children: [
           {
             path: 'dashboard',
-            loadComponent: () => import('./features/manager/components/dashboard.component').then(m => m.DashboardComponent)
+            loadComponent: () => import('./features/manager/components/manager-request-queue.component').then(m => m.ManagerRequestQueueComponent)
           },
           {
             path: 'approvals',

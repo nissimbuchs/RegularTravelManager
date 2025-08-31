@@ -1,0 +1,406 @@
+<div class="manager-dashboard-container">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1>Travel Request Queue</h1>
+      <div class="header-stats">
+        <mat-card class="stats-card pending">
+          <mat-card-content>
+            <div class="stats-number">{{ dashboard?.totalPending || 0 }}</div>
+            <div class="stats-label">Pending Requests</div>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="stats-card urgent">
+          <mat-card-content>
+            <div class="stats-number">{{ dashboard?.urgentCount || 0 }}</div>
+            <div class="stats-label">Urgent Requests</div>
+          </mat-card-content>
+        </mat-card>
+        <div class="refresh-info">
+          <button mat-icon-button (click)="refreshData()" matTooltip="Refresh data">
+            <mat-icon>refresh</mat-icon>
+          </button>
+          <small>Last updated: {{ lastRefreshTime }}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <mat-card class="filters-card">
+    <mat-card-header>
+      <mat-card-title>Filters</mat-card-title>
+      <mat-card-subtitle>Filter and search pending requests</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filters-form">
+        <div class="filter-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Employee Name</mat-label>
+            <input matInput formControlName="employeeName" placeholder="Search by name...">
+            <mat-icon matSuffix>person</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Project</mat-label>
+            <input matInput formControlName="projectName" placeholder="Search by project...">
+            <mat-icon matSuffix>business_center</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Subproject</mat-label>
+            <input matInput formControlName="subProjectName" placeholder="Search by location...">
+            <mat-icon matSuffix>location_on</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-row">
+          <mat-form-field appearance="outline">
+            <mat-label>From Date</mat-label>
+            <input matInput [matDatepicker]="startPicker" formControlName="dateRangeStart">
+            <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>To Date</mat-label>
+            <input matInput [matDatepicker]="endPicker" formControlName="dateRangeEnd">
+            <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+            <mat-datepicker #endPicker></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Priority Levels</mat-label>
+            <mat-select formControlName="urgencyLevels" multiple>
+              <mat-option *ngFor="let level of urgencyLevels" [value]="level.value">
+                <mat-icon [style.color]="level.color">{{ getUrgencyIconForLevel(level) }}</mat-icon>
+                {{ level.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-raised-button color="accent" (click)="clearFilters()">
+            <mat-icon>clear</mat-icon>
+            Clear Filters
+          </button>
+        </div>
+
+        <div class="filter-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Min Allowance (CHF)</mat-label>
+            <input matInput type="number" formControlName="allowanceMin" placeholder="0">
+            <span matPrefix>CHF&nbsp;</span>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Max Allowance (CHF)</mat-label>
+            <input matInput type="number" formControlName="allowanceMax" placeholder="1000">
+            <span matPrefix>CHF&nbsp;</span>
+          </mat-form-field>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="main-content">
+    <!-- Requests Table -->
+    <div class="table-container" [class.with-panel]="showEmployeePanel">
+      <mat-card class="table-card">
+        <mat-card-header>
+          <mat-card-title>Pending Travel Requests</mat-card-title>
+          <mat-card-subtitle>Click on a request to view employee details</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="table-wrapper">
+            <table mat-table [dataSource]="dataSource" matSort 
+                   (matSortChange)="onSortChange($event)" class="requests-table">
+
+              <!-- Urgency Column -->
+              <ng-container matColumnDef="urgency">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header="urgencyLevel">Priority</th>
+                <td mat-cell *matCellDef="let request">
+                  <mat-icon [style.color]="getUrgencyColor(request.urgencyLevel)" 
+                           [matTooltip]="request.urgencyLevel + ' priority'">
+                    {{ getUrgencyIcon(request.urgencyLevel) }}
+                  </mat-icon>
+                </td>
+              </ng-container>
+
+              <!-- Employee Name Column -->
+              <ng-container matColumnDef="employeeName">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header="employeeName">Employee</th>
+                <td mat-cell *matCellDef="let request" class="employee-cell">
+                  <div class="employee-info">
+                    <span class="employee-name">{{ request.employeeName }}</span>
+                    <small class="employee-email">{{ request.employeeEmail }}</small>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Project Column -->
+              <ng-container matColumnDef="projectName">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header="projectName">Project</th>
+                <td mat-cell *matCellDef="let request">{{ request.projectName }}</td>
+              </ng-container>
+
+              <!-- Subproject Column -->
+              <ng-container matColumnDef="subProjectName">
+                <th mat-header-cell *matHeaderCellDef>Location</th>
+                <td mat-cell *matCellDef="let request">{{ request.subProjectName }}</td>
+              </ng-container>
+
+              <!-- Days Per Week Column -->
+              <ng-container matColumnDef="daysPerWeek">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header="daysPerWeek">Days/Week</th>
+                <td mat-cell *matCellDef="let request" class="center-cell">
+                  <mat-chip-set>
+                    <mat-chip>{{ request.daysPerWeek }}</mat-chip>
+                  </mat-chip-set>
+                </td>
+              </ng-container>
+
+              <!-- Allowance Column -->
+              <ng-container matColumnDef="calculatedAllowance">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header="calculatedAllowance">Weekly Allowance</th>
+                <td mat-cell *matCellDef="let request" class="currency-cell">
+                  {{ formatCurrency(request.calculatedAllowance) }}
+                </td>
+              </ng-container>
+
+              <!-- Submitted Date Column -->
+              <ng-container matColumnDef="submittedDate">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header="submittedDate">Submitted</th>
+                <td mat-cell *matCellDef="let request">
+                  {{ formatDate(request.submittedDate) }}
+                </td>
+              </ng-container>
+
+              <!-- Days Since Submission Column -->
+              <ng-container matColumnDef="daysSinceSubmission">
+                <th mat-header-cell *matHeaderCellDef>Days Ago</th>
+                <td mat-cell *matCellDef="let request" class="center-cell">
+                  <mat-chip-set>
+                    <mat-chip [color]="request.daysSinceSubmission > 7 ? 'warn' : request.daysSinceSubmission > 3 ? 'accent' : 'primary'">
+                      {{ request.daysSinceSubmission }}
+                    </mat-chip>
+                  </mat-chip-set>
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let request">
+                  <button mat-icon-button (click)="selectRequest(request)" matTooltip="View Details">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                  <!-- Future: Add approve/reject buttons -->
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+                  [class.selected-row]="selectedRequest?.id === row.id"
+                  (click)="selectRequest(row)"></tr>
+            </table>
+
+            <!-- Loading Spinner -->
+            <div *ngIf="isLoading" class="loading-container">
+              <mat-spinner diameter="50"></mat-spinner>
+              <p>Loading requests...</p>
+            </div>
+
+            <!-- No Data Message -->
+            <div *ngIf="!isLoading && dataSource.data.length === 0" class="no-data-container">
+              <mat-icon class="no-data-icon">inbox</mat-icon>
+              <h3>No pending requests</h3>
+              <p>There are no travel requests matching your current filters.</p>
+            </div>
+          </div>
+
+          <!-- Paginator -->
+          <mat-paginator 
+            #paginator
+            [length]="pagination.totalItems"
+            [pageSize]="pagination.pageSize"
+            [pageSizeOptions]="pagination.pageSizeOptions"
+            (page)="onPageChange($event)"
+            showFirstLastButtons>
+          </mat-paginator>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Employee Context Panel -->
+    <div class="employee-panel" [@slideInOut]="showEmployeePanel ? 'in' : 'out'" *ngIf="showEmployeePanel">
+      <mat-card class="employee-card">
+        <mat-card-header>
+          <mat-card-title>
+            Employee Details
+            <button mat-icon-button (click)="closeEmployeePanel()" class="close-button">
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <!-- Loading State -->
+          <div *ngIf="isLoadingContext" class="context-loading">
+            <mat-spinner diameter="30"></mat-spinner>
+            <p>Loading employee details...</p>
+          </div>
+
+          <!-- Employee Information -->
+          <div *ngIf="!isLoadingContext && employeeContext" class="employee-details">
+            <div class="employee-header">
+              <mat-icon class="employee-avatar">account_circle</mat-icon>
+              <div class="employee-basic-info">
+                <h3>{{ employeeContext.employee.name }}</h3>
+                <p>{{ employeeContext.employee.position }}</p>
+                <p>{{ employeeContext.employee.department }}</p>
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <div class="employee-stats">
+              <div class="stat-item">
+                <mat-icon>attach_money</mat-icon>
+                <div class="stat-content">
+                  <span class="stat-value">{{ formatCurrency(employeeContext.currentWeeklyAllowance) }}</span>
+                  <span class="stat-label">Current Weekly Total</span>
+                </div>
+              </div>
+
+              <div class="stat-item">
+                <mat-icon>pending</mat-icon>
+                <div class="stat-content">
+                  <span class="stat-value">{{ employeeContext.activeRequestsCount }}</span>
+                  <span class="stat-label">Active Requests</span>
+                </div>
+              </div>
+
+              <div class="stat-item">
+                <mat-icon>trending_up</mat-icon>
+                <div class="stat-content">
+                  <span class="stat-value">{{ formatCurrency(employeeContext.averageWeeklyAllowance) }}</span>
+                  <span class="stat-label">Average Weekly</span>
+                </div>
+              </div>
+
+              <div class="stat-item">
+                <mat-icon>calendar_month</mat-icon>
+                <div class="stat-content">
+                  <span class="stat-value">{{ employeeContext.totalRequestsThisYear }}</span>
+                  <span class="stat-label">Requests This Year</span>
+                </div>
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <!-- Performance & Budget Stats -->
+            <div class="performance-section">
+              <h4>Performance Overview</h4>
+              <div class="performance-grid">
+                <div class="performance-item">
+                  <div class="performance-circle approved">
+                    <span class="performance-number">{{ employeeContext.recentApprovals }}</span>
+                    <small>Approved</small>
+                  </div>
+                </div>
+                <div class="performance-item">
+                  <div class="performance-circle rejected">
+                    <span class="performance-number">{{ employeeContext.recentRejections }}</span>
+                    <small>Rejected</small>
+                  </div>
+                </div>
+                <div class="performance-item budget-utilization">
+                  <div class="budget-info">
+                    <span class="budget-label">Dept. Budget Used</span>
+                    <div class="budget-bar">
+                      <div class="budget-progress" 
+                           [style.width.%]="employeeContext.departmentBudgetUtilization"
+                           [class.warning]="employeeContext.departmentBudgetUtilization > 80"
+                           [class.critical]="employeeContext.departmentBudgetUtilization > 90">
+                      </div>
+                    </div>
+                    <span class="budget-percentage">{{ employeeContext.departmentBudgetUtilization }}%</span>
+                  </div>
+                </div>
+                <div class="performance-item" *ngIf="employeeContext.performanceScore">
+                  <div class="score-display">
+                    <mat-icon>star</mat-icon>
+                    <span class="score-value">{{ employeeContext.performanceScore }}/10</span>
+                    <small>Performance Score</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <!-- Selected Request Details -->
+            <div *ngIf="selectedRequest" class="request-details">
+              <h4>Selected Request</h4>
+              <div class="request-detail-grid">
+                <div class="detail-item">
+                  <strong>Project:</strong>
+                  <span>{{ selectedRequest.projectName }}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Location:</strong>
+                  <span>{{ selectedRequest.subProjectName }}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Days per Week:</strong>
+                  <span>{{ selectedRequest.daysPerWeek }}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Weekly Allowance:</strong>
+                  <span>{{ formatCurrency(selectedRequest.calculatedAllowance) }}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Submitted:</strong>
+                  <span>{{ formatDate(selectedRequest.submittedDate) }}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Priority:</strong>
+                  <mat-chip [style.background-color]="getUrgencyColor(selectedRequest.urgencyLevel)">
+                    {{ selectedRequest.urgencyLevel }}
+                  </mat-chip>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons" *ngIf="selectedRequest">
+              <button mat-raised-button color="primary" 
+                      (click)="approveRequest(selectedRequest)"
+                      [disabled]="isProcessingAction"
+                      matTooltip="Approve this travel request">
+                <mat-icon>check</mat-icon>
+                {{ isProcessingAction && actionType === 'approve' ? 'Approving...' : 'Approve' }}
+              </button>
+              
+              <button mat-raised-button color="warn" 
+                      (click)="openRejectDialog(selectedRequest)"
+                      [disabled]="isProcessingAction"
+                      matTooltip="Reject this travel request">
+                <mat-icon>close</mat-icon>
+                {{ isProcessingAction && actionType === 'reject' ? 'Rejecting...' : 'Reject' }}
+              </button>
+              
+              <button mat-stroked-button color="accent"
+                      (click)="viewRequestDetails(selectedRequest)"
+                      matTooltip="View full request details">
+                <mat-icon>visibility</mat-icon>
+                View Details
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

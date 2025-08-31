@@ -45,12 +45,16 @@ export class AuthService {
     } catch (error) {
       // For development, provide a mock user if no real auth is available
       if (window.location.hostname === 'localhost') {
+        // Check for role override in localStorage for testing
+        const roleOverride = localStorage.getItem('mockUserRole') as 'employee' | 'manager' | 'admin' | null;
+        const role = roleOverride || 'employee';
+        
         const mockUser: User = {
           id: 'test-user-id',
-          email: 'demo@company.com',
-          name: 'Demo User',
-          role: 'employee',
-          groups: ['employees']
+          email: role === 'manager' ? 'manager@company.com' : role === 'admin' ? 'admin@company.com' : 'demo@company.com',
+          name: role === 'manager' ? 'Demo Manager' : role === 'admin' ? 'Demo Admin' : 'Demo Employee',
+          role: role,
+          groups: role === 'manager' ? ['managers'] : role === 'admin' ? ['administrators'] : ['employees']
         };
         this.currentUserSubject.next(mockUser);
       } else {

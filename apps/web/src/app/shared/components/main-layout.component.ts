@@ -57,7 +57,7 @@ interface NavigationItem {
         
         <mat-nav-list>
           <ng-container *ngFor="let item of navigationItems">
-            <a *ngIf="canShowNavItem(item)"
+            <a *ngIf="canShowNavItem(item, currentUser$ | async)"
                mat-list-item
                [routerLink]="item.route"
                routerLinkActive="active-nav-item"
@@ -300,11 +300,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  canShowNavItem(item: NavigationItem): boolean {
-    const currentUser = this.authService.getCurrentUser();
-    // For now, show items based on current route structure
-    // This will be enhanced when we have proper user role checking
-    return true;
+  canShowNavItem(item: NavigationItem, user: User | null): boolean {
+    return user ? item.roles.includes(user.role) : false;
   }
 
   getPageTitle(): string {
