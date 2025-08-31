@@ -1,0 +1,158 @@
+.confirmation-dialog {
+  min-width: 500px;
+  max-width: 600px;
+}
+
+.dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4caf50;
+  margin-bottom: 1rem;
+}
+
+.success-icon {
+  color: #4caf50;
+  font-size: 1.5rem;
+}
+
+.dialog-content {
+  padding: 0 1rem;
+}
+
+.request-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.request-id-section {
+  text-align: center;
+  padding: 1rem;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.request-id {
+  font-family: monospace;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #1976d2;
+  margin: 0.5rem 0;
+  letter-spacing: 1px;
+}
+
+.hint {
+  color: #666;
+  font-style: italic;
+}
+
+.calculation-summary h3,
+.request-details h3 {
+  color: #424242;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.5rem;
+}
+
+.summary-grid,
+.details-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.summary-item,
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.summary-item.highlight {
+  font-weight: bold;
+  border-top: 2px solid #1976d2;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+}
+
+.summary-item .label,
+.detail-item .label {
+  color: #666;
+  font-weight: 500;
+}
+
+.summary-item .value,
+.detail-item .value {
+  font-family: monospace;
+  font-weight: 600;
+  color: #333;
+}
+
+.justification-section {
+  margin-top: 1rem;
+}
+
+.justification-section h4 {
+  color: #424242;
+  margin-bottom: 0.5rem;
+}
+
+.justification-text {
+  background-color: #f9f9f9;
+  padding: 1rem;
+  border-radius: 4px;
+  border-left: 4px solid #1976d2;
+  line-height: 1.5;
+  color: #555;
+  font-style: italic;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  padding: 1rem;
+}
+
+.close-button {
+  color: #666;
+}
+
+.secondary-button {
+  color: #1976d2;
+}
+
+.primary-button {
+  min-width: 120px;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .confirmation-dialog {
+    min-width: 300px;
+    max-width: 95vw;
+  }
+  
+  .dialog-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .dialog-actions button {
+    width: 100%;
+  }
+  
+  .summary-item,
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .summary-item .value,
+  .detail-item .value {
+    align-self: flex-end;
+  }
+}

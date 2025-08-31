@@ -207,3 +207,15 @@ export async function initializeDatabase(): Promise<void> {
 
   console.log('Database initialized successfully');
 }
+
+// Health check specific function
+export async function testDatabaseConnection(): Promise<void> {
+  if (!db) {
+    throw new Error('Database not configured');
+  }
+  
+  const isConnected = await db.testConnection();
+  if (!isConnected) {
+    throw new Error('Database connection test failed');
+  }
+}

@@ -19,14 +19,9 @@ export enum UserRole {
   ADMIN = 'ADMIN',
 }
 
-export interface ApiResponse<T = any> {
+export interface PaginatedResponse<T> {
   success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-}
-
-export interface PaginatedResponse<T> extends ApiResponse<T[]> {
+  data: T[];
   pagination: {
     page: number;
     limit: number;

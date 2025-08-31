@@ -1,0 +1,141 @@
+import { healthHandler } from './health';
+import { corsMiddleware } from '../middleware/cors';
+import { errorHandler } from '../middleware/error-handler';
+import { initializeDatabase } from '../database/connection';
+
+// Initialize database connection when Lambda starts
+let isDbInitialized = false;
+
+const ensureDatabaseInitialized = async () => {
+  if (!isDbInitialized) {
+    await initializeDatabase();
+    isDbInitialized = true;
+  }
+};
+
+// Export handlers with middleware chain
+
+// Health check (no auth required)
+export const health = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return healthHandler(event, context);
+  })
+);
+
+// Authentication handlers
+export { authorizerHandler as authorizer, healthAuthorizerHandler as healthAuthorizer } from './auth/authorizer';
+export { setupTestUsersHandler as setupTestUsers, listUsersHandler as listUsers, getUserDetailsHandler as getUserDetails } from './auth/setup-test-users';
+
+// Employee handlers (require auth)
+import { getEmployeeProfile as getEmployeeProfileHandler, updateEmployeeAddress as updateEmployeeAddressHandler } from './employees/profile';
+
+export const getEmployeeProfile = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return getEmployeeProfileHandler(event, context);
+  })
+);
+
+export const updateEmployeeAddress = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return updateEmployeeAddressHandler(event, context);
+  })
+);
+
+// Project management handlers (require auth)
+import { 
+  createProject as createProjectHandler,
+  createSubproject as createSubprojectHandler,
+  getActiveProjects as getActiveProjectsHandler,
+  getSubprojectsForProject as getSubprojectsForProjectHandler,
+  searchProjects as searchProjectsHandler
+} from './projects/management';
+
+export const createProject = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return createProjectHandler(event, context);
+  })
+);
+
+export const createSubproject = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return createSubprojectHandler(event, context);
+  })
+);
+
+export const getActiveProjects = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return getActiveProjectsHandler(event, context);
+  })
+);
+
+export const getSubprojectsForProject = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return getSubprojectsForProjectHandler(event, context);
+  })
+);
+
+export const searchProjects = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return searchProjectsHandler(event, context);
+  })
+);
+
+// Calculation engine handlers (require auth)
+import { 
+  calculateDistance as calculateDistanceHandler,
+  calculateAllowance as calculateAllowanceHandler,
+  calculateTravelCost as calculateTravelCostHandler,
+  getCalculationAudit as getCalculationAuditHandler,
+  invalidateCalculationCache as invalidateCalculationCacheHandler,
+  cleanupExpiredCache as cleanupExpiredCacheHandler
+} from './calculations/engine';
+
+export const calculateDistance = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return calculateDistanceHandler(event, context);
+  })
+);
+
+export const calculateAllowance = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return calculateAllowanceHandler(event, context);
+  })
+);
+
+export const calculateTravelCost = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return calculateTravelCostHandler(event, context);
+  })
+);
+
+export const getCalculationAudit = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return getCalculationAuditHandler(event, context);
+  })
+);
+
+export const invalidateCalculationCache = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return invalidateCalculationCacheHandler(event, context);
+  })
+);
+
+export const cleanupExpiredCache = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return cleanupExpiredCacheHandler(event, context);
+  })
+);

@@ -1,0 +1,31 @@
+/* You can add global styles to this file, and also import other style files */
+
+/* Angular Material Core Styles */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+/* Global Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  background-color: #fafafa;
+}
+
+html, body {
+  height: 100%;
+}
+
+/* Swiss Professional Color Palette */
+:root {
+  --swiss-primary: #1976d2;
+  --swiss-accent: #ff4081;
+  --swiss-warn: #f44336;
+  --swiss-success: #4caf50;
+  --swiss-background: #fafafa;
+  --swiss-surface: #ffffff;
+  --swiss-text-primary: #212121;
+  --swiss-text-secondary: #757575;
+}

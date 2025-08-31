@@ -1,0 +1,137 @@
+.travel-request-form-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.form-card {
+  margin-bottom: 2rem;
+}
+
+.form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.calculation-preview {
+  margin-top: 1rem;
+}
+
+.preview-card {
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+}
+
+.preview-title {
+  font-size: 1.1rem;
+  color: #424242;
+}
+
+.calculation-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.loading-text {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.preview-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.preview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.preview-item.highlight {
+  font-weight: bold;
+  border-top: 1px solid #ddd;
+  padding-top: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.preview-item .label {
+  color: #666;
+}
+
+.preview-item .value {
+  font-family: monospace;
+  font-weight: 500;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding: 1rem;
+}
+
+.submit-button {
+  position: relative;
+  min-width: 150px;
+}
+
+.submit-spinner {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.cancel-button {
+  color: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .travel-request-form-container {
+    margin: 1rem auto;
+    padding: 0 0.5rem;
+  }
+  
+  .form-card {
+    margin: 0;
+  }
+  
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+  
+  .submit-button,
+  .cancel-button {
+    width: 100%;
+  }
+}
+
+/* Character count styling */
+.mat-mdc-form-field-hint-wrapper {
+  color: #666;
+}
+
+/* Error state styling */
+.mat-mdc-form-field.mat-form-field-invalid .mat-mdc-form-field-hint-wrapper {
+  color: #f44336;
+}
+
+/* Focus and hover states */
+.mat-mdc-raised-button:not([disabled]):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+  transition: all 0.2s ease;
+}

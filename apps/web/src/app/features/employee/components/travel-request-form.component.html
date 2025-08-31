@@ -1,0 +1,140 @@
+<div class="travel-request-form-container">
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>Travel Allowance Request</mat-card-title>
+      <mat-card-subtitle>Submit a new travel allowance request</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="requestForm" (ngSubmit)="onSubmit()" class="form-content">
+        <!-- Project Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Project</mat-label>
+          <mat-select formControlName="projectId" required>
+            <mat-option value="">Select a project</mat-option>
+            <mat-option *ngFor="let project of projects" [value]="project.id">
+              {{ project.name }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="requestForm.get('projectId')?.hasError('required')">
+            Project selection is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Subproject Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Subproject</mat-label>
+          <mat-select formControlName="subProjectId" required [disabled]="!requestForm.get('projectId')?.value">
+            <mat-option value="">Select a subproject</mat-option>
+            <mat-option *ngFor="let subproject of subprojects" [value]="subproject.id">
+              {{ subproject.name }}
+              <span *ngIf="subproject.location_city"> - {{ subproject.location_city }}</span>
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="requestForm.get('subProjectId')?.hasError('required')">
+            Subproject selection is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Manager Name -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Manager Name</mat-label>
+          <input matInput formControlName="managerName" required>
+          <mat-error *ngIf="requestForm.get('managerName')?.hasError('required')">
+            Manager name is required
+          </mat-error>
+          <mat-error *ngIf="requestForm.get('managerName')?.hasError('minlength')">
+            Manager name must be at least 2 characters
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Days Per Week -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Days Per Week</mat-label>
+          <mat-select formControlName="daysPerWeek" required>
+            <mat-option [value]="1">1 day</mat-option>
+            <mat-option [value]="2">2 days</mat-option>
+            <mat-option [value]="3">3 days</mat-option>
+            <mat-option [value]="4">4 days</mat-option>
+            <mat-option [value]="5">5 days</mat-option>
+            <mat-option [value]="6">6 days</mat-option>
+            <mat-option [value]="7">7 days</mat-option>
+          </mat-select>
+          <mat-error *ngIf="requestForm.get('daysPerWeek')?.hasError('required')">
+            Days per week is required
+          </mat-error>
+          <mat-error *ngIf="requestForm.get('daysPerWeek')?.hasError('min') || requestForm.get('daysPerWeek')?.hasError('max')">
+            Days per week must be between 1 and 7
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Justification -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Justification</mat-label>
+          <textarea 
+            matInput 
+            formControlName="justification" 
+            rows="4"
+            placeholder="Please provide a detailed justification for your travel request (minimum 10 characters)"
+            required>
+          </textarea>
+          <mat-hint align="end">{{ justificationCharCount }}/500 characters</mat-hint>
+          <mat-error *ngIf="requestForm.get('justification')?.hasError('required')">
+            Justification is required
+          </mat-error>
+          <mat-error *ngIf="requestForm.get('justification')?.hasError('minlength')">
+            Justification must be at least 10 characters
+          </mat-error>
+          <mat-error *ngIf="requestForm.get('justification')?.hasError('maxlength')">
+            Justification cannot exceed 500 characters
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Calculation Preview -->
+        <div class="calculation-preview" *ngIf="calculationPreview || isCalculating">
+          <mat-card class="preview-card">
+            <mat-card-header>
+              <mat-card-title class="preview-title">Cost Preview</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div *ngIf="isCalculating" class="calculation-loading">
+                <mat-spinner diameter="24"></mat-spinner>
+                <span class="loading-text">Calculating...</span>
+              </div>
+              <div *ngIf="calculationPreview && !isCalculating" class="preview-details">
+                <div class="preview-item">
+                  <span class="label">Distance:</span>
+                  <span class="value">{{ calculationPreview.distance | number:'1.3-3' }} km</span>
+                </div>
+                <div class="preview-item">
+                  <span class="label">Daily Allowance:</span>
+                  <span class="value">CHF {{ calculationPreview.dailyAllowance | number:'1.2-2' }}</span>
+                </div>
+                <div class="preview-item highlight">
+                  <span class="label">Weekly Total:</span>
+                  <span class="value">CHF {{ calculationPreview.weeklyAllowance | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions class="form-actions">
+      <button 
+        mat-raised-button 
+        color="primary" 
+        type="submit"
+        (click)="onSubmit()"
+        [disabled]="!isFormValid || isSubmitting"
+        class="submit-button">
+        <mat-spinner *ngIf="isSubmitting" diameter="20" class="submit-spinner"></mat-spinner>
+        {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+      </button>
+      <button mat-button type="button" class="cancel-button">
+        Cancel
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

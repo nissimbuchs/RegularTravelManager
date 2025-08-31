@@ -1,0 +1,73 @@
+<div class="confirmation-dialog">
+  <h2 mat-dialog-title class="dialog-title">
+    <mat-icon class="success-icon">check_circle</mat-icon>
+    Request Submitted Successfully
+  </h2>
+
+  <mat-dialog-content class="dialog-content">
+    <div class="request-summary">
+      <div class="request-id-section">
+        <h3>Request ID</h3>
+        <p class="request-id">{{ data.requestId }}</p>
+        <small class="hint">Save this ID for future reference</small>
+      </div>
+
+      <div class="calculation-summary">
+        <h3>Allowance Summary</h3>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="label">Distance:</span>
+            <span class="value">{{ data.calculationPreview.distance | number:'1.3-3' }} km</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Daily Allowance:</span>
+            <span class="value">CHF {{ data.calculationPreview.dailyAllowance | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-item highlight">
+            <span class="label">Weekly Total:</span>
+            <span class="value">CHF {{ data.calculationPreview.weeklyAllowance | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="request-details">
+        <h3>Request Details</h3>
+        <div class="details-grid">
+          <div class="detail-item">
+            <span class="label">Project:</span>
+            <span class="value">{{ data.projectName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Subproject:</span>
+            <span class="value">{{ data.subprojectName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Manager:</span>
+            <span class="value">{{ data.managerName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Days per Week:</span>
+            <span class="value">{{ data.daysPerWeek }}</span>
+          </div>
+        </div>
+        
+        <div class="justification-section">
+          <h4>Justification</h4>
+          <p class="justification-text">{{ data.justification }}</p>
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-actions">
+    <button mat-button (click)="onClose()" class="close-button">
+      Close
+    </button>
+    <button mat-button (click)="onViewRequests()" class="secondary-button">
+      View My Requests
+    </button>
+    <button mat-raised-button color="primary" (click)="onCreateNew()" class="primary-button">
+      Create New Request
+    </button>
+  </mat-dialog-actions>
+</div>
