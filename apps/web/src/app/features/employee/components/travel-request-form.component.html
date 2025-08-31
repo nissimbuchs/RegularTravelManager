@@ -36,15 +36,16 @@
           </mat-error>
         </mat-form-field>
 
-        <!-- Manager Name -->
+        <!-- Manager ID -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Manager Name</mat-label>
-          <input matInput formControlName="managerName" required>
-          <mat-error *ngIf="requestForm.get('managerName')?.hasError('required')">
-            Manager name is required
+          <mat-label>Manager ID</mat-label>
+          <input matInput formControlName="managerId" required>
+          <mat-hint>Enter your manager's employee ID</mat-hint>
+          <mat-error *ngIf="requestForm.get('managerId')?.hasError('required')">
+            Manager ID is required
           </mat-error>
-          <mat-error *ngIf="requestForm.get('managerName')?.hasError('minlength')">
-            Manager name must be at least 2 characters
+          <mat-error *ngIf="requestForm.get('managerId')?.hasError('minlength')">
+            Manager ID must be at least 2 characters
           </mat-error>
         </mat-form-field>
 

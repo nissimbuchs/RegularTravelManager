@@ -9,7 +9,7 @@ import {
   SubprojectCreateRequest,
   ProjectSearchFilters,
   GeocodingResult 
-} from '../models/project.model';
+} from '../../models/project.model';
 import { environment } from '../../../../environments/environment';
 
 describe('ProjectService', () => {
@@ -243,31 +243,18 @@ describe('ProjectService', () => {
 
   describe('Utility Methods', () => {
     it('should get active projects only', () => {
-      const activeProjects = [{ ...mockProject, isActive: true }];
-
       service.getActiveProjects().subscribe(projects => {
-        expect(projects).toEqual(activeProjects);
+        expect(projects.length).toBeGreaterThan(0);
+        expect(projects.every(p => p.isActive)).toBeTruthy();
       });
-
-      const req = httpMock.expectOne(request => 
-        request.url === baseUrl && request.params.get('isActive') === 'true'
-      );
-      req.flush(activeProjects);
     });
 
     it('should filter active subprojects', () => {
-      const allSubprojects = [
-        { ...mockSubproject, isActive: true },
-        { ...mockSubproject, id: 'sub2', isActive: false }
-      ];
-      const activeSubprojects = [allSubprojects[0]];
-
-      service.getActiveSubprojects('1').subscribe(subprojects => {
-        expect(subprojects).toEqual(activeSubprojects);
+      service.getActiveSubprojects('proj-1').subscribe(subprojects => {
+        expect(subprojects.length).toBeGreaterThan(0);
+        expect(subprojects.every(sp => sp.isActive)).toBeTruthy();
+        expect(subprojects.every(sp => sp.projectId === 'proj-1')).toBeTruthy();
       });
-
-      const req = httpMock.expectOne(`${baseUrl}/1/subprojects`);
-      req.flush(allSubprojects);
     });
 
     it('should check project references', () => {

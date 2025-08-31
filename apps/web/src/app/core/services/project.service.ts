@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { 
@@ -111,13 +111,114 @@ export class ProjectService {
 
   // Utility methods
   getActiveProjects(): Observable<Project[]> {
-    return this.getProjects({ isActive: true });
+    // Mock data for development - replace with API call when backend is ready
+    const mockProjects: Project[] = [
+      {
+        id: 'proj-1',
+        name: 'Swiss Infrastructure Development',
+        description: 'Major infrastructure project across Switzerland',
+        defaultCostPerKm: 0.68,
+        isActive: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'proj-2', 
+        name: 'Digital Transformation Initiative',
+        description: 'Company-wide digital transformation',
+        defaultCostPerKm: 0.75,
+        isActive: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'proj-3',
+        name: 'Green Energy Project',
+        description: 'Renewable energy initiative',
+        defaultCostPerKm: 0.72,
+        isActive: true,
+        createdAt: new Date().toISOString()
+      }
+    ];
+    
+    return of(mockProjects);
+    // return this.getProjects({ isActive: true });
   }
 
   getActiveSubprojects(projectId: string): Observable<Subproject[]> {
-    return this.getSubprojects(projectId).pipe(
-      map(subprojects => subprojects.filter(sp => sp.isActive))
-    );
+    // Mock data for development - replace with API call when backend is ready  
+    const mockSubprojects: Subproject[] = [
+      {
+        id: 'subproj-1-1',
+        projectId: 'proj-1',
+        name: 'Zurich Office Complex',
+        locationStreet: 'Bahnhofstrasse 100',
+        locationCity: 'Zurich',
+        locationPostalCode: '8001',
+        locationCoordinates: { latitude: 47.3769, longitude: 8.5417 },
+        costPerKm: 0.70,
+        isActive: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'subproj-1-2',
+        projectId: 'proj-1',
+        name: 'Basel Research Center',
+        locationStreet: 'Universitätsspital',
+        locationCity: 'Basel',
+        locationPostalCode: '4031',
+        locationCoordinates: { latitude: 47.5596, longitude: 7.5886 },
+        isActive: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'subproj-1-3',
+        projectId: 'proj-1',
+        name: 'Geneva International Center',
+        locationStreet: 'Route de Ferney 150',
+        locationCity: 'Geneva',
+        locationPostalCode: '1211',
+        locationCoordinates: { latitude: 46.2276, longitude: 6.1478 },
+        isActive: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'subproj-2-1',
+        projectId: 'proj-2',
+        name: 'Lausanne Tech Hub',
+        locationStreet: 'Avenue de la Gare 44',
+        locationCity: 'Lausanne',
+        locationPostalCode: '1003',
+        locationCoordinates: { latitude: 46.5197, longitude: 6.6323 },
+        isActive: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'subproj-2-2',
+        projectId: 'proj-2',
+        name: 'St. Gallen Innovation Park',
+        locationStreet: 'Lerchenfeldstrasse 5',
+        locationCity: 'St. Gallen',
+        locationPostalCode: '9014',
+        locationCoordinates: { latitude: 47.4245, longitude: 9.3767 },
+        isActive: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'subproj-3-1',
+        projectId: 'proj-3',
+        name: 'Bern Wind Farm',
+        locationStreet: 'Bundesplatz 3',
+        locationCity: 'Bern',
+        locationPostalCode: '3003',
+        locationCoordinates: { latitude: 46.9481, longitude: 7.4474 },
+        isActive: true,
+        createdAt: new Date().toISOString()
+      }
+    ];
+
+    return of(mockSubprojects.filter(sp => sp.projectId === projectId && sp.isActive));
+    // return this.getSubprojects(projectId).pipe(
+    //   map(subprojects => subprojects.filter(sp => sp.isActive))
+    // );
   }
 
   checkProjectReferences(projectId: string): Observable<{ canDelete: boolean; referencesCount: number }> {

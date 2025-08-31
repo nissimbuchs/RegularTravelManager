@@ -64,7 +64,7 @@ describe('TravelRequestFormComponent', () => {
     const form = component.requestForm;
     expect(form.get('projectId')?.hasError('required')).toBe(true);
     expect(form.get('subProjectId')?.hasError('required')).toBe(true);
-    expect(form.get('managerName')?.hasError('required')).toBe(true);
+    expect(form.get('managerId')?.hasError('required')).toBe(true);
     expect(form.get('daysPerWeek')?.value).toBe(1);
     expect(form.get('justification')?.hasError('required')).toBe(true);
   });
@@ -147,7 +147,7 @@ describe('TravelRequestFormComponent', () => {
     component.requestForm.patchValue({
       projectId: 'proj-1',
       subProjectId: 'subproj-1',
-      managerName: 'Test Manager',
+      managerId: 'mgr-123',
       daysPerWeek: 5,
       justification: 'This is a test justification for the travel request'
     });
@@ -173,7 +173,7 @@ describe('TravelRequestFormComponent', () => {
     component.requestForm.patchValue({
       projectId: 'proj-1',
       subProjectId: 'subproj-1',
-      managerName: 'Test Manager',
+      managerId: 'mgr-123',
       daysPerWeek: 5,
       justification: 'This is a test justification for the travel request'
     });
@@ -185,7 +185,7 @@ describe('TravelRequestFormComponent', () => {
   });
 
   it('should handle submission errors gracefully', () => {
-    mockTravelRequestService.submitRequest.and.returnValue(throwError('Network error'));
+    mockTravelRequestService.submitRequest.and.returnValue(throwError({ status: 500 }));
     mockSnackBar.open.and.returnValue({ onAction: () => of() } as any);
     
     component.ngOnInit();
@@ -199,7 +199,7 @@ describe('TravelRequestFormComponent', () => {
     component.requestForm.patchValue({
       projectId: 'proj-1',
       subProjectId: 'subproj-1',
-      managerName: 'Test Manager',
+      managerId: 'mgr-123',
       daysPerWeek: 5,
       justification: 'This is a test justification for the travel request'
     });
@@ -208,7 +208,54 @@ describe('TravelRequestFormComponent', () => {
     
     expect(component.isSubmitting).toBe(false);
     expect(mockSnackBar.open).toHaveBeenCalledWith(
-      'Failed to submit request. Please try again.',
+      'Unable to submit your travel request. Our system is temporarily unavailable. Please try again in a few minutes.',
+      'Retry',
+      jasmine.any(Object)
+    );
+  });
+
+  it('should handle different types of submission errors with specific messages', () => {
+    mockSnackBar.open.and.returnValue({ onAction: () => of() } as any);
+    
+    component.ngOnInit();
+    component.calculationPreview = {
+      distance: 45.250,
+      dailyAllowance: 30.75,
+      weeklyAllowance: 153.75
+    };
+    
+    // Set up valid form
+    component.requestForm.patchValue({
+      projectId: 'proj-1',
+      subProjectId: 'subproj-1',
+      managerId: 'mgr-123',
+      daysPerWeek: 5,
+      justification: 'This is a test justification for the travel request'
+    });
+
+    // Test 400 error
+    mockTravelRequestService.submitRequest.and.returnValue(throwError({ status: 400 }));
+    component.onSubmit();
+    expect(mockSnackBar.open).toHaveBeenCalledWith(
+      'Unable to submit your travel request. Please check your form data and try again.',
+      'Close',
+      jasmine.any(Object)
+    );
+
+    // Test 401 error
+    mockTravelRequestService.submitRequest.and.returnValue(throwError({ status: 401 }));
+    component.onSubmit();
+    expect(mockSnackBar.open).toHaveBeenCalledWith(
+      'Unable to submit your travel request. You may not have permission to submit requests. Please contact your manager.',
+      'Close',
+      jasmine.any(Object)
+    );
+
+    // Test 409 error
+    mockTravelRequestService.submitRequest.and.returnValue(throwError({ status: 409 }));
+    component.onSubmit();
+    expect(mockSnackBar.open).toHaveBeenCalledWith(
+      'Unable to submit your travel request. A similar request may already exist. Please check your pending requests.',
       'Close',
       jasmine.any(Object)
     );
@@ -231,7 +278,7 @@ describe('TravelRequestFormComponent', () => {
     component.requestForm.patchValue({
       projectId: 'proj-1',
       subProjectId: 'subproj-1',
-      managerName: 'Test Manager',
+      managerId: 'mgr-123',
       daysPerWeek: 5,
       justification: 'This is a test justification for the travel request'
     });
@@ -242,7 +289,7 @@ describe('TravelRequestFormComponent', () => {
   it('should save and load draft correctly', () => {
     const draftData = {
       projectId: 'proj-1',
-      managerName: 'Draft Manager',
+      managerId: 'mgr-456',
       daysPerWeek: 3,
       justification: 'Draft justification',
       timestamp: new Date().toISOString()
@@ -262,5 +309,184 @@ describe('TravelRequestFormComponent', () => {
       'Clear Draft',
       jasmine.any(Object)
     );
+  });
+
+  describe('Integration Tests - Debounced Calculation Preview', () => {
+    beforeEach(() => {
+      jasmine.clock().install();
+    });
+
+    afterEach(() => {
+      jasmine.clock().uninstall();
+    });
+
+    it('should debounce calculation preview updates with 300ms delay', () => {
+      component.ngOnInit();
+      
+      // Set up initial form state
+      component.requestForm.patchValue({
+        projectId: 'proj-1',
+        subProjectId: 'subproj-1',
+        daysPerWeek: 3
+      });
+
+      // Rapid form changes should not trigger multiple calculations
+      component.requestForm.get('daysPerWeek')?.setValue(4);
+      component.requestForm.get('daysPerWeek')?.setValue(5);
+      component.requestForm.get('justification')?.setValue('Test justification');
+
+      expect(component.isCalculating).toBe(true);
+      expect(mockTravelRequestService.calculatePreview).not.toHaveBeenCalled();
+
+      // Advance time by 299ms - should not trigger calculation yet
+      jasmine.clock().tick(299);
+      expect(mockTravelRequestService.calculatePreview).not.toHaveBeenCalled();
+
+      // Advance time by 1ms more (total 300ms) - should trigger calculation
+      jasmine.clock().tick(1);
+      expect(mockTravelRequestService.calculatePreview).toHaveBeenCalledWith('subproj-1', 5);
+    });
+
+    it('should restart debounce timer on subsequent form changes', () => {
+      component.ngOnInit();
+      
+      component.requestForm.patchValue({
+        projectId: 'proj-1',
+        subProjectId: 'subproj-1',
+        daysPerWeek: 3
+      });
+
+      // First change
+      component.requestForm.get('daysPerWeek')?.setValue(4);
+      jasmine.clock().tick(200);
+
+      // Second change resets the timer
+      component.requestForm.get('daysPerWeek')?.setValue(5);
+      jasmine.clock().tick(200); // Total 400ms from first change, but only 200ms from second
+
+      expect(mockTravelRequestService.calculatePreview).not.toHaveBeenCalled();
+
+      // Complete the debounce period from the second change
+      jasmine.clock().tick(100); // Now 300ms from second change
+      expect(mockTravelRequestService.calculatePreview).toHaveBeenCalledWith('subproj-1', 5);
+    });
+
+    it('should handle calculation errors gracefully during debounced updates', () => {
+      mockTravelRequestService.calculatePreview.and.returnValue(
+        throwError('Calculation service error')
+      );
+      
+      component.ngOnInit();
+      
+      component.requestForm.patchValue({
+        projectId: 'proj-1',
+        subProjectId: 'subproj-1',
+        daysPerWeek: 5,
+        justification: 'Test justification'
+      });
+
+      jasmine.clock().tick(300);
+
+      expect(component.isCalculating).toBe(false);
+      expect(component.calculationPreview).toBeNull();
+    });
+
+    it('should not trigger calculation if required fields are missing', () => {
+      component.ngOnInit();
+      
+      // Missing subProjectId
+      component.requestForm.patchValue({
+        projectId: 'proj-1',
+        daysPerWeek: 5,
+        justification: 'Test justification'
+      });
+
+      jasmine.clock().tick(300);
+      expect(mockTravelRequestService.calculatePreview).not.toHaveBeenCalled();
+
+      // Missing daysPerWeek
+      component.requestForm.patchValue({
+        projectId: 'proj-1',
+        subProjectId: 'subproj-1',
+        justification: 'Test justification'
+      });
+      component.requestForm.get('daysPerWeek')?.setValue(null);
+
+      jasmine.clock().tick(300);
+      expect(mockTravelRequestService.calculatePreview).not.toHaveBeenCalled();
+    });
+
+    it('should update calculation preview state correctly during debounced flow', () => {
+      const mockCalculation = {
+        distance: 42.5,
+        dailyAllowance: 25.50,
+        weeklyAllowance: 127.50
+      };
+      
+      mockTravelRequestService.calculatePreview.and.returnValue(of(mockCalculation));
+      
+      component.ngOnInit();
+      
+      expect(component.isCalculating).toBe(false);
+      expect(component.calculationPreview).toBeNull();
+
+      component.requestForm.patchValue({
+        projectId: 'proj-1',
+        subProjectId: 'subproj-1',
+        daysPerWeek: 5,
+        justification: 'Test justification'
+      });
+
+      // During debounce period
+      expect(component.isCalculating).toBe(true);
+      expect(component.calculationPreview).toBeNull();
+
+      jasmine.clock().tick(300);
+
+      // After calculation completes
+      expect(component.isCalculating).toBe(false);
+      expect(component.calculationPreview).toEqual(mockCalculation);
+    });
+  });
+
+  describe('Integration Tests - Project and Subproject Loading Chain', () => {
+    it('should load subprojects when project selection changes', () => {
+      const mockSubprojects = [
+        { id: 'sub-1', project_id: 'proj-1', name: 'Subproject 1', is_active: true, created_at: '2025-01-01', updated_at: '2025-01-01' }
+      ];
+      
+      mockTravelRequestService.getActiveSubprojects.and.returnValue(of(mockSubprojects));
+      
+      component.ngOnInit();
+      
+      // Initially no subprojects
+      expect(component.subprojects).toEqual([]);
+      expect(component.requestForm.get('subProjectId')?.value).toBe('');
+
+      // Select a project
+      component.requestForm.get('projectId')?.setValue('proj-1');
+
+      expect(mockTravelRequestService.getActiveSubprojects).toHaveBeenCalledWith('proj-1');
+      expect(component.subprojects).toEqual(mockSubprojects);
+    });
+
+    it('should clear subproject selection when project changes', () => {
+      component.ngOnInit();
+      
+      // Set initial state
+      component.requestForm.patchValue({
+        projectId: 'proj-1',
+        subProjectId: 'subproj-1'
+      });
+
+      expect(component.requestForm.get('subProjectId')?.value).toBe('subproj-1');
+
+      // Change project - should clear subproject
+      component.requestForm.get('projectId')?.setValue('proj-2');
+
+      expect(component.requestForm.get('subProjectId')?.value).toBe('');
+      expect(component.subprojects).toEqual([]);
+      expect(component.calculationPreview).toBeNull();
+    });
   });
 });

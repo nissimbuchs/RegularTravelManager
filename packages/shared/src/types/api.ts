@@ -142,7 +142,7 @@ export interface CalculationPreview {
 export interface TravelRequestFormData {
   projectId: string;
   subProjectId: string;
-  managerName: string;
+  managerId: string;
   daysPerWeek: number; // 1-7
   justification: string; // 10-500 chars
 }
