@@ -12,13 +12,19 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return authService.getCurrentUser().pipe(
     switchMap(user => {
       if (user) {
-        // For development with mock auth, skip token refresh
-        if (window.location.hostname === 'localhost' && user.id === 'test-user-id') {
-          // Mock development scenario - proceed without auth header
-          return next(req);
+        // For development with mock auth, add mock headers for local API
+        if (window.location.hostname === 'localhost') {
+          const authReq = req.clone({
+            setHeaders: {
+              'x-user-id': user.id,
+              'x-user-email': user.email,
+              'x-user-groups': user.groups.join(','),
+            },
+          });
+          return next(authReq);
         }
 
-        // Get current token and add to request
+        // Production - get current token and add to request
         return authService.refreshToken().pipe(
           switchMap(token => {
             const authReq = req.clone({

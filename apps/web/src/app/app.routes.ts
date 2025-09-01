@@ -76,8 +76,8 @@ export const routes: Routes = [
           {
             path: 'projects',
             loadComponent: () =>
-              import('./features/manager/components/projects.component').then(
-                m => m.ProjectsComponent
+              import('./features/admin/components/projects-list.component').then(
+                m => m.ProjectsListComponent
               ),
           },
         ],

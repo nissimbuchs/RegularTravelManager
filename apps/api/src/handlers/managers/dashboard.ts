@@ -1,5 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { db } from '../../database/connection';
+import { logger } from '../../middleware/logger';
+import { formatResponse } from '../../middleware/response-formatter';
 
 interface DashboardFilters {
   employeeName?: string;
@@ -65,6 +67,20 @@ interface EmployeeContext {
   performanceScore: number;
 }
 
+// Helper function to get manager's employee UUID from cognito ID
+async function getManagerEmployeeId(cognitoUserId: string): Promise<string> {
+  const result = await db.query(
+    'SELECT id FROM employees WHERE cognito_user_id = $1',
+    [cognitoUserId]
+  );
+  
+  if (result.rows.length === 0) {
+    throw new Error(`Manager not found in employees table for cognito ID: ${cognitoUserId}`);
+  }
+  
+  return result.rows[0].id;
+}
+
 export const getManagerDashboard = async (
   event: APIGatewayProxyEvent,
   context: Context
@@ -77,6 +93,22 @@ export const getManagerDashboard = async (
         statusCode: 401,
         body: JSON.stringify({ error: 'Unauthorized' }),
       };
+    }
+
+    // Look up manager's employee UUID using cognito ID
+    let managerEmployeeId: string;
+    try {
+      managerEmployeeId = await getManagerEmployeeId(managerId);
+    } catch (error) {
+      logger.warn('Manager not found in employees table', {
+        cognitoUserId: managerId,
+        error: error instanceof Error ? error.message : String(error),
+        requestId: context.awsRequestId,
+      });
+      
+      return formatResponse(404, { 
+        error: 'Manager profile not found. Please contact system administrator.' 
+      }, context.awsRequestId);
     }
 
     // Extract query parameters
@@ -146,7 +178,7 @@ export const getManagerDashboard = async (
       WHERE tr.manager_id = $1 AND tr.status = 'pending'
     `;
 
-    const queryParams: any[] = [managerId];
+    const queryParams: any[] = [managerEmployeeId];
     let paramIndex = 2;
 
     // Apply filters

@@ -281,6 +281,30 @@ class ProjectServiceImpl implements ProjectService {
     }));
   }
 
+  async getAllProjects() {
+    const result = await db.query(`
+      SELECT 
+        p.*,
+        COUNT(s.id) as subproject_count
+      FROM projects p
+      LEFT JOIN subprojects s ON p.id = s.project_id AND s.is_active = true
+      GROUP BY p.id
+      ORDER BY p.name
+    `);
+
+    // Transform to camelCase for frontend compatibility
+    return result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      defaultCostPerKm: parseFloat(row.default_cost_per_km),
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      subprojectCount: parseInt(row.subproject_count) || 0,
+    }));
+  }
+
   async getSubprojectsForProject(projectId: string) {
     const result = await db.query(
       `
@@ -409,7 +433,7 @@ export const createProject = validateRequest({
 // Create subproject (admin only)
 export const createSubproject = validateRequest({
   body: {
-    project_id: { required: true, type: 'string' },
+    projectId: { required: true, type: 'string' },
     name: { required: true, type: 'string', minLength: 1, maxLength: 255 },
     locationStreet: { required: false, type: 'string', maxLength: 255 },
     locationCity: { required: false, type: 'string', maxLength: 100 },
@@ -428,7 +452,7 @@ export const createSubproject = validateRequest({
 
   logger.info('Creating subproject', {
     name: body.name,
-    projectId: body.project_id,
+    projectId: body.projectId,
     createdBy: userContext.sub,
     requestId: context.awsRequestId,
   });
@@ -439,7 +463,7 @@ export const createSubproject = validateRequest({
   }
 
   const command: CreateSubprojectCommand = {
-    project_id: body.project_id,
+    project_id: body.projectId,
     name: body.name,
     street_address: body.locationStreet,
     city: body.locationCity,
@@ -474,6 +498,63 @@ export const getActiveProjects = async (
   const projects = await projectService.getActiveProjects();
 
   return formatResponse(200, { projects }, context.awsRequestId);
+};
+
+// Get all projects (active and inactive) - for admin use
+export const getAllProjects = async (
+  event: APIGatewayProxyEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> => {
+  const userContext = getUserContextFromEvent(event);
+  
+  // Require manager role for this endpoint
+  requireManager(userContext);
+
+  logger.info('Getting all projects (active and inactive)', {
+    requestedBy: userContext.sub,
+    requestId: context.awsRequestId,
+  });
+
+  const projects = await projectService.getAllProjects();
+
+  return formatResponse(200, { projects }, context.awsRequestId);
+};
+
+// Get single project by ID
+export const getProjectById = async (
+  event: APIGatewayProxyEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> => {
+  const userContext = getUserContextFromEvent(event);
+  const projectId = event.pathParameters?.id;
+
+  if (!projectId) {
+    return formatResponse(400, { error: 'Project ID is required' }, context.awsRequestId);
+  }
+
+  logger.info('Getting project by ID', {
+    projectId,
+    requestedBy: userContext.sub,
+    requestId: context.awsRequestId,
+  });
+
+  try {
+    const project = await projectService.getProject(projectId);
+    
+    if (!project) {
+      return formatResponse(404, { error: 'Project not found' }, context.awsRequestId);
+    }
+
+    return formatResponse(200, { project }, context.awsRequestId);
+  } catch (error) {
+    logger.error('Failed to get project by ID', {
+      projectId,
+      error: error instanceof Error ? error.message : String(error),
+      requestId: context.awsRequestId,
+    });
+
+    return formatResponse(500, { error: 'Internal server error' }, context.awsRequestId);
+  }
 };
 
 // Get subprojects for a project

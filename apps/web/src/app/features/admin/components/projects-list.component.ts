@@ -153,7 +153,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
               <th mat-header-cell *matHeaderCellDef>Subprojects</th>
               <td mat-cell *matCellDef="let project">
                 <mat-icon class="subprojects-icon">location_on</mat-icon>
-                {{ project.subprojects?.length || 0 }}
+                {{ project.subprojectCount || 0 }}
               </td>
             </ng-container>
 

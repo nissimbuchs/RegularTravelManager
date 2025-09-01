@@ -41,12 +41,17 @@ export class ProjectService {
     }
 
     return this.http
-      .get<Project[]>(this.baseUrl, { params })
-      .pipe(tap(projects => this.projectsSubject.next(projects)));
+      .get<{ success: boolean; data: { projects: Project[] } }>(this.baseUrl, { params })
+      .pipe(
+        map(response => response.data.projects),
+        tap(projects => this.projectsSubject.next(projects))
+      );
   }
 
   getProject(id: string): Observable<Project> {
-    return this.http.get<Project>(`${this.baseUrl}/${id}`);
+    return this.http
+      .get<{ success: boolean; data: { project: Project } }>(`${this.baseUrl}/${id}`)
+      .pipe(map(response => response.data.project));
   }
 
   createProject(project: ProjectCreateRequest): Observable<Project> {
@@ -71,7 +76,9 @@ export class ProjectService {
 
   // Subproject CRUD Operations
   getSubprojects(projectId: string): Observable<Subproject[]> {
-    return this.http.get<Subproject[]>(`${this.baseUrl}/${projectId}/subprojects`);
+    return this.http
+      .get<{ success: boolean; data: { subprojects: Subproject[] } }>(`${this.baseUrl}/${projectId}/subprojects`)
+      .pipe(map(response => response.data.subprojects));
   }
 
   getSubproject(projectId: string, subprojectId: string): Observable<Subproject> {

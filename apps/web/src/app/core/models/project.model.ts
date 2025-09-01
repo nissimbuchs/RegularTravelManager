@@ -5,6 +5,8 @@ export interface Project {
   defaultCostPerKm: number;
   isActive: boolean;
   createdAt: string;
+  updatedAt?: string;
+  subprojectCount?: number;
   subprojects?: Subproject[];
 }
 
