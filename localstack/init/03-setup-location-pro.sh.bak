@@ -1,0 +1,83 @@
+#!/bin/bash
+set -e
+
+echo "🗺️ Setting up AWS Location Service with LocalStack Pro..."
+
+# Wait for LocalStack to be ready
+echo "⏳ Waiting for LocalStack Location Service to be ready..."
+until curl -s http://localhost:4566/_localstack/health | grep -q '"location": "available"'; do
+  echo "   Waiting for Location service..."
+  sleep 2
+done
+
+# Create Place Index for geocoding
+echo "📍 Creating Place Index for Swiss geocoding..."
+PLACE_INDEX_OUTPUT=$(AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost:4566 location create-place-index \
+  --index-name "rtm-place-index-dev" \
+  --data-source "Esri" \
+  --region eu-central-1 \
+  --description "Place index for Swiss travel address geocoding" \
+  --data-source-configuration '{
+    "IntendedUse": "SingleUse"
+  }' 2>/dev/null)
+
+PLACE_INDEX_ARN=$(echo $PLACE_INDEX_OUTPUT | jq -r '.IndexArn')
+echo "✅ Place Index created: $PLACE_INDEX_ARN"
+
+# Create Map Resource (useful for visualization in future)
+echo "🗺️ Creating Map Resource..."
+MAP_OUTPUT=$(AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost:4566 location create-map \
+  --map-name "rtm-map-dev" \
+  --configuration '{
+    "Style": "VectorEsriStreets"
+  }' \
+  --region eu-central-1 \
+  --description "Map for Swiss travel management system" 2>/dev/null)
+
+MAP_ARN=$(echo $MAP_OUTPUT | jq -r '.MapArn')
+echo "✅ Map Resource created: $MAP_ARN"
+
+# Create Route Calculator (for future route optimization features)
+echo "🛣️ Creating Route Calculator..."
+ROUTE_OUTPUT=$(AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost:4566 location create-route-calculator \
+  --calculator-name "rtm-route-calculator-dev" \
+  --data-source "Esri" \
+  --region eu-central-1 \
+  --description "Route calculator for travel optimization" 2>/dev/null)
+
+ROUTE_ARN=$(echo $ROUTE_OUTPUT | jq -r '.CalculatorArn')
+echo "✅ Route Calculator created: $ROUTE_ARN"
+
+# Test geocoding functionality
+echo "🧪 Testing geocoding functionality..."
+TEST_GEOCODE=$(AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost:4566 location search-place-index-for-text \
+  --index-name "rtm-place-index-dev" \
+  --text "Bundesplatz 3, 3003 Bern, Switzerland" \
+  --max-results 1 \
+  --region eu-central-1 2>/dev/null)
+
+TEST_RESULT=$(echo $TEST_GEOCODE | jq -r '.Results[0].Place.Geometry.Point')
+echo "✅ Geocoding test successful: $TEST_RESULT"
+
+# Save configuration
+mkdir -p /tmp/localstack
+cat > /tmp/localstack/.env.location << EOF
+# Real Location Service configuration for LocalStack Pro
+LOCATION_PLACE_INDEX=rtm-place-index-dev
+LOCATION_MAP_NAME=rtm-map-dev
+LOCATION_ROUTE_CALCULATOR=rtm-route-calculator-dev
+LOCATION_REGION=eu-central-1
+MOCK_LOCATION_ENABLED=false
+EOF
+
+echo "✅ Real Location Service setup complete!"
+echo "📋 Location Resources created:"
+echo "  📍 Place Index: rtm-place-index-dev"
+echo "  🗺️  Map: rtm-map-dev"
+echo "  🛣️  Route Calculator: rtm-route-calculator-dev"
+echo ""
+echo "🔧 Location Service Configuration:"
+echo "   Place Index: rtm-place-index-dev"
+echo "   Data Source: Esri"
+echo "   Region: eu-central-1"
+echo "   Endpoint: http://localhost:4566"

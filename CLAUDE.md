@@ -12,7 +12,7 @@ RegularTravelManager is a Swiss employee travel allowance management system buil
 ```bash
 # Start development environment (< 15 minutes)
 npm run dev:env           # Start infrastructure (PostgreSQL, Redis, LocalStack)
-npm run localstack:init   # Initialize AWS services (DynamoDB, S3)
+npm run localstack:init   # Initialize AWS services (S3, Location)
 ./test-setup.sh          # Verify environment health
 
 # Start development
@@ -42,7 +42,6 @@ npm run test:e2e:local   # E2E tests in local environment
 - **PostgreSQL** (port 5432) → AWS RDS in production
 - **Redis** (port 6379) → AWS ElastiCache in production
 - **LocalStack** (port 4566) → AWS Services in production
-  - DynamoDB (projects, subprojects)
   - S3 (document storage)
   - Location Service (mocked)
 

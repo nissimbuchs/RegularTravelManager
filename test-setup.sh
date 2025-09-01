@@ -39,9 +39,9 @@ test_service "Redis" "docker exec rtm-redis redis-cli ping"
 # Test LocalStack
 test_service "LocalStack" "curl -f -s http://localhost:4566/_localstack/health"
 
-# Test DynamoDB Tables
-echo -n "Testing DynamoDB Tables... "
-if AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost:4566 dynamodb list-tables --region eu-central-1 --output text | grep -q "rtm-projects-dev"; then
+# Test PostgreSQL Database Connection
+echo -n "Testing Database Connection... "
+if docker exec rtm-postgres psql -U nissim -d travel_manager_dev -c "SELECT COUNT(*) FROM projects;" > /dev/null 2>&1; then
     echo -e "${GREEN}✅ PASS${NC}"
 else
     echo -e "${RED}❌ FAIL${NC}"
@@ -62,7 +62,6 @@ echo "${BLUE}📊 Service Status:${NC}"
 echo "├── PostgreSQL: ✅ Running on :5432"
 echo "├── Redis: ✅ Running on :6379" 
 echo "├── LocalStack: ✅ Running on :4566"
-echo "├── DynamoDB: ✅ 2 tables ready"
 echo "└── S3: ✅ 1 bucket ready"
 echo ""
 echo "${BLUE}🚀 Ready for Development:${NC}"
