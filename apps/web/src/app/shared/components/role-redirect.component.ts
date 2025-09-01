@@ -10,7 +10,7 @@ import { take } from 'rxjs/operators';
     <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
       <div>Redirecting...</div>
     </div>
-  `
+  `,
 })
 export class RoleRedirectComponent implements OnInit {
   constructor(
@@ -19,18 +19,19 @@ export class RoleRedirectComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.authService.getCurrentUser()
+    this.authService
+      .getCurrentUser()
       .pipe(take(1))
       .subscribe(user => {
         if (user) {
           let redirectUrl = '/employee/dashboard'; // Default for employees
-          
+
           if (user.role === 'admin') {
             redirectUrl = '/admin/projects';
           } else if (user.role === 'manager') {
             redirectUrl = '/manager/dashboard';
           }
-          
+
           this.router.navigate([redirectUrl]);
         } else {
           this.router.navigate(['/login']);

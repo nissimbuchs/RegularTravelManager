@@ -19,12 +19,12 @@ const mockContext: Context = {
   callbackWaitsForEmptyEventLoop: true,
   done: () => {},
   fail: () => {},
-  succeed: () => {}
+  succeed: () => {},
 };
 
 const createMockEvent = (
-  method: string, 
-  pathParams: Record<string, string> = {}, 
+  method: string,
+  pathParams: Record<string, string> = {},
   body?: any
 ): APIGatewayProxyEvent => ({
   httpMethod: method,
@@ -60,7 +60,7 @@ const createMockEvent = (
       user: null,
       apiKey: null,
       apiKeyId: null,
-      clientCert: null
+      clientCert: null,
     },
     domainName: 'api.test.com',
     apiId: 'api-id',
@@ -69,12 +69,12 @@ const createMockEvent = (
       sub: 'user-123',
       email: 'test@company.com',
       isManager: 'false',
-      groups: '["employees"]'
-    }
+      groups: '["employees"]',
+    },
   },
   resource: '/employees/{id}',
   multiValueHeaders: {},
-  multiValueQueryStringParameters: null
+  multiValueQueryStringParameters: null,
 });
 
 const mockEmployee = {
@@ -90,13 +90,13 @@ const mockEmployee = {
   home_country: 'Switzerland',
   home_location: { latitude: 47.376887, longitude: 8.540192 },
   created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString()
+  updated_at: new Date().toISOString(),
 };
 
 describe('Employee Profile Handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Mock getUserContextFromEvent
     const { getUserContextFromEvent } = require('../../../handlers/auth/auth-utils');
     vi.mocked(getUserContextFromEvent).mockReturnValue({
@@ -104,21 +104,23 @@ describe('Employee Profile Handlers', () => {
       email: 'test@company.com',
       cognitoUsername: 'testuser',
       isManager: false,
-      groups: ['employees']
+      groups: ['employees'],
     });
   });
 
   describe('getEmployeeProfile', () => {
     it('should return employee profile for own data', async () => {
       const mockEvent = createMockEvent('GET', { id: 'user-123' });
-      
+
       // Mock database query
       const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
-        rows: [mockEmployee]
-      }).mockResolvedValueOnce({
-        rows: [{ latitude: 47.376887, longitude: 8.540192 }]
-      });
+      vi.mocked(db.query)
+        .mockResolvedValueOnce({
+          rows: [mockEmployee],
+        })
+        .mockResolvedValueOnce({
+          rows: [{ latitude: 47.376887, longitude: 8.540192 }],
+        });
 
       const result = await getEmployeeProfile(mockEvent, mockContext);
 
@@ -131,7 +133,7 @@ describe('Employee Profile Handlers', () => {
 
     it('should allow manager to view any employee profile', async () => {
       const mockEvent = createMockEvent('GET', { id: 'employee-456' });
-      
+
       // Mock manager context
       const { getUserContextFromEvent } = require('../../../handlers/auth/auth-utils');
       vi.mocked(getUserContextFromEvent).mockReturnValue({
@@ -139,16 +141,18 @@ describe('Employee Profile Handlers', () => {
         email: 'manager@company.com',
         cognitoUsername: 'manageruser',
         isManager: true,
-        groups: ['managers']
+        groups: ['managers'],
       });
 
       // Mock database query
       const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
-        rows: [{ ...mockEmployee, id: 'employee-456' }]
-      }).mockResolvedValueOnce({
-        rows: [{ latitude: 47.376887, longitude: 8.540192 }]
-      });
+      vi.mocked(db.query)
+        .mockResolvedValueOnce({
+          rows: [{ ...mockEmployee, id: 'employee-456' }],
+        })
+        .mockResolvedValueOnce({
+          rows: [{ latitude: 47.376887, longitude: 8.540192 }],
+        });
 
       const result = await getEmployeeProfile(mockEvent, mockContext);
 
@@ -160,21 +164,23 @@ describe('Employee Profile Handlers', () => {
     it('should reject access to other employee profiles for non-managers', async () => {
       const mockEvent = createMockEvent('GET', { id: 'employee-456' });
 
-      await expect(getEmployeeProfile(mockEvent, mockContext))
-        .rejects.toThrow('Access denied: can only view own profile or manager access required');
+      await expect(getEmployeeProfile(mockEvent, mockContext)).rejects.toThrow(
+        'Access denied: can only view own profile or manager access required'
+      );
     });
 
     it('should return 404 for non-existent employee', async () => {
       const mockEvent = createMockEvent('GET', { id: 'user-123' });
-      
+
       // Mock empty database result
       const { db } = require('../../../database/connection');
       vi.mocked(db.query).mockResolvedValueOnce({
-        rows: []
+        rows: [],
       });
 
-      await expect(getEmployeeProfile(mockEvent, mockContext))
-        .rejects.toThrow('Employee not found');
+      await expect(getEmployeeProfile(mockEvent, mockContext)).rejects.toThrow(
+        'Employee not found'
+      );
     });
   });
 
@@ -183,12 +189,12 @@ describe('Employee Profile Handlers', () => {
       home_street: 'Bahnhofstrasse 15',
       home_city: 'Bern',
       home_postal_code: '3001',
-      home_country: 'Switzerland'
+      home_country: 'Switzerland',
     };
 
     it('should update employee address successfully', async () => {
       const mockEvent = createMockEvent('PUT', { id: 'user-123' }, validAddressUpdate);
-      
+
       // Mock geocoding service
       const { GeocodingService } = require('../../../services/geocoding-service');
       const mockGeocodingService = {
@@ -196,8 +202,8 @@ describe('Employee Profile Handlers', () => {
           latitude: 46.947974,
           longitude: 7.447447,
           accuracy: 0.9,
-          formattedAddress: 'Bahnhofstrasse 15, 3001 Bern, Switzerland'
-        })
+          formattedAddress: 'Bahnhofstrasse 15, 3001 Bern, Switzerland',
+        }),
       };
       vi.mocked(GeocodingService).mockImplementation(() => mockGeocodingService);
 
@@ -205,39 +211,45 @@ describe('Employee Profile Handlers', () => {
       const { db } = require('../../../database/connection');
       const mockClient = {
         query: vi.fn(),
-        release: vi.fn()
+        release: vi.fn(),
       };
       const mockPool = {
-        connect: vi.fn().mockResolvedValue(mockClient)
+        connect: vi.fn().mockResolvedValue(mockClient),
       };
       vi.mocked(db.getPool).mockResolvedValue(mockPool);
 
       mockClient.query
         .mockResolvedValueOnce() // BEGIN
-        .mockResolvedValueOnce({ // SELECT previous address
-          rows: [{
-            home_street: 'Old Street',
-            home_city: 'Old City',
-            home_postal_code: '1234',
-            home_country: 'Switzerland',
-            home_location: 'old_location'
-          }]
+        .mockResolvedValueOnce({
+          // SELECT previous address
+          rows: [
+            {
+              home_street: 'Old Street',
+              home_city: 'Old City',
+              home_postal_code: '1234',
+              home_country: 'Switzerland',
+              home_location: 'old_location',
+            },
+          ],
         })
-        .mockResolvedValueOnce({ // UPDATE employees
-          rows: [{
-            ...mockEmployee,
-            home_street: 'Bahnhofstrasse 15',
-            home_city: 'Bern',
-            home_postal_code: '3001',
-            home_location: 'new_location'
-          }]
+        .mockResolvedValueOnce({
+          // UPDATE employees
+          rows: [
+            {
+              ...mockEmployee,
+              home_street: 'Bahnhofstrasse 15',
+              home_city: 'Bern',
+              home_postal_code: '3001',
+              home_location: 'new_location',
+            },
+          ],
         })
         .mockResolvedValueOnce() // INSERT into address history
         .mockResolvedValueOnce(); // COMMIT
 
       // Mock pending requests check
       vi.mocked(db.query).mockResolvedValueOnce({
-        rows: []
+        rows: [],
       });
 
       const result = await updateEmployeeAddress(mockEvent, mockContext);
@@ -251,24 +263,26 @@ describe('Employee Profile Handlers', () => {
     it('should reject invalid postal code format', async () => {
       const invalidAddress = {
         ...validAddressUpdate,
-        home_postal_code: 'INVALID'
+        home_postal_code: 'INVALID',
       };
       const mockEvent = createMockEvent('PUT', { id: 'user-123' }, invalidAddress);
 
-      await expect(updateEmployeeAddress(mockEvent, mockContext))
-        .rejects.toThrow('Validation failed');
+      await expect(updateEmployeeAddress(mockEvent, mockContext)).rejects.toThrow(
+        'Validation failed'
+      );
     });
 
     it('should reject access for non-owner non-manager', async () => {
       const mockEvent = createMockEvent('PUT', { id: 'employee-456' }, validAddressUpdate);
 
-      await expect(updateEmployeeAddress(mockEvent, mockContext))
-        .rejects.toThrow('Access denied: can only update own profile or manager access required');
+      await expect(updateEmployeeAddress(mockEvent, mockContext)).rejects.toThrow(
+        'Access denied: can only update own profile or manager access required'
+      );
     });
 
     it('should allow manager to update any employee address', async () => {
       const mockEvent = createMockEvent('PUT', { id: 'employee-456' }, validAddressUpdate);
-      
+
       // Mock manager context
       const { getUserContextFromEvent } = require('../../../handlers/auth/auth-utils');
       vi.mocked(getUserContextFromEvent).mockReturnValue({
@@ -276,7 +290,7 @@ describe('Employee Profile Handlers', () => {
         email: 'manager@company.com',
         cognitoUsername: 'manageruser',
         isManager: true,
-        groups: ['managers']
+        groups: ['managers'],
       });
 
       // Mock successful update (same mocking as successful update test)
@@ -284,18 +298,18 @@ describe('Employee Profile Handlers', () => {
       const mockGeocodingService = {
         geocodeAddress: vi.fn().mockResolvedValue({
           latitude: 46.947974,
-          longitude: 7.447447
-        })
+          longitude: 7.447447,
+        }),
       };
       vi.mocked(GeocodingService).mockImplementation(() => mockGeocodingService);
 
       const { db } = require('../../../database/connection');
       const mockClient = {
         query: vi.fn(),
-        release: vi.fn()
+        release: vi.fn(),
       };
       const mockPool = {
-        connect: vi.fn().mockResolvedValue(mockClient)
+        connect: vi.fn().mockResolvedValue(mockClient),
       };
       vi.mocked(db.getPool).mockResolvedValue(mockPool);
 

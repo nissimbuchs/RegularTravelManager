@@ -20,9 +20,18 @@ import { MatIconModule } from '@angular/material/icon';
       </mat-card>
     </div>
   `,
-  styles: [`
-    .employees-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-    mat-card-header mat-icon { background-color: #e3f2fd; color: #1976d2; }
-  `]
+  styles: [
+    `
+      .employees-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      mat-card-header mat-icon {
+        background-color: #e3f2fd;
+        color: #1976d2;
+      }
+    `,
+  ],
 })
 export class EmployeesComponent {}

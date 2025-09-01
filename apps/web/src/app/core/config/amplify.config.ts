@@ -28,9 +28,9 @@ export function configureAmplify(): void {
       Cognito: {
         userPoolId: environment.cognito.userPoolId,
         userPoolClientId: environment.cognito.userPoolClientId,
-        region: environment.cognito.region
-      }
-    }
+        region: environment.cognito.region,
+      },
+    },
   };
 
   Amplify.configure(config);

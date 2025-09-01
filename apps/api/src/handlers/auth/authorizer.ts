@@ -34,43 +34,42 @@ export const authorizerHandler = async (
 ): Promise<APIGatewayAuthorizerResult> => {
   logger.info('Authorizer invoked', {
     methodArn: event.methodArn,
-    requestId: context.awsRequestId
+    requestId: context.awsRequestId,
   });
 
   try {
     // Extract token from Authorization header
     const token = extractTokenFromHeader(event.authorizationToken);
-    
+
     // Verify JWT token with Cognito
     const payload = await verifyToken(token);
-    
+
     // Generate IAM policy
     const policy = generatePolicy(payload.sub, 'Allow', event.methodArn);
-    
+
     // Add user context
     policy.context = {
       sub: payload.sub,
       email: payload.email,
       cognitoUsername: payload['cognito:username'],
       isManager: isUserManager(payload),
-      groups: JSON.stringify(payload['cognito:groups'] || [])
+      groups: JSON.stringify(payload['cognito:groups'] || []),
     };
 
     logger.info('Authorization successful', {
       sub: payload.sub,
       email: payload.email,
       isManager: policy.context.isManager,
-      requestId: context.awsRequestId
+      requestId: context.awsRequestId,
     });
 
     return policy;
-
   } catch (error) {
     logger.error('Authorization failed', {
       error: error.message,
       stack: error.stack,
       methodArn: event.methodArn,
-      requestId: context.awsRequestId
+      requestId: context.awsRequestId,
     });
 
     // Return deny policy for any authorization failures
@@ -93,8 +92,8 @@ function extractTokenFromHeader(authHeader: string): string {
 
 async function verifyToken(token: string): Promise<CognitoPayload> {
   try {
-    const payload = await verifier.verify(token) as CognitoPayload;
-    
+    const payload = (await verifier.verify(token)) as CognitoPayload;
+
     // Additional token validation
     if (!payload.sub || !payload.email) {
       throw new AuthorizationError('Invalid token claims');
@@ -115,7 +114,7 @@ async function verifyToken(token: string): Promise<CognitoPayload> {
     if (error.name === 'JwtInvalidClaimError') {
       throw new AuthorizationError('Invalid token claims');
     }
-    
+
     throw new AuthorizationError(`Token verification failed: ${error.message}`);
   }
 }
@@ -138,10 +137,10 @@ function generatePolicy(
         {
           Action: 'execute-api:Invoke',
           Effect: effect,
-          Resource: resource
-        }
-      ]
-    }
+          Resource: resource,
+        },
+      ],
+    },
   };
 }
 
@@ -154,7 +153,7 @@ export const healthAuthorizerHandler = async (
   if (event.methodArn.includes('/health')) {
     return generatePolicy('health-check', 'Allow', event.methodArn);
   }
-  
+
   // For all other endpoints, require authentication
   return authorizerHandler(event, _context);
 };

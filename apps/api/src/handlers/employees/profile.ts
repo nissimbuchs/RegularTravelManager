@@ -4,7 +4,11 @@ import { formatResponse } from '../../middleware/response-formatter';
 import { ValidationError, NotFoundError } from '../../middleware/error-handler';
 import { validateRequest } from '../../middleware/request-validator';
 import { db } from '../../database/connection';
-import { EmployeeService, UpdateEmployeeAddressCommand, CreateEmployeeCommand } from '../../../../domains/employee-management/EmployeeService';
+import {
+  EmployeeService,
+  UpdateEmployeeAddressCommand,
+  CreateEmployeeCommand,
+} from '../../../../domains/employee-management/EmployeeService';
 import { GeocodingService, GeocodeResult } from '../../services/geocoding-service';
 import { getUserContextFromEvent } from '../auth/auth-utils';
 
@@ -17,25 +21,20 @@ class EmployeeServiceImpl implements EmployeeService {
   async createEmployee(command: CreateEmployeeCommand) {
     logger.info('Creating employee profile', { email: command.email });
 
-    const result = await db.query(`
+    const result = await db.query(
+      `
       SELECT sync_employee_with_cognito($1, $2, $3, $4) as employee_id
-    `, [
-      command.email,
-      command.cognito_user_id,
-      command.first_name,
-      command.last_name
-    ]);
+    `,
+      [command.email, command.cognito_user_id, command.first_name, command.last_name]
+    );
 
     const employeeId = result.rows[0].employee_id;
     return this.getEmployee(employeeId);
   }
 
   async getEmployee(id: string) {
-    const result = await db.query(
-      'SELECT * FROM employees WHERE id = $1',
-      [id]
-    );
-    
+    const result = await db.query('SELECT * FROM employees WHERE id = $1', [id]);
+
     if (result.rows.length === 0) {
       return null;
     }
@@ -49,7 +48,7 @@ class EmployeeServiceImpl implements EmployeeService {
       );
       employee.home_location = {
         latitude: locationResult.rows[0].latitude,
-        longitude: locationResult.rows[0].longitude
+        longitude: locationResult.rows[0].longitude,
       };
     }
 
@@ -57,23 +56,20 @@ class EmployeeServiceImpl implements EmployeeService {
   }
 
   async getEmployeeByCognitoId(cognitoUserId: string) {
-    const result = await db.query(
-      'SELECT * FROM employees WHERE cognito_user_id = $1',
-      [cognitoUserId]
-    );
+    const result = await db.query('SELECT * FROM employees WHERE cognito_user_id = $1', [
+      cognitoUserId,
+    ]);
     return result.rows.length > 0 ? result.rows[0] : null;
   }
 
   async getEmployeeByEmployeeId(employeeId: string) {
-    const result = await db.query(
-      'SELECT * FROM employees WHERE employee_id = $1',
-      [employeeId]
-    );
+    const result = await db.query('SELECT * FROM employees WHERE employee_id = $1', [employeeId]);
     return result.rows.length > 0 ? result.rows[0] : null;
   }
 
   async searchEmployees(searchTerm: string) {
-    const result = await db.query(`
+    const result = await db.query(
+      `
       SELECT * FROM employees 
       WHERE first_name ILIKE $1 
          OR last_name ILIKE $1 
@@ -81,8 +77,10 @@ class EmployeeServiceImpl implements EmployeeService {
          OR (first_name || ' ' || last_name) ILIKE $1
       ORDER BY last_name, first_name
       LIMIT 50
-    `, [`%${searchTerm}%`]);
-    
+    `,
+      [`%${searchTerm}%`]
+    );
+
     return result.rows;
   }
 
@@ -94,7 +92,7 @@ class EmployeeServiceImpl implements EmployeeService {
       street: command.home_street,
       city: command.home_city,
       postalCode: command.home_postal_code,
-      country: command.home_country
+      country: command.home_country,
     });
 
     // Start transaction
@@ -115,7 +113,8 @@ class EmployeeServiceImpl implements EmployeeService {
       const previousAddress = previousResult.rows[0];
 
       // Update employee address
-      const updateResult = await client.query(`
+      const updateResult = await client.query(
+        `
         UPDATE employees 
         SET home_street = $1,
             home_city = $2,
@@ -125,20 +124,23 @@ class EmployeeServiceImpl implements EmployeeService {
             updated_at = CURRENT_TIMESTAMP
         WHERE id = $7
         RETURNING *
-      `, [
-        command.home_street,
-        command.home_city,
-        command.home_postal_code,
-        command.home_country,
-        coordinates.longitude,
-        coordinates.latitude,
-        command.id
-      ]);
+      `,
+        [
+          command.home_street,
+          command.home_city,
+          command.home_postal_code,
+          command.home_country,
+          coordinates.longitude,
+          coordinates.latitude,
+          command.id,
+        ]
+      );
 
       const updatedEmployee = updateResult.rows[0];
 
       // Create audit trail entry
-      await client.query(`
+      await client.query(
+        `
         INSERT INTO employee_address_history (
           employee_id, 
           previous_street, 
@@ -154,20 +156,22 @@ class EmployeeServiceImpl implements EmployeeService {
           changed_at,
           reason
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP, $12)
-      `, [
-        command.id,
-        previousAddress.home_street,
-        previousAddress.home_city,
-        previousAddress.home_postal_code,
-        previousAddress.home_country,
-        previousAddress.home_location,
-        command.home_street,
-        command.home_city,
-        command.home_postal_code,
-        command.home_country,
-        updatedEmployee.home_location,
-        'User address update'
-      ]);
+      `,
+        [
+          command.id,
+          previousAddress.home_street,
+          previousAddress.home_city,
+          previousAddress.home_postal_code,
+          previousAddress.home_country,
+          previousAddress.home_location,
+          command.home_street,
+          command.home_city,
+          command.home_postal_code,
+          command.home_country,
+          updatedEmployee.home_location,
+          'User address update',
+        ]
+      );
 
       await client.query('COMMIT');
 
@@ -178,7 +182,6 @@ class EmployeeServiceImpl implements EmployeeService {
       await this.recalculatePendingRequests(command.id);
 
       return updatedEmployee;
-
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -198,18 +201,21 @@ class EmployeeServiceImpl implements EmployeeService {
 
   private async recalculatePendingRequests(employeeId: string) {
     logger.info('Checking for pending requests to recalculate', { employeeId });
-    
-    const pendingRequests = await db.query(`
+
+    const pendingRequests = await db.query(
+      `
       SELECT id, subproject_id FROM travel_requests 
       WHERE employee_id = $1 AND status = 'pending'
-    `, [employeeId]);
+    `,
+      [employeeId]
+    );
 
     if (pendingRequests.rows.length > 0) {
-      logger.info('Found pending requests for recalculation', { 
+      logger.info('Found pending requests for recalculation', {
         count: pendingRequests.rows.length,
-        employeeId 
+        employeeId,
       });
-      
+
       // TODO: Trigger recalculation service
       // This would call the distance calculation engine
     }
@@ -221,25 +227,27 @@ const employeeService = new EmployeeServiceImpl();
 // Get employee profile
 export const getEmployeeProfile = validateRequest({
   pathParams: {
-    id: { required: true, type: 'string' }
-  }
+    id: { required: true, type: 'string' },
+  },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const employeeId = event.pathParameters?.id;
   const userContext = getUserContextFromEvent(event);
-  
-  logger.info('Getting employee profile', { 
-    employeeId, 
+
+  logger.info('Getting employee profile', {
+    employeeId,
     requestedBy: userContext.sub,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   // Verify user can access this employee's data
   if (userContext.sub !== employeeId && !userContext.isManager) {
-    throw new ValidationError('Access denied: can only view own profile or manager access required');
+    throw new ValidationError(
+      'Access denied: can only view own profile or manager access required'
+    );
   }
 
   const employee = await employeeService.getEmployee(employeeId!);
-  
+
   if (!employee) {
     throw new NotFoundError('Employee');
   }
@@ -250,36 +258,38 @@ export const getEmployeeProfile = validateRequest({
 // Update employee address
 export const updateEmployeeAddress = validateRequest({
   pathParams: {
-    id: { required: true, type: 'string' }
+    id: { required: true, type: 'string' },
   },
   body: {
     home_street: { required: true, type: 'string', minLength: 1, maxLength: 255 },
     home_city: { required: true, type: 'string', minLength: 1, maxLength: 100 },
-    home_postal_code: { 
-      required: true, 
-      type: 'string', 
-      pattern: /^[0-9]{4}$/ // Swiss postal code format
-    },
-    home_country: { 
-      required: true, 
+    home_postal_code: {
+      required: true,
       type: 'string',
-      enum: ['Switzerland', 'Germany', 'France', 'Italy', 'Austria']
-    }
-  }
+      pattern: /^[0-9]{4}$/, // Swiss postal code format
+    },
+    home_country: {
+      required: true,
+      type: 'string',
+      enum: ['Switzerland', 'Germany', 'France', 'Italy', 'Austria'],
+    },
+  },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const employeeId = event.pathParameters?.id;
   const body = JSON.parse(event.body!);
   const userContext = getUserContextFromEvent(event);
-  
-  logger.info('Updating employee address', { 
-    employeeId, 
+
+  logger.info('Updating employee address', {
+    employeeId,
     requestedBy: userContext.sub,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   // Verify user can update this employee's data
   if (userContext.sub !== employeeId && !userContext.isManager) {
-    throw new ValidationError('Access denied: can only update own profile or manager access required');
+    throw new ValidationError(
+      'Access denied: can only update own profile or manager access required'
+    );
   }
 
   const command: UpdateEmployeeAddressCommand = {
@@ -287,15 +297,15 @@ export const updateEmployeeAddress = validateRequest({
     home_street: body.home_street,
     home_city: body.home_city,
     home_postal_code: body.home_postal_code,
-    home_country: body.home_country
+    home_country: body.home_country,
   };
 
   const updatedEmployee = await employeeService.updateEmployeeAddress(command);
 
-  logger.info('Employee address updated successfully', { 
-    employeeId, 
+  logger.info('Employee address updated successfully', {
+    employeeId,
     requestedBy: userContext.sub,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   return formatResponse(200, updatedEmployee, context.awsRequestId);

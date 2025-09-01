@@ -24,11 +24,25 @@ export const health = errorHandler(
 );
 
 // Authentication handlers
-export { authorizerHandler as authorizer, healthAuthorizerHandler as healthAuthorizer } from './auth/authorizer';
-export { setupTestUsersHandler as setupTestUsers, listUsersHandler as listUsers, getUserDetailsHandler as getUserDetails } from './auth/setup-test-users';
+export {
+  authorizerHandler as authorizer,
+  healthAuthorizerHandler as healthAuthorizer,
+} from './auth/authorizer';
+export {
+  setupTestUsersHandler as setupTestUsers,
+  listUsersHandler as listUsers,
+  getUserDetailsHandler as getUserDetails,
+} from './auth/setup-test-users';
 
 // Employee handlers (require auth)
-import { getEmployeeProfile as getEmployeeProfileHandler, updateEmployeeAddress as updateEmployeeAddressHandler } from './employees/profile';
+import {
+  getEmployeeProfile as getEmployeeProfileHandler,
+  updateEmployeeAddress as updateEmployeeAddressHandler,
+} from './employees/profile';
+import {
+  calculatePreview as calculatePreviewHandler,
+  createTravelRequest as createTravelRequestHandler,
+} from './employees/travel-requests';
 
 export const getEmployeeProfile = errorHandler(
   corsMiddleware(async (event, context) => {
@@ -44,8 +58,22 @@ export const updateEmployeeAddress = errorHandler(
   })
 );
 
+export const calculateTravelPreview = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return calculatePreviewHandler(event, context);
+  })
+);
+
+export const createTravelRequest = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return createTravelRequestHandler(event, context);
+  })
+);
+
 // Project management handlers (require auth)
-import { 
+import {
   createProject as createProjectHandler,
   createSubproject as createSubprojectHandler,
   getActiveProjects as getActiveProjectsHandler,
@@ -54,7 +82,8 @@ import {
   updateProject as updateProjectHandler,
   deleteProject as deleteProjectHandler,
   toggleProjectStatus as toggleProjectStatusHandler,
-  checkProjectReferences as checkProjectReferencesHandler
+  checkProjectReferences as checkProjectReferencesHandler,
+  geocodeAddress as geocodeAddressHandler,
 } from './projects/management';
 
 export const createProject = errorHandler(
@@ -120,14 +149,21 @@ export const checkProjectReferences = errorHandler(
   })
 );
 
+export const geocodeAddress = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return geocodeAddressHandler(event, context);
+  })
+);
+
 // Calculation engine handlers (require auth)
-import { 
+import {
   calculateDistance as calculateDistanceHandler,
   calculateAllowance as calculateAllowanceHandler,
   calculateTravelCost as calculateTravelCostHandler,
   getCalculationAudit as getCalculationAuditHandler,
   invalidateCalculationCache as invalidateCalculationCacheHandler,
-  cleanupExpiredCache as cleanupExpiredCacheHandler
+  cleanupExpiredCache as cleanupExpiredCacheHandler,
 } from './calculations/engine';
 
 export const calculateDistance = errorHandler(
@@ -169,5 +205,41 @@ export const cleanupExpiredCache = errorHandler(
   corsMiddleware(async (event, context) => {
     await ensureDatabaseInitialized();
     return cleanupExpiredCacheHandler(event, context);
+  })
+);
+
+// Manager dashboard handlers (require auth)
+import {
+  getManagerDashboard as getManagerDashboardHandler,
+  getEmployeeContext as getEmployeeContextHandler,
+  approveRequest as approveRequestHandler,
+  rejectRequest as rejectRequestHandler,
+} from './managers/dashboard';
+
+export const getManagerDashboard = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return getManagerDashboardHandler(event, context);
+  })
+);
+
+export const getEmployeeContext = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return getEmployeeContextHandler(event, context);
+  })
+);
+
+export const approveRequest = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return approveRequestHandler(event, context);
+  })
+);
+
+export const rejectRequest = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return rejectRequestHandler(event, context);
   })
 );

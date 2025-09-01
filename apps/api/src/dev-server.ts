@@ -10,8 +10,9 @@ const mockProjects = [
   {
     id: 'proj-1',
     name: 'Digital Transformation Initiative',
-    description: 'Company-wide digital transformation project including system modernization and process optimization',
-    defaultCostPerKm: 0.70,
+    description:
+      'Company-wide digital transformation project including system modernization and process optimization',
+    defaultCostPerKm: 0.7,
     isActive: true,
     createdAt: new Date('2025-01-01').toISOString(),
     subprojects: [
@@ -24,11 +25,11 @@ const mockProjects = [
         locationPostalCode: '8001',
         locationCoordinates: {
           latitude: 47.3769,
-          longitude: 8.5417
+          longitude: 8.5417,
         },
-        costPerKm: 0.70,
+        costPerKm: 0.7,
         isActive: true,
-        createdAt: new Date('2025-01-01').toISOString()
+        createdAt: new Date('2025-01-01').toISOString(),
       },
       {
         id: 'subproj-2',
@@ -39,11 +40,11 @@ const mockProjects = [
         locationPostalCode: '1204',
         locationCoordinates: {
           latitude: 46.2044,
-          longitude: 6.1432
+          longitude: 6.1432,
         },
         costPerKm: 0.75,
         isActive: true,
-        createdAt: new Date('2025-01-05').toISOString()
+        createdAt: new Date('2025-01-05').toISOString(),
       },
       {
         id: 'subproj-3',
@@ -54,16 +55,16 @@ const mockProjects = [
         locationPostalCode: '4051',
         locationCoordinates: {
           latitude: 47.5596,
-          longitude: 7.5886
+          longitude: 7.5886,
         },
         costPerKm: null, // Will inherit from project
         isActive: true,
-        createdAt: new Date('2025-01-10').toISOString()
-      }
-    ]
+        createdAt: new Date('2025-01-10').toISOString(),
+      },
+    ],
   },
   {
-    id: 'proj-2', 
+    id: 'proj-2',
     name: 'Infrastructure Modernization',
     description: 'Upgrading IT infrastructure and network systems across all Swiss offices',
     defaultCostPerKm: 0.75,
@@ -78,12 +79,12 @@ const mockProjects = [
         locationCity: 'Bern',
         locationPostalCode: '3003',
         locationCoordinates: {
-          latitude: 46.9480,
-          longitude: 7.4474
+          latitude: 46.948,
+          longitude: 7.4474,
         },
-        costPerKm: 0.80,
+        costPerKm: 0.8,
         isActive: true,
-        createdAt: new Date('2025-01-16').toISOString()
+        createdAt: new Date('2025-01-16').toISOString(),
       },
       {
         id: 'subproj-5',
@@ -95,10 +96,10 @@ const mockProjects = [
         locationCoordinates: null, // Not geocoded yet
         costPerKm: null, // Will inherit from project
         isActive: false,
-        createdAt: new Date('2025-01-20').toISOString()
-      }
-    ]
-  }
+        createdAt: new Date('2025-01-20').toISOString(),
+      },
+    ],
+  },
 ];
 
 const app = express();
@@ -111,14 +112,14 @@ app.use(express.json());
 // Health endpoint with service checks
 app.get('/health', async (req, res) => {
   const config = getEnvironmentConfig();
-  
+
   try {
     const services = {
       database: 'connected', // TODO: Add database health check
       localstack: 'unknown',
-      redis: 'unknown'
+      redis: 'unknown',
     };
-    
+
     // Check LocalStack DynamoDB connection
     try {
       const dynamoClient = getDynamoClient();
@@ -127,8 +128,8 @@ app.get('/health', async (req, res) => {
     } catch (error) {
       services.localstack = 'error';
     }
-    
-    res.json({ 
+
+    res.json({
       status: 'ok',
       environment: config.NODE_ENV,
       timestamp: new Date().toISOString(),
@@ -138,15 +139,15 @@ app.get('/health', async (req, res) => {
         awsRegion: config.AWS_REGION,
         awsEndpoint: config.AWS_ENDPOINT_URL,
         databaseUrl: config.DATABASE_URL ? 'configured' : 'missing',
-        localStackMode: !!config.AWS_ENDPOINT_URL
-      }
+        localStackMode: !!config.AWS_ENDPOINT_URL,
+      },
     });
   } catch (error) {
     console.error('Health check error:', error);
     res.status(503).json({
       status: 'unhealthy',
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -155,30 +156,31 @@ app.get('/health', async (req, res) => {
 app.get('/projects', (req, res) => {
   try {
     let filteredProjects = [...mockProjects];
-    
+
     // Apply filters if provided
     const { search, isActive, minCostPerKm, maxCostPerKm } = req.query;
-    
+
     if (search) {
       const searchTerm = String(search).toLowerCase();
-      filteredProjects = filteredProjects.filter(p => 
-        p.name.toLowerCase().includes(searchTerm) || 
-        p.description.toLowerCase().includes(searchTerm)
+      filteredProjects = filteredProjects.filter(
+        p =>
+          p.name.toLowerCase().includes(searchTerm) ||
+          p.description.toLowerCase().includes(searchTerm)
       );
     }
-    
+
     if (isActive !== undefined) {
       filteredProjects = filteredProjects.filter(p => p.isActive === (isActive === 'true'));
     }
-    
+
     if (minCostPerKm) {
       filteredProjects = filteredProjects.filter(p => p.defaultCostPerKm >= Number(minCostPerKm));
     }
-    
+
     if (maxCostPerKm) {
       filteredProjects = filteredProjects.filter(p => p.defaultCostPerKm <= Number(maxCostPerKm));
     }
-    
+
     res.json(filteredProjects);
   } catch (error) {
     console.error('Get projects error:', error);
@@ -189,7 +191,7 @@ app.get('/projects', (req, res) => {
 app.get('/projects/active', (req, res) => {
   try {
     const activeProjects = mockProjects.filter(p => p.isActive);
-    res.json(activeProjects);
+    res.json({ data: activeProjects });
   } catch (error) {
     console.error('Get active projects error:', error);
     res.status(500).json({ error: 'Failed to load active projects' });
@@ -202,7 +204,7 @@ app.post('/projects', (req, res) => {
       id: `proj-${Date.now()}`,
       ...req.body,
       createdAt: new Date().toISOString(),
-      subprojects: []
+      subprojects: [],
     };
     mockProjects.push(newProject);
     res.status(201).json(newProject);
@@ -219,7 +221,7 @@ app.get('/projects/:projectId/subprojects', (req, res) => {
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
-    res.json(project.subprojects);
+    res.json({ data: project.subprojects });
   } catch (error) {
     console.error('Get subprojects error:', error);
     res.status(500).json({ error: 'Failed to load subprojects' });
@@ -232,19 +234,45 @@ app.post('/projects/:projectId/subprojects', (req, res) => {
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
-    
+
     const newSubproject = {
       id: `subproj-${Date.now()}`,
       projectId: req.params.projectId,
       ...req.body,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
-    
+
     project.subprojects.push(newSubproject);
     res.status(201).json(newSubproject);
   } catch (error) {
     console.error('Create subproject error:', error);
     res.status(500).json({ error: 'Failed to create subproject' });
+  }
+});
+
+// Geocoding endpoint (must be before :id route)
+app.get('/projects/geocode', async (req, res) => {
+  try {
+    const { address } = req.query;
+    
+    if (!address || typeof address !== 'string') {
+      return res.status(400).json({ error: 'Address parameter is required' });
+    }
+
+    // Mock geocoding response for development
+    // In production, this would use the GeocodingService
+    const mockGeocodeResult = {
+      latitude: 46.947974 + (Math.random() - 0.5) * 0.1, // Bern area with some randomness
+      longitude: 7.447447 + (Math.random() - 0.5) * 0.1,
+      formattedAddress: address
+    };
+
+    console.log(`🗺️ Mock geocoding: "${address}" -> ${mockGeocodeResult.latitude}, ${mockGeocodeResult.longitude}`);
+    
+    res.json(mockGeocodeResult);
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    res.status(500).json({ error: 'Failed to geocode address' });
   }
 });
 
@@ -268,13 +296,13 @@ app.put('/projects/:id', (req, res) => {
     if (projectIndex === -1) {
       return res.status(404).json({ error: 'Project not found' });
     }
-    
+
     mockProjects[projectIndex] = {
       ...mockProjects[projectIndex],
       ...req.body,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
-    
+
     res.json(mockProjects[projectIndex]);
   } catch (error) {
     console.error('Update project error:', error);
@@ -288,7 +316,7 @@ app.delete('/projects/:id', (req, res) => {
     if (projectIndex === -1) {
       return res.status(404).json({ error: 'Project not found' });
     }
-    
+
     mockProjects.splice(projectIndex, 1);
     res.status(204).send();
   } catch (error) {
@@ -303,7 +331,7 @@ app.patch('/projects/:id/toggle-status', (req, res) => {
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
-    
+
     project.isActive = !project.isActive;
     res.json(project);
   } catch (error) {
@@ -317,7 +345,7 @@ app.get('/projects/:id/references', (req, res) => {
     // Mock reference check - always return that project can be deleted for demo
     res.json({
       canDelete: true,
-      referencesCount: 0
+      referencesCount: 0,
     });
   } catch (error) {
     console.error('Check project references error:', error);
@@ -341,10 +369,10 @@ const mockEmployees = {
     home_country: 'Switzerland',
     home_location: {
       latitude: 47.3769,
-      longitude: 8.5417
+      longitude: 8.5417,
     },
     created_at: new Date('2025-01-01').toISOString(),
-    updated_at: new Date('2025-01-15').toISOString()
+    updated_at: new Date('2025-01-15').toISOString(),
   },
   // Employee 2 - Jane Worker
   'employee2-cognito-id': {
@@ -360,10 +388,10 @@ const mockEmployees = {
     home_country: 'Switzerland',
     home_location: {
       latitude: 46.2044,
-      longitude: 6.1432
+      longitude: 6.1432,
     },
     created_at: new Date('2025-01-01').toISOString(),
-    updated_at: new Date('2025-01-10').toISOString()
+    updated_at: new Date('2025-01-10').toISOString(),
   },
   // Manager 1 - Bob Manager
   'manager1-cognito-id': {
@@ -379,12 +407,12 @@ const mockEmployees = {
     home_country: 'Switzerland',
     home_location: {
       latitude: 47.5596,
-      longitude: 7.5886
+      longitude: 7.5886,
     },
     created_at: new Date('2025-01-01').toISOString(),
-    updated_at: new Date('2025-01-05').toISOString()
+    updated_at: new Date('2025-01-05').toISOString(),
   },
-  // Manager 2 - Alice Director  
+  // Manager 2 - Alice Director
   'manager2-cognito-id': {
     id: 'manager2-cognito-id',
     cognito_user_id: 'manager2-cognito-id',
@@ -397,12 +425,12 @@ const mockEmployees = {
     home_postal_code: '3003',
     home_country: 'Switzerland',
     home_location: {
-      latitude: 46.9480,
-      longitude: 7.4474
+      latitude: 46.948,
+      longitude: 7.4474,
     },
     created_at: new Date('2025-01-01').toISOString(),
-    updated_at: new Date('2025-01-08').toISOString()
-  }
+    updated_at: new Date('2025-01-08').toISOString(),
+  },
 };
 
 // Employee endpoints
@@ -425,23 +453,23 @@ app.put('/employees/:id/address', (req, res) => {
     if (!employee) {
       return res.status(404).json({ error: 'Employee not found' });
     }
-    
+
     const { home_street, home_city, home_postal_code, home_country } = req.body;
-    
+
     // Simple validation
     if (!home_street || !home_city || !home_postal_code || !home_country) {
       return res.status(422).json({ error: 'All address fields are required' });
     }
-    
+
     // Mock geocoding for Swiss cities
     const mockCoordinates = {
-      'Zurich': { latitude: 47.3769, longitude: 8.5417 },
-      'Geneva': { latitude: 46.2044, longitude: 6.1432 },
-      'Basel': { latitude: 47.5596, longitude: 7.5886 },
-      'Bern': { latitude: 46.9480, longitude: 7.4474 },
-      'Lausanne': { latitude: 46.5197, longitude: 6.6323 }
+      Zurich: { latitude: 47.3769, longitude: 8.5417 },
+      Geneva: { latitude: 46.2044, longitude: 6.1432 },
+      Basel: { latitude: 47.5596, longitude: 7.5886 },
+      Bern: { latitude: 46.948, longitude: 7.4474 },
+      Lausanne: { latitude: 46.5197, longitude: 6.6323 },
     };
-    
+
     // Update employee
     mockEmployees[req.params.id] = {
       ...employee,
@@ -449,14 +477,108 @@ app.put('/employees/:id/address', (req, res) => {
       home_city,
       home_postal_code,
       home_country,
-      home_location: mockCoordinates[home_city] || { latitude: 46.9480, longitude: 7.4474 },
-      updated_at: new Date().toISOString()
+      home_location: mockCoordinates[home_city] || { latitude: 46.948, longitude: 7.4474 },
+      updated_at: new Date().toISOString(),
     };
-    
+
     res.json(mockEmployees[req.params.id]);
   } catch (error) {
     console.error('Update employee address error:', error);
     res.status(500).json({ error: 'Failed to update employee address' });
+  }
+});
+
+// Travel Request endpoints
+app.post('/api/employees/travel-requests/preview', (req, res) => {
+  try {
+    const { subprojectId, daysPerWeek } = req.body;
+    
+    if (!subprojectId || !daysPerWeek) {
+      return res.status(400).json({ error: 'subprojectId and daysPerWeek are required' });
+    }
+
+    // Find the subproject
+    let foundSubproject = null;
+    for (const project of mockProjects) {
+      const subproject = project.subprojects.find(sp => sp.id === subprojectId);
+      if (subproject) {
+        foundSubproject = subproject;
+        break;
+      }
+    }
+
+    if (!foundSubproject) {
+      return res.status(404).json({ error: 'Subproject not found' });
+    }
+
+    // Mock calculation based on Swiss travel allowances
+    const costPerKm = foundSubproject.costPerKm || 0.7;
+    const estimatedDistanceKm = 25; // Mock distance from home to subproject
+    const weeksPerYear = 52;
+    const workingDaysPerWeek = daysPerWeek;
+    
+    const dailyAllowance = estimatedDistanceKm * 2 * costPerKm; // Round trip
+    const weeklyAllowance = dailyAllowance * workingDaysPerWeek;
+    const monthlyAllowance = weeklyAllowance * (weeksPerYear / 12);
+    const yearlyAllowance = weeklyAllowance * weeksPerYear;
+
+    const calculationPreview = {
+      subprojectId,
+      subprojectName: foundSubproject.name,
+      daysPerWeek: workingDaysPerWeek,
+      estimatedDistanceKm,
+      costPerKm,
+      dailyAllowance: Math.round(dailyAllowance * 100) / 100,
+      weeklyAllowance: Math.round(weeklyAllowance * 100) / 100,
+      monthlyAllowance: Math.round(monthlyAllowance * 100) / 100,
+      yearlyAllowance: Math.round(yearlyAllowance * 100) / 100,
+      calculation: {
+        method: 'Distance-based calculation',
+        formula: `${estimatedDistanceKm}km × 2 (round trip) × CHF ${costPerKm}/km × ${workingDaysPerWeek} days/week`,
+        assumptions: [
+          `Estimated distance: ${estimatedDistanceKm}km from home to workplace`,
+          `Cost per kilometer: CHF ${costPerKm}`,
+          `Working ${workingDaysPerWeek} days per week`,
+          'Based on Swiss Federal travel allowance guidelines'
+        ]
+      }
+    };
+
+    console.log(`💰 Travel allowance calculation preview for subproject ${foundSubproject.name}: CHF ${calculationPreview.monthlyAllowance}/month`);
+    
+    res.json({ data: calculationPreview });
+  } catch (error) {
+    console.error('Travel request preview calculation error:', error);
+    res.status(500).json({ error: 'Failed to calculate travel allowance preview' });
+  }
+});
+
+app.post('/api/employees/travel-requests', (req, res) => {
+  try {
+    const { subproject_id, days_per_week, justification } = req.body;
+    
+    if (!subproject_id || !days_per_week) {
+      return res.status(400).json({ error: 'subproject_id and days_per_week are required' });
+    }
+
+    // Mock travel request creation
+    const mockTravelRequest = {
+      id: `tr-${Date.now()}`,
+      employee_id: 'employee1-cognito-id', // Mock current user
+      subproject_id,
+      days_per_week,
+      justification: justification || '',
+      status: 'pending',
+      submitted_at: new Date().toISOString(),
+      estimated_monthly_allowance: 850.50, // Mock calculated value
+    };
+
+    console.log(`📝 Travel request submitted: ${mockTravelRequest.id} for ${days_per_week} days/week`);
+    
+    res.status(201).json({ data: mockTravelRequest });
+  } catch (error) {
+    console.error('Travel request submission error:', error);
+    res.status(500).json({ error: 'Failed to submit travel request' });
   }
 });
 

@@ -20,7 +20,10 @@ export const validateRequest = (schema: ValidationSchema) => {
   return (
     handler: (event: APIGatewayProxyEvent, context: Context) => Promise<APIGatewayProxyResult>
   ) => {
-    return async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
+    return async (
+      event: APIGatewayProxyEvent,
+      context: Context
+    ): Promise<APIGatewayProxyResult> => {
       const errors: Record<string, string> = {};
 
       // Validate body

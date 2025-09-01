@@ -4,12 +4,7 @@ import { CommonModule } from '@angular/common';
 import { MaterialModule } from '../../../material.module';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { 
-  TravelRequestFormData, 
-  CalculationPreview, 
-  ProjectDto, 
-  SubprojectDto 
-} from '@rtm/shared';
+import { TravelRequestFormData, CalculationPreview, ProjectDto, SubprojectDto } from '@rtm/shared';
 import { TravelRequestService } from '../services/travel-request.service';
 import { ConfirmationDialogComponent, ConfirmationData } from './confirmation-dialog.component';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
@@ -20,7 +15,7 @@ import { EMPTY, Observable } from 'rxjs';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MaterialModule],
   templateUrl: './travel-request-form.component.html',
-  styleUrls: ['./travel-request-form.component.css']
+  styleUrls: ['./travel-request-form.component.css'],
 })
 export class TravelRequestFormComponent implements OnInit, OnDestroy {
   requestForm: FormGroup;
@@ -43,28 +38,33 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
       subProjectId: ['', [Validators.required]],
       managerId: ['', [Validators.required, Validators.minLength(2)]],
       daysPerWeek: [1, [Validators.required, Validators.min(1), Validators.max(7)]],
-      justification: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]]
+      justification: [
+        '',
+        [Validators.required, Validators.minLength(10), Validators.maxLength(500)],
+      ],
     });
   }
 
   ngOnInit(): void {
     // Clear any problematic draft data first
     this.clearProblemDraft();
-    
+
     this.setupFormSubscriptions();
-    this.loadProjects().then(() => {
-      // Load draft after projects are loaded to ensure proper validation
-      this.loadDraft();
-    }).catch(error => {
-      console.error('Failed to load initial data:', error);
-      // Still load draft even if projects fail
-      this.loadDraft();
-      this.snackBar.open(
-        'Some initial data could not be loaded. The form may have limited functionality.',
-        'Close',
-        { duration: 6000, horizontalPosition: 'center', verticalPosition: 'top' }
-      );
-    });
+    this.loadProjects()
+      .then(() => {
+        // Load draft after projects are loaded to ensure proper validation
+        this.loadDraft();
+      })
+      .catch(error => {
+        console.error('Failed to load initial data:', error);
+        // Still load draft even if projects fail
+        this.loadDraft();
+        this.snackBar.open(
+          'Some initial data could not be loaded. The form may have limited functionality.',
+          'Close',
+          { duration: 6000, horizontalPosition: 'center', verticalPosition: 'top' }
+        );
+      });
     this.setupAutoSave();
   }
 
@@ -77,21 +77,24 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
   private loadProjects(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.travelRequestService.getActiveProjects().subscribe({
-        next: (projects) => {
+        next: projects => {
           this.projects = projects;
           resolve();
         },
-        error: (error) => {
+        error: error => {
           console.error('Failed to load projects:', error);
-          this.snackBar.open(
-            'Unable to load project list. Please refresh the page or contact support.',
-            'Retry',
-            { duration: 8000, horizontalPosition: 'center', verticalPosition: 'top' }
-          ).onAction().subscribe(() => {
-            this.loadProjects();
-          });
+          this.snackBar
+            .open(
+              'Unable to load project list. Please refresh the page or contact support.',
+              'Retry',
+              { duration: 8000, horizontalPosition: 'center', verticalPosition: 'top' }
+            )
+            .onAction()
+            .subscribe(() => {
+              this.loadProjects();
+            });
           reject(error);
-        }
+        },
       });
     });
   }
@@ -103,7 +106,7 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
       this.subprojects = [];
       this.calculationPreview = null;
       this.requestForm.get('subProjectId')?.setValue('', { emitEvent: false });
-      
+
       if (projectId) {
         this.loadSubprojects(projectId);
       }
@@ -114,15 +117,15 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
       .pipe(
         debounceTime(300),
         distinctUntilChanged(),
-        tap(() => this.isCalculating = true),
+        tap(() => (this.isCalculating = true)),
         switchMap(() => this.calculatePreview())
       )
       .subscribe({
-        next: (preview) => {
+        next: preview => {
           this.calculationPreview = preview;
           this.isCalculating = false;
         },
-        error: (error) => {
+        error: error => {
           console.error('Calculation failed:', error);
           this.calculationPreview = null;
           this.isCalculating = false;
@@ -131,29 +134,29 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
             'Close',
             { duration: 5000, horizontalPosition: 'center', verticalPosition: 'top' }
           );
-        }
+        },
       });
   }
 
   private loadSubprojects(projectId: string): void {
     this.travelRequestService.getActiveSubprojects(projectId).subscribe({
-      next: (subprojects) => {
+      next: subprojects => {
         this.subprojects = subprojects;
       },
-      error: (error) => {
+      error: error => {
         console.error('Failed to load subprojects:', error);
         this.snackBar.open(
           'Could not load locations for the selected project. Please try selecting another project.',
           'Close',
           { duration: 6000, horizontalPosition: 'center', verticalPosition: 'top' }
         );
-      }
+      },
     });
   }
 
   private calculatePreview(): Observable<CalculationPreview | null> {
     const formValue = this.requestForm.value;
-    
+
     if (!formValue.subProjectId || !formValue.daysPerWeek) {
       return EMPTY;
     }
@@ -170,28 +173,31 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
       const formData: TravelRequestFormData = this.requestForm.value;
 
       this.travelRequestService.submitRequest(formData).subscribe({
-        next: (response) => {
+        next: response => {
           this.isSubmitting = false;
           this.clearDraft(); // Clear draft on successful submission
           this.showConfirmationDialog(response.requestId, formData);
         },
-        error: (error) => {
+        error: error => {
           console.error('Failed to submit request:', error);
           this.isSubmitting = false;
-          
+
           // Provide specific error messages based on error type
           let errorMessage = 'Unable to submit your travel request. ';
           let actionText = 'Close';
-          let duration = 8000;
-          
+          const duration = 8000;
+
           if (error?.status === 400) {
             errorMessage += 'Please check your form data and try again.';
           } else if (error?.status === 401 || error?.status === 403) {
-            errorMessage += 'You may not have permission to submit requests. Please contact your manager.';
+            errorMessage +=
+              'You may not have permission to submit requests. Please contact your manager.';
           } else if (error?.status === 409) {
-            errorMessage += 'A similar request may already exist. Please check your pending requests.';
+            errorMessage +=
+              'A similar request may already exist. Please check your pending requests.';
           } else if (error?.status >= 500) {
-            errorMessage += 'Our system is temporarily unavailable. Please try again in a few minutes.';
+            errorMessage +=
+              'Our system is temporarily unavailable. Please try again in a few minutes.';
             actionText = 'Retry';
           } else if (!navigator.onLine) {
             errorMessage += 'Please check your internet connection and try again.';
@@ -199,19 +205,19 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
           } else {
             errorMessage += 'Please try again or contact support if the problem persists.';
           }
-          
-          const snackBarRef = this.snackBar.open(
-            errorMessage,
-            actionText,
-            { duration, horizontalPosition: 'center', verticalPosition: 'top' }
-          );
-          
+
+          const snackBarRef = this.snackBar.open(errorMessage, actionText, {
+            duration,
+            horizontalPosition: 'center',
+            verticalPosition: 'top',
+          });
+
           if (actionText === 'Retry') {
             snackBarRef.onAction().subscribe(() => {
               this.onSubmit();
             });
           }
-        }
+        },
       });
     }
   }
@@ -227,14 +233,14 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
       subprojectName: selectedSubproject?.name || 'Unknown Subproject',
       managerName: formData.managerId, // TODO: Backend expects managerName but form uses managerId
       daysPerWeek: formData.daysPerWeek,
-      justification: formData.justification
+      justification: formData.justification,
     };
 
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       width: '600px',
       maxWidth: '95vw',
       data: confirmationData,
-      disableClose: false
+      disableClose: false,
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -249,7 +255,7 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
 
   private resetForm(): void {
     this.requestForm.reset({
-      daysPerWeek: 1
+      daysPerWeek: 1,
     });
     this.subprojects = [];
     this.calculationPreview = null;
@@ -269,7 +275,7 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
     if (this.hasFormData(formValue)) {
       const draft = {
         ...formValue,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
       localStorage.setItem(this.draftKey, JSON.stringify(draft));
     }
@@ -282,19 +288,22 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
         const draft = JSON.parse(draftData);
         if (this.isDraftValid(draft)) {
           this.requestForm.patchValue(draft);
-          
+
           // If draft has a project selected, load its subprojects
           if (draft.projectId) {
             this.loadSubprojects(draft.projectId);
           }
-          
-          this.snackBar.open('Draft restored', 'Clear Draft', { 
-            duration: 5000,
-            horizontalPosition: 'center',
-            verticalPosition: 'top'
-          }).onAction().subscribe(() => {
-            this.clearDraft();
-          });
+
+          this.snackBar
+            .open('Draft restored', 'Clear Draft', {
+              duration: 5000,
+              horizontalPosition: 'center',
+              verticalPosition: 'top',
+            })
+            .onAction()
+            .subscribe(() => {
+              this.clearDraft();
+            });
         }
       } catch (error) {
         console.error('Failed to load draft:', error);
@@ -329,11 +338,13 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
   }
 
   private hasFormData(formValue: any): boolean {
-    return formValue.projectId || 
-           formValue.subProjectId || 
-           formValue.managerId || 
-           formValue.justification ||
-           formValue.daysPerWeek !== 1;
+    return (
+      formValue.projectId ||
+      formValue.subProjectId ||
+      formValue.managerId ||
+      formValue.justification ||
+      formValue.daysPerWeek !== 1
+    );
   }
 
   private isDraftValid(draft: any): boolean {

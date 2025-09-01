@@ -9,12 +9,7 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-unauthorized',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule
-  ],
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule],
   template: `
     <div class="unauthorized-container">
       <mat-card class="unauthorized-card">
@@ -24,7 +19,7 @@ import { AuthService } from '../../core/services/auth.service';
             <h2>Access Denied</h2>
             <p>You don't have permission to access this page.</p>
             <p>Please contact your administrator if you believe this is an error.</p>
-            
+
             <div class="action-buttons">
               <button mat-raised-button color="primary" (click)="goBack()">
                 <mat-icon>arrow_back</mat-icon>
@@ -40,59 +35,61 @@ import { AuthService } from '../../core/services/auth.service';
       </mat-card>
     </div>
   `,
-  styles: [`
-    .unauthorized-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background-color: #f5f5f5;
-      padding: 20px;
-    }
-
-    .unauthorized-card {
-      max-width: 500px;
-      text-align: center;
-    }
-
-    .unauthorized-content {
-      padding: 40px 20px;
-    }
-
-    .unauthorized-icon {
-      font-size: 72px;
-      height: 72px;
-      width: 72px;
-      color: #f44336;
-      margin-bottom: 24px;
-    }
-
-    h2 {
-      margin: 16px 0;
-      color: #333;
-    }
-
-    p {
-      margin: 12px 0;
-      color: #666;
-      line-height: 1.5;
-    }
-
-    .action-buttons {
-      margin-top: 32px;
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    @media (max-width: 480px) {
-      .action-buttons {
-        flex-direction: column;
-        align-items: stretch;
+  styles: [
+    `
+      .unauthorized-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background-color: #f5f5f5;
+        padding: 20px;
       }
-    }
-  `]
+
+      .unauthorized-card {
+        max-width: 500px;
+        text-align: center;
+      }
+
+      .unauthorized-content {
+        padding: 40px 20px;
+      }
+
+      .unauthorized-icon {
+        font-size: 72px;
+        height: 72px;
+        width: 72px;
+        color: #f44336;
+        margin-bottom: 24px;
+      }
+
+      h2 {
+        margin: 16px 0;
+        color: #333;
+      }
+
+      p {
+        margin: 12px 0;
+        color: #666;
+        line-height: 1.5;
+      }
+
+      .action-buttons {
+        margin-top: 32px;
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 480px) {
+        .action-buttons {
+          flex-direction: column;
+          align-items: stretch;
+        }
+      }
+    `,
+  ],
 })
 export class UnauthorizedComponent {
   constructor(
@@ -111,7 +108,7 @@ export class UnauthorizedComponent {
       },
       error: () => {
         this.router.navigate(['/login']);
-      }
+      },
     });
   }
 }

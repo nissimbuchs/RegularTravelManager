@@ -1,4 +1,11 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flush, discardPeriodicTasks } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+  flush,
+  discardPeriodicTasks,
+} from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatTableModule } from '@angular/material/table';
@@ -21,11 +28,11 @@ import { By } from '@angular/platform-browser';
 
 import { ManagerRequestQueueComponent } from '../manager-request-queue.component';
 import { ManagerDashboardService } from '../../services/manager-dashboard.service';
-import { 
+import {
   ManagerDashboard,
-  TravelRequestSummary, 
+  TravelRequestSummary,
   EmployeeContext,
-  DashboardFilters
+  DashboardFilters,
 } from '../../models/dashboard.model';
 
 describe('ManagerRequestQueueComponent', () => {
@@ -42,10 +49,10 @@ describe('ManagerRequestQueueComponent', () => {
       projectName: 'Test Project',
       subProjectName: 'Test Location',
       daysPerWeek: 3,
-      calculatedAllowance: 150.00,
+      calculatedAllowance: 150.0,
       submittedDate: new Date('2024-01-15'),
       urgencyLevel: 'high',
-      daysSinceSubmission: 8
+      daysSinceSubmission: 8,
     },
     {
       id: 'req-2',
@@ -54,18 +61,18 @@ describe('ManagerRequestQueueComponent', () => {
       projectName: 'Another Project',
       subProjectName: 'Another Location',
       daysPerWeek: 2,
-      calculatedAllowance: 100.00,
+      calculatedAllowance: 100.0,
       submittedDate: new Date('2024-01-18'),
       urgencyLevel: 'medium',
-      daysSinceSubmission: 5
-    }
+      daysSinceSubmission: 5,
+    },
   ];
 
   const mockDashboard: ManagerDashboard = {
     pendingRequests: mockTravelRequests,
     totalPending: 2,
     urgentCount: 1,
-    filters: {}
+    filters: {},
   };
 
   const mockEmployeeContext: EmployeeContext = {
@@ -75,9 +82,9 @@ describe('ManagerRequestQueueComponent', () => {
       email: 'john.doe@company.com',
       department: 'Engineering',
       position: 'Senior Software Developer',
-      managerId: 'manager-1'
+      managerId: 'manager-1',
     },
-    currentWeeklyAllowance: 245.50,
+    currentWeeklyAllowance: 245.5,
     activeRequestsCount: 2,
     recentHistory: [],
     totalRequestsThisYear: 18,
@@ -85,20 +92,19 @@ describe('ManagerRequestQueueComponent', () => {
     departmentBudgetUtilization: 72.5,
     recentApprovals: 15,
     recentRejections: 1,
-    performanceScore: 8.7
+    performanceScore: 8.7,
   };
 
   beforeEach(async () => {
     dashboardSubject = new BehaviorSubject<ManagerDashboard | null>(null);
-    
-    const spy = jasmine.createSpyObj('ManagerDashboardService', [
-      'getDashboardData',
-      'getEmployeeContext',
-      'startAutoRefresh',
-      'stopAutoRefresh'
-    ], {
-      dashboard$: dashboardSubject.asObservable()
-    });
+
+    const spy = jasmine.createSpyObj(
+      'ManagerDashboardService',
+      ['getDashboardData', 'getEmployeeContext', 'startAutoRefresh', 'stopAutoRefresh'],
+      {
+        dashboard$: dashboardSubject.asObservable(),
+      }
+    );
 
     await TestBed.configureTestingModule({
       imports: [
@@ -119,18 +125,17 @@ describe('ManagerRequestQueueComponent', () => {
         MatDatepickerModule,
         MatNativeDateModule,
         MatDividerModule,
-        MatTooltipModule
+        MatTooltipModule,
       ],
-      providers: [
-        { provide: ManagerDashboardService, useValue: spy }
-      ]
-    })
-    .compileComponents();
+      providers: [{ provide: ManagerDashboardService, useValue: spy }],
+    }).compileComponents();
 
-    mockManagerDashboardService = TestBed.inject(ManagerDashboardService) as jasmine.SpyObj<ManagerDashboardService>;
+    mockManagerDashboardService = TestBed.inject(
+      ManagerDashboardService
+    ) as jasmine.SpyObj<ManagerDashboardService>;
     mockManagerDashboardService.getDashboardData.and.returnValue(of(mockDashboard));
     mockManagerDashboardService.getEmployeeContext.and.returnValue(of(mockEmployeeContext));
-    
+
     fixture = TestBed.createComponent(ManagerRequestQueueComponent);
     component = fixture.componentInstance;
   });
@@ -163,7 +168,7 @@ describe('ManagerRequestQueueComponent', () => {
       expect(component.urgencyLevels).toEqual([
         { value: 'high', label: 'High Priority', color: '#f44336' },
         { value: 'medium', label: 'Medium Priority', color: '#ff9800' },
-        { value: 'low', label: 'Low Priority', color: '#4caf50' }
+        { value: 'low', label: 'Low Priority', color: '#4caf50' },
       ]);
     });
   });
@@ -182,13 +187,18 @@ describe('ManagerRequestQueueComponent', () => {
 
     it('should handle loading error gracefully', fakeAsync(() => {
       const errorMessage = 'Failed to load data';
-      mockManagerDashboardService.getDashboardData.and.returnValue(throwError(() => new Error(errorMessage)));
-      
+      mockManagerDashboardService.getDashboardData.and.returnValue(
+        throwError(() => new Error(errorMessage))
+      );
+
       spyOn(console, 'error');
       fixture.detectChanges();
       tick();
 
-      expect(console.error).toHaveBeenCalledWith('Failed to load dashboard data:', jasmine.any(Error));
+      expect(console.error).toHaveBeenCalledWith(
+        'Failed to load dashboard data:',
+        jasmine.any(Error)
+      );
       expect(component.isLoading).toBeFalse();
       discardPeriodicTasks();
     }));
@@ -196,13 +206,13 @@ describe('ManagerRequestQueueComponent', () => {
     it('should set loading state correctly during data fetch', () => {
       // Mock the service to return immediately
       mockManagerDashboardService.getDashboardData.and.returnValue(of(mockDashboard));
-      
+
       expect(component.isLoading).toBeFalse(); // Initial state
-      
+
       // Manually call loadDashboardData to test loading state
       component['loadDashboardData']();
       expect(component.isLoading).toBeTrue(); // Should be true when method is called
-      
+
       // Wait for observable to complete
       expect(component.isLoading).toBeFalse(); // Should be false after completion
     });
@@ -211,7 +221,7 @@ describe('ManagerRequestQueueComponent', () => {
       const beforeTime = new Date();
       fixture.detectChanges();
       tick();
-      
+
       expect(component.lastRefreshTime).toBeTruthy();
       // lastRefreshTime is a formatted string, not a Date object
       expect(component.lastRefreshTime).toMatch(/\d{2}:\d{2}:\d{2}/);
@@ -228,7 +238,7 @@ describe('ManagerRequestQueueComponent', () => {
 
     it('should debounce filter changes', fakeAsync(() => {
       const employeeNameControl = component.filterForm.get('employeeName')!;
-      
+
       employeeNameControl.setValue('J');
       tick(100);
       employeeNameControl.setValue('Jo');
@@ -241,7 +251,7 @@ describe('ManagerRequestQueueComponent', () => {
 
     it('should reset pagination when filters change', fakeAsync(() => {
       component.pagination.pageIndex = 2;
-      
+
       component.filterForm.get('employeeName')?.setValue('John');
       tick(300);
 
@@ -251,7 +261,7 @@ describe('ManagerRequestQueueComponent', () => {
     it('should build filters correctly from form values', () => {
       const startDate = new Date('2024-01-01');
       const endDate = new Date('2024-01-31');
-      
+
       component.filterForm.patchValue({
         employeeName: 'John',
         projectName: 'Test Project',
@@ -260,7 +270,7 @@ describe('ManagerRequestQueueComponent', () => {
         dateRangeEnd: endDate,
         allowanceMin: 100,
         allowanceMax: 500,
-        urgencyLevels: ['high', 'medium']
+        urgencyLevels: ['high', 'medium'],
       });
 
       const filters = component['buildFilters']();
@@ -279,10 +289,10 @@ describe('ManagerRequestQueueComponent', () => {
       component.filterForm.patchValue({
         employeeName: 'John',
         projectName: 'Test',
-        urgencyLevels: ['high']
+        urgencyLevels: ['high'],
       });
       component.pagination.pageIndex = 2;
-      
+
       component.clearFilters();
       tick(300);
 
@@ -304,7 +314,7 @@ describe('ManagerRequestQueueComponent', () => {
     it('should handle sort change correctly', () => {
       const sortEvent = { active: 'employeeName', direction: 'asc' };
       component.pagination.pageIndex = 2;
-      
+
       component.onSortChange(sortEvent);
 
       expect(component.sortConfig.active).toBe('employeeName');
@@ -315,7 +325,7 @@ describe('ManagerRequestQueueComponent', () => {
 
     it('should handle page change correctly', () => {
       const pageEvent = { pageIndex: 1, pageSize: 50 };
-      
+
       component.onPageChange(pageEvent);
 
       expect(component.pagination.pageIndex).toBe(1);
@@ -333,7 +343,7 @@ describe('ManagerRequestQueueComponent', () => {
 
     it('should select request and show employee panel', () => {
       const request = mockTravelRequests[0];
-      
+
       component.selectRequest(request);
 
       expect(component.selectedRequest).toBe(request);
@@ -343,7 +353,7 @@ describe('ManagerRequestQueueComponent', () => {
 
     it('should extract employee ID from email correctly', () => {
       const request = { ...mockTravelRequests[0], employeeEmail: 'jane.smith@company.com' };
-      
+
       component.selectRequest(request);
 
       expect(mockManagerDashboardService.getEmployeeContext).toHaveBeenCalledWith('janesmith');
@@ -351,7 +361,7 @@ describe('ManagerRequestQueueComponent', () => {
 
     it('should load employee context successfully', fakeAsync(() => {
       const request = mockTravelRequests[0];
-      
+
       component.selectRequest(request);
       tick();
 
@@ -361,15 +371,20 @@ describe('ManagerRequestQueueComponent', () => {
 
     it('should handle employee context loading error', fakeAsync(() => {
       const errorMessage = 'Failed to load employee context';
-      mockManagerDashboardService.getEmployeeContext.and.returnValue(throwError(() => new Error(errorMessage)));
-      
+      mockManagerDashboardService.getEmployeeContext.and.returnValue(
+        throwError(() => new Error(errorMessage))
+      );
+
       spyOn(console, 'error');
       const request = mockTravelRequests[0];
-      
+
       component.selectRequest(request);
       tick();
 
-      expect(console.error).toHaveBeenCalledWith('Failed to load employee context:', jasmine.any(Error));
+      expect(console.error).toHaveBeenCalledWith(
+        'Failed to load employee context:',
+        jasmine.any(Error)
+      );
       expect(component.isLoadingContext).toBeFalse();
       flush();
     }));
@@ -378,7 +393,7 @@ describe('ManagerRequestQueueComponent', () => {
       component.selectedRequest = mockTravelRequests[0];
       component.employeeContext = mockEmployeeContext;
       component.showEmployeePanel = true;
-      
+
       component.closeEmployeePanel();
 
       expect(component.showEmployeePanel).toBeFalse();
@@ -453,7 +468,7 @@ describe('ManagerRequestQueueComponent', () => {
     it('should format currency correctly', () => {
       const formatted1 = component.formatCurrency(123.45);
       const formatted2 = component.formatCurrency(1000);
-      
+
       // Swiss format uses different separators
       expect(formatted1).toContain('CHF');
       expect(formatted1).toContain('123.45');
@@ -481,12 +496,12 @@ describe('ManagerRequestQueueComponent', () => {
 
     it('should display dashboard stats correctly', () => {
       const statsCards = fixture.debugElement.queryAll(By.css('.stats-card'));
-      
+
       expect(statsCards.length).toBe(2);
-      
+
       const pendingStats = statsCards[0].query(By.css('.stats-number'));
       expect(pendingStats.nativeElement.textContent.trim()).toBe('2');
-      
+
       const urgentStats = statsCards[1].query(By.css('.stats-number'));
       expect(urgentStats.nativeElement.textContent.trim()).toBe('1');
     });
@@ -535,10 +550,12 @@ describe('ManagerRequestQueueComponent', () => {
   describe('Error Handling', () => {
     it('should display error snackbar on dashboard load failure', fakeAsync(() => {
       const errorMessage = 'Network error';
-      mockManagerDashboardService.getDashboardData.and.returnValue(throwError(() => new Error(errorMessage)));
-      
+      mockManagerDashboardService.getDashboardData.and.returnValue(
+        throwError(() => new Error(errorMessage))
+      );
+
       spyOn(component['snackBar'], 'open').and.callThrough();
-      
+
       fixture.detectChanges();
       tick();
 
@@ -551,13 +568,15 @@ describe('ManagerRequestQueueComponent', () => {
     }));
 
     it('should display error snackbar on employee context load failure', fakeAsync(() => {
-      mockManagerDashboardService.getEmployeeContext.and.returnValue(throwError(() => new Error('Context error')));
-      
+      mockManagerDashboardService.getEmployeeContext.and.returnValue(
+        throwError(() => new Error('Context error'))
+      );
+
       spyOn(component['snackBar'], 'open').and.callThrough();
-      
+
       fixture.detectChanges();
       tick();
-      
+
       component.selectRequest(mockTravelRequests[0]);
       tick();
 
@@ -580,14 +599,14 @@ describe('ManagerRequestQueueComponent', () => {
     it('should approve request successfully', fakeAsync(() => {
       const request = mockTravelRequests[0];
       spyOn(component['snackBar'], 'open').and.callThrough();
-      
+
       component.approveRequest(request);
-      
+
       expect(component.isProcessingAction).toBeTrue();
       expect(component.actionType).toBe('approve');
-      
+
       tick(1500);
-      
+
       expect(component['snackBar'].open).toHaveBeenCalledWith(
         `Travel request for ${request.employeeName} has been approved successfully.`,
         'Close',
@@ -601,14 +620,14 @@ describe('ManagerRequestQueueComponent', () => {
     it('should reject request successfully', fakeAsync(() => {
       const request = mockTravelRequests[0];
       spyOn(component['snackBar'], 'open').and.callThrough();
-      
+
       component.openRejectDialog(request);
-      
+
       expect(component.isProcessingAction).toBeTrue();
       expect(component.actionType).toBe('reject');
-      
+
       tick(1500);
-      
+
       expect(component['snackBar'].open).toHaveBeenCalledWith(
         `Travel request for ${request.employeeName} has been rejected.`,
         'Close',
@@ -621,9 +640,9 @@ describe('ManagerRequestQueueComponent', () => {
     it('should view request details', () => {
       const request = mockTravelRequests[0];
       spyOn(component['snackBar'], 'open').and.callThrough();
-      
+
       component.viewRequestDetails(request);
-      
+
       expect(component['snackBar'].open).toHaveBeenCalledWith(
         `Request Details: ${request.projectName} - ${request.subProjectName} (${request.daysPerWeek} days/week)`,
         'Close',
@@ -634,10 +653,10 @@ describe('ManagerRequestQueueComponent', () => {
     it('should remove request from table after action', fakeAsync(() => {
       const request = mockTravelRequests[0];
       const initialCount = component.dataSource.data.length;
-      
+
       component.approveRequest(request);
       tick(1500);
-      
+
       expect(component.dataSource.data.length).toBe(initialCount - 1);
       expect(component.dataSource.data.find(req => req.id === request.id)).toBeUndefined();
     }));
@@ -647,10 +666,10 @@ describe('ManagerRequestQueueComponent', () => {
       component.dashboard = { ...mockDashboard };
       const initialPending = component.dashboard.totalPending;
       const initialUrgent = component.dashboard.urgentCount;
-      
+
       component.approveRequest(urgentRequest);
       tick(1500);
-      
+
       expect(component.dashboard.totalPending).toBe(initialPending - 1);
       expect(component.dashboard.urgentCount).toBe(initialUrgent - 1);
     }));
@@ -660,7 +679,7 @@ describe('ManagerRequestQueueComponent', () => {
     it('should complete destroy subject on destroy', () => {
       spyOn(component['destroy$'], 'next');
       spyOn(component['destroy$'], 'complete');
-      
+
       component.ngOnDestroy();
 
       expect(component['destroy$'].next).toHaveBeenCalled();
@@ -673,7 +692,7 @@ describe('ManagerRequestQueueComponent', () => {
 
       const subscription = component['filterForm'].valueChanges.subscribe();
       spyOn(subscription, 'unsubscribe');
-      
+
       component.ngOnDestroy();
 
       expect(mockManagerDashboardService.stopAutoRefresh).toHaveBeenCalled();

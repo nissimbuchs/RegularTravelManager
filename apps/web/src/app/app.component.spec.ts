@@ -26,6 +26,8 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('mat-toolbar span')?.textContent).toContain('Regular Travel Manager');
+    expect(compiled.querySelector('mat-toolbar span')?.textContent).toContain(
+      'Regular Travel Manager'
+    );
   });
 });

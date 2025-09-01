@@ -14,7 +14,7 @@ const mockContext: Context = {
   callbackWaitsForEmptyEventLoop: true,
   done: () => {},
   fail: () => {},
-  succeed: () => {}
+  succeed: () => {},
 };
 
 const createMockEvent = (httpMethod: string): APIGatewayProxyEvent => ({
@@ -51,23 +51,23 @@ const createMockEvent = (httpMethod: string): APIGatewayProxyEvent => ({
       user: null,
       apiKey: null,
       apiKeyId: null,
-      clientCert: null
+      clientCert: null,
     },
     domainName: 'api.test.com',
     apiId: 'api-id',
     accountId: '123456789',
-    authorizer: null
+    authorizer: null,
   },
   resource: '/test',
   multiValueHeaders: {},
-  multiValueQueryStringParameters: null
+  multiValueQueryStringParameters: null,
 });
 
 describe('CORS Middleware', () => {
   it('should handle OPTIONS preflight request', async () => {
     const mockEvent = createMockEvent('OPTIONS');
     const mockHandler = vi.fn();
-    
+
     const corsHandler = corsMiddleware(mockHandler);
     const result = await corsHandler(mockEvent, mockContext);
 
@@ -76,7 +76,7 @@ describe('CORS Middleware', () => {
     expect(result.headers['Access-Control-Allow-Methods']).toContain('GET,POST,PUT,DELETE,OPTIONS');
     expect(result.headers['Access-Control-Allow-Headers']).toContain('Content-Type,Authorization');
     expect(result.headers['Access-Control-Max-Age']).toBe('86400');
-    
+
     // Handler should not be called for OPTIONS
     expect(mockHandler).not.toHaveBeenCalled();
   });
@@ -86,9 +86,9 @@ describe('CORS Middleware', () => {
     const mockHandler = vi.fn().mockResolvedValue({
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: 'success' })
+      body: JSON.stringify({ message: 'success' }),
     });
-    
+
     const corsHandler = corsMiddleware(mockHandler);
     const result = await corsHandler(mockEvent, mockContext);
 
@@ -102,13 +102,13 @@ describe('CORS Middleware', () => {
     const mockEvent = createMockEvent('POST');
     const mockHandler = vi.fn().mockResolvedValue({
       statusCode: 201,
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'X-Custom-Header': 'custom-value' 
+        'X-Custom-Header': 'custom-value',
       },
-      body: JSON.stringify({ id: '123' })
+      body: JSON.stringify({ id: '123' }),
     });
-    
+
     const corsHandler = corsMiddleware(mockHandler);
     const result = await corsHandler(mockEvent, mockContext);
 

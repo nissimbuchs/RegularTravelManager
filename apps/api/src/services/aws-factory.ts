@@ -16,7 +16,7 @@ export class AWSServiceFactory {
       clientConfig.endpoint = this.config.AWS_ENDPOINT_URL;
       clientConfig.credentials = {
         accessKeyId: this.config.AWS_ACCESS_KEY_ID || 'test',
-        secretAccessKey: this.config.AWS_SECRET_ACCESS_KEY || 'test'
+        secretAccessKey: this.config.AWS_SECRET_ACCESS_KEY || 'test',
       };
       // Disable SSL verification for LocalStack
       clientConfig.forcePathStyle = true;
@@ -24,7 +24,6 @@ export class AWSServiceFactory {
 
     return new CognitoIdentityProviderClient(clientConfig);
   }
-
 
   static createS3Client(): S3Client {
     const clientConfig: any = {
@@ -35,7 +34,7 @@ export class AWSServiceFactory {
       clientConfig.endpoint = this.config.AWS_ENDPOINT_URL;
       clientConfig.credentials = {
         accessKeyId: this.config.AWS_ACCESS_KEY_ID || 'test',
-        secretAccessKey: this.config.AWS_SECRET_ACCESS_KEY || 'test'
+        secretAccessKey: this.config.AWS_SECRET_ACCESS_KEY || 'test',
       };
       clientConfig.forcePathStyle = true; // Required for LocalStack S3
     }
@@ -48,12 +47,11 @@ export class AWSServiceFactory {
     if (isLocalDevelopment()) {
       return new MockLocationClient();
     }
-    
+
     return new LocationClient({
       region: this.config.AWS_REGION,
     });
   }
-
 }
 
 // Singleton instances for better performance
@@ -68,7 +66,6 @@ export function getCognitoClient(): CognitoIdentityProviderClient {
   return cognitoClientInstance;
 }
 
-
 export function getS3Client(): S3Client {
   if (!s3ClientInstance) {
     s3ClientInstance = AWSServiceFactory.createS3Client();
@@ -82,4 +79,3 @@ export function getLocationClient(): LocationClient | MockLocationClient {
   }
   return locationClientInstance;
 }
-

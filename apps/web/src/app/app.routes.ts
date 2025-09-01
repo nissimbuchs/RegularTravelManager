@@ -7,17 +7,19 @@ import { adminGuard } from './core/guards/admin.guard';
 export const routes: Routes = [
   {
     path: 'login',
-    loadComponent: () => import('./auth/components/login.component').then(m => m.LoginComponent)
+    loadComponent: () => import('./auth/components/login.component').then(m => m.LoginComponent),
   },
   {
     path: '',
-    loadComponent: () => import('./shared/components/main-layout.component').then(m => m.MainLayoutComponent),
+    loadComponent: () =>
+      import('./shared/components/main-layout.component').then(m => m.MainLayoutComponent),
     canActivate: [authGuard],
     children: [
       {
         path: '',
-        loadComponent: () => import('./shared/components/role-redirect.component').then(m => m.RoleRedirectComponent),
-        pathMatch: 'full'
+        loadComponent: () =>
+          import('./shared/components/role-redirect.component').then(m => m.RoleRedirectComponent),
+        pathMatch: 'full',
       },
       {
         path: 'employee',
@@ -25,17 +27,26 @@ export const routes: Routes = [
         children: [
           {
             path: 'dashboard',
-            loadComponent: () => import('./features/employee/components/dashboard.component').then(m => m.DashboardComponent)
+            loadComponent: () =>
+              import('./features/employee/components/dashboard.component').then(
+                m => m.DashboardComponent
+              ),
           },
           {
             path: 'address',
-            loadComponent: () => import('./features/employee/components/address.component').then(m => m.AddressComponent)
+            loadComponent: () =>
+              import('./features/employee/components/address.component').then(
+                m => m.AddressComponent
+              ),
           },
           {
             path: 'request',
-            loadComponent: () => import('./features/employee/components/travel-request-form.component').then(m => m.TravelRequestFormComponent)
-          }
-        ]
+            loadComponent: () =>
+              import('./features/employee/components/travel-request-form.component').then(
+                m => m.TravelRequestFormComponent
+              ),
+          },
+        ],
       },
       {
         path: 'manager',
@@ -43,21 +54,33 @@ export const routes: Routes = [
         children: [
           {
             path: 'dashboard',
-            loadComponent: () => import('./features/manager/components/manager-request-queue.component').then(m => m.ManagerRequestQueueComponent)
+            loadComponent: () =>
+              import('./features/manager/components/manager-request-queue.component').then(
+                m => m.ManagerRequestQueueComponent
+              ),
           },
           {
             path: 'approvals',
-            loadComponent: () => import('./features/manager/components/approvals.component').then(m => m.ApprovalsComponent)
+            loadComponent: () =>
+              import('./features/manager/components/approvals.component').then(
+                m => m.ApprovalsComponent
+              ),
           },
           {
             path: 'employees',
-            loadComponent: () => import('./features/manager/components/employees.component').then(m => m.EmployeesComponent)
+            loadComponent: () =>
+              import('./features/manager/components/employees.component').then(
+                m => m.EmployeesComponent
+              ),
           },
           {
             path: 'projects',
-            loadComponent: () => import('./features/manager/components/projects.component').then(m => m.ProjectsComponent)
-          }
-        ]
+            loadComponent: () =>
+              import('./features/manager/components/projects.component').then(
+                m => m.ProjectsComponent
+              ),
+          },
+        ],
       },
       {
         path: 'admin',
@@ -65,23 +88,30 @@ export const routes: Routes = [
         children: [
           {
             path: 'projects',
-            loadComponent: () => import('./features/admin/components/projects-list.component').then(m => m.ProjectsListComponent)
+            loadComponent: () =>
+              import('./features/admin/components/projects-list.component').then(
+                m => m.ProjectsListComponent
+              ),
           },
           {
             path: 'projects/:id',
-            loadComponent: () => import('./features/admin/components/project-detail.component').then(m => m.ProjectDetailComponent)
+            loadComponent: () =>
+              import('./features/admin/components/project-detail.component').then(
+                m => m.ProjectDetailComponent
+              ),
           },
-          { path: '', redirectTo: 'projects', pathMatch: 'full' }
-        ]
-      }
-    ]
+          { path: '', redirectTo: 'projects', pathMatch: 'full' },
+        ],
+      },
+    ],
   },
   {
     path: 'unauthorized',
-    loadComponent: () => import('./shared/components/unauthorized.component').then(m => m.UnauthorizedComponent)
+    loadComponent: () =>
+      import('./shared/components/unauthorized.component').then(m => m.UnauthorizedComponent),
   },
   {
     path: '**',
-    redirectTo: '/login'
-  }
+    redirectTo: '/login',
+  },
 ];

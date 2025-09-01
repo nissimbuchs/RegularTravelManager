@@ -2,10 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { EmployeeDto, UpdateEmployeeAddressRequest } from '../../../../../../packages/shared/src/types/api';
+import {
+  EmployeeDto,
+  UpdateEmployeeAddressRequest,
+} from '../../../../../../packages/shared/src/types/api';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class EmployeeService {
   private readonly baseUrl = `${environment.apiUrl}/employees`;
@@ -20,7 +23,10 @@ export class EmployeeService {
   }
 
   // Update employee address
-  updateEmployeeAddress(id: string, addressData: UpdateEmployeeAddressRequest): Observable<EmployeeDto> {
+  updateEmployeeAddress(
+    id: string,
+    addressData: UpdateEmployeeAddressRequest
+  ): Observable<EmployeeDto> {
     return this.http.put<EmployeeDto>(`${this.baseUrl}/${id}/address`, addressData);
   }
 
@@ -33,7 +39,7 @@ export class EmployeeService {
   // Format address for display
   formatAddress(employee: EmployeeDto): string {
     if (!employee.home_street) return 'No address set';
-    
+
     return `${employee.home_street}, ${employee.home_postal_code} ${employee.home_city}, ${employee.home_country}`;
   }
 

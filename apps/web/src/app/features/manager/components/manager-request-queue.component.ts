@@ -1,10 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
-import { 
-  MatTableModule, 
-  MatTableDataSource 
-} from '@angular/material/table';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatInputModule } from '@angular/material/input';
@@ -20,23 +17,17 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { 
-  trigger, 
-  state, 
-  style, 
-  transition, 
-  animate 
-} from '@angular/animations';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged, merge } from 'rxjs';
 
 import { ManagerDashboardService } from '../services/manager-dashboard.service';
-import { 
+import {
   ManagerDashboard,
-  TravelRequestSummary, 
-  DashboardFilters, 
-  PaginationConfig, 
+  TravelRequestSummary,
+  DashboardFilters,
+  PaginationConfig,
   SortConfig,
-  EmployeeContext
+  EmployeeContext,
 } from '../models/dashboard.model';
 
 @Component({
@@ -60,42 +51,37 @@ import {
     MatNativeDateModule,
     MatExpansionModule,
     MatDividerModule,
-    MatTooltipModule
+    MatTooltipModule,
   ],
   animations: [
     trigger('slideInOut', [
       state('in', style({ transform: 'translateX(0)' })),
       state('out', style({ transform: 'translateX(100%)' })),
       transition('in => out', animate('300ms ease-in-out')),
-      transition('out => in', animate('300ms ease-in-out'))
+      transition('out => in', animate('300ms ease-in-out')),
     ]),
     trigger('fadeInOut', [
-      transition(':enter', [
-        style({ opacity: 0 }),
-        animate('300ms', style({ opacity: 1 }))
-      ]),
-      transition(':leave', [
-        animate('300ms', style({ opacity: 0 }))
-      ])
-    ])
+      transition(':enter', [style({ opacity: 0 }), animate('300ms', style({ opacity: 1 }))]),
+      transition(':leave', [animate('300ms', style({ opacity: 0 }))]),
+    ]),
   ],
   templateUrl: './manager-request-queue.component.html',
-  styleUrls: ['./manager-request-queue.component.css']
+  styleUrls: ['./manager-request-queue.component.css'],
 })
 export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
   displayedColumns: string[] = [
-    'urgency', 
-    'employeeName', 
-    'projectName', 
-    'subProjectName', 
+    'urgency',
+    'employeeName',
+    'projectName',
+    'subProjectName',
     'daysPerWeek',
-    'calculatedAllowance', 
+    'calculatedAllowance',
     'submittedDate',
     'daysSinceSubmission',
-    'actions'
+    'actions',
   ];
 
   dataSource = new MatTableDataSource<TravelRequestSummary>();
@@ -109,23 +95,23 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
   showEmployeePanel = false;
 
   filterForm: FormGroup;
-  
+
   pagination: PaginationConfig = {
     pageIndex: 0,
     pageSize: 25,
     totalItems: 0,
-    pageSizeOptions: [10, 25, 50]
+    pageSizeOptions: [10, 25, 50],
   };
 
   sortConfig: SortConfig = {
     active: 'submittedDate',
-    direction: 'desc'
+    direction: 'desc',
   };
 
   urgencyLevels = [
     { value: 'high', label: 'High Priority', color: '#f44336' },
     { value: 'medium', label: 'Medium Priority', color: '#ff9800' },
-    { value: 'low', label: 'Low Priority', color: '#4caf50' }
+    { value: 'low', label: 'Low Priority', color: '#4caf50' },
   ];
 
   private destroy$ = new Subject<void>();
@@ -144,7 +130,7 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
       dateRangeEnd: [''],
       allowanceMin: [''],
       allowanceMax: [''],
-      urgencyLevels: [[]]
+      urgencyLevels: [[]],
     });
   }
 
@@ -167,11 +153,7 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
   private setupFilterSubscriptions(): void {
     // Debounce filter changes to avoid excessive API calls
     this.filterForm.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$)
-      )
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(() => {
         this.pagination.pageIndex = 0; // Reset to first page when filters change
         this.loadDashboardData();
@@ -181,28 +163,28 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
   private loadDashboardData(): void {
     this.isLoading = true;
     const filters = this.buildFilters();
-    
-    this.managerDashboardService.getDashboardData(filters, this.pagination, this.sortConfig)
+
+    this.managerDashboardService
+      .getDashboardData(filters, this.pagination, this.sortConfig)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (dashboard) => {
+        next: dashboard => {
           this.dashboard = dashboard;
           this.dataSource.data = dashboard.pendingRequests;
           this.pagination.totalItems = dashboard.totalPending;
           this.isLoading = false;
           this.lastRefresh = new Date();
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Failed to load dashboard data:', error);
           this.isLoading = false;
-          this.snackBar.open(
-            'Failed to load pending requests. Please try again.',
-            'Retry',
-            { duration: 5000 }
-          ).onAction().subscribe(() => {
-            this.loadDashboardData();
-          });
-        }
+          this.snackBar
+            .open('Failed to load pending requests. Please try again.', 'Retry', { duration: 5000 })
+            .onAction()
+            .subscribe(() => {
+              this.loadDashboardData();
+            });
+        },
       });
   }
 
@@ -213,18 +195,18 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
     if (formValue.employeeName) filters.employeeName = formValue.employeeName;
     if (formValue.projectName) filters.projectName = formValue.projectName;
     if (formValue.subProjectName) filters.subProjectName = formValue.subProjectName;
-    
+
     if (formValue.dateRangeStart && formValue.dateRangeEnd) {
       filters.dateRange = {
         start: new Date(formValue.dateRangeStart),
-        end: new Date(formValue.dateRangeEnd)
+        end: new Date(formValue.dateRangeEnd),
       };
     }
 
     if (formValue.allowanceMin || formValue.allowanceMax) {
       filters.allowanceRange = {
         min: formValue.allowanceMin || 0,
-        max: formValue.allowanceMax || 10000
+        max: formValue.allowanceMax || 10000,
       };
     }
 
@@ -250,7 +232,7 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
 
   selectRequest(request: TravelRequestSummary): void {
     this.selectedRequest = request;
-    this.loadEmployeeContext(request.employeeEmail);
+    this.loadEmployeeContext(request);
     this.showEmployeePanel = true;
   }
 
@@ -260,27 +242,26 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
     this.employeeContext = null;
   }
 
-  private loadEmployeeContext(employeeEmail: string): void {
-    // Extract employee ID from email or use a lookup service
-    const employeeId = employeeEmail.split('@')[0].replace('.', '');
-    
+  private loadEmployeeContext(request: TravelRequestSummary): void {
+    // Extract employee ID from email - this will now match the service lookup correctly
+    const employeeId = request.employeeEmail.split('@')[0].replace('.', '');
+
     this.isLoadingContext = true;
-    this.managerDashboardService.getEmployeeContext(employeeId)
+    this.managerDashboardService
+      .getEmployeeContext(employeeId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (context) => {
+        next: context => {
           this.employeeContext = context;
           this.isLoadingContext = false;
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Failed to load employee context:', error);
           this.isLoadingContext = false;
-          this.snackBar.open(
-            'Failed to load employee details. Please try again.',
-            'Close',
-            { duration: 5000 }
-          );
-        }
+          this.snackBar.open('Failed to load employee details. Please try again.', 'Close', {
+            duration: 5000,
+          });
+        },
       });
   }
 
@@ -298,17 +279,15 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
   private startAutoRefresh(): void {
     const filters = this.buildFilters();
     this.managerDashboardService.startAutoRefresh(filters, this.pagination, this.sortConfig);
-    
+
     // Subscribe to dashboard updates
-    this.managerDashboardService.dashboard$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(dashboard => {
-        if (dashboard) {
-          this.dashboard = dashboard;
-          this.dataSource.data = dashboard.pendingRequests;
-          this.pagination.totalItems = dashboard.totalPending;
-        }
-      });
+    this.managerDashboardService.dashboard$.pipe(takeUntil(this.destroy$)).subscribe(dashboard => {
+      if (dashboard) {
+        this.dashboard = dashboard;
+        this.dataSource.data = dashboard.pendingRequests;
+        this.pagination.totalItems = dashboard.totalPending;
+      }
+    });
   }
 
   getUrgencyColor(urgency: 'low' | 'medium' | 'high'): string {
@@ -318,10 +297,14 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
 
   getUrgencyIcon(urgency: 'low' | 'medium' | 'high'): string {
     switch (urgency) {
-      case 'high': return 'priority_high';
-      case 'medium': return 'remove';
-      case 'low': return 'keyboard_arrow_down';
-      default: return 'remove';
+      case 'high':
+        return 'priority_high';
+      case 'medium':
+        return 'remove';
+      case 'low':
+        return 'keyboard_arrow_down';
+      default:
+        return 'remove';
     }
   }
 
@@ -334,7 +317,7 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
       style: 'currency',
       currency: 'CHF',
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     }).format(amount);
   }
 
@@ -342,7 +325,7 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
     return new Intl.DateTimeFormat('de-CH', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
     }).format(new Date(date));
   }
 
@@ -350,7 +333,7 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
     return new Intl.DateTimeFormat('de-CH', {
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit'
+      second: '2-digit',
     }).format(this.lastRefresh);
   }
 
@@ -359,20 +342,31 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
     this.isProcessingAction = true;
     this.actionType = 'approve';
 
-    // Simulate API call for approval
-    setTimeout(() => {
-      this.snackBar.open(
-        `Travel request for ${request.employeeName} has been approved successfully.`,
-        'Close',
-        { duration: 4000 }
-      );
-      
-      // Remove request from table and refresh data
-      this.removeRequestFromTable(request.id);
-      this.isProcessingAction = false;
-      this.actionType = null;
-      this.closeEmployeePanel();
-    }, 1500);
+    this.managerDashboardService.approveRequest(request.id).subscribe({
+      next: (response: any) => {
+        this.snackBar.open(
+          `Travel request for ${request.employeeName} has been approved successfully.`,
+          'Close',
+          { duration: 4000 }
+        );
+
+        // Remove request from table and refresh data
+        this.removeRequestFromTable(request.id);
+        this.isProcessingAction = false;
+        this.actionType = null;
+        this.closeEmployeePanel();
+      },
+      error: (error: any) => {
+        console.error('Error approving request:', error);
+        this.snackBar.open(
+          `Failed to approve request for ${request.employeeName}. Please try again.`,
+          'Close',
+          { duration: 4000 }
+        );
+        this.isProcessingAction = false;
+        this.actionType = null;
+      },
+    });
   }
 
   openRejectDialog(request: TravelRequestSummary): void {
@@ -385,20 +379,31 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
     this.isProcessingAction = true;
     this.actionType = 'reject';
 
-    // Simulate API call for rejection
-    setTimeout(() => {
-      this.snackBar.open(
-        `Travel request for ${request.employeeName} has been rejected.`,
-        'Close',
-        { duration: 4000 }
-      );
-      
-      // Remove request from table and refresh data
-      this.removeRequestFromTable(request.id);
-      this.isProcessingAction = false;
-      this.actionType = null;
-      this.closeEmployeePanel();
-    }, 1500);
+    this.managerDashboardService.rejectRequest(request.id, reason).subscribe({
+      next: (response: any) => {
+        this.snackBar.open(
+          `Travel request for ${request.employeeName} has been rejected.`,
+          'Close',
+          { duration: 4000 }
+        );
+
+        // Remove request from table and refresh data
+        this.removeRequestFromTable(request.id);
+        this.isProcessingAction = false;
+        this.actionType = null;
+        this.closeEmployeePanel();
+      },
+      error: (error: any) => {
+        console.error('Error rejecting request:', error);
+        this.snackBar.open(
+          `Failed to reject request for ${request.employeeName}. Please try again.`,
+          'Close',
+          { duration: 4000 }
+        );
+        this.isProcessingAction = false;
+        this.actionType = null;
+      },
+    });
   }
 
   viewRequestDetails(request: TravelRequestSummary): void {

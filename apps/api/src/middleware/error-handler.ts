@@ -44,7 +44,7 @@ export const errorHandler = (
         stack: error.stack,
         requestId: context.awsRequestId,
         path: event.path,
-        method: event.httpMethod
+        method: event.httpMethod,
       });
 
       if (error instanceof ApiError) {
@@ -53,7 +53,7 @@ export const errorHandler = (
           {
             code: error.code,
             message: error.message,
-            details: error.details
+            details: error.details,
           },
           context.awsRequestId
         );
@@ -64,7 +64,7 @@ export const errorHandler = (
         500,
         {
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'An unexpected error occurred'
+          message: 'An unexpected error occurred',
         },
         context.awsRequestId
       );

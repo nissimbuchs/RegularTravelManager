@@ -18,7 +18,7 @@ const mockContext: Context = {
   callbackWaitsForEmptyEventLoop: true,
   done: () => {},
   fail: () => {},
-  succeed: () => {}
+  succeed: () => {},
 };
 
 const mockEvent: APIGatewayProxyEvent = {
@@ -55,16 +55,16 @@ const mockEvent: APIGatewayProxyEvent = {
       user: null,
       apiKey: null,
       apiKeyId: null,
-      clientCert: null
+      clientCert: null,
     },
     domainName: 'api.test.com',
     apiId: 'api-id',
     accountId: '123456789',
-    authorizer: null
+    authorizer: null,
   },
   resource: '/health',
   multiValueHeaders: {},
-  multiValueQueryStringParameters: null
+  multiValueQueryStringParameters: null,
 };
 
 describe('Health Handler', () => {
@@ -92,12 +92,14 @@ describe('Health Handler', () => {
 
   it('should return degraded status when database connection fails', async () => {
     // Mock failed database connection
-    vi.mocked(dbConnection.testDatabaseConnection).mockRejectedValue(new Error('Connection failed'));
+    vi.mocked(dbConnection.testDatabaseConnection).mockRejectedValue(
+      new Error('Connection failed')
+    );
 
     const result = await healthHandler(mockEvent, mockContext);
 
     expect(result.statusCode).toBe(200);
-    
+
     const body = JSON.parse(result.body);
     expect(body.success).toBe(true);
     expect(body.data.status).toBe('degraded');
@@ -113,7 +115,7 @@ describe('Health Handler', () => {
     const result = await healthHandler(mockEvent, mockContext);
 
     expect(result.statusCode).toBe(503);
-    
+
     const body = JSON.parse(result.body);
     expect(body.success).toBe(false);
     expect(body.error.code).toBeDefined();
@@ -123,7 +125,7 @@ describe('Health Handler', () => {
     vi.mocked(dbConnection.testDatabaseConnection).mockResolvedValue();
 
     const result = await healthHandler(mockEvent, mockContext);
-    
+
     const body = JSON.parse(result.body);
     expect(body.data.services.database.responseTime).toBeGreaterThanOrEqual(0);
     expect(body.data.services.cognito.responseTime).toBeGreaterThanOrEqual(0);
@@ -135,10 +137,10 @@ describe('Health Handler', () => {
     vi.mocked(dbConnection.testDatabaseConnection).mockResolvedValue();
 
     const result = await healthHandler(mockEvent, mockContext);
-    
+
     const body = JSON.parse(result.body);
     expect(body.data.version).toBe('1.2.3');
-    
+
     delete process.env.API_VERSION;
   });
 });

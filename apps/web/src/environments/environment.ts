@@ -8,10 +8,10 @@ export const environment = {
     region: 'eu-central-1',
     domain: 'localhost.localstack.cloud',
     // Use mock authentication in community edition
-    useMockAuth: true
+    useMockAuth: true,
   },
   localstack: {
     endpoint: 'http://localhost:4566',
-    region: 'eu-central-1'
-  }
+    region: 'eu-central-1',
+  },
 };

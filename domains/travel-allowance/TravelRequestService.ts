@@ -53,7 +53,10 @@ export interface TravelRequestService {
   /**
    * Calculate distance and allowance for a potential travel request
    */
-  calculateTravelAllowance(employeeId: string, subprojectId: string): Promise<{
+  calculateTravelAllowance(
+    employeeId: string,
+    subprojectId: string
+  ): Promise<{
     distanceKm: number;
     allowanceAmount: number;
   }>;

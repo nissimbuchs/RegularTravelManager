@@ -11,34 +11,33 @@ describe('ConfirmationDialogComponent', () => {
   const mockData: ConfirmationData = {
     requestId: 'req-12345',
     calculationPreview: {
-      distance: 45.250,
+      distance: 45.25,
       dailyAllowance: 30.75,
-      weeklyAllowance: 153.75
+      weeklyAllowance: 153.75,
     },
     projectName: 'Test Project',
     subprojectName: 'Test Subproject',
     managerName: 'Test Manager',
     daysPerWeek: 5,
-    justification: 'This is a test justification for the travel request'
+    justification: 'This is a test justification for the travel request',
   };
 
   beforeEach(async () => {
     const dialogRefSpy = jasmine.createSpyObj('MatDialogRef', ['close']);
 
     await TestBed.configureTestingModule({
-      imports: [
-        ConfirmationDialogComponent,
-        BrowserAnimationsModule
-      ],
+      imports: [ConfirmationDialogComponent, BrowserAnimationsModule],
       providers: [
         { provide: MatDialogRef, useValue: dialogRefSpy },
-        { provide: MAT_DIALOG_DATA, useValue: mockData }
-      ]
+        { provide: MAT_DIALOG_DATA, useValue: mockData },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ConfirmationDialogComponent);
     component = fixture.componentInstance;
-    mockDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<ConfirmationDialogComponent>>;
+    mockDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<
+      MatDialogRef<ConfirmationDialogComponent>
+    >;
   });
 
   it('should create', () => {
@@ -54,7 +53,7 @@ describe('ConfirmationDialogComponent', () => {
   it('should display calculation preview correctly', () => {
     fixture.detectChanges();
     const summaryItems = fixture.nativeElement.querySelectorAll('.summary-item .value');
-    
+
     expect(summaryItems[0].textContent).toContain('45.250 km');
     expect(summaryItems[1].textContent).toContain('CHF 30.75');
     expect(summaryItems[2].textContent).toContain('CHF 153.75');
@@ -63,7 +62,7 @@ describe('ConfirmationDialogComponent', () => {
   it('should display request details correctly', () => {
     fixture.detectChanges();
     const detailItems = fixture.nativeElement.querySelectorAll('.detail-item .value');
-    
+
     expect(detailItems[0].textContent).toContain('Test Project');
     expect(detailItems[1].textContent).toContain('Test Subproject');
     expect(detailItems[2].textContent).toContain('Test Manager');
@@ -73,7 +72,9 @@ describe('ConfirmationDialogComponent', () => {
   it('should display justification correctly', () => {
     fixture.detectChanges();
     const justificationElement = fixture.nativeElement.querySelector('.justification-text');
-    expect(justificationElement.textContent).toContain('This is a test justification for the travel request');
+    expect(justificationElement.textContent).toContain(
+      'This is a test justification for the travel request'
+    );
   });
 
   it('should close dialog on close button click', () => {
@@ -94,7 +95,7 @@ describe('ConfirmationDialogComponent', () => {
   it('should render all action buttons', () => {
     fixture.detectChanges();
     const buttons = fixture.nativeElement.querySelectorAll('.dialog-actions button');
-    
+
     expect(buttons.length).toBe(3);
     expect(buttons[0].textContent.trim()).toBe('Close');
     expect(buttons[1].textContent.trim()).toBe('View My Requests');

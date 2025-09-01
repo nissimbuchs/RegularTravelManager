@@ -25,10 +25,10 @@ describe('ProjectsListComponent', () => {
       id: '1',
       name: 'Project Alpha',
       description: 'Test project Alpha',
-      defaultCostPerKm: 0.50,
+      defaultCostPerKm: 0.5,
       isActive: true,
       createdAt: '2024-01-01T00:00:00Z',
-      subprojects: []
+      subprojects: [],
     },
     {
       id: '2',
@@ -37,8 +37,8 @@ describe('ProjectsListComponent', () => {
       defaultCostPerKm: 0.75,
       isActive: false,
       createdAt: '2024-01-02T00:00:00Z',
-      subprojects: []
-    }
+      subprojects: [],
+    },
   ];
 
   beforeEach(async () => {
@@ -47,30 +47,26 @@ describe('ProjectsListComponent', () => {
       'toggleProjectStatus',
       'deleteProject',
       'checkProjectReferences',
-      'formatCHF'
+      'formatCHF',
     ]);
-    
+
     const loadingServiceSpy = jasmine.createSpyObj('LoadingService', ['setLoading'], {
-      loading$: of(false)
+      loading$: of(false),
     });
-    
+
     const dialogSpy = jasmine.createSpyObj('MatDialog', ['open']);
     const snackBarSpy = jasmine.createSpyObj('MatSnackBar', ['open']);
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
-      imports: [
-        ProjectsListComponent,
-        ReactiveFormsModule,
-        NoopAnimationsModule
-      ],
+      imports: [ProjectsListComponent, ReactiveFormsModule, NoopAnimationsModule],
       providers: [
         { provide: ProjectService, useValue: projectServiceSpy },
         { provide: LoadingService, useValue: loadingServiceSpy },
         { provide: MatDialog, useValue: dialogSpy },
         { provide: MatSnackBar, useValue: snackBarSpy },
-        { provide: Router, useValue: routerSpy }
-      ]
+        { provide: Router, useValue: routerSpy },
+      ],
     }).compileComponents();
 
     mockProjectService = TestBed.inject(ProjectService) as jasmine.SpyObj<ProjectService>;
@@ -101,13 +97,13 @@ describe('ProjectsListComponent', () => {
 
   it('should apply search filters', () => {
     fixture.detectChanges();
-    
+
     const searchForm = component.searchForm;
     searchForm.patchValue({
       search: 'Alpha',
       isActive: true,
-      minCostPerKm: 0.40,
-      maxCostPerKm: 0.60
+      minCostPerKm: 0.4,
+      maxCostPerKm: 0.6,
     });
 
     // Trigger filter application manually since debounce won't work in sync tests
@@ -116,8 +112,8 @@ describe('ProjectsListComponent', () => {
     const expectedFilters: ProjectSearchFilters = {
       search: 'Alpha',
       isActive: true,
-      minCostPerKm: 0.40,
-      maxCostPerKm: 0.60
+      minCostPerKm: 0.4,
+      maxCostPerKm: 0.6,
     };
 
     expect(mockProjectService.getProjects).toHaveBeenCalledWith(expectedFilters);
@@ -125,13 +121,13 @@ describe('ProjectsListComponent', () => {
 
   it('should clear all filters', () => {
     fixture.detectChanges();
-    
+
     // Set some filter values
     component.searchForm.patchValue({
       search: 'test',
       isActive: true,
       minCostPerKm: 1.0,
-      maxCostPerKm: 2.0
+      maxCostPerKm: 2.0,
     });
 
     component.clearFilters();
@@ -151,7 +147,9 @@ describe('ProjectsListComponent', () => {
     component.createProject();
 
     expect(mockDialog.open).toHaveBeenCalled();
-    expect(mockSnackBar.open).toHaveBeenCalledWith('Project created successfully', 'Close', { duration: 3000 });
+    expect(mockSnackBar.open).toHaveBeenCalledWith('Project created successfully', 'Close', {
+      duration: 3000,
+    });
   });
 
   it('should open edit project dialog', () => {
@@ -163,10 +161,10 @@ describe('ProjectsListComponent', () => {
     component.editProject(mockProjects[0]);
 
     expect(mockDialog.open).toHaveBeenCalledWith(
-      jasmine.any(Function), 
+      jasmine.any(Function),
       jasmine.objectContaining({
         width: '600px',
-        data: { title: 'Edit Project', project: mockProjects[0] }
+        data: { title: 'Edit Project', project: mockProjects[0] },
       })
     );
   });
@@ -182,11 +180,15 @@ describe('ProjectsListComponent', () => {
 
     expect(mockDialog.open).toHaveBeenCalled();
     expect(mockProjectService.toggleProjectStatus).toHaveBeenCalledWith('2');
-    expect(mockSnackBar.open).toHaveBeenCalledWith('Project activated successfully', 'Close', { duration: 3000 });
+    expect(mockSnackBar.open).toHaveBeenCalledWith('Project activated successfully', 'Close', {
+      duration: 3000,
+    });
   });
 
   it('should check project references before deletion', () => {
-    mockProjectService.checkProjectReferences.and.returnValue(of({ canDelete: true, referencesCount: 0 }));
+    mockProjectService.checkProjectReferences.and.returnValue(
+      of({ canDelete: true, referencesCount: 0 })
+    );
     const dialogRefSpy = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
     dialogRefSpy.afterClosed.and.returnValue(of(true));
     mockDialog.open.and.returnValue(dialogRefSpy);
@@ -201,7 +203,9 @@ describe('ProjectsListComponent', () => {
   });
 
   it('should prevent deletion of referenced projects', () => {
-    mockProjectService.checkProjectReferences.and.returnValue(of({ canDelete: false, referencesCount: 3 }));
+    mockProjectService.checkProjectReferences.and.returnValue(
+      of({ canDelete: false, referencesCount: 3 })
+    );
 
     fixture.detectChanges();
     component.deleteProject(mockProjects[0]);
@@ -220,7 +224,9 @@ describe('ProjectsListComponent', () => {
 
     fixture.detectChanges();
 
-    expect(mockSnackBar.open).toHaveBeenCalledWith('Failed to load projects', 'Close', { duration: 3000 });
+    expect(mockSnackBar.open).toHaveBeenCalledWith('Failed to load projects', 'Close', {
+      duration: 3000,
+    });
     expect(mockLoadingService.setLoading).toHaveBeenCalledWith(false);
   });
 
@@ -235,12 +241,12 @@ describe('ProjectsListComponent', () => {
 
   it('should ignore empty search values in filters', () => {
     fixture.detectChanges();
-    
+
     component.searchForm.patchValue({
       search: '   ', // whitespace only
       isActive: null,
       minCostPerKm: null,
-      maxCostPerKm: -1 // negative value
+      maxCostPerKm: -1, // negative value
     });
 
     component['applyFilters']();

@@ -19,7 +19,7 @@ export interface ConfirmationData {
   standalone: true,
   imports: [CommonModule, MaterialModule],
   templateUrl: './confirmation-dialog.component.html',
-  styleUrls: ['./confirmation-dialog.component.css']
+  styleUrls: ['./confirmation-dialog.component.css'],
 })
 export class ConfirmationDialogComponent {
   constructor(

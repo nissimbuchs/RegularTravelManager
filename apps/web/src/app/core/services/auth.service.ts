@@ -23,7 +23,7 @@ export interface AuthResponse {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
@@ -41,11 +41,11 @@ export class AuthService {
       this.initializeMockAuth();
       return;
     }
-    
+
     try {
       const user = await getCurrentUser();
       const session = await fetchAuthSession();
-      
+
       if (user && session.tokens) {
         const userData = this.mapAuthUserToUser(user, session.tokens);
         this.currentUserSubject.next(userData);
@@ -63,9 +63,16 @@ export class AuthService {
 
   private initializeMockAuth(): void {
     // Check for user override in localStorage for testing (defaults to employee1)
-    const userOverride = localStorage.getItem('mockUser') as 'employee1' | 'employee2' | 'manager1' | 'manager2' | null;
+    const userOverride = localStorage.getItem('mockUser') as
+      | 'employee1'
+      | 'employee2'
+      | 'manager1'
+      | 'manager2'
+      | 'admin1'
+      | 'admin2'
+      | null;
     const selectedUser = userOverride || 'employee1';
-    
+
     // Production-matching test users
     const mockUsers = {
       employee1: {
@@ -73,36 +80,52 @@ export class AuthService {
         email: 'employee1@company.com',
         name: 'John Employee',
         role: 'employee' as const,
-        groups: ['employees']
+        groups: ['employees'],
       },
       employee2: {
-        id: 'employee2-cognito-id', 
+        id: 'employee2-cognito-id',
         email: 'employee2@company.com',
         name: 'Jane Worker',
         role: 'employee' as const,
-        groups: ['employees']
+        groups: ['employees'],
       },
       manager1: {
         id: 'manager1-cognito-id',
-        email: 'manager1@company.com', 
+        email: 'manager1@company.com',
         name: 'Bob Manager',
         role: 'manager' as const,
-        groups: ['managers', 'employees']
+        groups: ['managers', 'employees'],
       },
       manager2: {
         id: 'manager2-cognito-id',
         email: 'manager2@company.com',
-        name: 'Alice Director', 
+        name: 'Alice Director',
         role: 'manager' as const,
-        groups: ['managers', 'employees']
-      }
+        groups: ['managers', 'employees'],
+      },
+      admin1: {
+        id: 'admin1-cognito-id',
+        email: 'admin1@company.com',
+        name: 'Sarah Admin',
+        role: 'admin' as const,
+        groups: ['administrators', 'managers', 'employees'],
+      },
+      admin2: {
+        id: 'admin2-cognito-id',
+        email: 'admin2@company.com',
+        name: 'David SuperAdmin',
+        role: 'admin' as const,
+        groups: ['administrators', 'managers', 'employees'],
+      },
     };
-    
+
     const mockUser = mockUsers[selectedUser];
     this.currentUserSubject.next(mockUser);
-    
+
     console.log(`🧪 Mock authentication initialized with user: ${selectedUser}`, mockUser);
-    console.log('💡 To change user, run: localStorage.setItem("mockUser", "employee1|employee2|manager1|manager2"); window.location.reload()');
+    console.log(
+      '💡 To change user, run: localStorage.setItem("mockUser", "employee1|employee2|manager1|manager2|admin1|admin2"); window.location.reload()'
+    );
   }
 
   login(credentials: LoginCredentials): Observable<AuthResponse> {
@@ -110,27 +133,29 @@ export class AuthService {
     if (environment.cognito.useMockAuth) {
       return this.mockLogin(credentials);
     }
-    
+
     // Handle real Cognito authentication
-    return from(signIn({
-      username: credentials.email,
-      password: credentials.password
-    })).pipe(
+    return from(
+      signIn({
+        username: credentials.email,
+        password: credentials.password,
+      })
+    ).pipe(
       switchMap(async () => {
         // After successful sign in, get the user data
         const user = await getCurrentUser();
         const session = await fetchAuthSession();
-        
+
         if (!user || !session.tokens?.accessToken) {
           throw new Error('Failed to get user data after login');
         }
 
         const userData = this.mapAuthUserToUser(user, session.tokens);
         this.currentUserSubject.next(userData);
-        
+
         return {
           user: userData,
-          accessToken: session.tokens.accessToken.toString()
+          accessToken: session.tokens.accessToken.toString(),
         };
       }),
       catchError(error => {
@@ -148,59 +173,82 @@ export class AuthService {
         email: 'employee1@company.com',
         name: 'John Employee',
         role: 'employee' as const,
-        groups: ['employees']
+        groups: ['employees'],
       },
       'employee2@company.com': {
-        id: 'employee2-cognito-id', 
+        id: 'employee2-cognito-id',
         email: 'employee2@company.com',
         name: 'Jane Worker',
         role: 'employee' as const,
-        groups: ['employees']
+        groups: ['employees'],
       },
       'manager1@company.com': {
         id: 'manager1-cognito-id',
-        email: 'manager1@company.com', 
+        email: 'manager1@company.com',
         name: 'Bob Manager',
         role: 'manager' as const,
-        groups: ['managers', 'employees']
+        groups: ['managers', 'employees'],
       },
       'manager2@company.com': {
         id: 'manager2-cognito-id',
         email: 'manager2@company.com',
-        name: 'Alice Director', 
+        name: 'Alice Director',
         role: 'manager' as const,
-        groups: ['managers', 'employees']
-      }
+        groups: ['managers', 'employees'],
+      },
+      'admin1@company.com': {
+        id: 'admin1-cognito-id',
+        email: 'admin1@company.com',
+        name: 'Sarah Admin',
+        role: 'admin' as const,
+        groups: ['administrators', 'managers', 'employees'],
+      },
+      'admin2@company.com': {
+        id: 'admin2-cognito-id',
+        email: 'admin2@company.com',
+        name: 'David SuperAdmin',
+        role: 'admin' as const,
+        groups: ['administrators', 'managers', 'employees'],
+      },
     };
 
     const mockUser = mockUsers[credentials.email as keyof typeof mockUsers];
-    
+
     if (!mockUser) {
-      return throwError(() => new Error('User not found. Use: employee1@company.com, employee2@company.com, manager1@company.com, or manager2@company.com'));
+      return throwError(
+        () =>
+          new Error(
+            'User not found. Use: employee1@company.com, employee2@company.com, manager1@company.com, manager2@company.com, admin1@company.com, or admin2@company.com'
+          )
+      );
     }
 
     // Simulate async login delay
-    return from(new Promise<AuthResponse>(resolve => {
-      setTimeout(() => {
-        this.currentUserSubject.next(mockUser);
-        console.log(`🧪 Mock login successful for: ${mockUser.name}`);
-        
-        resolve({
-          user: mockUser,
-          accessToken: 'mock-jwt-token-' + mockUser.id
-        });
-      }, 500); // 500ms delay to simulate network request
-    }));
+    return from(
+      new Promise<AuthResponse>(resolve => {
+        setTimeout(() => {
+          this.currentUserSubject.next(mockUser);
+          console.log(`🧪 Mock login successful for: ${mockUser.name}`);
+
+          resolve({
+            user: mockUser,
+            accessToken: 'mock-jwt-token-' + mockUser.id,
+          });
+        }, 500); // 500ms delay to simulate network request
+      })
+    );
   }
 
   logout(): Observable<void> {
     if (environment.cognito.useMockAuth) {
       // Mock logout
-      return from(new Promise<void>(resolve => {
-        this.currentUserSubject.next(null);
-        console.log('🧪 Mock logout successful');
-        resolve();
-      }));
+      return from(
+        new Promise<void>(resolve => {
+          this.currentUserSubject.next(null);
+          console.log('🧪 Mock logout successful');
+          resolve();
+        })
+      );
     }
 
     // Real logout
@@ -249,7 +297,7 @@ export class AuthService {
 
   private mapAuthUserToUser(authUser: AuthUser, tokens: any): User {
     const groups = tokens.accessToken?.payload['cognito:groups'] || [];
-    
+
     // Determine role based on group membership (admin > manager > employee)
     let role: 'employee' | 'manager' | 'admin' = 'employee';
     if (groups.includes('administrators')) {
@@ -257,25 +305,23 @@ export class AuthService {
     } else if (groups.includes('managers')) {
       role = 'manager';
     }
-    
+
     return {
       id: authUser.userId,
       email: authUser.signInDetails?.loginId || '',
-      name: `${tokens.idToken?.payload?.given_name || ''} ${tokens.idToken?.payload?.family_name || ''}`.trim() || 'User',
+      name:
+        `${tokens.idToken?.payload?.given_name || ''} ${tokens.idToken?.payload?.family_name || ''}`.trim() ||
+        'User',
       role: role,
-      groups: groups
+      groups: groups,
     };
   }
 
   hasRole(role: 'employee' | 'manager' | 'admin'): Observable<boolean> {
-    return this.currentUser$.pipe(
-      map(user => user?.role === role || false)
-    );
+    return this.currentUser$.pipe(map(user => user?.role === role || false));
   }
 
   hasAnyRole(roles: ('employee' | 'manager' | 'admin')[]): Observable<boolean> {
-    return this.currentUser$.pipe(
-      map(user => user ? roles.includes(user.role) : false)
-    );
+    return this.currentUser$.pipe(map(user => (user ? roles.includes(user.role) : false)));
   }
 }

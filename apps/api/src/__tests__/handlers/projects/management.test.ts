@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
-import { 
-  createProject, 
-  createSubproject, 
+import {
+  createProject,
+  createSubproject,
   getActiveProjects,
   getSubprojectsForProject,
   searchProjects,
   updateProject,
   deleteProject,
   toggleProjectStatus,
-  checkProjectReferences
+  checkProjectReferences,
 } from '../../../handlers/projects/management';
 import { db } from '../../../database/connection';
 import { GeocodingService } from '../../../services/geocoding-service';
@@ -21,8 +21,8 @@ vi.mock('../../middleware/logger', () => ({
   logger: {
     info: vi.fn(),
     warn: vi.fn(),
-    error: vi.fn()
-  }
+    error: vi.fn(),
+  },
 }));
 
 const mockDb = vi.mocked(db);
@@ -41,32 +41,32 @@ describe('Project Management API', () => {
     done: vi.fn(),
     fail: vi.fn(),
     succeed: vi.fn(),
-    callbackWaitsForEmptyEventLoop: true
+    callbackWaitsForEmptyEventLoop: true,
   };
 
   const mockManagerEvent: Partial<APIGatewayProxyEvent> = {
     headers: {
-      Authorization: 'Bearer valid-token'
+      Authorization: 'Bearer valid-token',
     },
     requestContext: {
       authorizer: {
         claims: {
           sub: 'manager-123',
           'cognito:groups': 'managers',
-          email: 'manager@test.com'
-        }
-      }
-    } as any
+          email: 'manager@test.com',
+        },
+      },
+    } as any,
   };
 
   const mockProject = {
     id: 'project-123',
     name: 'Test Project',
     description: 'Test Description',
-    default_cost_per_km: 0.50,
+    default_cost_per_km: 0.5,
     is_active: true,
     created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
+    updated_at: '2024-01-01T00:00:00Z',
   };
 
   const mockSubproject = {
@@ -78,10 +78,10 @@ describe('Project Management API', () => {
     postal_code: '8001',
     country: 'Switzerland',
     location: 'POINT(8.5417 47.3769)',
-    cost_per_km: 0.60,
+    cost_per_km: 0.6,
     is_active: true,
     created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
+    updated_at: '2024-01-01T00:00:00Z',
   };
 
   beforeEach(() => {
@@ -100,22 +100,23 @@ describe('Project Management API', () => {
         body: JSON.stringify({
           name: 'New Project',
           description: 'Project Description',
-          default_cost_per_km: 0.75
-        })
+          default_cost_per_km: 0.75,
+        }),
       } as APIGatewayProxyEvent;
 
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [mockProject] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [mockProject],
       });
 
       const result = await createProject(event, mockContext);
 
       expect(result.statusCode).toBe(201);
       expect(JSON.parse(result.body).data).toEqual(mockProject);
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO projects'),
-        ['New Project', 'Project Description', 0.75]
-      );
+      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO projects'), [
+        'New Project',
+        'Project Description',
+        0.75,
+      ]);
     });
 
     it('should reject creation with negative cost per km', async () => {
@@ -123,8 +124,8 @@ describe('Project Management API', () => {
         ...mockManagerEvent,
         body: JSON.stringify({
           name: 'New Project',
-          default_cost_per_km: -0.25
-        })
+          default_cost_per_km: -0.25,
+        }),
       } as APIGatewayProxyEvent;
 
       const result = await createProject(event, mockContext);
@@ -137,8 +138,8 @@ describe('Project Management API', () => {
       const event = {
         ...mockManagerEvent,
         body: JSON.stringify({
-          description: 'Missing name and cost'
-        })
+          description: 'Missing name and cost',
+        }),
       } as APIGatewayProxyEvent;
 
       const result = await createProject(event, mockContext);
@@ -155,14 +156,14 @@ describe('Project Management API', () => {
             claims: {
               sub: 'employee-123',
               'cognito:groups': 'employees',
-              email: 'employee@test.com'
-            }
-          }
+              email: 'employee@test.com',
+            },
+          },
         } as any,
         body: JSON.stringify({
           name: 'New Project',
-          default_cost_per_km: 0.50
-        })
+          default_cost_per_km: 0.5,
+        }),
       } as APIGatewayProxyEvent;
 
       const result = await createProject(event, mockContext);
@@ -181,27 +182,27 @@ describe('Project Management API', () => {
           street_address: 'Bahnhofstrasse 1',
           city: 'Zurich',
           postal_code: '8001',
-          cost_per_km: 0.60
-        })
+          cost_per_km: 0.6,
+        }),
       } as APIGatewayProxyEvent;
 
       // Mock project exists check
       mockDb.query.mockResolvedValueOnce({
-        rows: [{ id: 'project-123', default_cost_per_km: 0.50 }]
+        rows: [{ id: 'project-123', default_cost_per_km: 0.5 }],
       });
-      
+
       // Mock geocoding service
       const mockGeocodingInstance = {
         geocodeAddress: vi.fn().mockResolvedValue({
           latitude: 47.3769,
-          longitude: 8.5417
-        })
+          longitude: 8.5417,
+        }),
       };
       mockGeocodingService.mockImplementation(() => mockGeocodingInstance);
 
       // Mock subproject creation
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [mockSubproject] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [mockSubproject],
       });
 
       const result = await createSubproject(event, mockContext);
@@ -211,7 +212,7 @@ describe('Project Management API', () => {
         street: 'Bahnhofstrasse 1',
         city: 'Zurich',
         postalCode: '8001',
-        country: 'Switzerland'
+        country: 'Switzerland',
       });
     });
 
@@ -223,24 +224,24 @@ describe('Project Management API', () => {
           name: 'Test Location',
           street_address: 'Invalid Address',
           city: 'Unknown',
-          postal_code: '0000'
-        })
+          postal_code: '0000',
+        }),
       } as APIGatewayProxyEvent;
 
       // Mock project exists
       mockDb.query.mockResolvedValueOnce({
-        rows: [{ id: 'project-123', default_cost_per_km: 0.50 }]
+        rows: [{ id: 'project-123', default_cost_per_km: 0.5 }],
       });
 
       // Mock geocoding failure
       const mockGeocodingInstance = {
-        geocodeAddress: vi.fn().mockRejectedValue(new Error('Address not found'))
+        geocodeAddress: vi.fn().mockRejectedValue(new Error('Address not found')),
       };
       mockGeocodingService.mockImplementation(() => mockGeocodingInstance);
 
       // Mock subproject creation with default coordinates
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [{ ...mockSubproject, location: 'POINT(7.447447 46.947974)' }] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [{ ...mockSubproject, location: 'POINT(7.447447 46.947974)' }],
       });
 
       const result = await createSubproject(event, mockContext);
@@ -257,8 +258,8 @@ describe('Project Management API', () => {
         ...mockManagerEvent,
         body: JSON.stringify({
           project_id: 'non-existent',
-          name: 'Test Location'
-        })
+          name: 'Test Location',
+        }),
       } as APIGatewayProxyEvent;
 
       // Mock project not found
@@ -276,8 +277,8 @@ describe('Project Management API', () => {
         body: JSON.stringify({
           project_id: 'project-123',
           name: 'Test Location',
-          postal_code: '12345' // Invalid Swiss format
-        })
+          postal_code: '12345', // Invalid Swiss format
+        }),
       } as APIGatewayProxyEvent;
 
       const result = await createSubproject(event, mockContext);
@@ -291,7 +292,7 @@ describe('Project Management API', () => {
     it('should return active projects with subproject counts', async () => {
       const mockProjects = [
         { ...mockProject, subproject_count: '2' },
-        { ...mockProject, id: 'project-456', subproject_count: '0' }
+        { ...mockProject, id: 'project-456', subproject_count: '0' },
       ];
 
       mockDb.query.mockResolvedValueOnce({ rows: mockProjects });
@@ -311,18 +312,20 @@ describe('Project Management API', () => {
     it('should return subprojects for valid project', async () => {
       const event = {
         ...mockManagerEvent,
-        pathParameters: { projectId: 'project-123' }
+        pathParameters: { projectId: 'project-123' },
       } as APIGatewayProxyEvent;
 
       // Mock project exists
       mockDb.query.mockResolvedValueOnce({ rows: [mockProject] });
-      
+
       // Mock subprojects query
-      const mockSubprojects = [{
-        ...mockSubproject,
-        longitude: 8.5417,
-        latitude: 47.3769
-      }];
+      const mockSubprojects = [
+        {
+          ...mockSubproject,
+          longitude: 8.5417,
+          latitude: 47.3769,
+        },
+      ];
       mockDb.query.mockResolvedValueOnce({ rows: mockSubprojects });
 
       const result = await getSubprojectsForProject(event, mockContext);
@@ -333,14 +336,14 @@ describe('Project Management API', () => {
       expect(response.subprojects).toHaveLength(1);
       expect(response.subprojects[0].location_coordinates).toEqual({
         latitude: 47.3769,
-        longitude: 8.5417
+        longitude: 8.5417,
       });
     });
 
     it('should return 404 for non-existent project', async () => {
       const event = {
         ...mockManagerEvent,
-        pathParameters: { projectId: 'non-existent' }
+        pathParameters: { projectId: 'non-existent' },
       } as APIGatewayProxyEvent;
 
       mockDb.query.mockResolvedValueOnce({ rows: [] });
@@ -355,7 +358,7 @@ describe('Project Management API', () => {
     it('should search projects by name and description', async () => {
       const event = {
         ...mockManagerEvent,
-        queryStringParameters: { q: 'test' }
+        queryStringParameters: { q: 'test' },
       } as APIGatewayProxyEvent;
 
       const mockResults = [mockProject];
@@ -367,16 +370,13 @@ describe('Project Management API', () => {
       const response = JSON.parse(result.body).data;
       expect(response.query).toBe('test');
       expect(response.projects).toEqual(mockResults);
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('ILIKE $1'),
-        ['%test%']
-      );
+      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('ILIKE $1'), ['%test%']);
     });
 
     it('should require minimum search length', async () => {
       const event = {
         ...mockManagerEvent,
-        queryStringParameters: { q: 'a' }
+        queryStringParameters: { q: 'a' },
       } as APIGatewayProxyEvent;
 
       const result = await searchProjects(event, mockContext);
@@ -388,7 +388,7 @@ describe('Project Management API', () => {
     it('should limit results to 50', async () => {
       const event = {
         ...mockManagerEvent,
-        queryStringParameters: { q: 'test' }
+        queryStringParameters: { q: 'test' },
       } as APIGatewayProxyEvent;
 
       mockDb.query.mockResolvedValueOnce({ rows: [mockProject] });
@@ -409,12 +409,12 @@ describe('Project Management API', () => {
         pathParameters: { id: 'project-123' },
         body: JSON.stringify({
           name: 'Updated Project',
-          default_cost_per_km: 0.80
-        })
+          default_cost_per_km: 0.8,
+        }),
       } as APIGatewayProxyEvent;
 
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [{ ...mockProject, name: 'Updated Project', default_cost_per_km: 0.80 }] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [{ ...mockProject, name: 'Updated Project', default_cost_per_km: 0.8 }],
       });
 
       const result = await updateProject(event, mockContext);
@@ -422,7 +422,7 @@ describe('Project Management API', () => {
       expect(result.statusCode).toBe(200);
       expect(mockDb.query).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE projects'),
-        expect.arrayContaining(['Updated Project', 0.80, 'project-123'])
+        expect.arrayContaining(['Updated Project', 0.8, 'project-123'])
       );
     });
 
@@ -431,8 +431,8 @@ describe('Project Management API', () => {
         ...mockManagerEvent,
         pathParameters: { id: 'project-123' },
         body: JSON.stringify({
-          default_cost_per_km: -0.25
-        })
+          default_cost_per_km: -0.25,
+        }),
       } as APIGatewayProxyEvent;
 
       const result = await updateProject(event, mockContext);
@@ -446,8 +446,8 @@ describe('Project Management API', () => {
         ...mockManagerEvent,
         pathParameters: { id: 'non-existent' },
         body: JSON.stringify({
-          name: 'Updated Name'
-        })
+          name: 'Updated Name',
+        }),
       } as APIGatewayProxyEvent;
 
       mockDb.query.mockResolvedValueOnce({ rows: [] });
@@ -462,17 +462,17 @@ describe('Project Management API', () => {
     it('should toggle project status successfully', async () => {
       const event = {
         ...mockManagerEvent,
-        pathParameters: { id: 'project-123' }
+        pathParameters: { id: 'project-123' },
       } as APIGatewayProxyEvent;
 
       // Mock getting current project
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [{ ...mockProject, is_active: true }] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [{ ...mockProject, is_active: true }],
       });
-      
+
       // Mock update result
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [{ ...mockProject, is_active: false }] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [{ ...mockProject, is_active: false }],
       });
 
       const result = await toggleProjectStatus(event, mockContext);
@@ -485,7 +485,7 @@ describe('Project Management API', () => {
     it('should return 404 for non-existent project', async () => {
       const event = {
         ...mockManagerEvent,
-        pathParameters: { id: 'non-existent' }
+        pathParameters: { id: 'non-existent' },
       } as APIGatewayProxyEvent;
 
       mockDb.query.mockResolvedValueOnce({ rows: [] });
@@ -500,17 +500,17 @@ describe('Project Management API', () => {
     it('should return reference count and deletion status', async () => {
       const event = {
         ...mockManagerEvent,
-        pathParameters: { id: 'project-123' }
+        pathParameters: { id: 'project-123' },
       } as APIGatewayProxyEvent;
 
       // Mock canDeleteProject check
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [{ count: '0' }] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [{ count: '0' }],
       });
-      
+
       // Mock reference count query
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [{ count: '0' }] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [{ count: '0' }],
       });
 
       const result = await checkProjectReferences(event, mockContext);
@@ -520,24 +520,24 @@ describe('Project Management API', () => {
       expect(responseData).toEqual({
         canDelete: true,
         referencesCount: 0,
-        projectId: 'project-123'
+        projectId: 'project-123',
       });
     });
 
     it('should indicate project cannot be deleted when references exist', async () => {
       const event = {
         ...mockManagerEvent,
-        pathParameters: { id: 'project-123' }
+        pathParameters: { id: 'project-123' },
       } as APIGatewayProxyEvent;
 
       // Mock canDeleteProject check (returns false)
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [{ count: '3' }] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [{ count: '3' }],
       });
-      
+
       // Mock reference count query
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [{ count: '3' }] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [{ count: '3' }],
       });
 
       const result = await checkProjectReferences(event, mockContext);
@@ -553,73 +553,73 @@ describe('Project Management API', () => {
     it('should delete project when no references exist', async () => {
       const event = {
         ...mockManagerEvent,
-        pathParameters: { id: 'project-123' }
+        pathParameters: { id: 'project-123' },
       } as APIGatewayProxyEvent;
 
       // Mock canDeleteProject check
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [{ count: '0' }] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [{ count: '0' }],
       });
-      
+
       // Mock getProject
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [mockProject] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [mockProject],
       });
-      
+
       // Mock subprojects deletion
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [],
       });
-      
+
       // Mock project deletion
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [mockProject] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [mockProject],
       });
 
       const result = await deleteProject(event, mockContext);
 
       expect(result.statusCode).toBe(204);
-      expect(mockDb.query).toHaveBeenCalledWith(
-        'DELETE FROM subprojects WHERE project_id = $1',
-        ['project-123']
-      );
-      expect(mockDb.query).toHaveBeenCalledWith(
-        'DELETE FROM projects WHERE id = $1 RETURNING *',
-        ['project-123']
-      );
+      expect(mockDb.query).toHaveBeenCalledWith('DELETE FROM subprojects WHERE project_id = $1', [
+        'project-123',
+      ]);
+      expect(mockDb.query).toHaveBeenCalledWith('DELETE FROM projects WHERE id = $1 RETURNING *', [
+        'project-123',
+      ]);
     });
 
     it('should prevent deletion when references exist', async () => {
       const event = {
         ...mockManagerEvent,
-        pathParameters: { id: 'project-123' }
+        pathParameters: { id: 'project-123' },
       } as APIGatewayProxyEvent;
 
       // Mock canDeleteProject check (returns false)
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [{ count: '2' }] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [{ count: '2' }],
       });
 
       const result = await deleteProject(event, mockContext);
 
       expect(result.statusCode).toBe(400);
-      expect(JSON.parse(result.body).error).toContain('Cannot delete project with active travel request references');
+      expect(JSON.parse(result.body).error).toContain(
+        'Cannot delete project with active travel request references'
+      );
     });
 
     it('should return 404 for non-existent project', async () => {
       const event = {
         ...mockManagerEvent,
-        pathParameters: { id: 'non-existent' }
+        pathParameters: { id: 'non-existent' },
       } as APIGatewayProxyEvent;
 
       // Mock canDeleteProject check
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [{ count: '0' }] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [{ count: '0' }],
       });
-      
+
       // Mock getProject (not found)
-      mockDb.query.mockResolvedValueOnce({ 
-        rows: [] 
+      mockDb.query.mockResolvedValueOnce({
+        rows: [],
       });
 
       const result = await deleteProject(event, mockContext);
@@ -630,20 +630,20 @@ describe('Project Management API', () => {
 
   describe('CHF Validation', () => {
     it('should validate cost rates are positive decimals', async () => {
-      const validCosts = [0.01, 0.50, 1.00, 999.99];
-      const invalidCosts = [0, -0.50, -1, Infinity, NaN];
+      const validCosts = [0.01, 0.5, 1.0, 999.99];
+      const invalidCosts = [0, -0.5, -1, Infinity, NaN];
 
       for (const cost of validCosts) {
         const event = {
           ...mockManagerEvent,
           body: JSON.stringify({
             name: 'Test Project',
-            default_cost_per_km: cost
-          })
+            default_cost_per_km: cost,
+          }),
         } as APIGatewayProxyEvent;
 
-        mockDb.query.mockResolvedValueOnce({ 
-          rows: [{ ...mockProject, default_cost_per_km: cost }] 
+        mockDb.query.mockResolvedValueOnce({
+          rows: [{ ...mockProject, default_cost_per_km: cost }],
         });
 
         const result = await createProject(event, mockContext);
@@ -655,8 +655,8 @@ describe('Project Management API', () => {
           ...mockManagerEvent,
           body: JSON.stringify({
             name: 'Test Project',
-            default_cost_per_km: cost
-          })
+            default_cost_per_km: cost,
+          }),
         } as APIGatewayProxyEvent;
 
         const result = await createProject(event, mockContext);
@@ -674,17 +674,17 @@ describe('Project Management API', () => {
           body: JSON.stringify({
             project_id: 'project-123',
             name: 'Test Location',
-            postal_code: code
-          })
+            postal_code: code,
+          }),
         } as APIGatewayProxyEvent;
 
         // Mock project exists
         mockDb.query.mockResolvedValueOnce({
-          rows: [{ id: 'project-123', default_cost_per_km: 0.50 }]
+          rows: [{ id: 'project-123', default_cost_per_km: 0.5 }],
         });
-        
-        mockDb.query.mockResolvedValueOnce({ 
-          rows: [mockSubproject] 
+
+        mockDb.query.mockResolvedValueOnce({
+          rows: [mockSubproject],
         });
 
         const result = await createSubproject(event, mockContext);
@@ -697,8 +697,8 @@ describe('Project Management API', () => {
           body: JSON.stringify({
             project_id: 'project-123',
             name: 'Test Location',
-            postal_code: code
-          })
+            postal_code: code,
+          }),
         } as APIGatewayProxyEvent;
 
         const result = await createSubproject(event, mockContext);

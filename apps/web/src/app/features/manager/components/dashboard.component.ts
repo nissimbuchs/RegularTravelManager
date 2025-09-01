@@ -8,13 +8,7 @@ import { RouterModule } from '@angular/router';
 @Component({
   selector: 'app-manager-dashboard',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    RouterModule
-  ],
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, RouterModule],
   template: `
     <div class="dashboard-container">
       <div class="welcome-section">
@@ -64,47 +58,49 @@ import { RouterModule } from '@angular/router';
       </div>
     </div>
   `,
-  styles: [`
-    .dashboard-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
+  styles: [
+    `
+      .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
 
-    .welcome-section {
-      margin-bottom: 32px;
-      text-align: center;
-    }
+      .welcome-section {
+        margin-bottom: 32px;
+        text-align: center;
+      }
 
-    .welcome-section h1 {
-      margin: 0 0 16px;
-      color: #333;
-    }
+      .welcome-section h1 {
+        margin: 0 0 16px;
+        color: #333;
+      }
 
-    .welcome-section p {
-      margin: 0;
-      color: #666;
-      font-size: 16px;
-    }
+      .welcome-section p {
+        margin: 0;
+        color: #666;
+        font-size: 16px;
+      }
 
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
-    }
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+      }
 
-    .dashboard-card {
-      transition: transform 0.2s ease-in-out;
-    }
+      .dashboard-card {
+        transition: transform 0.2s ease-in-out;
+      }
 
-    .dashboard-card:hover {
-      transform: translateY(-4px);
-    }
+      .dashboard-card:hover {
+        transform: translateY(-4px);
+      }
 
-    mat-card-header mat-icon {
-      background-color: #fff3e0;
-      color: #f57c00;
-    }
-  `]
+      mat-card-header mat-icon {
+        background-color: #fff3e0;
+        color: #f57c00;
+      }
+    `,
+  ],
 })
 export class DashboardComponent {}

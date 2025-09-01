@@ -17,14 +17,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           // Mock development scenario - proceed without auth header
           return next(req);
         }
-        
+
         // Get current token and add to request
         return authService.refreshToken().pipe(
           switchMap(token => {
             const authReq = req.clone({
               setHeaders: {
-                Authorization: `Bearer ${token}`
-              }
+                Authorization: `Bearer ${token}`,
+              },
             });
             return next(authReq);
           }),

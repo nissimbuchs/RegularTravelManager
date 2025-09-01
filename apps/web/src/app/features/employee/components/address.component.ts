@@ -16,7 +16,10 @@ import { takeUntil, finalize } from 'rxjs/operators';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoadingService } from '../../../core/services/loading.service';
-import { EmployeeDto, UpdateEmployeeAddressRequest } from '../../../../../../../packages/shared/src/types/api';
+import {
+  EmployeeDto,
+  UpdateEmployeeAddressRequest,
+} from '../../../../../../../packages/shared/src/types/api';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 
 @Component({
@@ -33,7 +36,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
     MatSelectModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-    MatDialogModule
+    MatDialogModule,
   ],
   template: `
     <div class="address-container">
@@ -50,20 +53,22 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
               <mat-icon class="address-icon">place</mat-icon>
               <div class="address-text">
                 <div class="street">{{ employee.home_street }}</div>
-                <div class="city-postal">{{ employee.home_postal_code }} {{ employee.home_city }}</div>
+                <div class="city-postal">
+                  {{ employee.home_postal_code }} {{ employee.home_city }}
+                </div>
                 <div class="country">{{ employee.home_country }}</div>
               </div>
             </div>
-            
+
             <div class="coordinates" *ngIf="employee.home_location">
               <mat-icon class="coords-icon">my_location</mat-icon>
               <span class="coords-text">
-                {{ employee.home_location.latitude | number:'1.6-6' }}, 
-                {{ employee.home_location.longitude | number:'1.6-6' }}
+                {{ employee.home_location.latitude | number: '1.6-6' }},
+                {{ employee.home_location.longitude | number: '1.6-6' }}
               </span>
             </div>
           </div>
-          
+
           <ng-template #noAddress>
             <div class="no-address">
               <mat-icon>location_off</mat-icon>
@@ -73,10 +78,14 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
           </ng-template>
         </mat-card-content>
         <mat-card-actions>
-          <button mat-raised-button color="primary" (click)="toggleEditMode()" 
-                  [disabled]="isLoading">
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="toggleEditMode()"
+            [disabled]="isLoading"
+          >
             <mat-icon>{{ isEditMode ? 'cancel' : 'edit' }}</mat-icon>
-            {{ isEditMode ? 'Cancel' : (hasAddress() ? 'Edit Address' : 'Add Address') }}
+            {{ isEditMode ? 'Cancel' : hasAddress() ? 'Edit Address' : 'Add Address' }}
           </button>
         </mat-card-actions>
       </mat-card>
@@ -93,10 +102,12 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
             <div class="form-row">
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Street Address</mat-label>
-                <input matInput 
-                       formControlName="home_street" 
-                       placeholder="e.g. Bahnhofstrasse 45"
-                       maxlength="255">
+                <input
+                  matInput
+                  formControlName="home_street"
+                  placeholder="e.g. Bahnhofstrasse 45"
+                  maxlength="255"
+                />
                 <mat-icon matSuffix>home</mat-icon>
                 <mat-error *ngIf="addressForm.get('home_street')?.errors?.['required']">
                   Street address is required
@@ -110,10 +121,12 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
             <div class="form-row">
               <mat-form-field appearance="outline" class="city-field">
                 <mat-label>City</mat-label>
-                <input matInput 
-                       formControlName="home_city" 
-                       placeholder="e.g. Zurich"
-                       maxlength="100">
+                <input
+                  matInput
+                  formControlName="home_city"
+                  placeholder="e.g. Zurich"
+                  maxlength="100"
+                />
                 <mat-icon matSuffix>location_city</mat-icon>
                 <mat-error *ngIf="addressForm.get('home_city')?.errors?.['required']">
                   City is required
@@ -125,10 +138,12 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
 
               <mat-form-field appearance="outline" class="postal-field">
                 <mat-label>Postal Code</mat-label>
-                <input matInput 
-                       formControlName="home_postal_code" 
-                       placeholder="e.g. 8001"
-                       maxlength="4">
+                <input
+                  matInput
+                  formControlName="home_postal_code"
+                  placeholder="e.g. 8001"
+                  maxlength="4"
+                />
                 <mat-icon matSuffix>markunread_mailbox</mat-icon>
                 <mat-error *ngIf="addressForm.get('home_postal_code')?.errors?.['required']">
                   Postal code is required
@@ -159,10 +174,12 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
           <button mat-button type="button" (click)="toggleEditMode()" [disabled]="isLoading">
             Cancel
           </button>
-          <button mat-raised-button 
-                  color="primary" 
-                  (click)="onSubmit()"
-                  [disabled]="!addressForm.valid || isLoading">
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="onSubmit()"
+            [disabled]="!addressForm.valid || isLoading"
+          >
             <mat-spinner diameter="20" *ngIf="isLoading" class="button-spinner"></mat-spinner>
             <mat-icon *ngIf="!isLoading">{{ hasAddress() ? 'update' : 'add_location' }}</mat-icon>
             {{ hasAddress() ? 'Update' : 'Add' }} Address
@@ -182,7 +199,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
               <mat-icon>event</mat-icon>
               <div>
                 <strong>Last Updated</strong>
-                <p>{{ employee.updated_at | date:'medium' }}</p>
+                <p>{{ employee.updated_at | date: 'medium' }}</p>
               </div>
             </div>
             <div class="info-item" *ngIf="employee.home_location">
@@ -197,182 +214,185 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
       </mat-card>
     </div>
   `,
-  styles: [`
-    .address-container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .current-address-card mat-card-header mat-icon {
-      background-color: #e3f2fd;
-      color: #1976d2;
-    }
-
-    .address-form-card mat-card-header mat-icon {
-      background-color: #e8f5e8;
-      color: #2e7d32;
-    }
-
-    .address-history-card mat-card-header mat-icon {
-      background-color: #fff3e0;
-      color: #f57c00;
-    }
-
-    .address-display {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .address-info {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
-    .address-icon {
-      color: #1976d2;
-      margin-top: 2px;
-    }
-
-    .address-text {
-      flex: 1;
-    }
-
-    .street {
-      font-size: 1.1rem;
-      font-weight: 500;
-      margin-bottom: 4px;
-    }
-
-    .city-postal {
-      color: rgba(0, 0, 0, 0.7);
-      margin-bottom: 2px;
-    }
-
-    .country {
-      color: rgba(0, 0, 0, 0.6);
-      font-size: 0.9rem;
-    }
-
-    .coordinates {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      background-color: #f5f5f5;
-      border-radius: 4px;
-      font-family: 'Roboto Mono', monospace;
-      font-size: 0.9rem;
-    }
-
-    .coords-icon {
-      color: #4caf50;
-      font-size: 1rem;
-      width: 1rem;
-      height: 1rem;
-    }
-
-    .no-address {
-      text-align: center;
-      padding: 40px 20px;
-      color: rgba(0, 0, 0, 0.6);
-    }
-
-    .no-address mat-icon {
-      font-size: 4rem;
-      width: 4rem;
-      height: 4rem;
-      color: #ccc;
-      margin-bottom: 16px;
-    }
-
-    .no-address h3 {
-      margin: 16px 0 8px 0;
-      color: rgba(0, 0, 0, 0.87);
-    }
-
-    .form-row {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    .full-width {
-      width: 100%;
-    }
-
-    .city-field {
-      flex: 2;
-    }
-
-    .postal-field {
-      flex: 1;
-    }
-
-    .button-spinner {
-      margin-right: 8px;
-    }
-
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-top: 16px;
-    }
-
-    .info-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 16px;
-      background-color: #f9f9f9;
-      border-radius: 8px;
-    }
-
-    .info-item mat-icon {
-      color: #666;
-      margin-top: 2px;
-    }
-
-    .info-item strong {
-      display: block;
-      margin-bottom: 4px;
-      color: rgba(0, 0, 0, 0.87);
-    }
-
-    .info-item p {
-      margin: 0;
-      color: rgba(0, 0, 0, 0.6);
-    }
-
-    @media (max-width: 768px) {
+  styles: [
+    `
       .address-container {
-        padding: 12px;
-      }
-
-      .form-row {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 20px;
       }
 
-      .city-field, .postal-field {
+      .current-address-card mat-card-header mat-icon {
+        background-color: #e3f2fd;
+        color: #1976d2;
+      }
+
+      .address-form-card mat-card-header mat-icon {
+        background-color: #e8f5e8;
+        color: #2e7d32;
+      }
+
+      .address-history-card mat-card-header mat-icon {
+        background-color: #fff3e0;
+        color: #f57c00;
+      }
+
+      .address-display {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .address-info {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .address-icon {
+        color: #1976d2;
+        margin-top: 2px;
+      }
+
+      .address-text {
         flex: 1;
       }
 
-      .info-grid {
-        grid-template-columns: 1fr;
+      .street {
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 4px;
       }
-    }
-  `]
+
+      .city-postal {
+        color: rgba(0, 0, 0, 0.7);
+        margin-bottom: 2px;
+      }
+
+      .country {
+        color: rgba(0, 0, 0, 0.6);
+        font-size: 0.9rem;
+      }
+
+      .coordinates {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 0.9rem;
+      }
+
+      .coords-icon {
+        color: #4caf50;
+        font-size: 1rem;
+        width: 1rem;
+        height: 1rem;
+      }
+
+      .no-address {
+        text-align: center;
+        padding: 40px 20px;
+        color: rgba(0, 0, 0, 0.6);
+      }
+
+      .no-address mat-icon {
+        font-size: 4rem;
+        width: 4rem;
+        height: 4rem;
+        color: #ccc;
+        margin-bottom: 16px;
+      }
+
+      .no-address h3 {
+        margin: 16px 0 8px 0;
+        color: rgba(0, 0, 0, 0.87);
+      }
+
+      .form-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .full-width {
+        width: 100%;
+      }
+
+      .city-field {
+        flex: 2;
+      }
+
+      .postal-field {
+        flex: 1;
+      }
+
+      .button-spinner {
+        margin-right: 8px;
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 16px;
+      }
+
+      .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+      }
+
+      .info-item mat-icon {
+        color: #666;
+        margin-top: 2px;
+      }
+
+      .info-item strong {
+        display: block;
+        margin-bottom: 4px;
+        color: rgba(0, 0, 0, 0.87);
+      }
+
+      .info-item p {
+        margin: 0;
+        color: rgba(0, 0, 0, 0.6);
+      }
+
+      @media (max-width: 768px) {
+        .address-container {
+          padding: 12px;
+        }
+
+        .form-row {
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .city-field,
+        .postal-field {
+          flex: 1;
+        }
+
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    `,
+  ],
 })
 export class AddressComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  
+
   employee: EmployeeDto | null = null;
   addressForm: FormGroup;
   isEditMode = false;
@@ -405,47 +425,55 @@ export class AddressComponent implements OnInit, OnDestroy {
       home_street: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],
       home_city: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       home_postal_code: ['', [Validators.required, Validators.pattern(/^[0-9]{4}$/)]],
-      home_country: ['Switzerland', [Validators.required]]
+      home_country: ['Switzerland', [Validators.required]],
     });
   }
 
   private loadEmployeeProfile(): void {
     this.loadingService.setLoading(true);
-    
+
     // Get current user ID from auth service
-    this.authService.getCurrentUser().pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (user) => {
-        console.log('Auth user:', user); // Debug log
-        if (user?.id) {
-          console.log('Loading profile for user ID:', user.id); // Debug log
-          this.employeeService.getEmployeeProfile(user.id).pipe(
-            takeUntil(this.destroy$),
-            finalize(() => this.loadingService.setLoading(false))
-          ).subscribe({
-            next: (employee) => {
-              console.log('Employee profile loaded:', employee); // Debug log
-              this.employee = employee;
-              this.populateForm();
-            },
-            error: (error) => {
-              console.error('Failed to load employee profile:', error);
-              this.snackBar.open(`Failed to load employee profile: ${error.message || error.status}`, 'Close', { duration: 5000 });
-            }
-          });
-        } else {
-          console.warn('No user ID available'); // Debug log
-          this.snackBar.open('No user authentication found', 'Close', { duration: 3000 });
+    this.authService
+      .getCurrentUser()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: user => {
+          console.log('Auth user:', user); // Debug log
+          if (user?.id) {
+            console.log('Loading profile for user ID:', user.id); // Debug log
+            this.employeeService
+              .getEmployeeProfile(user.id)
+              .pipe(
+                takeUntil(this.destroy$),
+                finalize(() => this.loadingService.setLoading(false))
+              )
+              .subscribe({
+                next: employee => {
+                  console.log('Employee profile loaded:', employee); // Debug log
+                  this.employee = employee;
+                  this.populateForm();
+                },
+                error: error => {
+                  console.error('Failed to load employee profile:', error);
+                  this.snackBar.open(
+                    `Failed to load employee profile: ${error.message || error.status}`,
+                    'Close',
+                    { duration: 5000 }
+                  );
+                },
+              });
+          } else {
+            console.warn('No user ID available'); // Debug log
+            this.snackBar.open('No user authentication found', 'Close', { duration: 3000 });
+            this.loadingService.setLoading(false);
+          }
+        },
+        error: error => {
+          console.error('Failed to get current user:', error);
+          this.snackBar.open('Authentication error', 'Close', { duration: 3000 });
           this.loadingService.setLoading(false);
-        }
-      },
-      error: (error) => {
-        console.error('Failed to get current user:', error);
-        this.snackBar.open('Authentication error', 'Close', { duration: 3000 });
-        this.loadingService.setLoading(false);
-      }
-    });
+        },
+      });
   }
 
   private populateForm(): void {
@@ -454,13 +482,17 @@ export class AddressComponent implements OnInit, OnDestroy {
         home_street: this.employee.home_street,
         home_city: this.employee.home_city,
         home_postal_code: this.employee.home_postal_code,
-        home_country: this.employee.home_country
+        home_country: this.employee.home_country,
       });
     }
   }
 
   hasAddress(): boolean {
-    return !!(this.employee?.home_street && this.employee?.home_city && this.employee?.home_postal_code);
+    return !!(
+      this.employee?.home_street &&
+      this.employee?.home_city &&
+      this.employee?.home_postal_code
+    );
   }
 
   toggleEditMode(): void {
@@ -479,17 +511,18 @@ export class AddressComponent implements OnInit, OnDestroy {
     }
 
     const addressData: UpdateEmployeeAddressRequest = this.addressForm.value;
-    
+
     // Show confirmation dialog if updating existing address
     if (this.hasAddress()) {
       const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
         data: {
           title: 'Update Address',
-          message: 'Updating your address will recalculate distances for any pending travel requests. Continue?',
+          message:
+            'Updating your address will recalculate distances for any pending travel requests. Continue?',
           confirmText: 'Update Address',
           confirmColor: 'primary',
-          icon: 'update'
-        }
+          icon: 'update',
+        },
       });
 
       dialogRef.afterClosed().subscribe(confirmed => {
@@ -504,36 +537,39 @@ export class AddressComponent implements OnInit, OnDestroy {
 
   private performAddressUpdate(addressData: UpdateEmployeeAddressRequest): void {
     this.isLoading = true;
-    
-    this.employeeService.updateEmployeeAddress(this.employee!.id, addressData).pipe(
-      takeUntil(this.destroy$),
-      finalize(() => this.isLoading = false)
-    ).subscribe({
-      next: (updatedEmployee) => {
-        this.employee = updatedEmployee;
-        this.isEditMode = false;
-        this.snackBar.open(
-          updatedEmployee.home_location 
-            ? 'Address updated and geocoded successfully' 
-            : 'Address updated (geocoding in progress)', 
-          'Close', 
-          { duration: 3000 }
-        );
-      },
-      error: (error) => {
-        console.error('Failed to update address:', error);
-        let errorMessage = 'Failed to update address';
-        
-        if (error.status === 422) {
-          errorMessage = 'Invalid address format. Please check your input.';
-        } else if (error.status === 404) {
-          errorMessage = 'Employee profile not found';
-        } else if (error.error?.message) {
-          errorMessage = error.error.message;
-        }
-        
-        this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
-      }
-    });
+
+    this.employeeService
+      .updateEmployeeAddress(this.employee!.id, addressData)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.isLoading = false))
+      )
+      .subscribe({
+        next: updatedEmployee => {
+          this.employee = updatedEmployee;
+          this.isEditMode = false;
+          this.snackBar.open(
+            updatedEmployee.home_location
+              ? 'Address updated and geocoded successfully'
+              : 'Address updated (geocoding in progress)',
+            'Close',
+            { duration: 3000 }
+          );
+        },
+        error: error => {
+          console.error('Failed to update address:', error);
+          let errorMessage = 'Failed to update address';
+
+          if (error.status === 422) {
+            errorMessage = 'Invalid address format. Please check your input.';
+          } else if (error.status === 404) {
+            errorMessage = 'Employee profile not found';
+          } else if (error.error?.message) {
+            errorMessage = error.error.message;
+          }
+
+          this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
+        },
+      });
   }
 }

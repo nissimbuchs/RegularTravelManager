@@ -1,4 +1,4 @@
-// API Response Types  
+// API Response Types
 export interface ApiErrorResponse {
   code: string;
   message: string;

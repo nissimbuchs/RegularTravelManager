@@ -11,7 +11,7 @@ class Logger {
       timestamp,
       level,
       message,
-      ...context
+      ...context,
     };
     return JSON.stringify(logEntry);
   }

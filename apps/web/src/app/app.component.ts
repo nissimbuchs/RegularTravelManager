@@ -8,7 +8,7 @@ import { configureAmplify } from './core/config/amplify.config';
   standalone: true,
   imports: [RouterOutlet, MaterialModule],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrl: './app.component.css',
 })
 export class AppComponent implements OnInit {
   title = 'RegularTravelManager';

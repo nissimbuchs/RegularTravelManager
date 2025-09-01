@@ -34,9 +34,7 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        { provide: AuthService, useClass: MockAuthService }
-      ]
+      providers: [{ provide: AuthService, useClass: MockAuthService }],
     });
     service = TestBed.inject(AuthService) as any;
   });
@@ -45,7 +43,7 @@ describe('AuthService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should detect when user is not authenticated', (done) => {
+  it('should detect when user is not authenticated', done => {
     service.isAuthenticated$.pipe(take(1)).subscribe(isAuth => {
       expect(isAuth).toBeFalsy();
       done();
@@ -53,20 +51,26 @@ describe('AuthService', () => {
   });
 
   describe('hasRole', () => {
-    it('should return false when no user is authenticated', (done) => {
-      service.hasRole('employee').pipe(take(1)).subscribe(hasRole => {
-        expect(hasRole).toBeFalsy();
-        done();
-      });
+    it('should return false when no user is authenticated', done => {
+      service
+        .hasRole('employee')
+        .pipe(take(1))
+        .subscribe(hasRole => {
+          expect(hasRole).toBeFalsy();
+          done();
+        });
     });
   });
 
   describe('hasAnyRole', () => {
-    it('should return false when no user is authenticated', (done) => {
-      service.hasAnyRole(['employee', 'manager']).pipe(take(1)).subscribe(hasRole => {
-        expect(hasRole).toBeFalsy();
-        done();
-      });
+    it('should return false when no user is authenticated', done => {
+      service
+        .hasAnyRole(['employee', 'manager'])
+        .pipe(take(1))
+        .subscribe(hasRole => {
+          expect(hasRole).toBeFalsy();
+          done();
+        });
     });
   });
 });

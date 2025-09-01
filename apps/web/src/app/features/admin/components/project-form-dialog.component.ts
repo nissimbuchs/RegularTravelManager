@@ -9,7 +9,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
-import { Project, ProjectCreateRequest, ProjectUpdateRequest } from '../../../core/models/project.model';
+import {
+  Project,
+  ProjectCreateRequest,
+  ProjectUpdateRequest,
+} from '../../../core/models/project.model';
 import { ProjectService } from '../../../core/services/project.service';
 
 export interface ProjectFormDialogData {
@@ -29,7 +33,7 @@ export interface ProjectFormDialogData {
     MatButtonModule,
     MatIconModule,
     MatSlideToggleModule,
-    MatProgressBarModule
+    MatProgressBarModule,
   ],
   template: `
     <div class="dialog-header">
@@ -43,10 +47,9 @@ export interface ProjectFormDialogData {
 
     <mat-dialog-content>
       <form [formGroup]="projectForm" class="project-form">
-        
         <mat-form-field appearance="outline">
           <mat-label>Project Name</mat-label>
-          <input matInput formControlName="name" placeholder="Enter project name" maxlength="255">
+          <input matInput formControlName="name" placeholder="Enter project name" maxlength="255" />
           <mat-hint>Unique name for the project</mat-hint>
           <mat-error *ngIf="projectForm.get('name')?.hasError('required')">
             Project name is required
@@ -58,17 +61,28 @@ export interface ProjectFormDialogData {
 
         <mat-form-field appearance="outline">
           <mat-label>Description</mat-label>
-          <textarea matInput formControlName="description" 
-                    placeholder="Enter project description (optional)"
-                    rows="3" maxlength="1000">
+          <textarea
+            matInput
+            formControlName="description"
+            placeholder="Enter project description (optional)"
+            rows="3"
+            maxlength="1000"
+          >
           </textarea>
           <mat-hint>Optional description of the project</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Default Cost per Kilometer (CHF)</mat-label>
-          <input matInput type="number" formControlName="defaultCostPerKm" 
-                 placeholder="0.00" step="0.01" min="0.01" max="999.99">
+          <input
+            matInput
+            type="number"
+            formControlName="defaultCostPerKm"
+            placeholder="0.00"
+            step="0.01"
+            min="0.01"
+            max="999.99"
+          />
           <span matPrefix>CHF&nbsp;</span>
           <mat-hint>Default rate applied to all subprojects</mat-hint>
           <mat-error *ngIf="projectForm.get('defaultCostPerKm')?.hasError('required')">
@@ -95,9 +109,11 @@ export interface ProjectFormDialogData {
             </span>
           </mat-slide-toggle>
           <p class="status-hint">
-            {{ projectForm.get('isActive')?.value 
-               ? 'Project is available for new travel requests' 
-               : 'Project is hidden from new travel requests' }}
+            {{
+              projectForm.get('isActive')?.value
+                ? 'Project is available for new travel requests'
+                : 'Project is hidden from new travel requests'
+            }}
           </p>
         </div>
 
@@ -110,100 +126,104 @@ export interface ProjectFormDialogData {
             </span>
           </div>
         </div>
-
       </form>
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close [disabled]="isLoading">Cancel</button>
-      <button mat-raised-button color="primary" 
-              (click)="onSubmit()" 
-              [disabled]="projectForm.invalid || isLoading">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="onSubmit()"
+        [disabled]="projectForm.invalid || isLoading"
+      >
         <mat-icon *ngIf="isLoading">hourglass_empty</mat-icon>
         <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
-        {{ isLoading ? 'Saving...' : (isEditMode ? 'Update' : 'Create') }}
+        {{ isLoading ? 'Saving...' : isEditMode ? 'Update' : 'Create' }}
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
-    .dialog-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
+  styles: [
+    `
+      .dialog-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
 
-    .dialog-header h2 {
-      margin: 0;
-    }
+      .dialog-header h2 {
+        margin: 0;
+      }
 
-    .project-form {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      min-width: 500px;
-    }
+      .project-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-width: 500px;
+      }
 
-    .status-toggle {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 16px;
-      background-color: #f5f5f5;
-      border-radius: 8px;
-    }
+      .status-toggle {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 16px;
+        background-color: #f5f5f5;
+        border-radius: 8px;
+      }
 
-    .toggle-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 500;
-    }
+      .toggle-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+      }
 
-    .status-hint {
-      margin: 0;
-      font-size: 0.875rem;
-      color: rgba(0, 0, 0, 0.6);
-    }
+      .status-hint {
+        margin: 0;
+        font-size: 0.875rem;
+        color: rgba(0, 0, 0, 0.6);
+      }
 
-    .form-section {
-      margin-top: 16px;
-      padding: 16px;
-      background-color: #f9f9f9;
-      border-radius: 8px;
-    }
+      .form-section {
+        margin-top: 16px;
+        padding: 16px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+      }
 
-    .form-section h4 {
-      margin: 0 0 12px 0;
-      color: rgba(0, 0, 0, 0.87);
-    }
+      .form-section h4 {
+        margin: 0 0 12px 0;
+        color: rgba(0, 0, 0, 0.87);
+      }
 
-    .cost-preview {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+      .cost-preview {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
 
-    .cost-display {
-      font-family: 'Roboto Mono', monospace;
-      font-size: 1.1rem;
-      color: #2e7d32;
-      font-weight: 500;
-      padding: 4px 8px;
-      background-color: #e8f5e8;
-      border-radius: 4px;
-    }
+      .cost-display {
+        font-family: 'Roboto Mono', monospace;
+        font-size: 1.1rem;
+        color: #2e7d32;
+        font-weight: 500;
+        padding: 4px 8px;
+        background-color: #e8f5e8;
+        border-radius: 4px;
+      }
 
-    mat-dialog-content {
-      max-height: 70vh;
-      overflow-y: auto;
-    }
+      mat-dialog-content {
+        max-height: 70vh;
+        overflow-y: auto;
+      }
 
-    mat-dialog-actions {
-      padding: 16px 0;
-      gap: 8px;
-    }
-  `]
+      mat-dialog-actions {
+        padding: 16px 0;
+        gap: 8px;
+      }
+    `,
+  ],
 })
 export class ProjectFormDialogComponent implements OnInit {
   projectForm: FormGroup;
@@ -226,26 +246,32 @@ export class ProjectFormDialogComponent implements OnInit {
         name: this.data.project.name,
         description: this.data.project.description || '',
         defaultCostPerKm: this.data.project.defaultCostPerKm,
-        isActive: this.data.project.isActive
+        isActive: this.data.project.isActive,
       });
     }
   }
 
   private createForm(): FormGroup {
     return this.fb.group({
-      name: ['', [
-        Validators.required, 
-        Validators.maxLength(255),
-        Validators.pattern(/^[a-zA-Z0-9\s\-_().]+$/) // Alphanumeric plus common symbols
-      ]],
+      name: [
+        '',
+        [
+          Validators.required,
+          Validators.maxLength(255),
+          Validators.pattern(/^[a-zA-Z0-9\s\-_().]+$/), // Alphanumeric plus common symbols
+        ],
+      ],
       description: ['', [Validators.maxLength(1000)]],
-      defaultCostPerKm: ['', [
-        Validators.required,
-        Validators.min(0.01),
-        Validators.max(999.99),
-        Validators.pattern(/^\d+(\.\d{1,2})?$/) // Decimal with max 2 places
-      ]],
-      isActive: [true]
+      defaultCostPerKm: [
+        '',
+        [
+          Validators.required,
+          Validators.min(0.01),
+          Validators.max(999.99),
+          Validators.pattern(/^\d+(\.\d{1,2})?$/), // Decimal with max 2 places
+        ],
+      ],
+      isActive: [true],
     });
   }
 
@@ -258,22 +284,25 @@ export class ProjectFormDialogComponent implements OnInit {
         name: formValue.name.trim(),
         description: formValue.description?.trim() || undefined,
         defaultCostPerKm: parseFloat(formValue.defaultCostPerKm),
-        isActive: formValue.isActive
+        isActive: formValue.isActive,
       };
 
       const operation = this.isEditMode
-        ? this.projectService.updateProject(this.data.project!.id, projectData as ProjectUpdateRequest)
+        ? this.projectService.updateProject(
+            this.data.project!.id,
+            projectData as ProjectUpdateRequest
+          )
         : this.projectService.createProject(projectData as ProjectCreateRequest);
 
       operation.subscribe({
-        next: (result) => {
+        next: result => {
           this.isLoading = false;
           this.dialogRef.close(result);
         },
-        error: (error) => {
+        error: error => {
           this.isLoading = false;
           console.error('Project operation failed:', error);
-          
+
           // Handle specific error cases
           if (error.status === 409) {
             this.projectForm.get('name')?.setErrors({ duplicate: true });
@@ -289,7 +318,7 @@ export class ProjectFormDialogComponent implements OnInit {
               });
             }
           }
-        }
+        },
       });
     }
   }
@@ -303,7 +332,7 @@ export class ProjectFormDialogComponent implements OnInit {
   }
 
   // Custom validation methods
-  private validateCostRate(control: any): {[key: string]: any} | null {
+  private validateCostRate(control: any): { [key: string]: any } | null {
     const value = control.value;
     if (value !== null && !this.projectService.validateCostRate(value)) {
       return { invalidCostRate: true };

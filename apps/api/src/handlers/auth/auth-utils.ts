@@ -1,12 +1,12 @@
 import { APIGatewayProxyEvent } from 'aws-lambda';
-import { 
-  CognitoIdentityProviderClient, 
+import {
+  CognitoIdentityProviderClient,
   AdminCreateUserCommand,
   AdminSetUserPasswordCommand,
   AdminAddUserToGroupCommand,
   ListUsersCommand,
   AdminGetUserCommand,
-  AdminListGroupsForUserCommand
+  AdminListGroupsForUserCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { logger } from '../../middleware/logger';
 
@@ -33,7 +33,7 @@ export function getUserContextFromEvent(event: APIGatewayProxyEvent): UserContex
     email: authorizerContext.email,
     cognitoUsername: authorizerContext.cognitoUsername,
     isManager: authorizerContext.isManager === 'true',
-    groups: JSON.parse(authorizerContext.groups || '[]')
+    groups: JSON.parse(authorizerContext.groups || '[]'),
   };
 }
 
@@ -44,7 +44,7 @@ export class CognitoAdminService {
 
   constructor() {
     this.client = new CognitoIdentityProviderClient({
-      region: process.env.AWS_REGION || 'eu-central-1'
+      region: process.env.AWS_REGION || 'eu-central-1',
     });
     this.userPoolId = process.env.COGNITO_USER_POOL_ID || '';
   }
@@ -67,10 +67,10 @@ export class CognitoAdminService {
           { Name: 'email', Value: email },
           { Name: 'given_name', Value: firstName },
           { Name: 'family_name', Value: lastName },
-          { Name: 'email_verified', Value: 'true' }
+          { Name: 'email_verified', Value: 'true' },
         ],
         TemporaryPassword: tempPassword,
-        MessageAction: 'SUPPRESS' // Don't send welcome email for testing
+        MessageAction: 'SUPPRESS', // Don't send welcome email for testing
       });
 
       const createResult = await this.client.send(createCommand);
@@ -81,9 +81,9 @@ export class CognitoAdminService {
         UserPoolId: this.userPoolId,
         Username: username,
         Password: tempPassword,
-        Permanent: true
+        Permanent: true,
       });
-      
+
       await this.client.send(passwordCommand);
 
       // Add to appropriate group
@@ -91,23 +91,22 @@ export class CognitoAdminService {
       const groupCommand = new AdminAddUserToGroupCommand({
         UserPoolId: this.userPoolId,
         Username: username,
-        GroupName: groupName
+        GroupName: groupName,
       });
 
       await this.client.send(groupCommand);
 
-      logger.info('User created successfully', { 
-        username, 
-        email, 
-        group: groupName 
+      logger.info('User created successfully', {
+        username,
+        email,
+        group: groupName,
       });
 
       return username;
-
     } catch (error) {
-      logger.error('Failed to create user', { 
-        error: error.message, 
-        email 
+      logger.error('Failed to create user', {
+        error: error.message,
+        email,
       });
       throw error;
     }
@@ -117,15 +116,15 @@ export class CognitoAdminService {
     try {
       const command = new AdminGetUserCommand({
         UserPoolId: this.userPoolId,
-        Username: username
+        Username: username,
       });
 
       const result = await this.client.send(command);
-      
+
       // Get user groups
       const groupsCommand = new AdminListGroupsForUserCommand({
         UserPoolId: this.userPoolId,
-        Username: username
+        Username: username,
       });
 
       const groupsResult = await this.client.send(groupsCommand);
@@ -135,13 +134,12 @@ export class CognitoAdminService {
         attributes: result.UserAttributes,
         groups: groupsResult.Groups?.map(g => g.GroupName) || [],
         enabled: result.Enabled,
-        status: result.UserStatus
+        status: result.UserStatus,
       };
-
     } catch (error) {
-      logger.error('Failed to get user details', { 
-        error: error.message, 
-        username 
+      logger.error('Failed to get user details', {
+        error: error.message,
+        username,
       });
       throw error;
     }
@@ -151,20 +149,21 @@ export class CognitoAdminService {
     try {
       const command = new ListUsersCommand({
         UserPoolId: this.userPoolId,
-        Limit: limit
+        Limit: limit,
       });
 
       const result = await this.client.send(command);
-      
-      return result.Users?.map(user => ({
-        username: user.Username,
-        attributes: user.Attributes,
-        enabled: user.Enabled,
-        status: user.UserStatus,
-        created: user.UserCreateDate,
-        modified: user.UserLastModifiedDate
-      })) || [];
 
+      return (
+        result.Users?.map(user => ({
+          username: user.Username,
+          attributes: user.Attributes,
+          enabled: user.Enabled,
+          status: user.UserStatus,
+          created: user.UserCreateDate,
+          modified: user.UserLastModifiedDate,
+        })) || []
+      );
     } catch (error) {
       logger.error('Failed to list users', { error: error.message });
       throw error;
@@ -192,34 +191,34 @@ export const TEST_USERS = [
     firstName: 'John',
     lastName: 'Employee',
     password: 'TempPass123!',
-    isManager: false
+    isManager: false,
   },
   {
-    email: 'employee2@company.com', 
+    email: 'employee2@company.com',
     firstName: 'Jane',
     lastName: 'Worker',
     password: 'TempPass123!',
-    isManager: false
+    isManager: false,
   },
   {
     email: 'manager1@company.com',
     firstName: 'Bob',
     lastName: 'Manager',
     password: 'TempPass123!',
-    isManager: true
+    isManager: true,
   },
   {
     email: 'manager2@company.com',
     firstName: 'Alice',
     lastName: 'Director',
     password: 'TempPass123!',
-    isManager: true
-  }
+    isManager: true,
+  },
 ];
 
 export async function createTestUsers(): Promise<void> {
   const cognitoService = new CognitoAdminService();
-  
+
   logger.info('Creating test users', { count: TEST_USERS.length });
 
   for (const user of TEST_USERS) {
@@ -237,9 +236,9 @@ export async function createTestUsers(): Promise<void> {
       if (error.name === 'UsernameExistsException') {
         logger.info('Test user already exists', { email: user.email });
       } else {
-        logger.error('Failed to create test user', { 
-          email: user.email, 
-          error: error.message 
+        logger.error('Failed to create test user', {
+          email: user.email,
+          error: error.message,
         });
       }
     }

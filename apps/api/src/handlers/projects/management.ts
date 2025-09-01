@@ -4,8 +4,13 @@ import { formatResponse } from '../../middleware/response-formatter';
 import { ValidationError, NotFoundError } from '../../middleware/error-handler';
 import { validateRequest } from '../../middleware/request-validator';
 import { db } from '../../database/connection';
-import { ProjectService, CreateProjectCommand, CreateSubprojectCommand, UpdateProjectCommand } from '../../../../domains/project-management/ProjectService';
-import { GeocodingService, GeocodeResult } from '../../services/geocoding-service';
+import {
+  ProjectService,
+  CreateProjectCommand,
+  CreateSubprojectCommand,
+  UpdateProjectCommand,
+} from '../../../../domains/project-management/ProjectService';
+import { GeocodingService, GeocodeResult, GeocodeRequest } from '../../services/geocoding-service';
 import { getUserContextFromEvent, requireManager } from '../auth/auth-utils';
 
 class ProjectServiceImpl implements ProjectService {
@@ -18,15 +23,14 @@ class ProjectServiceImpl implements ProjectService {
   async createProject(command: CreateProjectCommand) {
     logger.info('Creating project', { name: command.name });
 
-    const result = await db.query(`
+    const result = await db.query(
+      `
       INSERT INTO projects (name, description, default_cost_per_km, is_active)
       VALUES ($1, $2, $3, true)
       RETURNING *
-    `, [
-      command.name,
-      command.description || null,
-      command.default_cost_per_km
-    ]);
+    `,
+      [command.name, command.description || null, command.default_cost_per_km]
+    );
 
     const row = result.rows[0];
     return {
@@ -36,14 +40,14 @@ class ProjectServiceImpl implements ProjectService {
       defaultCostPerKm: parseFloat(row.default_cost_per_km),
       isActive: row.is_active,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
     };
   }
 
   async createSubproject(command: CreateSubprojectCommand) {
-    logger.info('Creating subproject', { 
-      name: command.name, 
-      projectId: command.project_id 
+    logger.info('Creating subproject', {
+      name: command.name,
+      projectId: command.project_id,
     });
 
     // Verify parent project exists
@@ -66,17 +70,17 @@ class ProjectServiceImpl implements ProjectService {
           street: command.street_address,
           city: command.city,
           postalCode: command.postal_code,
-          country: command.country || 'Switzerland'
+          country: command.country || 'Switzerland',
         });
-        
+
         logger.info('Subproject geocoding successful', {
           name: command.name,
-          coordinates
+          coordinates,
         });
       } catch (error) {
         logger.warn('Subproject geocoding failed, using default coordinates', {
           error: error.message,
-          name: command.name
+          name: command.name,
         });
         coordinates = { latitude: 46.947974, longitude: 7.447447 }; // Default to Bern
       }
@@ -85,7 +89,8 @@ class ProjectServiceImpl implements ProjectService {
     // Use subproject cost rate or inherit from parent project
     const costPerKm = command.cost_per_km || parentProject.default_cost_per_km;
 
-    const result = await db.query(`
+    const result = await db.query(
+      `
       INSERT INTO subprojects (
         project_id, 
         name, 
@@ -99,19 +104,21 @@ class ProjectServiceImpl implements ProjectService {
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
       RETURNING *
-    `, [
-      command.project_id,
-      command.name,
-      command.street_address || null,
-      command.city || null,
-      command.postal_code || null,
-      command.country || 'Switzerland',
-      coordinates ? `POINT(${coordinates.longitude} ${coordinates.latitude})` : null,
-      costPerKm
-    ]);
+    `,
+      [
+        command.project_id,
+        command.name,
+        command.street_address || null,
+        command.city || null,
+        command.postal_code || null,
+        command.country || 'Switzerland',
+        coordinates ? `POINT(${coordinates.longitude} ${coordinates.latitude})` : null,
+        costPerKm,
+      ]
+    );
 
     const row = result.rows[0];
-    
+
     // Transform to camelCase for frontend compatibility
     return {
       id: row.id,
@@ -120,13 +127,15 @@ class ProjectServiceImpl implements ProjectService {
       locationStreet: row.street_address,
       locationCity: row.city,
       locationPostalCode: row.postal_code,
-      locationCoordinates: coordinates ? {
-        latitude: coordinates.latitude,
-        longitude: coordinates.longitude
-      } : null,
+      locationCoordinates: coordinates
+        ? {
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+          }
+        : null,
       costPerKm: parseFloat(row.cost_per_km),
       isActive: row.is_active,
-      createdAt: row.created_at
+      createdAt: row.created_at,
     };
   }
 
@@ -161,12 +170,15 @@ class ProjectServiceImpl implements ProjectService {
     setClauses.push(`updated_at = CURRENT_TIMESTAMP`);
     values.push(command.id);
 
-    const result = await db.query(`
+    const result = await db.query(
+      `
       UPDATE projects 
       SET ${setClauses.join(', ')}
       WHERE id = $${paramIndex}
       RETURNING *
-    `, values);
+    `,
+      values
+    );
 
     if (result.rows.length === 0) {
       throw new NotFoundError('Project');
@@ -180,20 +192,17 @@ class ProjectServiceImpl implements ProjectService {
       defaultCostPerKm: parseFloat(row.default_cost_per_km),
       isActive: row.is_active,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
     };
   }
 
   async getProject(id: string) {
-    const result = await db.query(
-      'SELECT * FROM projects WHERE id = $1',
-      [id]
-    );
-    
+    const result = await db.query('SELECT * FROM projects WHERE id = $1', [id]);
+
     if (result.rows.length === 0) {
       return null;
     }
-    
+
     const row = result.rows[0];
     return {
       id: row.id,
@@ -202,12 +211,13 @@ class ProjectServiceImpl implements ProjectService {
       defaultCostPerKm: parseFloat(row.default_cost_per_km),
       isActive: row.is_active,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
     };
   }
 
   async getSubproject(id: string) {
-    const result = await db.query(`
+    const result = await db.query(
+      `
       SELECT 
         s.*,
         ST_X(s.location) as longitude,
@@ -216,7 +226,9 @@ class ProjectServiceImpl implements ProjectService {
       FROM subprojects s
       LEFT JOIN projects p ON s.project_id = p.id
       WHERE s.id = $1
-    `, [id]);
+    `,
+      [id]
+    );
 
     if (result.rows.length === 0) {
       return null;
@@ -230,14 +242,17 @@ class ProjectServiceImpl implements ProjectService {
       locationStreet: row.street_address,
       locationCity: row.city,
       locationPostalCode: row.postal_code,
-      locationCoordinates: (row.longitude && row.latitude) ? {
-        latitude: row.latitude,
-        longitude: row.longitude
-      } : null,
+      locationCoordinates:
+        row.longitude && row.latitude
+          ? {
+              latitude: row.latitude,
+              longitude: row.longitude,
+            }
+          : null,
       costPerKm: parseFloat(row.cost_per_km),
       isActive: row.is_active,
       createdAt: row.created_at,
-      projectName: row.project_name
+      projectName: row.project_name,
     };
   }
 
@@ -252,7 +267,7 @@ class ProjectServiceImpl implements ProjectService {
       GROUP BY p.id
       ORDER BY p.name
     `);
-    
+
     // Transform to camelCase for frontend compatibility
     return result.rows.map(row => ({
       id: row.id,
@@ -262,12 +277,13 @@ class ProjectServiceImpl implements ProjectService {
       isActive: row.is_active,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      subprojectCount: parseInt(row.subproject_count) || 0
+      subprojectCount: parseInt(row.subproject_count) || 0,
     }));
   }
 
   async getSubprojectsForProject(projectId: string) {
-    const result = await db.query(`
+    const result = await db.query(
+      `
       SELECT 
         s.*,
         ST_X(s.location) as longitude,
@@ -275,7 +291,9 @@ class ProjectServiceImpl implements ProjectService {
       FROM subprojects s
       WHERE s.project_id = $1 AND s.is_active = true
       ORDER BY s.name
-    `, [projectId]);
+    `,
+      [projectId]
+    );
 
     return result.rows.map(row => ({
       id: row.id,
@@ -284,18 +302,22 @@ class ProjectServiceImpl implements ProjectService {
       locationStreet: row.street_address,
       locationCity: row.city,
       locationPostalCode: row.postal_code,
-      locationCoordinates: (row.longitude && row.latitude) ? {
-        latitude: row.latitude,
-        longitude: row.longitude
-      } : null,
+      locationCoordinates:
+        row.longitude && row.latitude
+          ? {
+              latitude: row.latitude,
+              longitude: row.longitude,
+            }
+          : null,
       costPerKm: parseFloat(row.cost_per_km),
       isActive: row.is_active,
-      createdAt: row.created_at
+      createdAt: row.created_at,
     }));
   }
 
   async searchProjects(searchTerm: string) {
-    const result = await db.query(`
+    const result = await db.query(
+      `
       SELECT 
         p.*,
         COUNT(s.id) as subproject_count
@@ -308,8 +330,10 @@ class ProjectServiceImpl implements ProjectService {
       GROUP BY p.id
       ORDER BY p.name
       LIMIT 50
-    `, [`%${searchTerm}%`]);
-    
+    `,
+      [`%${searchTerm}%`]
+    );
+
     // Transform to camelCase for frontend compatibility
     return result.rows.map(row => ({
       id: row.id,
@@ -319,18 +343,21 @@ class ProjectServiceImpl implements ProjectService {
       isActive: row.is_active,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      subprojectCount: parseInt(row.subproject_count) || 0
+      subprojectCount: parseInt(row.subproject_count) || 0,
     }));
   }
 
   async canDeleteProject(projectId: string) {
     // Check for active travel requests referencing this project's subprojects
-    const result = await db.query(`
+    const result = await db.query(
+      `
       SELECT COUNT(*) as count
       FROM travel_requests tr
       JOIN subprojects s ON tr.subproject_id = s.id
       WHERE s.project_id = $1 AND tr.status != 'completed'
-    `, [projectId]);
+    `,
+      [projectId]
+    );
 
     return parseInt(result.rows[0].count) === 0;
   }
@@ -343,18 +370,18 @@ export const createProject = validateRequest({
   body: {
     name: { required: true, type: 'string', minLength: 1, maxLength: 255 },
     description: { required: false, type: 'string', maxLength: 1000 },
-    default_cost_per_km: { required: true, type: 'number' }
-  }
+    default_cost_per_km: { required: true, type: 'number' },
+  },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const userContext = getUserContextFromEvent(event);
   requireManager(userContext); // Only managers can create projects
 
   const body = JSON.parse(event.body!);
-  
-  logger.info('Creating project', { 
+
+  logger.info('Creating project', {
     name: body.name,
     createdBy: userContext.sub,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   // Validate cost per km is positive
@@ -365,15 +392,15 @@ export const createProject = validateRequest({
   const command: CreateProjectCommand = {
     name: body.name,
     description: body.description,
-    default_cost_per_km: body.default_cost_per_km
+    default_cost_per_km: body.default_cost_per_km,
   };
 
   const project = await projectService.createProject(command);
 
-  logger.info('Project created successfully', { 
+  logger.info('Project created successfully', {
     projectId: project.id,
     name: project.name,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   return formatResponse(201, project, context.awsRequestId);
@@ -386,24 +413,24 @@ export const createSubproject = validateRequest({
     name: { required: true, type: 'string', minLength: 1, maxLength: 255 },
     locationStreet: { required: false, type: 'string', maxLength: 255 },
     locationCity: { required: false, type: 'string', maxLength: 100 },
-    locationPostalCode: { 
-      required: false, 
-      type: 'string', 
-      pattern: /^[0-9]{4}$/ // Swiss postal code format
+    locationPostalCode: {
+      required: false,
+      type: 'string',
+      pattern: /^[0-9]{4}$/, // Swiss postal code format
     },
-    costPerKm: { required: false, type: 'number' }
-  }
+    costPerKm: { required: false, type: 'number' },
+  },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const userContext = getUserContextFromEvent(event);
   requireManager(userContext);
 
   const body = JSON.parse(event.body!);
-  
-  logger.info('Creating subproject', { 
+
+  logger.info('Creating subproject', {
     name: body.name,
     projectId: body.project_id,
     createdBy: userContext.sub,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   // Validate cost per km if provided
@@ -418,15 +445,15 @@ export const createSubproject = validateRequest({
     city: body.locationCity,
     postal_code: body.locationPostalCode,
     country: 'Switzerland',
-    cost_per_km: body.costPerKm
+    cost_per_km: body.costPerKm,
   };
 
   const subproject = await projectService.createSubproject(command);
 
-  logger.info('Subproject created successfully', { 
+  logger.info('Subproject created successfully', {
     subprojectId: subproject.id,
     name: subproject.name,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   return formatResponse(201, subproject, context.awsRequestId);
@@ -438,10 +465,10 @@ export const getActiveProjects = async (
   context: Context
 ): Promise<APIGatewayProxyResult> => {
   const userContext = getUserContextFromEvent(event);
-  
-  logger.info('Getting active projects', { 
+
+  logger.info('Getting active projects', {
     requestedBy: userContext.sub,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   const projects = await projectService.getActiveProjects();
@@ -452,16 +479,16 @@ export const getActiveProjects = async (
 // Get subprojects for a project
 export const getSubprojectsForProject = validateRequest({
   pathParams: {
-    projectId: { required: true, type: 'string' }
-  }
+    projectId: { required: true, type: 'string' },
+  },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const projectId = event.pathParameters?.projectId;
   const userContext = getUserContextFromEvent(event);
-  
-  logger.info('Getting subprojects for project', { 
+
+  logger.info('Getting subprojects for project', {
     projectId,
     requestedBy: userContext.sub,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   // Verify project exists
@@ -472,57 +499,65 @@ export const getSubprojectsForProject = validateRequest({
 
   const subprojects = await projectService.getSubprojectsForProject(projectId!);
 
-  return formatResponse(200, { 
-    project: project.name,
-    subprojects 
-  }, context.awsRequestId);
+  return formatResponse(
+    200,
+    {
+      project: project.name,
+      subprojects,
+    },
+    context.awsRequestId
+  );
 });
 
 // Search projects
 export const searchProjects = validateRequest({
   queryParams: {
-    q: { required: true, type: 'string', minLength: 2 }
-  }
+    q: { required: true, type: 'string', minLength: 2 },
+  },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const searchTerm = event.queryStringParameters?.q;
   const userContext = getUserContextFromEvent(event);
-  
-  logger.info('Searching projects', { 
+
+  logger.info('Searching projects', {
     searchTerm,
     requestedBy: userContext.sub,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   const projects = await projectService.searchProjects(searchTerm!);
 
-  return formatResponse(200, { 
-    query: searchTerm,
-    projects 
-  }, context.awsRequestId);
+  return formatResponse(
+    200,
+    {
+      query: searchTerm,
+      projects,
+    },
+    context.awsRequestId
+  );
 });
 
 // Update project (admin only)
 export const updateProject = validateRequest({
   pathParams: {
-    id: { required: true, type: 'string' }
+    id: { required: true, type: 'string' },
   },
   body: {
     name: { required: false, type: 'string', minLength: 1, maxLength: 255 },
     description: { required: false, type: 'string', maxLength: 1000 },
     default_cost_per_km: { required: false, type: 'number' },
-    is_active: { required: false, type: 'boolean' }
-  }
+    is_active: { required: false, type: 'boolean' },
+  },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const projectId = event.pathParameters?.id;
   const userContext = getUserContextFromEvent(event);
   requireManager(userContext);
 
   const body = JSON.parse(event.body!);
-  
-  logger.info('Updating project', { 
+
+  logger.info('Updating project', {
     projectId,
     updatedBy: userContext.sub,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   // Validate cost per km if provided
@@ -535,15 +570,15 @@ export const updateProject = validateRequest({
     name: body.name,
     description: body.description,
     default_cost_per_km: body.default_cost_per_km,
-    is_active: body.is_active
+    is_active: body.is_active,
   };
 
   const project = await projectService.updateProject(command);
 
-  logger.info('Project updated successfully', { 
+  logger.info('Project updated successfully', {
     projectId: project.id,
     name: project.name,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   return formatResponse(200, project, context.awsRequestId);
@@ -552,17 +587,17 @@ export const updateProject = validateRequest({
 // Toggle project status (admin only)
 export const toggleProjectStatus = validateRequest({
   pathParams: {
-    id: { required: true, type: 'string' }
-  }
+    id: { required: true, type: 'string' },
+  },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const projectId = event.pathParameters?.id;
   const userContext = getUserContextFromEvent(event);
   requireManager(userContext);
 
-  logger.info('Toggling project status', { 
+  logger.info('Toggling project status', {
     projectId,
     requestedBy: userContext.sub,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   // Get current project status
@@ -573,15 +608,15 @@ export const toggleProjectStatus = validateRequest({
 
   const command: UpdateProjectCommand = {
     id: projectId!,
-    is_active: !currentProject.is_active
+    is_active: !currentProject.is_active,
   };
 
   const project = await projectService.updateProject(command);
 
-  logger.info('Project status toggled successfully', { 
+  logger.info('Project status toggled successfully', {
     projectId: project.id,
     newStatus: project.is_active ? 'active' : 'inactive',
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   return formatResponse(200, project, context.awsRequestId);
@@ -590,52 +625,59 @@ export const toggleProjectStatus = validateRequest({
 // Check project references (admin only)
 export const checkProjectReferences = validateRequest({
   pathParams: {
-    id: { required: true, type: 'string' }
-  }
+    id: { required: true, type: 'string' },
+  },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const projectId = event.pathParameters?.id;
   const userContext = getUserContextFromEvent(event);
   requireManager(userContext);
 
-  logger.info('Checking project references', { 
+  logger.info('Checking project references', {
     projectId,
     requestedBy: userContext.sub,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   const canDelete = await projectService.canDeleteProject(projectId!);
-  
+
   // Get reference count for detailed response
-  const result = await db.query(`
+  const result = await db.query(
+    `
     SELECT COUNT(*) as count
     FROM travel_requests tr
     JOIN subprojects s ON tr.subproject_id = s.id
     WHERE s.project_id = $1 AND tr.status != 'completed'
-  `, [projectId]);
+  `,
+    [projectId]
+  );
 
   const referencesCount = parseInt(result.rows[0].count);
 
-  return formatResponse(200, { 
-    canDelete,
-    referencesCount,
-    projectId 
-  }, context.awsRequestId);
+  return formatResponse(
+    200,
+    {
+      canDelete,
+      referencesCount,
+      projectId,
+    },
+    context.awsRequestId
+  );
 });
 
 // Delete project (admin only)
 export const deleteProject = validateRequest({
   pathParams: {
-    id: { required: true, type: 'string' }
-  }
+    id: { required: true, type: 'string' },
+  },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const projectId = event.pathParameters?.id;
   const userContext = getUserContextFromEvent(event);
   requireManager(userContext);
 
-  logger.info('Deleting project', { 
+  logger.info('Deleting project', {
     projectId,
     requestedBy: userContext.sub,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   // Check if project can be deleted
@@ -652,7 +694,7 @@ export const deleteProject = validateRequest({
 
   // Delete associated subprojects first (cascade)
   await db.query('DELETE FROM subprojects WHERE project_id = $1', [projectId]);
-  
+
   // Delete the project
   const result = await db.query('DELETE FROM projects WHERE id = $1 RETURNING *', [projectId]);
 
@@ -660,11 +702,117 @@ export const deleteProject = validateRequest({
     throw new NotFoundError('Project');
   }
 
-  logger.info('Project deleted successfully', { 
+  logger.info('Project deleted successfully', {
     projectId,
     name: project.name,
-    requestId: context.awsRequestId 
+    requestId: context.awsRequestId,
   });
 
   return formatResponse(204, null, context.awsRequestId);
+});
+
+// Helper function to parse address string into GeocodeRequest
+function parseAddressString(addressString: string): GeocodeRequest {
+  // For Swiss addresses, try to parse common patterns
+  // Examples: "Bahnhofstrasse 45, 8001 Zurich, Switzerland"
+  //           "Rue du Rhône 112, Geneva"
+  //           "Basel"
+  
+  const trimmed = addressString.trim();
+  const parts = trimmed.split(',').map(part => part.trim());
+  
+  let street = '';
+  let city = '';
+  let postalCode = '';
+  let country = 'Switzerland'; // Default for Swiss addresses
+  
+  if (parts.length === 1) {
+    // Just city name
+    city = parts[0] || '';
+  } else if (parts.length === 2) {
+    // "Street, City" or "PostalCode City, Country"
+    const firstPart = parts[0] || '';
+    const secondPart = parts[1] || '';
+    
+    // Check if first part contains numbers (likely street)
+    if (/\d/.test(firstPart)) {
+      street = firstPart;
+      // Second part might be "PostalCode City"
+      const cityMatch = secondPart.match(/^(\d{4})?\s*(.+)$/);
+      if (cityMatch) {
+        if (cityMatch[1]) postalCode = cityMatch[1];
+        city = cityMatch[2] || '';
+      } else {
+        city = secondPart;
+      }
+    } else {
+      // First part is likely city, second might be country
+      city = firstPart;
+      country = secondPart.toLowerCase().includes('switzerland') ? 'Switzerland' : secondPart;
+    }
+  } else if (parts.length >= 3) {
+    // "Street, PostalCode City, Country"
+    street = parts[0] || '';
+    const cityPart = parts[1] || '';
+    country = parts[2] || 'Switzerland';
+    
+    // Extract postal code and city from middle part
+    const cityMatch = cityPart.match(/^(\d{4})?\s*(.+)$/);
+    if (cityMatch) {
+      if (cityMatch[1]) postalCode = cityMatch[1];
+      city = cityMatch[2] || '';
+    } else {
+      city = cityPart;
+    }
+  }
+  
+  return {
+    street,
+    city,
+    postalCode,
+    country,
+  };
+}
+
+// Geocode address endpoint
+export const geocodeAddress = validateRequest({
+  queryParams: {
+    address: { required: true, type: 'string', minLength: 3, maxLength: 255 },
+  },
+})(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
+  const address = event.queryStringParameters?.address;
+  const userContext = getUserContextFromEvent(event);
+
+  logger.info('Geocoding address', {
+    address,
+    requestedBy: userContext.sub,
+    requestId: context.awsRequestId,
+  });
+
+  try {
+    const geocodingService = new GeocodingService();
+    
+    // Parse the address string to create a GeocodeRequest
+    const geocodeRequest = parseAddressString(address!);
+    
+    const result = await geocodingService.geocodeAddress(geocodeRequest);
+
+    logger.info('Geocoding successful', {
+      address,
+      coordinates: result,
+      requestId: context.awsRequestId,
+    });
+
+    return formatResponse(200, result, context.awsRequestId);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error('Geocoding failed', {
+      address,
+      error: errorMessage,
+      requestId: context.awsRequestId,
+    });
+
+    // Return a more user-friendly error for geocoding failures
+    throw new ValidationError('Unable to geocode the provided address. Please check the address format.');
+  }
 });

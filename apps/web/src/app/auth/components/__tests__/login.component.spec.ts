@@ -19,28 +19,24 @@ describe('LoginComponent', () => {
 
   beforeEach(async () => {
     const authServiceSpy = jasmine.createSpyObj('AuthService', ['login', 'getCurrentUser'], {
-      isAuthenticated$: of(false)
+      isAuthenticated$: of(false),
     });
 
     const loadingServiceSpy = jasmine.createSpyObj('LoadingService', ['setLoading'], {
-      loading$: of(false)
+      loading$: of(false),
     });
 
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
     const snackBarSpy = jasmine.createSpyObj('MatSnackBar', ['open']);
 
     await TestBed.configureTestingModule({
-      imports: [
-        LoginComponent,
-        ReactiveFormsModule,
-        NoopAnimationsModule
-      ],
+      imports: [LoginComponent, ReactiveFormsModule, NoopAnimationsModule],
       providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: LoadingService, useValue: loadingServiceSpy },
         { provide: Router, useValue: routerSpy },
-        { provide: MatSnackBar, useValue: snackBarSpy }
-      ]
+        { provide: MatSnackBar, useValue: snackBarSpy },
+      ],
     }).compileComponents();
 
     mockAuthService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
@@ -71,48 +67,54 @@ describe('LoginComponent', () => {
 
   it('should validate email format', () => {
     const emailControl = component.loginForm.get('email');
-    
+
     emailControl?.setValue('invalid-email');
     expect(emailControl?.hasError('email')).toBeTruthy();
-    
+
     emailControl?.setValue('valid@email.com');
     expect(emailControl?.hasError('email')).toBeFalsy();
   });
 
   it('should validate password minimum length', () => {
     const passwordControl = component.loginForm.get('password');
-    
+
     passwordControl?.setValue('short');
     expect(passwordControl?.hasError('minlength')).toBeTruthy();
-    
+
     passwordControl?.setValue('longenoughpassword');
     expect(passwordControl?.hasError('minlength')).toBeFalsy();
   });
 
   it('should not submit invalid form', () => {
     component.onSubmit();
-    
+
     expect(mockAuthService.login).not.toHaveBeenCalled();
   });
 
   it('should normalize email input (trim and lowercase)', () => {
     const emailControl = component.loginForm.get('email');
-    
+
     emailControl?.setValue('  TEST@EXAMPLE.COM  ');
     // Allow time for the valueChanges subscription to process
     fixture.detectChanges();
-    
+
     expect(emailControl?.value).toBe('test@example.com');
   });
 
   it('should handle login error correctly', () => {
-    const mockUser = { id: '1', email: 'test@example.com', name: 'Test User', role: 'employee' as const, groups: [] };
+    const mockUser = {
+      id: '1',
+      email: 'test@example.com',
+      name: 'Test User',
+      role: 'employee' as const,
+      groups: [],
+    };
     mockAuthService.login.and.returnValue(throwError(() => new Error('Invalid credentials')));
     mockAuthService.getCurrentUser.and.returnValue(of(mockUser));
 
     component.loginForm.patchValue({
       email: 'test@example.com',
-      password: 'testpassword123'
+      password: 'testpassword123',
     });
 
     component.onSubmit();
@@ -124,14 +126,14 @@ describe('LoginComponent', () => {
       'Close',
       jasmine.objectContaining({
         duration: 5000,
-        panelClass: ['error-snackbar']
+        panelClass: ['error-snackbar'],
       })
     );
-    
+
     // Password should be cleared but email preserved
     expect(component.loginForm.get('password')?.value).toBe('');
     expect(component.loginForm.get('email')?.value).toBe('test@example.com');
-    
+
     // Form should be marked as untouched and pristine for retry
     expect(component.loginForm.untouched).toBeTruthy();
     expect(component.loginForm.pristine).toBeTruthy();
@@ -139,15 +141,21 @@ describe('LoginComponent', () => {
 
   it('should handle successful login', () => {
     const mockResponse = {
-      user: { id: '1', email: 'test@example.com', name: 'Test User', role: 'employee' as const, groups: [] },
-      accessToken: 'mock-token'
+      user: {
+        id: '1',
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'employee' as const,
+        groups: [],
+      },
+      accessToken: 'mock-token',
     };
     mockAuthService.login.and.returnValue(of(mockResponse));
     mockAuthService.getCurrentUser.and.returnValue(of(mockResponse.user));
 
     component.loginForm.patchValue({
       email: 'test@example.com',
-      password: 'testpassword123'
+      password: 'testpassword123',
     });
 
     component.onSubmit();
@@ -159,7 +167,7 @@ describe('LoginComponent', () => {
       'Close',
       jasmine.objectContaining({
         duration: 3000,
-        panelClass: ['success-snackbar']
+        panelClass: ['success-snackbar'],
       })
     );
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/employee/dashboard']);

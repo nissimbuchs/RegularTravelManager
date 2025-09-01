@@ -16,7 +16,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           return timer(retryCount * 1000);
         }
         throw error;
-      }
+      },
     }),
     catchError((error: HttpErrorResponse) => {
       let errorMessage = 'An unexpected error occurred';
@@ -34,7 +34,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             errorMessage = 'You are not authorized to perform this action.';
             break;
           case 403:
-            errorMessage = 'Access forbidden. You don\'t have permission.';
+            errorMessage = "Access forbidden. You don't have permission.";
             break;
           case 404:
             errorMessage = 'The requested resource was not found.';
@@ -51,7 +51,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (!req.url.includes('/auth') && error.status !== 401) {
         snackBar.open(errorMessage, 'Close', {
           duration: 5000,
-          panelClass: ['error-snackbar']
+          panelClass: ['error-snackbar'],
         });
       }
 

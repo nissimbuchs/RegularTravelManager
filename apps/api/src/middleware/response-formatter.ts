@@ -21,11 +21,11 @@ export const formatResponse = (
   headers: Record<string, string> = {}
 ): APIGatewayProxyResult => {
   const isError = statusCode >= 400;
-  
+
   const response: ApiResponse = {
     success: !isError,
     timestamp: new Date().toISOString(),
-    requestId
+    requestId,
   };
 
   if (isError) {
@@ -34,7 +34,7 @@ export const formatResponse = (
       message: data.message || data,
       details: data.details,
       timestamp: response.timestamp,
-      requestId
+      requestId,
     };
   } else {
     response.data = data;
@@ -44,12 +44,12 @@ export const formatResponse = (
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
   };
 
   return {
     statusCode,
     headers: { ...defaultHeaders, ...headers },
-    body: JSON.stringify(response)
+    body: JSON.stringify(response),
   };
 };

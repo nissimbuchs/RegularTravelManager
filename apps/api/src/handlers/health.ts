@@ -19,7 +19,7 @@ export const healthHandler = async (
   context: Context
 ): Promise<APIGatewayProxyResult> => {
   const startTime = Date.now();
-  
+
   try {
     logger.info('Health check initiated', { requestId: context.awsRequestId });
 
@@ -27,7 +27,7 @@ export const healthHandler = async (
     const dbStartTime = Date.now();
     let dbStatus = 'healthy';
     let dbResponseTime = 0;
-    
+
     try {
       await testDatabaseConnection();
       dbResponseTime = Date.now() - dbStartTime;
@@ -35,7 +35,7 @@ export const healthHandler = async (
       dbStatus = 'unhealthy';
       dbResponseTime = Date.now() - dbStartTime;
       logger.error('Database health check failed', { error: error.message });
-      
+
       // If it's a critical failure (test setup issue), throw immediately
       if (error.message.includes('Critical failure')) {
         throw error;
@@ -51,10 +51,9 @@ export const healthHandler = async (
     const sesResponseTime = 3;
 
     // Determine overall status
-    const allServicesHealthy = dbStatus === 'healthy' && 
-                              cognitoStatus === 'healthy' && 
-                              sesStatus === 'healthy';
-    
+    const allServicesHealthy =
+      dbStatus === 'healthy' && cognitoStatus === 'healthy' && sesStatus === 'healthy';
+
     const overallStatus: HealthStatus['status'] = allServicesHealthy ? 'healthy' : 'degraded';
 
     const healthData: HealthStatus = {
@@ -64,23 +63,22 @@ export const healthHandler = async (
       services: {
         database: { status: dbStatus, responseTime: dbResponseTime },
         cognito: { status: cognitoStatus, responseTime: cognitoResponseTime },
-        ses: { status: sesStatus, responseTime: sesResponseTime }
-      }
+        ses: { status: sesStatus, responseTime: sesResponseTime },
+      },
     };
 
     const responseTime = Date.now() - startTime;
-    logger.info('Health check completed', { 
-      status: overallStatus, 
+    logger.info('Health check completed', {
+      status: overallStatus,
       responseTime,
-      requestId: context.awsRequestId 
+      requestId: context.awsRequestId,
     });
 
     return formatResponse(200, healthData, context.awsRequestId);
-
   } catch (error) {
-    logger.error('Health check failed', { 
-      error: error.message, 
-      requestId: context.awsRequestId 
+    logger.error('Health check failed', {
+      error: error.message,
+      requestId: context.awsRequestId,
     });
 
     const errorHealthData: HealthStatus = {
@@ -90,8 +88,8 @@ export const healthHandler = async (
       services: {
         database: { status: 'unknown', responseTime: 0 },
         cognito: { status: 'unknown', responseTime: 0 },
-        ses: { status: 'unknown', responseTime: 0 }
-      }
+        ses: { status: 'unknown', responseTime: 0 },
+      },
     };
 
     return formatResponse(503, errorHealthData, context.awsRequestId);
