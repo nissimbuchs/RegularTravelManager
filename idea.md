@@ -387,27 +387,30 @@ npx @composio/mcp@latest setup "https://mcp.composio.dev/partner/composio/figma/
 
 
 # 🔐 Configured Test Users
-🧪 Test Users Available:
+🧪 Production-Matching Test Users:
 
-  | Role     | Email                 | Password     | Access               |
-  |----------|-----------------------|--------------|----------------------|
-  | Admin    | admin@company.com     | TempPass123! | Project management   |
-  | Manager  | manager1@company.com  | TempPass123! | Approvals, employees |
-  | Employee | employee1@company.com | TempPass123! | Submit requests      |
+  | User | Email | Name | Role | Employee ID |
+  |------|-------|------|------|-------------|
+  | **employee1** | employee1@company.com | John Employee | Employee | EMP001 |
+  | **employee2** | employee2@company.com | Jane Worker | Employee | EMP002 |
+  | **manager1** | manager1@company.com | Bob Manager | Manager | MGR001 |
+  | **manager2** | manager2@company.com | Alice Director | Manager | MGR002 |
 
-  Employees (can submit travel requests)
-  Managers (can approve requests)
+  **Development Environment:**
+  - Uses mock authentication (no passwords required)
+  - Switch users in browser console: `localStorage.setItem('mockUser', 'employee1')`
+  - Full environment parity with LocalStack
 
-  ⚠️ Important Notes
+  **Production Environment:**
+  - Uses AWS Cognito with real authentication
+  - Password: `TempPass123!` (configured via Cognito setup)
+  - JWT-based authentication with role-based access
 
-  1. Cognito Setup Required: The test users need to be created in AWS Cognito first before you can log in
-  2. Development Only: These test users are only available in non-production environments
-  3. Test User Creation: There's an API endpoint to create these users: /auth/setup-test-users
+  ⚠️ Environment Notes
 
-  To actually use these credentials, you'll need to:
-  1. Ensure AWS Cognito is deployed and configured
-  2. Run the test user setup endpoint to create the Cognito users
-  3. Then use the email/password combinations above to log into the web application
+  1. **Development**: Mock authentication with LocalStack - no Cognito required
+  2. **Production**: Real AWS Cognito User Pools with managed authentication
+  3. **Test Data**: Consistent user data across all environments
 
 
 #  ⏺ 🎉 Perfect! Full-Stack Deployment Complete!
@@ -450,10 +453,11 @@ npm run deploy
 
   Visit http://rtm-frontend-prod.s3-website.eu-central-1.amazonaws.com to access your production application. You can now:
 
-  1. Login with your test users:
-    - employee1@company.com / TempPass123!
-    - manager1@company.com / TempPass123!
-    - admin@company.com / TempPass123!
+  1. Login with your production test users:
+    - employee1@company.com / TempPass123! (John Employee)
+    - employee2@company.com / TempPass123! (Jane Worker)  
+    - manager1@company.com / TempPass123! (Bob Manager)
+    - manager2@company.com / TempPass123! (Alice Director)
   2. Test all features - the frontend now connects to your live API
   3. Monitor performance using AWS CloudWatch and logs
 

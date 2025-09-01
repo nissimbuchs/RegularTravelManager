@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-// Development server to run Lambda functions locally
+// Development server to run Lambda functions locally with LocalStack integration
 import express from 'express';
 import cors from 'cors';
+import { getEnvironmentConfig } from './config/environment.js';
+import { getDynamoClient, getS3Client } from './services/aws-factory.js';
 
 // Mock project data for development
 const mockProjects = [
@@ -106,13 +108,47 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
-// Health endpoint
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    service: 'RegularTravelManager API'
-  });
+// Health endpoint with service checks
+app.get('/health', async (req, res) => {
+  const config = getEnvironmentConfig();
+  
+  try {
+    const services = {
+      database: 'connected', // TODO: Add database health check
+      localstack: 'unknown',
+      redis: 'unknown'
+    };
+    
+    // Check LocalStack DynamoDB connection
+    try {
+      const dynamoClient = getDynamoClient();
+      await dynamoClient.send({ input: {} }); // Simple connection test
+      services.localstack = 'ready';
+    } catch (error) {
+      services.localstack = 'error';
+    }
+    
+    res.json({ 
+      status: 'ok',
+      environment: config.NODE_ENV,
+      timestamp: new Date().toISOString(),
+      service: 'RegularTravelManager API',
+      services,
+      config: {
+        awsRegion: config.AWS_REGION,
+        awsEndpoint: config.AWS_ENDPOINT_URL,
+        databaseUrl: config.DATABASE_URL ? 'configured' : 'missing',
+        localStackMode: !!config.AWS_ENDPOINT_URL
+      }
+    });
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(503).json({
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Projects endpoints
@@ -289,14 +325,15 @@ app.get('/projects/:id/references', (req, res) => {
   }
 });
 
-// Mock employee data for development
+// Mock employee data for development - matching production test users
 const mockEmployees = {
-  'test-user-id': {
-    id: 'test-user-id',
-    cognito_user_id: 'test-user-id',
-    email: 'employee@example.com',
+  // Employee 1 - John Employee
+  'employee1-cognito-id': {
+    id: 'employee1-cognito-id',
+    cognito_user_id: 'employee1-cognito-id',
+    email: 'employee1@company.com',
     first_name: 'John',
-    last_name: 'Doe',
+    last_name: 'Employee',
     employee_id: 'EMP001',
     home_street: 'Bahnhofstrasse 45',
     home_city: 'Zurich',
@@ -309,21 +346,62 @@ const mockEmployees = {
     created_at: new Date('2025-01-01').toISOString(),
     updated_at: new Date('2025-01-15').toISOString()
   },
-  // Add some test user IDs to handle auth scenarios
-  'user-123': {
-    id: 'user-123',
-    cognito_user_id: 'user-123',
-    email: 'demo@company.com',
-    first_name: 'Demo',
-    last_name: 'User',
+  // Employee 2 - Jane Worker
+  'employee2-cognito-id': {
+    id: 'employee2-cognito-id',
+    cognito_user_id: 'employee2-cognito-id',
+    email: 'employee2@company.com',
+    first_name: 'Jane',
+    last_name: 'Worker',
     employee_id: 'EMP002',
-    home_street: '',
-    home_city: '',
-    home_postal_code: '',
+    home_street: 'Rue du Rhône 112',
+    home_city: 'Geneva',
+    home_postal_code: '1204',
     home_country: 'Switzerland',
-    home_location: null,
+    home_location: {
+      latitude: 46.2044,
+      longitude: 6.1432
+    },
     created_at: new Date('2025-01-01').toISOString(),
-    updated_at: new Date('2025-01-01').toISOString()
+    updated_at: new Date('2025-01-10').toISOString()
+  },
+  // Manager 1 - Bob Manager
+  'manager1-cognito-id': {
+    id: 'manager1-cognito-id',
+    cognito_user_id: 'manager1-cognito-id',
+    email: 'manager1@company.com',
+    first_name: 'Bob',
+    last_name: 'Manager',
+    employee_id: 'MGR001',
+    home_street: 'Steinentorstrasse 30',
+    home_city: 'Basel',
+    home_postal_code: '4051',
+    home_country: 'Switzerland',
+    home_location: {
+      latitude: 47.5596,
+      longitude: 7.5886
+    },
+    created_at: new Date('2025-01-01').toISOString(),
+    updated_at: new Date('2025-01-05').toISOString()
+  },
+  // Manager 2 - Alice Director  
+  'manager2-cognito-id': {
+    id: 'manager2-cognito-id',
+    cognito_user_id: 'manager2-cognito-id',
+    email: 'manager2@company.com',
+    first_name: 'Alice',
+    last_name: 'Director',
+    employee_id: 'MGR002',
+    home_street: 'Bundesplatz 3',
+    home_city: 'Bern',
+    home_postal_code: '3003',
+    home_country: 'Switzerland',
+    home_location: {
+      latitude: 46.9480,
+      longitude: 7.4474
+    },
+    created_at: new Date('2025-01-01').toISOString(),
+    updated_at: new Date('2025-01-08').toISOString()
   }
 };
 

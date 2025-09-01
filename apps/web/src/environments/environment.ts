@@ -2,9 +2,16 @@ export const environment = {
   production: false,
   apiUrl: 'http://localhost:3000',
   cognito: {
-    userPoolId: 'eu-central-1_TbjGs9xsM',
-    userPoolClientId: '56eg6e1l1619nkp69m2i3dek7o',
+    // LocalStack Community edition - using mock authentication for development
+    userPoolId: 'local-pool-id',
+    userPoolClientId: 'local-client-id',
     region: 'eu-central-1',
-    domain: 'rtm-auth-dev.auth.eu-central-1.amazoncognito.com'
+    domain: 'localhost.localstack.cloud',
+    // Use mock authentication in community edition
+    useMockAuth: true
+  },
+  localstack: {
+    endpoint: 'http://localhost:4566',
+    region: 'eu-central-1'
   }
 };

@@ -1,0 +1,40 @@
+# Development Dockerfile for RegularTravelManager API
+FROM node:20-alpine
+
+# Install development dependencies
+RUN apk add --no-cache \
+    curl \
+    git \
+    openssh-client
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Note: Shared package will be mounted via volume in docker-compose
+
+# Copy source code
+COPY . .
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Change ownership of the app directory
+RUN chown -R nodejs:nodejs /app
+USER nodejs
+
+# Expose port for API and debugger
+EXPOSE 3000 9229
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Start development server with hot reload and debugging
+CMD ["npm", "run", "dev"]

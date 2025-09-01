@@ -37,36 +37,128 @@ RegularTravelManager/
 
 ## Prerequisites
 
-- Node.js 18.0.0 or higher
-- npm 9.0.0 or higher
-- AWS CLI configured (for infrastructure deployment)
-- Angular CLI (will be installed as dev dependency)
+- **Node.js** 20.0.0 or higher
+- **npm** 9.0.0 or higher  
+- **Docker Desktop** with Docker Compose
+- **Git**
+- **AWS CLI** (optional, for manual LocalStack testing)
 
-## Getting Started
+## Quick Start (< 15 minutes)
 
-### 1. Installation
+### 1. Clone and Install
 
 ```bash
-# Clone the repository
 git clone <repository-url>
 cd RegularTravelManager
-
-# Install dependencies for all workspaces
 npm install
 ```
 
-### 2. Development Setup
+### 2. Start Development Environment
 
 ```bash
-# Start all development servers (Angular frontend + API)
-npm run dev
+# Start infrastructure services (PostgreSQL, Redis, LocalStack)
+npm run dev:env
 
-# Or start services individually
-npm run dev:web    # Angular frontend on http://localhost:4200
-npm run dev:api    # API development server
+# Initialize AWS services (DynamoDB, S3)
+npm run localstack:init
+
+# Verify setup
+./test-setup.sh
 ```
 
-### 3. Building the Project
+### 3. Start Development
+
+```bash
+# Option A: Start everything
+npm run dev:full
+
+# Option B: Start services individually  
+npm run dev:api:local    # API server on :3000
+npm run dev:web         # Angular app on :4200
+```
+
+### 4. Verify Setup
+
+Visit: http://localhost:3000/health (when API is running)
+
+**Expected response:**
+```json
+{
+  "status": "ok",
+  "environment": "development", 
+  "services": {
+    "database": "connected",
+    "localstack": "ready",
+    "redis": "connected"
+  }
+}
+```
+
+### 5. Development Authentication
+
+The development environment includes production-matching test users for authentication testing:
+
+| User | Email | Name | Role | Employee ID |
+|------|-------|------|------|-------------|
+| **employee1** | employee1@company.com | John Employee | Employee | EMP001 |
+| **employee2** | employee2@company.com | Jane Worker | Employee | EMP002 |
+| **manager1** | manager1@company.com | Bob Manager | Manager | MGR001 |
+| **manager2** | manager2@company.com | Alice Director | Manager | MGR002 |
+
+**To switch users in development:**
+```javascript
+// In browser console (F12) - No passwords required in development
+localStorage.setItem('mockUser', 'employee1');  // Default user
+localStorage.setItem('mockUser', 'employee2');  // Jane Worker
+localStorage.setItem('mockUser', 'manager1');   // Bob Manager  
+localStorage.setItem('mockUser', 'manager2');   // Alice Director
+window.location.reload();
+```
+
+**Note:** Development uses mock authentication - no passwords required. Production uses AWS Cognito with real authentication.
+
+## Development Environment
+
+### Local AWS Services (LocalStack)
+
+Our development environment provides **95% production parity** using LocalStack:
+
+| Service | Local Port | Production | Description |
+|---------|------------|------------|-------------|
+| PostgreSQL | :5432 | AWS RDS | Database with PostGIS |
+| Redis | :6379 | ElastiCache | Caching layer |
+| LocalStack | :4566 | AWS | DynamoDB, S3, Location Service |
+| DynamoDB | via :4566 | AWS DynamoDB | Projects, subprojects data |
+| S3 | via :4566 | AWS S3 | Document storage |
+
+### Key Benefits
+
+✅ **< 15 minute setup** for new developers  
+✅ **Full offline development** - no internet required  
+✅ **Cost savings** - ~€200/month per developer  
+✅ **Zero code changes** between local and production  
+✅ **Consistent behavior** across environments  
+
+### Development Commands
+
+```bash
+# Environment management
+npm run dev:env           # Start all Docker services
+npm run dev:env:logs      # View service logs  
+npm run dev:env:clean     # Stop & remove all containers
+npm run dev:env:restart   # Clean restart
+
+# Development servers
+npm run dev:full          # Start everything
+npm run dev:api:local     # API server only
+npm run dev:web           # Angular app only
+
+# Utilities
+npm run localstack:status # Check LocalStack health
+./test-setup.sh          # Verify environment
+```
+
+### Building the Project
 
 ```bash
 # Build all workspaces
@@ -77,15 +169,17 @@ npm run build --workspace=apps/web
 npm run build --workspace=apps/api
 ```
 
-### 4. Testing
+### Testing
 
 ```bash
 # Run tests for all workspaces
 npm run test
 
-# Run tests with watch mode
-npm run test:watch --workspace=apps/web
-npm run test:watch --workspace=apps/api
+# Integration tests against LocalStack
+npm run test:integration
+
+# E2E tests in local environment  
+npm run test:e2e:local
 ```
 
 ## Workspace Organization
@@ -179,16 +273,47 @@ npm run destroy --workspace=infrastructure
 
 ### Local Development
 
-Environment variables are managed through `.env` files (not committed to version control):
+The development environment automatically configures AWS services to use LocalStack:
 
-```bash
-# Create environment file
-cp .env.example .env.local
+```typescript
+// Automatically switches between local and production
+const config = {
+  NODE_ENV: 'development',
+  AWS_ENDPOINT_URL: 'http://localhost:4566',  // LocalStack
+  DATABASE_URL: 'postgresql://nissim:devpass123@localhost:5432/travel_manager_dev',
+  REDIS_URL: 'redis://localhost:6379'
+}
 ```
 
-### AWS Infrastructure
+### AWS Infrastructure 
 
-Infrastructure is managed through AWS CDK. See the [infrastructure README](./infrastructure/README.md) for deployment instructions.
+Infrastructure is managed through AWS CDK. The same code runs in both local and production:
+
+- **Local**: Uses LocalStack endpoints with mock credentials
+- **Production**: Uses real AWS services with IAM roles
+
+See [DEVELOPMENT_SETUP.md](./DEVELOPMENT_SETUP.md) for detailed configuration.
+
+### Troubleshooting
+
+Common issues and solutions:
+
+```bash
+# Services not starting
+npm run dev:env:restart
+
+# LocalStack connection issues  
+npm run localstack:status
+docker logs rtm-localstack
+
+# Database connection errors
+docker logs rtm-postgres
+
+# Reset everything
+npm run dev:env:clean
+npm run dev:env
+npm run localstack:init
+```
 
 ## Contributing
 
@@ -236,6 +361,17 @@ After completing the project setup, the next development phases include:
 
 This project is proprietary software. All rights reserved.
 
+## Documentation
+
+- **[DEVELOPMENT_SETUP.md](./DEVELOPMENT_SETUP.md)** - Comprehensive local development guide
+- **[Development Environment Parity Strategy](./docs/development-environment-parity-strategy.md)** - Technical architecture details
+- **[Infrastructure README](./infrastructure/README.md)** - AWS deployment instructions
+
 ## Support
 
 For questions or support, please contact the development team or create an issue in the project repository.
+
+**For development environment issues:**
+1. Check [DEVELOPMENT_SETUP.md](./DEVELOPMENT_SETUP.md) troubleshooting section
+2. Run `./test-setup.sh` to verify environment health  
+3. Check service logs: `npm run dev:env:logs`

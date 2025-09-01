@@ -1,12 +1,11 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgis/postgis:15-3.3
+    platform: linux/amd64
     container_name: rtm-postgres
     environment:
       POSTGRES_USER: nissim
-      POSTGRES_PASSWORD: 
+      POSTGRES_PASSWORD: devpass123
       POSTGRES_DB: travel_manager_dev
     ports:
       - "5432:5432"
@@ -18,6 +17,89 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - rtm-network
+
+  # LocalStack for AWS Services
+  localstack:
+    image: localstack/localstack:3.0  # Community edition
+    container_name: rtm-localstack
+    environment:
+      - SERVICES=dynamodb,location,apigateway,lambda,s3,logs
+      - DEBUG=1
+      - LAMBDA_EXECUTOR=local
+      - LOCALSTACK_HOST=localhost.localstack.cloud
+    ports:
+      - "4566:4566"            # Main LocalStack port
+    volumes:
+      - "./localstack/init:/etc/localstack/init/ready.d"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - rtm-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Redis for Caching (replacing ElastiCache)
+  redis:
+    image: redis:7.2-alpine
+    container_name: rtm-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - rtm-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  # Development API Server (commented out for initial setup)
+  # api-dev:
+  #   build:
+  #     context: ./apps/api
+  #     dockerfile: Dockerfile.dev
+  #   container_name: rtm-api-dev
+  #   environment:
+  #     - NODE_ENV=development
+  #     - AWS_ENDPOINT_URL=http://localstack:4566
+  #     - AWS_ACCESS_KEY_ID=test
+  #     - AWS_SECRET_ACCESS_KEY=test
+  #     - AWS_DEFAULT_REGION=eu-central-1
+  #     - DATABASE_URL=postgresql://nissim@postgres:5432/travel_manager_dev
+  #     - REDIS_URL=redis://redis:6379
+  #     - COGNITO_USER_POOL_ID=local-pool-id
+  #     - COGNITO_CLIENT_ID=local-client-id
+  #   ports:
+  #     - "3000:3000"
+  #     - "9229:9229"  # Debug port
+  #   volumes:
+  #     - ./apps/api/src:/app/src
+  #     - ./packages/shared:/app/packages/shared
+  #     - /app/node_modules
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     localstack:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - rtm-network
+  #   command: npm run dev
 
 volumes:
   postgres_data:
+  redis_data:
+  localstack_data:
+
+networks:
+  rtm-network:
+    driver: bridge

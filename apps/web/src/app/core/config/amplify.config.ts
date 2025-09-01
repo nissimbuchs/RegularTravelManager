@@ -17,6 +17,12 @@ export function configureAmplify(): void {
     return;
   }
 
+  // Skip Amplify configuration if using mock authentication
+  if (environment.cognito.useMockAuth) {
+    console.log('🧪 Mock authentication enabled - skipping Amplify configuration');
+    return;
+  }
+
   const config: AmplifyConfig = {
     Auth: {
       Cognito: {
@@ -28,4 +34,5 @@ export function configureAmplify(): void {
   };
 
   Amplify.configure(config);
+  console.log('✅ Amplify configured for real Cognito authentication');
 }

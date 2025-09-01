@@ -1,5 +1,7 @@
 import { LocationClient, SearchPlaceIndexForTextCommand } from '@aws-sdk/client-location';
-import { logger } from '../middleware/logger';
+import { logger } from '../middleware/logger.js';
+import { getLocationClient } from './aws-factory.js';
+import { getEnvironmentConfig } from '../config/environment.js';
 
 export interface GeocodeResult {
   latitude: number;
@@ -20,10 +22,10 @@ export class GeocodingService {
   private placeIndexName: string;
 
   constructor() {
-    this.client = new LocationClient({
-      region: process.env.AWS_REGION || 'eu-central-1'
-    });
-    this.placeIndexName = process.env.PLACE_INDEX_NAME || 'rtm-dev-places';
+    // Use LocalStack-aware factory (includes MockLocationClient for dev)
+    this.client = getLocationClient();
+    const config = getEnvironmentConfig();
+    this.placeIndexName = config.LOCATION_PLACE_INDEX;
   }
 
   async geocodeAddress(request: GeocodeRequest): Promise<GeocodeResult> {
@@ -35,7 +37,7 @@ export class GeocodingService {
     });
 
     try {
-      // Try AWS Location Service first
+      // Try AWS Location Service in production only
       if (process.env.NODE_ENV === 'production') {
         return await this.geocodeWithAWS(fullAddress, request);
       }

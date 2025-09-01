@@ -106,7 +106,7 @@ export class LambdaStack extends cdk.Stack {
       },
       description: 'Health check endpoint for RTM API',
       tracing: lambda.Tracing.ACTIVE,
-      reservedConcurrencyLimit: environment === 'production' ? 10 : 5,
+      reservedConcurrentExecutions: environment === 'production' ? 10 : 5,
     });
 
     // Store Lambda function ARN for monitoring
@@ -641,15 +641,13 @@ export class LambdaStack extends cdk.Stack {
         proxy: true,
       });
 
-      // Update the existing GET method to use the Lambda integration
-      const healthMethod = healthResource.getMethod('GET');
-      if (healthMethod) {
-        healthResource.addMethod('GET', healthIntegration, {
+      // Add GET method to use the Lambda integration
+      healthResource.addMethod('GET', healthIntegration, {
           methodResponses: [
             {
               statusCode: '200',
               responseModels: {
-                'application/json': apigateway.Model.GENERIC_JSON_MODEL,
+                'application/json': apigateway.Model.EMPTY_MODEL,
               },
               responseParameters: {
                 'method.response.header.Access-Control-Allow-Origin': true,
@@ -663,7 +661,6 @@ export class LambdaStack extends cdk.Stack {
             },
           ],
         });
-      }
     }
 
     // Create deployment to update API Gateway
