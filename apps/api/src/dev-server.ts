@@ -582,6 +582,155 @@ app.post('/api/employees/travel-requests', (req, res) => {
   }
 });
 
+// Manager Dashboard endpoint
+app.get('/api/manager/dashboard', (req, res) => {
+  try {
+    // Mock manager dashboard data - matching ManagerDashboard interface
+    const mockDashboardData = {
+      pendingRequests: [
+        {
+          id: 'tr-1756750001',
+          employeeName: 'John Employee',
+          employeeEmail: 'employee1@company.com',
+          projectName: 'Digital Transformation Initiative',
+          subProjectName: 'Zurich Office Modernization',
+          daysPerWeek: 3,
+          calculatedAllowance: 455.00,
+          submittedDate: '2025-08-28T10:30:00Z',
+          urgencyLevel: 'medium',
+          daysSinceSubmission: 4
+        },
+        {
+          id: 'tr-1756750002',
+          employeeName: 'Jane Worker',
+          employeeEmail: 'employee2@company.com',
+          projectName: 'Infrastructure Modernization',
+          subProjectName: 'Bern Data Center',
+          daysPerWeek: 5,
+          calculatedAllowance: 920.00,
+          submittedDate: '2025-08-29T14:15:00Z',
+          urgencyLevel: 'high',
+          daysSinceSubmission: 3
+        },
+        {
+          id: 'tr-1756750003',
+          employeeName: 'Alice Smith',
+          employeeEmail: 'employee3@company.com',
+          projectName: 'Digital Transformation Initiative',
+          subProjectName: 'Geneva Branch Integration',
+          daysPerWeek: 2,
+          calculatedAllowance: 320.00,
+          submittedDate: '2025-08-27T09:45:00Z',
+          urgencyLevel: 'low',
+          daysSinceSubmission: 5
+        }
+      ],
+      totalPending: 3,
+      urgentCount: 1,
+      filters: {},
+      // Additional data for dashboard display (not part of ManagerDashboard interface but useful)
+      summary: {
+        totalEmployees: 45,
+        activeProjects: 8,
+        pendingRequests: 3,
+        monthlyBudget: 15750.00,
+        currentSpending: 8920.50
+      },
+      budgetBreakdown: {
+        byProject: [
+          {
+            projectName: 'Digital Transformation Initiative',
+            totalAllowances: 5420.00,
+            employeeCount: 15
+          },
+          {
+            projectName: 'Infrastructure Modernization', 
+            totalAllowances: 3500.50,
+            employeeCount: 12
+          }
+        ],
+        byStatus: {
+          approved: 6850.00,
+          pending: 2070.50,
+          rejected: 0
+        }
+      },
+      trends: {
+        monthlySpending: [
+          { month: 'Jan', amount: 8200.00 },
+          { month: 'Feb', amount: 7900.50 },
+          { month: 'Mar', amount: 9100.00 },
+          { month: 'Apr', amount: 8750.25 },
+          { month: 'May', amount: 9350.75 },
+          { month: 'Jun', amount: 8920.50 }
+        ]
+      }
+    };
+
+    console.log('📊 Manager dashboard data requested - serving mock data');
+    
+    res.json({ data: mockDashboardData });
+  } catch (error) {
+    console.error('Manager dashboard error:', error);
+    res.status(500).json({ error: 'Failed to load manager dashboard data' });
+  }
+});
+
+// Employee Context endpoint for manager dashboard
+app.get('/api/manager/employee-context/:employeeId', (req, res) => {
+  try {
+    const employeeId = req.params.employeeId;
+    
+    // Mock employee context data
+    const mockEmployeeContext = {
+      employee: {
+        id: employeeId,
+        name: 'John Employee',
+        email: 'employee1@company.com',
+        department: 'Engineering',
+        position: 'Senior Developer',
+        homeAddress: {
+          street: 'Bahnhofstrasse 45',
+          city: 'Zurich',
+          postalCode: '8001',
+          country: 'Switzerland'
+        }
+      },
+      currentWeeklyAllowance: 315.00,
+      activeRequestsCount: 2,
+      recentHistory: [
+        {
+          id: 'tr-001',
+          subprojectName: 'Zurich Office Modernization',
+          weeklyAllowance: 315.00,
+          status: 'approved',
+          submittedDate: '2025-08-15'
+        },
+        {
+          id: 'tr-002', 
+          subprojectName: 'Basel Research Center',
+          weeklyAllowance: 280.00,
+          status: 'pending',
+          submittedDate: '2025-08-28'
+        }
+      ],
+      totalRequestsThisYear: 8,
+      averageWeeklyAllowance: 285.50,
+      departmentBudgetUtilization: 0.72,
+      recentApprovals: 6,
+      recentRejections: 0,
+      performanceScore: 4.2
+    };
+
+    console.log(`👤 Employee context requested for: ${employeeId}`);
+    
+    res.json({ data: mockEmployeeContext });
+  } catch (error) {
+    console.error('Employee context error:', error);
+    res.status(500).json({ error: 'Failed to load employee context' });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Development API server running at http://localhost:${PORT}`);

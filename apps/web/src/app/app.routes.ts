@@ -55,15 +55,15 @@ export const routes: Routes = [
           {
             path: 'dashboard',
             loadComponent: () =>
-              import('./features/manager/components/manager-request-queue.component').then(
-                m => m.ManagerRequestQueueComponent
+              import('./features/manager/components/dashboard.component').then(
+                m => m.DashboardComponent
               ),
           },
           {
             path: 'approvals',
             loadComponent: () =>
-              import('./features/manager/components/approvals.component').then(
-                m => m.ApprovalsComponent
+              import('./features/manager/components/manager-request-queue.component').then(
+                m => m.ManagerRequestQueueComponent
               ),
           },
           {
