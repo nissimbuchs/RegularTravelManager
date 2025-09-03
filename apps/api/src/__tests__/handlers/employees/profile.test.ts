@@ -3,7 +3,12 @@ import { APIGatewayProxyEvent, Context } from 'aws-lambda';
 import { getEmployeeProfile, updateEmployeeAddress } from '../../../handlers/employees/profile';
 
 // Mock dependencies
-vi.mock('../../../database/connection');
+vi.mock('../../../database/connection', () => ({
+  db: {
+    query: vi.fn(),
+    getPool: vi.fn(),
+  }
+}));
 vi.mock('../../../handlers/auth/auth-utils');
 vi.mock('../../../services/geocoding-service');
 
@@ -94,12 +99,12 @@ const mockEmployee = {
 };
 
 describe('Employee Profile Handlers', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
 
     // Mock getUserContextFromEvent
-    const { getUserContextFromEvent } = require('../../../handlers/auth/auth-utils');
-    vi.mocked(getUserContextFromEvent).mockReturnValue({
+    const authUtils = await import('../../../handlers/auth/auth-utils');
+    vi.mocked(authUtils.getUserContextFromEvent).mockReturnValue({
       sub: 'user-123',
       email: 'test@company.com',
       cognitoUsername: 'testuser',
@@ -113,8 +118,7 @@ describe('Employee Profile Handlers', () => {
       const mockEvent = createMockEvent('GET', { id: 'user-123' });
 
       // Mock database query
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query)
+      vi.mocked((await import('../../../database/connection')).db.query)
         .mockResolvedValueOnce({
           rows: [mockEmployee],
         })
@@ -135,8 +139,8 @@ describe('Employee Profile Handlers', () => {
       const mockEvent = createMockEvent('GET', { id: 'employee-456' });
 
       // Mock manager context
-      const { getUserContextFromEvent } = require('../../../handlers/auth/auth-utils');
-      vi.mocked(getUserContextFromEvent).mockReturnValue({
+      const authUtils = await import('../../../handlers/auth/auth-utils');
+      vi.mocked(authUtils.getUserContextFromEvent).mockReturnValue({
         sub: 'manager-123',
         email: 'manager@company.com',
         cognitoUsername: 'manageruser',
@@ -145,8 +149,7 @@ describe('Employee Profile Handlers', () => {
       });
 
       // Mock database query
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query)
+      vi.mocked((await import('../../../database/connection')).db.query)
         .mockResolvedValueOnce({
           rows: [{ ...mockEmployee, id: 'employee-456' }],
         })
@@ -173,8 +176,7 @@ describe('Employee Profile Handlers', () => {
       const mockEvent = createMockEvent('GET', { id: 'user-123' });
 
       // Mock empty database result
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
+      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
         rows: [],
       });
 
@@ -208,7 +210,6 @@ describe('Employee Profile Handlers', () => {
       vi.mocked(GeocodingService).mockImplementation(() => mockGeocodingService);
 
       // Mock database operations
-      const { db } = require('../../../database/connection');
       const mockClient = {
         query: vi.fn(),
         release: vi.fn(),
@@ -216,7 +217,7 @@ describe('Employee Profile Handlers', () => {
       const mockPool = {
         connect: vi.fn().mockResolvedValue(mockClient),
       };
-      vi.mocked(db.getPool).mockResolvedValue(mockPool);
+      vi.mocked((await import('../../../database/connection')).db.getPool).mockResolvedValue(mockPool);
 
       mockClient.query
         .mockResolvedValueOnce() // BEGIN
@@ -248,7 +249,7 @@ describe('Employee Profile Handlers', () => {
         .mockResolvedValueOnce(); // COMMIT
 
       // Mock pending requests check
-      vi.mocked(db.query).mockResolvedValueOnce({
+      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
         rows: [],
       });
 
@@ -284,8 +285,8 @@ describe('Employee Profile Handlers', () => {
       const mockEvent = createMockEvent('PUT', { id: 'employee-456' }, validAddressUpdate);
 
       // Mock manager context
-      const { getUserContextFromEvent } = require('../../../handlers/auth/auth-utils');
-      vi.mocked(getUserContextFromEvent).mockReturnValue({
+      const authUtils = await import('../../../handlers/auth/auth-utils');
+      vi.mocked(authUtils.getUserContextFromEvent).mockReturnValue({
         sub: 'manager-123',
         email: 'manager@company.com',
         cognitoUsername: 'manageruser',
@@ -303,7 +304,6 @@ describe('Employee Profile Handlers', () => {
       };
       vi.mocked(GeocodingService).mockImplementation(() => mockGeocodingService);
 
-      const { db } = require('../../../database/connection');
       const mockClient = {
         query: vi.fn(),
         release: vi.fn(),
@@ -311,7 +311,7 @@ describe('Employee Profile Handlers', () => {
       const mockPool = {
         connect: vi.fn().mockResolvedValue(mockClient),
       };
-      vi.mocked(db.getPool).mockResolvedValue(mockPool);
+      vi.mocked((await import('../../../database/connection')).db.getPool).mockResolvedValue(mockPool);
 
       mockClient.query
         .mockResolvedValueOnce() // BEGIN
@@ -320,7 +320,7 @@ describe('Employee Profile Handlers', () => {
         .mockResolvedValueOnce() // INSERT history
         .mockResolvedValueOnce(); // COMMIT
 
-      vi.mocked(db.query).mockResolvedValueOnce({ rows: [] }); // pending requests
+      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({ rows: [] }); // pending requests
 
       const result = await updateEmployeeAddress(mockEvent, mockContext);
 

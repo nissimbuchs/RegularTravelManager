@@ -1,11 +1,18 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   EmployeeDto,
   UpdateEmployeeAddressRequest,
 } from '../../../../../../packages/shared/src/types/api';
+
+interface Manager {
+  id: string;
+  name: string;
+  employeeId: string;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -46,5 +53,12 @@ export class EmployeeService {
   // Get supported countries
   getSupportedCountries(): string[] {
     return ['Switzerland', 'Germany', 'France', 'Italy', 'Austria'];
+  }
+
+  // Get all managers for dropdown selection
+  getManagers(): Observable<Manager[]> {
+    return this.http
+      .get<{ managers: Manager[] }>(`${environment.apiUrl}/managers`)
+      .pipe(map(response => response.managers));
   }
 }

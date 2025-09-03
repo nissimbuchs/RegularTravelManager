@@ -36,16 +36,18 @@
           </mat-error>
         </mat-form-field>
 
-        <!-- Manager ID -->
+        <!-- Manager Selection -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Manager ID</mat-label>
-          <input matInput formControlName="managerId" required>
-          <mat-hint>Enter your manager's employee ID</mat-hint>
+          <mat-label>Manager</mat-label>
+          <mat-select formControlName="managerId" required>
+            <mat-option value="">Select your manager</mat-option>
+            <mat-option *ngFor="let manager of managers" [value]="manager.id">
+              {{ manager.name }} ({{ manager.employeeId }})
+            </mat-option>
+          </mat-select>
+          <mat-hint>Select the manager who will approve this request</mat-hint>
           <mat-error *ngIf="requestForm.get('managerId')?.hasError('required')">
-            Manager ID is required
-          </mat-error>
-          <mat-error *ngIf="requestForm.get('managerId')?.hasError('minlength')">
-            Manager ID must be at least 2 characters
+            Manager selection is required
           </mat-error>
         </mat-form-field>
 

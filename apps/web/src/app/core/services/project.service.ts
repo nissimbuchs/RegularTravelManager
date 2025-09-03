@@ -40,12 +40,10 @@ export class ProjectService {
       if (filters.createdBefore) params = params.set('createdBefore', filters.createdBefore);
     }
 
-    return this.http
-      .get<{ projects: Project[] }>(this.baseUrl, { params })
-      .pipe(
-        map(response => response.projects),
-        tap(projects => this.projectsSubject.next(projects))
-      );
+    return this.http.get<{ projects: Project[] }>(this.baseUrl, { params }).pipe(
+      map(response => response.projects),
+      tap(projects => this.projectsSubject.next(projects))
+    );
   }
 
   getProject(id: string): Observable<Project> {
@@ -124,15 +122,19 @@ export class ProjectService {
 
   // Utility methods
   getActiveProjects(): Observable<Project[]> {
-    return this.http.get<Project[]>(`${this.baseUrl}/active`).pipe(
+    return this.http.get<{ projects: Project[] }>(`${this.baseUrl}/active`).pipe(
+      map(response => response.projects),
       tap(projects => this.projectsSubject.next(projects))
     );
   }
 
   getActiveSubprojects(projectId: string): Observable<Subproject[]> {
     return this.http
-      .get<Subproject[]>(`${this.baseUrl}/${projectId}/subprojects`)
-      .pipe(map(response => response.filter(sp => sp.isActive)));
+      .get<{
+        project: string;
+        subprojects: Subproject[];
+      }>(`${this.baseUrl}/${projectId}/subprojects`)
+      .pipe(map(response => response.subprojects.filter(sp => sp.isActive)));
   }
 
   checkProjectReferences(

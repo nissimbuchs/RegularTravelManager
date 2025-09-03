@@ -64,9 +64,11 @@ export class AuthService {
   private initializeMockAuth(): void {
     // In mock mode, start logged out - only login on explicit login attempt
     this.currentUserSubject.next(null);
-    
+
     console.log('🧪 Mock authentication initialized - ready for login');
-    console.log('💡 Available users: employee1@company.com, employee2@company.com, manager1@company.com, manager2@company.com, admin1@company.com, admin2@company.com');
+    console.log(
+      '💡 Available users: employee1@company.com, employee2@company.com, manager1@company.com, manager2@company.com, admin1@company.com, admin2@company.com'
+    );
     console.log('💡 Use any password to login in development mode');
   }
 

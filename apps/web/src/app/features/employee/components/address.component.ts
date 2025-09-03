@@ -580,7 +580,9 @@ export class AddressComponent implements OnInit, OnDestroy {
               });
           } else {
             this.isLoading = false;
-            this.snackBar.open('Authentication error - no user ID found', 'Close', { duration: 3000 });
+            this.snackBar.open('Authentication error - no user ID found', 'Close', {
+              duration: 3000,
+            });
           }
         },
         error: error => {

@@ -19,23 +19,20 @@ import {
   deleteProject,
   getSubprojectsForProject,
   searchProjects,
-  geocodeAddress
+  geocodeAddress,
 } from './handlers/projects/management';
 import {
   getEmployeeProfile,
-  updateEmployeeAddress
+  updateEmployeeAddress,
+  getManagers,
 } from './handlers/employees/profile';
-import {
-  calculatePreview,
-  createTravelRequest
-} from './handlers/employees/travel-requests';
+import { calculatePreview, createTravelRequest } from './handlers/employees/travel-requests';
 import {
   getManagerDashboard,
   getEmployeeContext,
   approveRequest,
-  rejectRequest
+  rejectRequest,
 } from './handlers/managers/dashboard';
-
 
 const app = express();
 const PORT = 3000;
@@ -48,14 +45,15 @@ app.use(express.json());
 function lambdaToExpress(lambdaHandler) {
   return async (req, res) => {
     console.log(`🔵 ${req.method} ${req.path} - Processing request`);
-    
+
     // Parse user groups from headers
-    const userGroups = req.headers['x-user-groups'] ? 
-      req.headers['x-user-groups'].split(',') : ['employees'];
-    
+    const userGroups = req.headers['x-user-groups']
+      ? req.headers['x-user-groups'].split(',')
+      : ['employees'];
+
     // Determine if user is a manager (admin counts as manager)
     const isManager = userGroups.includes('managers') || userGroups.includes('administrators');
-    
+
     const event = {
       httpMethod: req.method,
       path: req.path,
@@ -77,8 +75,8 @@ function lambdaToExpress(lambdaHandler) {
           cognitoUsername: req.headers['x-user-email'] || 'employee1@company.com',
           isManager: isManager.toString(),
           groups: JSON.stringify(userGroups),
-        }
-      }
+        },
+      },
     };
 
     const context = {
@@ -94,13 +92,17 @@ function lambdaToExpress(lambdaHandler) {
     } catch (error: any) {
       console.error(`❌ Lambda handler error for ${req.method} ${req.path}:`, error);
       console.error('Error stack:', error.stack);
-      
+
       // Handle specific error types with appropriate HTTP status codes
-      if (error.message === 'Manager role required' || 
-          error.message === 'Access denied: can only access own data or manager required') {
+      if (
+        error.message === 'Manager role required' ||
+        error.message === 'Access denied: can only access own data or manager required'
+      ) {
         res.status(403).json({ error: 'Forbidden: ' + error.message });
-      } else if (error.message === 'No authorization context found' || 
-                 error.message === 'Unauthorized') {
+      } else if (
+        error.message === 'No authorization context found' ||
+        error.message === 'Unauthorized'
+      ) {
         res.status(401).json({ error: 'Unauthorized' });
       } else if (error.name === 'ValidationError' || error.code === 'VALIDATION_ERROR') {
         res.status(400).json({ error: 'Bad Request: ' + error.message });
@@ -177,8 +179,8 @@ app.post('/projects/:projectId/subprojects', lambdaToExpress(createSubproject));
 app.put('/projects/:id', lambdaToExpress(updateProject));
 app.delete('/projects/:id', lambdaToExpress(deleteProject));
 
-
 // Employee endpoints - using real database handlers
+app.get('/managers', lambdaToExpress(getManagers));
 app.get('/employees/:id', lambdaToExpress(getEmployeeProfile));
 app.put('/employees/:id/address', lambdaToExpress(updateEmployeeAddress));
 
@@ -198,7 +200,7 @@ async function startServer() {
     console.log('🔧 Initializing database connection...');
     await initializeDatabase();
     console.log('✅ Database connection initialized successfully');
-    
+
     app.listen(PORT, () => {
       console.log(`🚀 Development API server running at http://localhost:${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);

@@ -169,6 +169,38 @@ npm run build --workspace=apps/web
 npm run build --workspace=apps/api
 ```
 
+### Deployment
+
+The project includes a streamlined deployment process using AWS CDK:
+
+```bash
+# Deploy to AWS (builds automatically)
+npm run deploy
+
+# This command will:
+# 1. Build all workspaces (packages, domains, apps, infrastructure)
+# 2. Deploy infrastructure using AWS CDK
+# 3. Deploy Lambda functions and API Gateway
+# 4. Output the API endpoint URL
+```
+
+**Prerequisites for Deployment:**
+- AWS CLI configured with appropriate credentials
+- AWS CDK CLI installed globally: `npm install -g aws-cdk`
+- Target AWS account bootstrapped for CDK: `cd infrastructure && npm run bootstrap`
+
+**Deployment Outputs:**
+- **API Endpoint**: The deployed API Gateway URL for backend services
+- **Stack ARN**: CloudFormation stack identifier for resource management
+- **Region**: eu-central-1 (Frankfurt) for Swiss data residency compliance
+
+**Infrastructure Components Deployed:**
+- AWS Lambda functions for API endpoints
+- API Gateway with proper CORS and authorization
+- Amazon RDS PostgreSQL with PostGIS extension
+- AWS Cognito User Pool for authentication
+- IAM roles and security policies
+
 ### Testing
 
 ```bash
@@ -243,6 +275,7 @@ The project enforces code quality through:
 ```bash
 npm run dev           # Start all development servers
 npm run build         # Build all workspaces
+npm run deploy        # Build and deploy to AWS
 npm run test          # Run tests in all workspaces
 npm run lint          # Lint all code
 npm run format        # Format all code with Prettier

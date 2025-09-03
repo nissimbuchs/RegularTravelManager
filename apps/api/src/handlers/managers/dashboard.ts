@@ -70,15 +70,14 @@ interface EmployeeContext {
 
 // Helper function to get manager's employee UUID from cognito ID
 async function getManagerEmployeeId(cognitoUserId: string): Promise<string> {
-  const result = await db.query(
-    'SELECT id FROM employees WHERE cognito_user_id = $1',
-    [cognitoUserId]
-  );
-  
+  const result = await db.query('SELECT id FROM employees WHERE cognito_user_id = $1', [
+    cognitoUserId,
+  ]);
+
   if (result.rows.length === 0) {
     throw new Error(`Manager not found in employees table for cognito ID: ${cognitoUserId}`);
   }
-  
+
   return result.rows[0].id;
 }
 
@@ -106,10 +105,14 @@ export const getManagerDashboard = async (
         error: error instanceof Error ? error.message : String(error),
         requestId: context.awsRequestId,
       });
-      
-      return formatResponse(404, { 
-        error: 'Manager profile not found. Please contact system administrator.' 
-      }, context.awsRequestId);
+
+      return formatResponse(
+        404,
+        {
+          error: 'Manager profile not found. Please contact system administrator.',
+        },
+        context.awsRequestId
+      );
     }
 
     // Extract query parameters
@@ -529,7 +532,11 @@ export const rejectRequest = async (
       RETURNING id, employee_id
     `;
 
-    const updateResult = await db.query(updateQuery, [managerEmployeeId, rejectionReason, requestId]);
+    const updateResult = await db.query(updateQuery, [
+      managerEmployeeId,
+      rejectionReason,
+      requestId,
+    ]);
 
     if (updateResult.rows.length === 0) {
       return {

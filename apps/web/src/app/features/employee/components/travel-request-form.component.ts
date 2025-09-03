@@ -6,9 +6,16 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TravelRequestFormData, CalculationPreview, ProjectDto, SubprojectDto } from '@rtm/shared';
 import { TravelRequestService } from '../services/travel-request.service';
+import { EmployeeService } from '../../../core/services/employee.service';
 import { ConfirmationDialogComponent, ConfirmationData } from './confirmation-dialog.component';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
 import { EMPTY, Observable } from 'rxjs';
+
+interface Manager {
+  id: string;
+  name: string;
+  employeeId: string;
+}
 
 @Component({
   selector: 'app-travel-request-form',
@@ -21,6 +28,7 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
   requestForm: FormGroup;
   projects: ProjectDto[] = [];
   subprojects: SubprojectDto[] = [];
+  managers: Manager[] = [];
   calculationPreview: CalculationPreview | null = null;
   isCalculating = false;
   isSubmitting = false;
@@ -30,13 +38,14 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private travelRequestService: TravelRequestService,
+    private employeeService: EmployeeService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) {
     this.requestForm = this.fb.group({
       projectId: ['', [Validators.required]],
       subProjectId: ['', [Validators.required]],
-      managerId: ['', [Validators.required, Validators.minLength(2)]],
+      managerId: ['', [Validators.required]],
       daysPerWeek: [1, [Validators.required, Validators.min(1), Validators.max(7)]],
       justification: [
         '',
@@ -50,9 +59,9 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
     this.clearProblemDraft();
 
     this.setupFormSubscriptions();
-    this.loadProjects()
+    Promise.all([this.loadProjects(), this.loadManagers()])
       .then(() => {
-        // Load draft after projects are loaded to ensure proper validation
+        // Load draft after projects and managers are loaded to ensure proper validation
         this.loadDraft();
       })
       .catch(error => {
@@ -93,6 +102,26 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
             .subscribe(() => {
               this.loadProjects();
             });
+          reject(error);
+        },
+      });
+    });
+  }
+
+  private loadManagers(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.employeeService.getManagers().subscribe({
+        next: managers => {
+          this.managers = managers;
+          resolve();
+        },
+        error: error => {
+          console.error('Failed to load managers:', error);
+          this.snackBar.open(
+            'Unable to load managers list. Please refresh the page or contact support.',
+            'Close',
+            { duration: 8000, horizontalPosition: 'center', verticalPosition: 'top' }
+          );
           reject(error);
         },
       });
@@ -225,13 +254,15 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
   private showConfirmationDialog(requestId: string, formData: TravelRequestFormData): void {
     const selectedProject = this.projects.find(p => p.id === formData.projectId);
     const selectedSubproject = this.subprojects.find(s => s.id === formData.subProjectId);
+    const selectedManager = this.managers.find(m => m.id === formData.managerId);
 
     const confirmationData: ConfirmationData = {
       requestId,
       calculationPreview: this.calculationPreview!,
       projectName: selectedProject?.name || 'Unknown Project',
       subprojectName: selectedSubproject?.name || 'Unknown Subproject',
-      managerName: formData.managerId, // TODO: Backend expects managerName but form uses managerId
+      managerId: formData.managerId,
+      managerName: selectedManager?.name || 'Unknown Manager',
       daysPerWeek: formData.daysPerWeek,
       justification: formData.justification,
     };

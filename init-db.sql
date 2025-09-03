@@ -269,6 +269,7 @@ VALUES
     'Switzerland',
     ST_GeomFromText('POINT(7.588576 47.559599)', 4326),
     '550e8400-e29b-41d4-a716-446655440001',
+    NULL,
     true,
     'employee2-cognito-id',
     'EMP-0002'

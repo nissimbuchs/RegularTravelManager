@@ -17,6 +17,7 @@ describe('ConfirmationDialogComponent', () => {
     },
     projectName: 'Test Project',
     subprojectName: 'Test Subproject',
+    managerId: 'manager-123',
     managerName: 'Test Manager',
     daysPerWeek: 5,
     justification: 'This is a test justification for the travel request',

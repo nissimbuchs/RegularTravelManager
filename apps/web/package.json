@@ -9,6 +9,8 @@
     "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "lint": "eslint src --ext .ts,.js,.tsx,.jsx --config ../../.eslintrc.js",
+    "lint:fix": "eslint src --ext .ts,.js,.tsx,.jsx --config ../../.eslintrc.js --fix",
     "deploy": "./scripts/deploy.sh",
     "deploy:setup": "aws s3 mb s3://rtm-frontend-prod --region eu-central-1 && aws s3 website s3://rtm-frontend-prod --index-document index.html --error-document index.html --region eu-central-1",
     "cloudfront:setup": "./scripts/setup-cloudfront.sh"

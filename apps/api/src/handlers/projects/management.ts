@@ -506,7 +506,7 @@ export const getAllProjects = async (
   context: Context
 ): Promise<APIGatewayProxyResult> => {
   const userContext = getUserContextFromEvent(event);
-  
+
   // Require manager role for this endpoint
   requireManager(userContext);
 
@@ -540,7 +540,7 @@ export const getProjectById = async (
 
   try {
     const project = await projectService.getProject(projectId);
-    
+
     if (!project) {
       return formatResponse(404, { error: 'Project not found' }, context.awsRequestId);
     }
@@ -798,15 +798,15 @@ function parseAddressString(addressString: string): GeocodeRequest {
   // Examples: "Bahnhofstrasse 45, 8001 Zurich, Switzerland"
   //           "Rue du Rhône 112, Geneva"
   //           "Basel"
-  
+
   const trimmed = addressString.trim();
   const parts = trimmed.split(',').map(part => part.trim());
-  
+
   let street = '';
   let city = '';
   let postalCode = '';
   let country = 'Switzerland'; // Default for Swiss addresses
-  
+
   if (parts.length === 1) {
     // Just city name
     city = parts[0] || '';
@@ -814,14 +814,16 @@ function parseAddressString(addressString: string): GeocodeRequest {
     // "Street, City" or "PostalCode City, Country"
     const firstPart = parts[0] || '';
     const secondPart = parts[1] || '';
-    
+
     // Check if first part contains numbers (likely street)
     if (/\d/.test(firstPart)) {
       street = firstPart;
       // Second part might be "PostalCode City"
       const cityMatch = secondPart.match(/^(\d{4})?\s*(.+)$/);
       if (cityMatch) {
-        if (cityMatch[1]) postalCode = cityMatch[1];
+        if (cityMatch[1]) {
+          postalCode = cityMatch[1];
+        }
         city = cityMatch[2] || '';
       } else {
         city = secondPart;
@@ -836,17 +838,19 @@ function parseAddressString(addressString: string): GeocodeRequest {
     street = parts[0] || '';
     const cityPart = parts[1] || '';
     country = parts[2] || 'Switzerland';
-    
+
     // Extract postal code and city from middle part
     const cityMatch = cityPart.match(/^(\d{4})?\s*(.+)$/);
     if (cityMatch) {
-      if (cityMatch[1]) postalCode = cityMatch[1];
+      if (cityMatch[1]) {
+        postalCode = cityMatch[1];
+      }
       city = cityMatch[2] || '';
     } else {
       city = cityPart;
     }
   }
-  
+
   return {
     street,
     city,
@@ -872,10 +876,10 @@ export const geocodeAddress = validateRequest({
 
   try {
     const geocodingService = new GeocodingService();
-    
+
     // Parse the address string to create a GeocodeRequest
     const geocodeRequest = parseAddressString(address!);
-    
+
     const result = await geocodingService.geocodeAddress(geocodeRequest);
 
     logger.info('Geocoding successful', {
@@ -894,6 +898,8 @@ export const geocodeAddress = validateRequest({
     });
 
     // Return a more user-friendly error for geocoding failures
-    throw new ValidationError('Unable to geocode the provided address. Please check the address format.');
+    throw new ValidationError(
+      'Unable to geocode the provided address. Please check the address format.'
+    );
   }
 });

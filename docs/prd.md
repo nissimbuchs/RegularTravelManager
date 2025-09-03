@@ -19,12 +19,13 @@ The solution leverages modern web technologies and AWS infrastructure to automat
 | Date | Version | Description | Author |
 |------|---------|-------------|--------|
 | 2025-08-30 | 1.0 | Initial PRD creation based on comprehensive brainstorming and architecture work | John (PM) |
+| 2025-09-03 | 1.1 | Updated to reflect Story 2.4B backend correction - manager selection functionality and related requirement updates | John (PM) |
 
 ## Requirements
 
 ### Functional Requirements
 
-1. **FR1**: Employees can submit travel allowance requests specifying project, subproject, manager name, days per week, and justification
+1. **FR1**: Employees can submit travel allowance requests specifying project, subproject, selected manager (from all available active managers), days per week, and justification
 2. **FR2**: System automatically calculates straight-line distance between employee home address and project subproject location using PostGIS
 3. **FR3**: System automatically calculates daily allowance amount in CHF based on distance and project-specific cost-per-kilometer rates
 4. **FR4**: Managers can search for employees and view all their travel requests with status filtering (pending, approved, rejected)
@@ -321,7 +322,7 @@ I want **to submit travel allowance requests with immediate calculation feedback
 so that **I can see the daily and weekly allowance amounts before submitting my request**.
 
 #### Acceptance Criteria
-1. Request form provides dropdowns for project selection, subproject selection, and manager name input field
+1. Request form provides dropdowns for project selection, subproject selection, and manager selection from all available managers
 2. Days per week input accepts values 1-7 with validation and error messaging for invalid ranges
 3. Justification text area requires minimum 10 characters with counter display and maximum 500 character limit
 4. Real-time calculation display shows distance, daily allowance, and weekly total as user completes form fields
@@ -329,6 +330,20 @@ so that **I can see the daily and weekly allowance amounts before submitting my 
 6. Successful submission displays confirmation with request ID and calculated allowance summary
 7. Form auto-saves draft data to prevent loss during session interruptions
 8. Form integrates with calculation engine from Story 2.3 for real-time feedback
+
+### Story 2.4B: Travel Request Submission Backend Correction
+
+As a **system**,
+I want **to support employee selection of any manager for travel request approval**,
+so that **employees can submit requests to appropriate managers regardless of organizational hierarchy**.
+
+#### Acceptance Criteria
+1. Backend API accepts `manager_id` from request body instead of defaulting to employee's assigned manager
+2. System validates that selected `manager_id` corresponds to an active manager with proper role permissions
+3. Travel request submission stores the selected manager, not the employee's default manager
+4. Request validation requires `manager_id` in request body with clear error messaging for invalid selections
+5. All existing distance calculation and allowance computation functionality remains unchanged
+6. Manager validation prevents submission to inactive or invalid manager accounts
 
 ### Story 2.5: Employee Request Dashboard
 

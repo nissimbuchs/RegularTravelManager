@@ -9,6 +9,7 @@ export interface ConfirmationData {
   calculationPreview: CalculationPreview;
   projectName: string;
   subprojectName: string;
+  managerId: string;
   managerName: string;
   daysPerWeek: number;
   justification: string;

@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -101,7 +101,7 @@ describe('LoginComponent', () => {
     expect(emailControl?.value).toBe('test@example.com');
   });
 
-  it('should handle login error correctly', () => {
+  it('should handle login error correctly', fakeAsync(() => {
     const mockUser = {
       id: '1',
       email: 'test@example.com',
@@ -118,6 +118,7 @@ describe('LoginComponent', () => {
     });
 
     component.onSubmit();
+    tick(); // Wait for async operations to complete
 
     expect(mockLoadingService.setLoading).toHaveBeenCalledWith(true);
     expect(mockLoadingService.setLoading).toHaveBeenCalledWith(false);
@@ -137,9 +138,9 @@ describe('LoginComponent', () => {
     // Form should be marked as untouched and pristine for retry
     expect(component.loginForm.untouched).toBeTruthy();
     expect(component.loginForm.pristine).toBeTruthy();
-  });
+  }));
 
-  it('should handle successful login', () => {
+  it('should handle successful login', fakeAsync(() => {
     const mockResponse = {
       user: {
         id: '1',
@@ -159,6 +160,7 @@ describe('LoginComponent', () => {
     });
 
     component.onSubmit();
+    tick(); // Wait for async operations to complete
 
     expect(mockLoadingService.setLoading).toHaveBeenCalledWith(true);
     expect(mockLoadingService.setLoading).toHaveBeenCalledWith(false);
@@ -171,5 +173,5 @@ describe('LoginComponent', () => {
       })
     );
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/employee/dashboard']);
-  });
+  }));
 });

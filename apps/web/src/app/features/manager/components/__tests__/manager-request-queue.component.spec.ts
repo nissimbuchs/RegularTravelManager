@@ -18,7 +18,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
@@ -106,6 +106,11 @@ describe('ManagerRequestQueueComponent', () => {
       }
     );
 
+    const snackBarSpy = jasmine.createSpyObj('MatSnackBar', ['open']);
+    const snackBarRefSpy = jasmine.createSpyObj('MatSnackBarRef', ['onAction']);
+    snackBarRefSpy.onAction.and.returnValue(of(true));
+    snackBarSpy.open.and.returnValue(snackBarRefSpy);
+
     await TestBed.configureTestingModule({
       imports: [
         ManagerRequestQueueComponent,
@@ -127,7 +132,10 @@ describe('ManagerRequestQueueComponent', () => {
         MatDividerModule,
         MatTooltipModule,
       ],
-      providers: [{ provide: ManagerDashboardService, useValue: spy }],
+      providers: [
+        { provide: ManagerDashboardService, useValue: spy },
+        { provide: MatSnackBar, useValue: snackBarSpy },
+      ],
     }).compileComponents();
 
     mockManagerDashboardService = TestBed.inject(
@@ -554,12 +562,16 @@ describe('ManagerRequestQueueComponent', () => {
         throwError(() => new Error(errorMessage))
       );
 
-      spyOn(component['snackBar'], 'open').and.callThrough();
+      const mockSnackBar = TestBed.inject(MatSnackBar) as jasmine.SpyObj<MatSnackBar>;
+
+      // Create a new component instance for this error test
+      fixture = TestBed.createComponent(ManagerRequestQueueComponent);
+      component = fixture.componentInstance;
 
       fixture.detectChanges();
       tick();
 
-      expect(component['snackBar'].open).toHaveBeenCalledWith(
+      expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Failed to load pending requests. Please try again.',
         'Retry',
         { duration: 5000 }
@@ -572,7 +584,7 @@ describe('ManagerRequestQueueComponent', () => {
         throwError(() => new Error('Context error'))
       );
 
-      spyOn(component['snackBar'], 'open').and.callThrough();
+      const mockSnackBar = TestBed.inject(MatSnackBar) as jasmine.SpyObj<MatSnackBar>;
 
       fixture.detectChanges();
       tick();
@@ -580,7 +592,7 @@ describe('ManagerRequestQueueComponent', () => {
       component.selectRequest(mockTravelRequests[0]);
       tick();
 
-      expect(component['snackBar'].open).toHaveBeenCalledWith(
+      expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Failed to load employee details. Please try again.',
         'Close',
         { duration: 5000 }

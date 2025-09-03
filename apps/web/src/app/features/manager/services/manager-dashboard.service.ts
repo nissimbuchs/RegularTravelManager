@@ -69,8 +69,9 @@ export class ManagerDashboardService {
   }
 
   getEmployeeContext(employeeId: string): Observable<EmployeeContext> {
-    return this.http
-      .get<EmployeeContext>(`${this.baseUrl}/api/manager/employee-context/${employeeId}`);
+    return this.http.get<EmployeeContext>(
+      `${this.baseUrl}/api/manager/employee-context/${employeeId}`
+    );
   }
 
   startAutoRefresh(
@@ -103,9 +104,7 @@ export class ManagerDashboardService {
     }
   }
 
-  approveRequest(
-    requestId: string
-  ): Observable<{ id: string; status: string; message: string }> {
+  approveRequest(requestId: string): Observable<{ id: string; status: string; message: string }> {
     return this.http.put<{ id: string; status: string; message: string }>(
       `${this.baseUrl}/api/manager/requests/${requestId}/approve`,
       {}

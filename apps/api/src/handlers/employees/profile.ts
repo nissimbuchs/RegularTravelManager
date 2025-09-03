@@ -60,7 +60,7 @@ class EmployeeServiceImpl implements EmployeeService {
     const result = await db.query('SELECT * FROM employees WHERE cognito_user_id = $1', [
       cognitoUserId,
     ]);
-    
+
     console.log('Query result rows count:', result.rows.length);
     if (result.rows.length === 0) {
       console.log('No employee found with cognito_user_id:', cognitoUserId);
@@ -69,7 +69,7 @@ class EmployeeServiceImpl implements EmployeeService {
 
     const employee = result.rows[0];
     console.log('Found employee:', employee.first_name, employee.last_name);
-    
+
     // Convert PostGIS point to lat/lng
     if (employee.home_location) {
       try {
@@ -329,7 +329,7 @@ export const updateEmployeeAddress = validateRequest({
 
   // First, get the employee by Cognito ID to get the actual database ID
   const employee = await employeeService.getEmployeeByCognitoId(cognitoUserId!);
-  
+
   if (!employee) {
     throw new NotFoundError('Employee');
   }
@@ -352,4 +352,37 @@ export const updateEmployeeAddress = validateRequest({
   });
 
   return formatResponse(200, updatedEmployee, context.awsRequestId);
+});
+
+// Get all managers for dropdown selection
+export const getManagers = validateRequest({})(async (
+  event: APIGatewayProxyEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> => {
+  const userContext = getUserContextFromEvent(event);
+
+  logger.info('Getting managers list', {
+    requestedBy: userContext.sub,
+    requestId: context.awsRequestId,
+  });
+
+  // Query for all employees who are managers
+  const result = await db.query(`
+      SELECT 
+        cognito_user_id as id,
+        CONCAT(first_name, ' ', last_name) as name,
+        employee_id
+      FROM employees 
+      WHERE employee_id LIKE 'MGR-%'
+      AND is_active = true
+      ORDER BY first_name, last_name
+    `);
+
+  const managers = result.rows.map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    employeeId: row.employee_id,
+  }));
+
+  return formatResponse(200, { managers }, context.awsRequestId);
 });

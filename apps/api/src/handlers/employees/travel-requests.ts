@@ -13,9 +13,16 @@ interface CalculationPreview {
   weeklyAllowance: number;
 }
 
+interface CreateTravelRequestBody {
+  subproject_id: string;
+  days_per_week: number;
+  justification: string;
+  manager_id: string;
+}
+
 export const calculatePreview = async (
   event: APIGatewayProxyEvent,
-  context: Context
+  _context: Context
 ): Promise<APIGatewayProxyResult> => {
   try {
     // Extract user info from Lambda authorizer
@@ -117,7 +124,7 @@ export const calculatePreview = async (
 
 export const createTravelRequest = async (
   event: APIGatewayProxyEvent,
-  context: Context
+  _context: Context
 ): Promise<APIGatewayProxyResult> => {
   try {
     // Extract user info from Lambda authorizer
@@ -130,21 +137,21 @@ export const createTravelRequest = async (
       };
     }
 
-    const body = JSON.parse(event.body || '{}');
-    const { subproject_id, days_per_week, justification } = body;
+    const body: CreateTravelRequestBody = JSON.parse(event.body || '{}');
+    const { subproject_id, days_per_week, justification, manager_id } = body;
 
-    if (!subproject_id || !days_per_week || !justification) {
+    if (!subproject_id || !days_per_week || !justification || !manager_id) {
       return {
         statusCode: 400,
         body: JSON.stringify({
-          error: 'subproject_id, days_per_week, and justification are required',
+          error: 'subproject_id, days_per_week, justification, and manager_id are required',
         }),
       };
     }
 
-    // Get employee details and validate manager
+    // Get employee details
     const employeeQuery = `
-      SELECT id, manager_id, home_location
+      SELECT id, home_location
       FROM employees 
       WHERE cognito_user_id = $1 AND is_active = true
     `;
@@ -160,12 +167,23 @@ export const createTravelRequest = async (
 
     const employee = employeeResult.rows[0];
 
-    if (!employee.manager_id) {
+    // Validate selected manager
+    const managerQuery = `
+      SELECT id, is_active
+      FROM employees 
+      WHERE cognito_user_id = $1 AND employee_id LIKE 'MGR-%' AND is_active = true
+    `;
+
+    const managerResult = await db.query(managerQuery, [manager_id]);
+
+    if (managerResult.rows.length === 0) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Employee has no assigned manager' }),
+        body: JSON.stringify({ error: 'Invalid or inactive manager selected' }),
       };
     }
+
+    const selectedManager = managerResult.rows[0];
 
     if (!employee.home_location) {
       return {
@@ -226,7 +244,7 @@ export const createTravelRequest = async (
 
     const insertResult = await db.query(insertQuery, [
       employee.id,
-      employee.manager_id,
+      selectedManager.id,
       subproject.project_id,
       subproject_id,
       days_per_week,

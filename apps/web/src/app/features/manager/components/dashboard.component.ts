@@ -11,7 +11,14 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
 @Component({
   selector: 'app-manager-dashboard',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, RouterModule, MatProgressSpinnerModule],
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    RouterModule,
+    MatProgressSpinnerModule,
+  ],
   template: `
     <div class="dashboard-container">
       <div class="welcome-section">
@@ -54,7 +61,9 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
           <mat-card class="summary-card">
             <mat-card-header>
               <mat-icon mat-card-avatar>account_balance</mat-icon>
-              <mat-card-title>CHF {{ dashboardData.summary.monthlyBudget | number:'1.0-0' }}</mat-card-title>
+              <mat-card-title
+                >CHF {{ dashboardData.summary.monthlyBudget | number: '1.0-0' }}</mat-card-title
+              >
               <mat-card-subtitle>Monthly Budget</mat-card-subtitle>
             </mat-card-header>
           </mat-card>
@@ -64,7 +73,9 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
         <div class="section">
           <mat-card>
             <mat-card-header>
-              <mat-card-title>Pending Travel Requests ({{ dashboardData.totalPending }})</mat-card-title>
+              <mat-card-title
+                >Pending Travel Requests ({{ dashboardData.totalPending }})</mat-card-title
+              >
               <mat-card-subtitle *ngIf="dashboardData.urgentCount > 0" class="urgent-indicator">
                 {{ dashboardData.urgentCount }} urgent request(s)
               </mat-card-subtitle>
@@ -81,7 +92,9 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
                     </span>
                   </div>
                   <div class="request-amount">
-                    <span class="amount">CHF {{ request.calculatedAllowance | number:'1.2-2' }}/month</span>
+                    <span class="amount"
+                      >CHF {{ request.calculatedAllowance | number: '1.2-2' }}/month</span
+                    >
                     <span class="days-since">{{ request.daysSinceSubmission }} days ago</span>
                   </div>
                 </div>
@@ -337,28 +350,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private loadDashboardData() {
     this.loading = true;
-    
+
     // Simple call without complex filters for basic dashboard
-    const pagination = { 
-      pageIndex: 0, 
-      pageSize: 10, 
-      totalItems: 0, 
-      pageSizeOptions: [5, 10, 25] 
+    const pagination = {
+      pageIndex: 0,
+      pageSize: 10,
+      totalItems: 0,
+      pageSizeOptions: [5, 10, 25],
     };
     const sort = { active: 'submittedAt', direction: 'desc' as 'asc' | 'desc' };
-    
+
     this.dashboardService
       .getDashboardData({}, pagination, sort)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (data) => {
+        next: data => {
           this.dashboardData = data;
           this.loading = false;
         },
-        error: (error) => {
+        error: error => {
           console.error('Failed to load dashboard data:', error);
           this.loading = false;
-        }
+        },
       });
   }
 }

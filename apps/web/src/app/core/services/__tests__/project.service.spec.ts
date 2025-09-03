@@ -245,18 +245,30 @@ describe('ProjectService', () => {
 
   describe('Utility Methods', () => {
     it('should get active projects only', () => {
+      const mockActiveProjects = [mockProject];
+
       service.getActiveProjects().subscribe(projects => {
-        expect(projects.length).toBeGreaterThan(0);
+        expect(projects).toEqual(mockActiveProjects);
         expect(projects.every(p => p.isActive)).toBeTruthy();
       });
+
+      const req = httpMock.expectOne(`${baseUrl}/active`);
+      expect(req.request.method).toBe('GET');
+      req.flush(mockActiveProjects);
     });
 
     it('should filter active subprojects', () => {
+      const mockActiveSubprojects = [mockSubproject];
+
       service.getActiveSubprojects('proj-1').subscribe(subprojects => {
-        expect(subprojects.length).toBeGreaterThan(0);
+        expect(subprojects).toEqual(mockActiveSubprojects);
         expect(subprojects.every(sp => sp.isActive)).toBeTruthy();
         expect(subprojects.every(sp => sp.projectId === 'proj-1')).toBeTruthy();
       });
+
+      const req = httpMock.expectOne(`${baseUrl}/proj-1/subprojects`);
+      expect(req.request.method).toBe('GET');
+      req.flush(mockActiveSubprojects);
     });
 
     it('should check project references', () => {

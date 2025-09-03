@@ -242,19 +242,19 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     {
       icon: 'dashboard',
       label: 'Dashboard',
-      route: (role: string) => role === 'manager' ? '/manager/dashboard' : '/employee/dashboard',
+      route: (role: string) => (role === 'manager' ? '/manager/dashboard' : '/employee/dashboard'),
       roles: ['employee', 'manager'],
     },
     {
       icon: 'home',
       label: 'Address',
-      route: (role: string) => role === 'manager' ? '/employee/address' : '/employee/address', // Both use employee address for now
+      route: (role: string) => (role === 'manager' ? '/employee/address' : '/employee/address'), // Both use employee address for now
       roles: ['employee', 'manager'],
     },
     {
       icon: 'add_circle',
       label: 'New Request',
-      route: (role: string) => role === 'manager' ? '/employee/request' : '/employee/request', // Both use employee request for now
+      route: (role: string) => (role === 'manager' ? '/employee/request' : '/employee/request'), // Both use employee request for now
       roles: ['employee', 'manager'],
     },
     {

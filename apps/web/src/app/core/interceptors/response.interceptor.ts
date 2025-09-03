@@ -3,7 +3,7 @@ import { map } from 'rxjs/operators';
 
 /**
  * Response Interceptor
- * 
+ *
  * Automatically unwraps API responses from the backend which come in the format:
  * {
  *   "success": true,
@@ -11,8 +11,8 @@ import { map } from 'rxjs/operators';
  *   "timestamp": "...",
  *   "requestId": "..."
  * }
- * 
- * This interceptor extracts the 'data' field automatically so services 
+ *
+ * This interceptor extracts the 'data' field automatically so services
  * can work with the actual data directly.
  */
 export const responseInterceptor: HttpInterceptorFn = (req, next) => {
@@ -21,20 +21,21 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
       // Only process successful HTTP responses
       if (event.type === HttpEventType.Response) {
         const response = event as HttpResponse<any>;
-        
+
         // Check if response has the wrapped format
-        if (response.body && 
-            typeof response.body === 'object' && 
-            'success' in response.body && 
-            'data' in response.body) {
-          
+        if (
+          response.body &&
+          typeof response.body === 'object' &&
+          'success' in response.body &&
+          'data' in response.body
+        ) {
           // Clone the response and replace body with unwrapped data
           return response.clone({
-            body: response.body.data
+            body: response.body.data,
           });
         }
       }
-      
+
       return event;
     })
   );

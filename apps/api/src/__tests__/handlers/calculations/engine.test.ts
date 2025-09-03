@@ -9,8 +9,13 @@ import {
   cleanupExpiredCache,
 } from '../../../handlers/calculations/engine';
 
-// Mock dependencies
-vi.mock('../../../database/connection');
+// Mock dependencies  
+vi.mock('../../../database/connection', () => ({
+  db: {
+    query: vi.fn(),
+    getPool: vi.fn(),
+  }
+}));
 vi.mock('../../../handlers/auth/auth-utils');
 
 const mockContext: Context = {
@@ -87,23 +92,31 @@ const createMockEvent = (
 const zurichCoords = { latitude: 47.376887, longitude: 8.540192 };
 const bernCoords = { latitude: 46.947974, longitude: 7.447447 };
 
-describe('Calculation Engine Handlers', () => {
-  beforeEach(() => {
+describe('Calculation Engine Handlers', async () => {
+  let mockDb: any;
+
+  beforeEach(async () => {
     vi.clearAllMocks();
 
     // Mock getUserContextFromEvent
-    const { getUserContextFromEvent } = require('../../../handlers/auth/auth-utils');
-    vi.mocked(getUserContextFromEvent).mockReturnValue({
+    const authUtils = await import('../../../handlers/auth/auth-utils');
+    vi.mocked(authUtils.getUserContextFromEvent).mockReturnValue({
       sub: 'user-123',
       email: 'test@company.com',
       cognitoUsername: 'testuser',
       isManager: false,
       groups: ['employees'],
     });
+
+    // Set up database mock
+    mockDb = {
+      query: vi.fn(),
+      getPool: vi.fn(),
+    };
   });
 
-  describe('calculateDistance', () => {
-    it('should calculate distance between Zurich and Bern', async () => {
+  describe('calculateDistance', async () => {
+    it.concurrent('should calculate distance between Zurich and Bern', async () => {
       const requestBody = {
         employeeLocation: zurichCoords,
         subprojectLocation: bernCoords,
@@ -112,8 +125,7 @@ describe('Calculation Engine Handlers', () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock database query for cached distance calculation
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
+            vi.mocked(db.query).mockResolvedValueOnce({
         rows: [{ distance: 93.752 }], // Approximate distance Zurich-Bern
       });
 
@@ -126,7 +138,7 @@ describe('Calculation Engine Handlers', () => {
       expect(body.data.calculationTimestamp).toBeDefined();
     });
 
-    it('should validate coordinate bounds', async () => {
+    it.concurrent('should validate coordinate bounds', async () => {
       const invalidRequestBody = {
         employeeLocation: { latitude: 91, longitude: 8.540192 }, // Invalid latitude
         subprojectLocation: bernCoords,
@@ -136,7 +148,7 @@ describe('Calculation Engine Handlers', () => {
       await expect(calculateDistance(mockEvent, mockContext)).rejects.toThrow('Validation failed');
     });
 
-    it('should handle calculation without cache', async () => {
+    it.concurrent('should handle calculation without cache', async () => {
       const requestBody = {
         employeeLocation: zurichCoords,
         subprojectLocation: bernCoords,
@@ -145,8 +157,7 @@ describe('Calculation Engine Handlers', () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock direct distance calculation
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
+            vi.mocked(db.query).mockResolvedValueOnce({
         rows: [{ distance: 93.752 }],
       });
 
@@ -159,8 +170,8 @@ describe('Calculation Engine Handlers', () => {
     });
   });
 
-  describe('calculateAllowance', () => {
-    it('should calculate daily allowance correctly', async () => {
+  describe('calculateAllowance', async () => {
+    it.concurrent('should calculate daily allowance correctly', async () => {
       const requestBody = {
         distanceKm: 93.752,
         costPerKm: 0.68, // CHF per km
@@ -168,8 +179,7 @@ describe('Calculation Engine Handlers', () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock allowance calculation (93.752 * 0.68 = 63.75)
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
+      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
         rows: [{ allowance: 63.75 }],
       });
 
@@ -184,7 +194,7 @@ describe('Calculation Engine Handlers', () => {
       expect(body.data.days).toBe(1);
     });
 
-    it('should calculate multi-day allowance', async () => {
+    it.concurrent('should calculate multi-day allowance', async () => {
       const requestBody = {
         distanceKm: 50,
         costPerKm: 0.7,
@@ -193,8 +203,7 @@ describe('Calculation Engine Handlers', () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock allowance calculation (50 * 0.70 = 35.00 per day)
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
+      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
         rows: [{ allowance: 35.0 }],
       });
 
@@ -206,7 +215,7 @@ describe('Calculation Engine Handlers', () => {
       expect(body.data.allowanceChf).toBe(175.0); // 35 * 5 days
     });
 
-    it('should validate positive values', async () => {
+    it.concurrent('should validate positive values', async () => {
       const invalidRequestBody = {
         distanceKm: -10,
         costPerKm: 0.7,
@@ -217,8 +226,8 @@ describe('Calculation Engine Handlers', () => {
     });
   });
 
-  describe('calculateTravelCost', () => {
-    it('should calculate complete travel cost for employee and subproject', async () => {
+  describe('calculateTravelCost', async () => {
+    it.concurrent('should calculate complete travel cost for employee and subproject', async () => {
       const requestBody = {
         employeeId: 'employee-123',
         subprojectId: 'subproject-456',
@@ -226,10 +235,7 @@ describe('Calculation Engine Handlers', () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock database queries
-      const { db } = require('../../../database/connection');
-
-      // Mock employee location query
-      vi.mocked(db.query)
+      vi.mocked((await import('../../../database/connection')).db.query)
         .mockResolvedValueOnce({
           rows: [{ latitude: 47.376887, longitude: 8.540192 }], // Zurich
         })
@@ -268,7 +274,7 @@ describe('Calculation Engine Handlers', () => {
       expect(body.data.cacheUsed).toBe(true);
     });
 
-    it('should handle missing employee', async () => {
+    it.concurrent('should handle missing employee', async () => {
       const requestBody = {
         employeeId: 'nonexistent-employee',
         subprojectId: 'subproject-456',
@@ -276,8 +282,7 @@ describe('Calculation Engine Handlers', () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock empty employee result
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
+      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
         rows: [],
       });
 
@@ -286,7 +291,7 @@ describe('Calculation Engine Handlers', () => {
       );
     });
 
-    it('should handle missing subproject', async () => {
+    it.concurrent('should handle missing subproject', async () => {
       const requestBody = {
         employeeId: 'employee-123',
         subprojectId: 'nonexistent-subproject',
@@ -294,8 +299,7 @@ describe('Calculation Engine Handlers', () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock employee exists but subproject doesn't
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query)
+      vi.mocked((await import('../../../database/connection')).db.query)
         .mockResolvedValueOnce({
           rows: [{ latitude: 47.376887, longitude: 8.540192 }],
         })
@@ -309,16 +313,15 @@ describe('Calculation Engine Handlers', () => {
     });
   });
 
-  describe('getCalculationAudit', () => {
-    it('should retrieve calculation audit records', async () => {
+  describe('getCalculationAudit', async () => {
+    it.concurrent('should retrieve calculation audit records', async () => {
       const mockEvent = createMockEvent('GET', null, {
         employeeId: 'employee-123',
         limit: '10',
       });
 
       // Mock audit query
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
+      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
         rows: [
           {
             id: 'audit-123',
@@ -350,16 +353,15 @@ describe('Calculation Engine Handlers', () => {
     });
   });
 
-  describe('invalidateCalculationCache', () => {
-    it('should invalidate cache by location', async () => {
+  describe('invalidateCalculationCache', async () => {
+    it.concurrent('should invalidate cache by location', async () => {
       const requestBody = {
         location: zurichCoords,
       };
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock cache invalidation
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
+      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
         rows: [{ deleted_count: 5 }],
       });
 
@@ -372,15 +374,14 @@ describe('Calculation Engine Handlers', () => {
       expect(body.data.message).toBe('Invalidated 5 cache entries');
     });
 
-    it('should invalidate cache by employee ID', async () => {
+    it.concurrent('should invalidate cache by employee ID', async () => {
       const requestBody = {
         employeeId: 'employee-123',
       };
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock cache invalidation
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
+      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
         rowCount: 3,
       });
 
@@ -393,13 +394,12 @@ describe('Calculation Engine Handlers', () => {
     });
   });
 
-  describe('cleanupExpiredCache', () => {
-    it('should cleanup expired cache entries', async () => {
+  describe('cleanupExpiredCache', async () => {
+    it.concurrent('should cleanup expired cache entries', async () => {
       const mockEvent = createMockEvent('POST');
 
       // Mock cache cleanup
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
+      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
         rows: [{ deleted_count: 12 }],
       });
 
@@ -413,8 +413,8 @@ describe('Calculation Engine Handlers', () => {
     });
   });
 
-  describe('Edge Cases and Error Handling', () => {
-    it('should handle zero distance calculation', async () => {
+  describe('Edge Cases and Error Handling', async () => {
+    it.concurrent('should handle zero distance calculation', async () => {
       const requestBody = {
         employeeLocation: zurichCoords,
         subprojectLocation: zurichCoords, // Same location
@@ -422,8 +422,7 @@ describe('Calculation Engine Handlers', () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock zero distance result
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
+      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
         rows: [{ distance: 0.0 }],
       });
 
@@ -435,7 +434,7 @@ describe('Calculation Engine Handlers', () => {
       expect(body.data.distanceKm).toBe(0);
     });
 
-    it('should handle database calculation errors', async () => {
+    it.concurrent('should handle database calculation errors', async () => {
       const requestBody = {
         employeeLocation: zurichCoords,
         subprojectLocation: bernCoords,
@@ -443,8 +442,7 @@ describe('Calculation Engine Handlers', () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock database error
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockRejectedValueOnce(
+      vi.mocked((await import('../../../database/connection')).db.query).mockRejectedValueOnce(
         new Error('Coordinates must be in WGS84 coordinate system')
       );
 
@@ -453,7 +451,7 @@ describe('Calculation Engine Handlers', () => {
       );
     });
 
-    it('should validate CHF precision in allowance calculation', async () => {
+    it.concurrent('should validate CHF precision in allowance calculation', async () => {
       const requestBody = {
         distanceKm: 93.752,
         costPerKm: 0.683, // This should round to proper CHF precision
@@ -461,8 +459,7 @@ describe('Calculation Engine Handlers', () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock allowance calculation with proper rounding
-      const { db } = require('../../../database/connection');
-      vi.mocked(db.query).mockResolvedValueOnce({
+      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
         rows: [{ allowance: 64.03 }], // Properly rounded CHF amount
       });
 

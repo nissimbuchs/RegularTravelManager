@@ -2,12 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import {
-  ProjectDto,
-  SubprojectDto,
-  TravelRequestFormData,
-  CalculationPreview,
-} from '@rtm/shared';
+import { ProjectDto, SubprojectDto, TravelRequestFormData, CalculationPreview } from '@rtm/shared';
 import { ProjectService } from '../../../core/services/project.service';
 import { environment } from '../../../../environments/environment';
 
@@ -62,10 +57,11 @@ export class TravelRequestService {
 
   calculatePreview(subprojectId: string, daysPerWeek: number): Observable<CalculationPreview> {
     return this.http
-      .post<CalculationPreview>(`${this.apiUrl}/api/employees/travel-requests/preview`, {
+      .post<{ data: CalculationPreview }>(`${this.apiUrl}/api/employees/travel-requests/preview`, {
         subprojectId,
         daysPerWeek,
-      });
+      })
+      .pipe(map(response => response.data));
   }
 
   submitRequest(formData: TravelRequestFormData): Observable<any> {
@@ -73,9 +69,9 @@ export class TravelRequestService {
       subproject_id: formData.subProjectId,
       days_per_week: formData.daysPerWeek,
       justification: formData.justification,
+      manager_id: formData.managerId,
     };
 
-    return this.http
-      .post<any>(`${this.apiUrl}/api/employees/travel-requests`, requestData);
+    return this.http.post<any>(`${this.apiUrl}/api/employees/travel-requests`, requestData);
   }
 }
