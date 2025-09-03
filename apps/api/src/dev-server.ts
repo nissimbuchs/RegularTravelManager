@@ -47,6 +47,8 @@ app.use(express.json());
 // Lambda to Express adapter
 function lambdaToExpress(lambdaHandler) {
   return async (req, res) => {
+    console.log(`🔵 ${req.method} ${req.path} - Processing request`);
+    
     // Parse user groups from headers
     const userGroups = req.headers['x-user-groups'] ? 
       req.headers['x-user-groups'].split(',') : ['employees'];
@@ -90,7 +92,8 @@ function lambdaToExpress(lambdaHandler) {
       const response = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
       res.status(result.statusCode).json(response);
     } catch (error: any) {
-      console.error('Lambda handler error:', error);
+      console.error(`❌ Lambda handler error for ${req.method} ${req.path}:`, error);
+      console.error('Error stack:', error.stack);
       
       // Handle specific error types with appropriate HTTP status codes
       if (error.message === 'Manager role required' || 
@@ -102,7 +105,7 @@ function lambdaToExpress(lambdaHandler) {
       } else if (error.name === 'ValidationError' || error.code === 'VALIDATION_ERROR') {
         res.status(400).json({ error: 'Bad Request: ' + error.message });
       } else {
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Internal server error', details: error.message });
       }
     }
   };

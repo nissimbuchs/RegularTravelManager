@@ -54,11 +54,10 @@ export class ManagerDashboardService {
     }
 
     return this.http
-      .get<{ data: ManagerDashboard }>(`${this.baseUrl}/api/manager/dashboard`, { params })
+      .get<ManagerDashboard>(`${this.baseUrl}/api/manager/dashboard`, { params })
       .pipe(
-        map(response => {
+        map(dashboard => {
           // Transform date strings back to Date objects
-          const dashboard = response.data;
           dashboard.pendingRequests = dashboard.pendingRequests.map(request => ({
             ...request,
             submittedDate: new Date(request.submittedDate),
@@ -71,8 +70,7 @@ export class ManagerDashboardService {
 
   getEmployeeContext(employeeId: string): Observable<EmployeeContext> {
     return this.http
-      .get<{ data: EmployeeContext }>(`${this.baseUrl}/api/manager/employee-context/${employeeId}`)
-      .pipe(map(response => response.data));
+      .get<EmployeeContext>(`${this.baseUrl}/api/manager/employee-context/${employeeId}`);
   }
 
   startAutoRefresh(
@@ -107,8 +105,8 @@ export class ManagerDashboardService {
 
   approveRequest(
     requestId: string
-  ): Observable<{ data: { id: string; status: string; message: string } }> {
-    return this.http.put<{ data: { id: string; status: string; message: string } }>(
+  ): Observable<{ id: string; status: string; message: string }> {
+    return this.http.put<{ id: string; status: string; message: string }>(
       `${this.baseUrl}/api/manager/requests/${requestId}/approve`,
       {}
     );
@@ -117,8 +115,8 @@ export class ManagerDashboardService {
   rejectRequest(
     requestId: string,
     reason: string
-  ): Observable<{ data: { id: string; status: string; message: string } }> {
-    return this.http.put<{ data: { id: string; status: string; message: string } }>(
+  ): Observable<{ id: string; status: string; message: string }> {
+    return this.http.put<{ id: string; status: string; message: string }>(
       `${this.baseUrl}/api/manager/requests/${requestId}/reject`,
       { reason }
     );

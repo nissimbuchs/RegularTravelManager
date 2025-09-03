@@ -538,37 +538,55 @@ export class AddressComponent implements OnInit, OnDestroy {
   private performAddressUpdate(addressData: UpdateEmployeeAddressRequest): void {
     this.isLoading = true;
 
-    this.employeeService
-      .updateEmployeeAddress(this.employee!.id, addressData)
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => (this.isLoading = false))
-      )
+    // Get current user ID (cognito_user_id) from auth service
+    this.authService
+      .getCurrentUser()
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: updatedEmployee => {
-          this.employee = updatedEmployee;
-          this.isEditMode = false;
-          this.snackBar.open(
-            updatedEmployee.home_location
-              ? 'Address updated and geocoded successfully'
-              : 'Address updated (geocoding in progress)',
-            'Close',
-            { duration: 3000 }
-          );
+        next: user => {
+          if (user?.id) {
+            this.employeeService
+              .updateEmployeeAddress(user.id, addressData)
+              .pipe(
+                takeUntil(this.destroy$),
+                finalize(() => (this.isLoading = false))
+              )
+              .subscribe({
+                next: updatedEmployee => {
+                  this.employee = updatedEmployee;
+                  this.isEditMode = false;
+                  this.snackBar.open(
+                    updatedEmployee.home_location
+                      ? 'Address updated and geocoded successfully'
+                      : 'Address updated (geocoding in progress)',
+                    'Close',
+                    { duration: 3000 }
+                  );
+                },
+                error: error => {
+                  console.error('Failed to update address:', error);
+                  let errorMessage = 'Failed to update address';
+
+                  if (error.status === 422) {
+                    errorMessage = 'Invalid address format. Please check your input.';
+                  } else if (error.status === 404) {
+                    errorMessage = 'Employee profile not found';
+                  } else if (error.error?.message) {
+                    errorMessage = error.error.message;
+                  }
+
+                  this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
+                },
+              });
+          } else {
+            this.isLoading = false;
+            this.snackBar.open('Authentication error - no user ID found', 'Close', { duration: 3000 });
+          }
         },
         error: error => {
-          console.error('Failed to update address:', error);
-          let errorMessage = 'Failed to update address';
-
-          if (error.status === 422) {
-            errorMessage = 'Invalid address format. Please check your input.';
-          } else if (error.status === 404) {
-            errorMessage = 'Employee profile not found';
-          } else if (error.error?.message) {
-            errorMessage = error.error.message;
-          }
-
-          this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
+          console.error('Failed to get current user:', error);
+          this.isLoading = false;
+          this.snackBar.open('Authentication error', 'Close', { duration: 3000 });
         },
       });
   }

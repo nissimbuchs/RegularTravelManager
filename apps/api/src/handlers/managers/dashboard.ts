@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda
 import { db } from '../../database/connection';
 import { logger } from '../../middleware/logger';
 import { formatResponse } from '../../middleware/response-formatter';
+import { getUserContextFromEvent } from '../auth/auth-utils';
 
 interface DashboardFilters {
   employeeName?: string;
@@ -411,13 +412,17 @@ export const approveRequest = async (
   context: Context
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const managerId = event.requestContext.authorizer?.claims?.sub;
-    if (!managerId) {
+    const userContext = getUserContextFromEvent(event);
+    const managerCognitoId = userContext.sub;
+    if (!managerCognitoId) {
       return {
         statusCode: 401,
         body: JSON.stringify({ error: 'Unauthorized' }),
       };
     }
+
+    // Convert cognito_user_id to UUID for database queries
+    const managerEmployeeId = await getManagerEmployeeId(managerCognitoId);
 
     const requestId = event.pathParameters?.requestId;
     if (!requestId) {
@@ -439,7 +444,7 @@ export const approveRequest = async (
       RETURNING id, employee_id
     `;
 
-    const updateResult = await db.query(updateQuery, [managerId, requestId]);
+    const updateResult = await db.query(updateQuery, [managerEmployeeId, requestId]);
 
     if (updateResult.rows.length === 0) {
       return {
@@ -456,7 +461,7 @@ export const approveRequest = async (
       VALUES ($1, 'pending', 'approved', $2)
     `;
 
-    await db.query(historyQuery, [requestId, managerId]);
+    await db.query(historyQuery, [requestId, managerEmployeeId]);
 
     return {
       statusCode: 200,
@@ -482,13 +487,17 @@ export const rejectRequest = async (
   context: Context
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const managerId = event.requestContext.authorizer?.claims?.sub;
-    if (!managerId) {
+    const userContext = getUserContextFromEvent(event);
+    const managerCognitoId = userContext.sub;
+    if (!managerCognitoId) {
       return {
         statusCode: 401,
         body: JSON.stringify({ error: 'Unauthorized' }),
       };
     }
+
+    // Convert cognito_user_id to UUID for database queries
+    const managerEmployeeId = await getManagerEmployeeId(managerCognitoId);
 
     const requestId = event.pathParameters?.requestId;
     if (!requestId) {
@@ -520,7 +529,7 @@ export const rejectRequest = async (
       RETURNING id, employee_id
     `;
 
-    const updateResult = await db.query(updateQuery, [managerId, rejectionReason, requestId]);
+    const updateResult = await db.query(updateQuery, [managerEmployeeId, rejectionReason, requestId]);
 
     if (updateResult.rows.length === 0) {
       return {
@@ -537,7 +546,7 @@ export const rejectRequest = async (
       VALUES ($1, 'pending', 'rejected', $2, $3)
     `;
 
-    await db.query(historyQuery, [requestId, rejectionReason, managerId]);
+    await db.query(historyQuery, [requestId, rejectionReason, managerEmployeeId]);
 
     return {
       statusCode: 200,

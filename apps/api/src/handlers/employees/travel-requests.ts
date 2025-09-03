@@ -1,5 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { db } from '../../database/connection';
+import { getUserContextFromEvent } from '../auth/auth-utils';
 
 interface CalculationPreviewRequest {
   subprojectId: string;
@@ -18,8 +19,9 @@ export const calculatePreview = async (
 ): Promise<APIGatewayProxyResult> => {
   try {
     // Extract user info from Lambda authorizer
-    const employeeId = event.requestContext.authorizer?.claims?.sub;
-    if (!employeeId) {
+    const userContext = getUserContextFromEvent(event);
+    const employeeCognitoId = userContext.sub;
+    if (!employeeCognitoId) {
       return {
         statusCode: 401,
         body: JSON.stringify({ error: 'Unauthorized' }),
@@ -38,10 +40,10 @@ export const calculatePreview = async (
     const employeeQuery = `
       SELECT home_location 
       FROM employees 
-      WHERE id = $1 AND is_active = true
+      WHERE cognito_user_id = $1 AND is_active = true
     `;
 
-    const employeeResult = await db.query(employeeQuery, [employeeId]);
+    const employeeResult = await db.query(employeeQuery, [employeeCognitoId]);
 
     if (employeeResult.rows.length === 0) {
       return {
@@ -119,8 +121,9 @@ export const createTravelRequest = async (
 ): Promise<APIGatewayProxyResult> => {
   try {
     // Extract user info from Lambda authorizer
-    const employeeId = event.requestContext.authorizer?.claims?.sub;
-    if (!employeeId) {
+    const userContext = getUserContextFromEvent(event);
+    const employeeCognitoId = userContext.sub;
+    if (!employeeCognitoId) {
       return {
         statusCode: 401,
         body: JSON.stringify({ error: 'Unauthorized' }),
@@ -143,10 +146,10 @@ export const createTravelRequest = async (
     const employeeQuery = `
       SELECT id, manager_id, home_location
       FROM employees 
-      WHERE id = $1 AND is_active = true
+      WHERE cognito_user_id = $1 AND is_active = true
     `;
 
-    const employeeResult = await db.query(employeeQuery, [employeeId]);
+    const employeeResult = await db.query(employeeQuery, [employeeCognitoId]);
 
     if (employeeResult.rows.length === 0) {
       return {
@@ -222,7 +225,7 @@ export const createTravelRequest = async (
     `;
 
     const insertResult = await db.query(insertQuery, [
-      employeeId,
+      employee.id,
       employee.manager_id,
       subproject.project_id,
       subproject_id,
@@ -240,7 +243,7 @@ export const createTravelRequest = async (
       VALUES ($1, 'pending', $2)
     `;
 
-    await db.query(historyQuery, [newRequest.id, employeeId]);
+    await db.query(historyQuery, [newRequest.id, employee.id]);
 
     return {
       statusCode: 201,

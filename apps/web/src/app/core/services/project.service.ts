@@ -41,17 +41,17 @@ export class ProjectService {
     }
 
     return this.http
-      .get<{ success: boolean; data: { projects: Project[] } }>(this.baseUrl, { params })
+      .get<{ projects: Project[] }>(this.baseUrl, { params })
       .pipe(
-        map(response => response.data.projects),
+        map(response => response.projects),
         tap(projects => this.projectsSubject.next(projects))
       );
   }
 
   getProject(id: string): Observable<Project> {
     return this.http
-      .get<{ success: boolean; data: { project: Project } }>(`${this.baseUrl}/${id}`)
-      .pipe(map(response => response.data.project));
+      .get<{ project: Project }>(`${this.baseUrl}/${id}`)
+      .pipe(map(response => response.project));
   }
 
   createProject(project: ProjectCreateRequest): Observable<Project> {
@@ -77,8 +77,8 @@ export class ProjectService {
   // Subproject CRUD Operations
   getSubprojects(projectId: string): Observable<Subproject[]> {
     return this.http
-      .get<{ success: boolean; data: { subprojects: Subproject[] } }>(`${this.baseUrl}/${projectId}/subprojects`)
-      .pipe(map(response => response.data.subprojects));
+      .get<{ subprojects: Subproject[] }>(`${this.baseUrl}/${projectId}/subprojects`)
+      .pipe(map(response => response.subprojects));
   }
 
   getSubproject(projectId: string, subprojectId: string): Observable<Subproject> {
@@ -124,16 +124,15 @@ export class ProjectService {
 
   // Utility methods
   getActiveProjects(): Observable<Project[]> {
-    return this.http.get<{ data: Project[] }>(`${this.baseUrl}/active`).pipe(
-      map(response => response.data),
+    return this.http.get<Project[]>(`${this.baseUrl}/active`).pipe(
       tap(projects => this.projectsSubject.next(projects))
     );
   }
 
   getActiveSubprojects(projectId: string): Observable<Subproject[]> {
     return this.http
-      .get<{ data: Subproject[] }>(`${this.baseUrl}/${projectId}/subprojects`)
-      .pipe(map(response => response.data.filter(sp => sp.isActive)));
+      .get<Subproject[]>(`${this.baseUrl}/${projectId}/subprojects`)
+      .pipe(map(response => response.filter(sp => sp.isActive)));
   }
 
   checkProjectReferences(

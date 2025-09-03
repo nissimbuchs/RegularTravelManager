@@ -4,7 +4,7 @@
 
 ### Prerequisites
 - **Docker Desktop** (with Docker Compose)
-- **Node.js 20+** with npm
+- **Node.js 18+** with npm
 - **Git**
 - **Optional**: AWS CLI (for manual LocalStack testing)
 
@@ -27,10 +27,9 @@ npm run localstack:init
 ```
 
 This creates:
-- ✅ Mock authentication with production-matching test users
-- ✅ DynamoDB tables with sample data  
 - ✅ S3 bucket for documents
 - ✅ Location Service configuration (mocked)
+- ✅ PostgreSQL database with sample data
 
 ### 3. Start Development
 
@@ -45,42 +44,40 @@ npm run dev:web    # Angular app on :4200
 
 ### 4. Test Your Setup
 
-Visit: http://localhost:3000/health
-Expected response:
-```json
-{
-  "status": "ok",
-  "environment": "development",
-  "services": {
-    "database": "connected",
-    "localstack": "ready",
-    "redis": "connected"
-  }
-}
+```bash
+# Run the health check script
+./test-setup.sh
 ```
+
+Expected output shows all services passing:
+- ✅ PostgreSQL connection
+- ✅ Redis connection  
+- ✅ LocalStack health
+- ✅ Database tables accessible
+- ✅ S3 buckets created
 
 ## 🔧 Architecture Overview
 
 ### Service Stack
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Angular App   │    │   Node.js API   │    │   PostgreSQL    │
+│   Angular App   │    │   Node.js API   │    │ PostgreSQL 16   │
 │   :4200         │◄──►│   :3000         │◄──►│   :5432         │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
                                 ▲
                                 │
                        ┌─────────────────┐    ┌─────────────────┐
-                       │   LocalStack    │    │     Redis       │
-                       │   :4566         │    │     :6379       │
+                       │LocalStack v3.8  │    │   Redis 7.4     │
+                       │   :4566         │    │   :6379         │
                        └─────────────────┘    └─────────────────┘
 ```
 
 ### LocalStack Services
-- **Authentication**: Mock authentication with production user data (Cognito is Pro feature)
-- **DynamoDB**: Project/subproject data storage
 - **S3**: Document storage
 - **Location Service**: Geocoding (mocked for development)
 - **API Gateway**: REST API routing simulation
+- **Lambda**: Function execution simulation
+- **CloudWatch Logs**: Application logging
 
 ## 📋 Available Scripts
 
@@ -118,7 +115,7 @@ npm run test:e2e:local   # Run E2E tests against local env
 
 ### Production-Matching Test Users
 
-The development environment uses mock authentication with production user data:
+The development environment uses mock authentication with test users stored in the PostgreSQL database:
 
 | User | Email | Name | Role | Employee ID |
 |------|-------|------|------|-------------|
@@ -145,16 +142,17 @@ window.location.reload();
 
 ### Authentication Notes
 
-- **No passwords required** in development - authentication is mocked
-- **Production parity**: Same user data structure as production Cognito
+- **No passwords required** in development - authentication is mocked in the frontend
+- **PostgreSQL storage**: User data stored in the employees table with roles
 - **Role-based access**: Managers can access employee data, employees cannot
-- **LocalStack**: Cognito is Pro feature - using frontend mock authentication
+- **Production parity**: Same user data structure as production, stored in PostgreSQL instead of Cognito
 
 ## 🗄️ Sample Data
 
-### DynamoDB Tables
-- **Projects**: 2 sample projects (Digital Transformation, Office Relocation)
-- **Subprojects**: 3 sample subprojects linked to main projects
+### PostgreSQL Database
+- **Projects**: Sample projects data
+- **Employees**: Test user accounts with roles
+- **Travel Requests**: Sample travel request data
 
 ### S3 Bucket
 - Sample receipts and templates in `rtm-documents-dev` bucket
@@ -199,8 +197,7 @@ Add to `.vscode/launch.json`:
 |----------|-------------|------------|-------------|
 | `NODE_ENV` | `development` | `production` | Environment mode |
 | `AWS_ENDPOINT_URL` | `http://localhost:4566` | _undefined_ | LocalStack endpoint |
-| `DATABASE_URL` | `postgresql://nissim@postgres:5432/...` | RDS endpoint | Database connection |
-| `COGNITO_USER_POOL_ID` | Auto-generated | Real pool ID | Cognito configuration |
+| `DATABASE_URL` | `postgresql://nissim:devpass123@localhost:5432/travel_manager_dev` | RDS endpoint | Database connection |
 
 ### Service Configuration
 
@@ -345,7 +342,7 @@ npm run localstack:init
 |--------|-------------|------------|
 | **Database** | PostgreSQL Docker | AWS RDS PostgreSQL |
 | **Authentication** | Mock authentication (frontend) | AWS Cognito User Pools |
-| **Storage** | LocalStack S3/DynamoDB | AWS S3/DynamoDB |
+| **Storage** | LocalStack S3 | AWS S3 |
 | **Location** | Mock geocoding service | AWS Location Service |
 | **Networking** | Docker Compose | VPC + Security Groups |
 

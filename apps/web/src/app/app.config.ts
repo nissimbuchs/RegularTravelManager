@@ -7,11 +7,12 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { responseInterceptor } from './core/interceptors/response.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
     provideAnimations(),
-    provideHttpClient(withInterceptors([loadingInterceptor, authInterceptor, errorInterceptor])),
+    provideHttpClient(withInterceptors([loadingInterceptor, responseInterceptor, authInterceptor, errorInterceptor])),
   ],
 };

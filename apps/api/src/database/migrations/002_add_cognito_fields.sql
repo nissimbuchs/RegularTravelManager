@@ -9,9 +9,16 @@ ADD COLUMN cognito_user_id VARCHAR(255) UNIQUE,
 ADD COLUMN employee_id VARCHAR(50) UNIQUE;
 
 -- Update existing records with placeholder values (will be updated when users are synced)
-UPDATE employees SET 
-  cognito_user_id = 'pending-' || id::text,
-  employee_id = 'EMP-' || LPAD(ROW_NUMBER() OVER (ORDER BY created_at)::text, 4, '0');
+WITH numbered_employees AS (
+  SELECT id, ROW_NUMBER() OVER (ORDER BY created_at) as row_num
+  FROM employees
+)
+UPDATE employees 
+SET 
+  cognito_user_id = 'pending-' || employees.id::text,
+  employee_id = 'EMP-' || LPAD(numbered_employees.row_num::text, 4, '0')
+FROM numbered_employees
+WHERE employees.id = numbered_employees.id;
 
 -- Make fields required after populating with placeholder values
 ALTER TABLE employees 

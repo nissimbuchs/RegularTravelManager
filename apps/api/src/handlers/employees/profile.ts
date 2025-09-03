@@ -56,10 +56,43 @@ class EmployeeServiceImpl implements EmployeeService {
   }
 
   async getEmployeeByCognitoId(cognitoUserId: string) {
+    console.log('Searching for employee with cognito_user_id:', cognitoUserId);
     const result = await db.query('SELECT * FROM employees WHERE cognito_user_id = $1', [
       cognitoUserId,
     ]);
-    return result.rows.length > 0 ? result.rows[0] : null;
+    
+    console.log('Query result rows count:', result.rows.length);
+    if (result.rows.length === 0) {
+      console.log('No employee found with cognito_user_id:', cognitoUserId);
+      return null;
+    }
+
+    const employee = result.rows[0];
+    console.log('Found employee:', employee.first_name, employee.last_name);
+    
+    // Convert PostGIS point to lat/lng
+    if (employee.home_location) {
+      try {
+        const locationResult = await db.query(
+          'SELECT ST_X($1::geometry) as longitude, ST_Y($1::geometry) as latitude',
+          [employee.home_location]
+        );
+        employee.home_location = {
+          latitude: locationResult.rows[0].latitude,
+          longitude: locationResult.rows[0].longitude,
+        };
+      } catch (error) {
+        console.error('PostGIS location conversion failed:', error);
+        // If location conversion fails, set to default location (Bern)
+        employee.home_location = {
+          latitude: 46.947974,
+          longitude: 7.447447,
+        };
+      }
+    }
+
+    console.log('Returning employee:', employee.id);
+    return employee;
   }
 
   async getEmployeeByEmployeeId(employeeId: string) {
@@ -154,8 +187,9 @@ class EmployeeServiceImpl implements EmployeeService {
           new_country,
           new_location,
           changed_at,
+          changed_by,
           reason
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP, $12)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP, $12, $13)
       `,
         [
           command.id,
@@ -169,6 +203,7 @@ class EmployeeServiceImpl implements EmployeeService {
           command.home_postal_code,
           command.home_country,
           updatedEmployee.home_location,
+          command.id, // changed_by is the employee making the change
           'User address update',
         ]
       );
@@ -246,7 +281,7 @@ export const getEmployeeProfile = validateRequest({
     );
   }
 
-  const employee = await employeeService.getEmployee(employeeId!);
+  const employee = await employeeService.getEmployeeByCognitoId(employeeId!);
 
   if (!employee) {
     throw new NotFoundError('Employee');
@@ -275,25 +310,32 @@ export const updateEmployeeAddress = validateRequest({
     },
   },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
-  const employeeId = event.pathParameters?.id;
+  const cognitoUserId = event.pathParameters?.id;
   const body = JSON.parse(event.body!);
   const userContext = getUserContextFromEvent(event);
 
   logger.info('Updating employee address', {
-    employeeId,
+    cognitoUserId,
     requestedBy: userContext.sub,
     requestId: context.awsRequestId,
   });
 
   // Verify user can update this employee's data
-  if (userContext.sub !== employeeId && !userContext.isManager) {
+  if (userContext.sub !== cognitoUserId && !userContext.isManager) {
     throw new ValidationError(
       'Access denied: can only update own profile or manager access required'
     );
   }
 
+  // First, get the employee by Cognito ID to get the actual database ID
+  const employee = await employeeService.getEmployeeByCognitoId(cognitoUserId!);
+  
+  if (!employee) {
+    throw new NotFoundError('Employee');
+  }
+
   const command: UpdateEmployeeAddressCommand = {
-    id: employeeId!,
+    id: employee.id, // Use the actual database ID, not the Cognito ID
     home_street: body.home_street,
     home_city: body.home_city,
     home_postal_code: body.home_postal_code,
@@ -303,7 +345,8 @@ export const updateEmployeeAddress = validateRequest({
   const updatedEmployee = await employeeService.updateEmployeeAddress(command);
 
   logger.info('Employee address updated successfully', {
-    employeeId,
+    cognitoUserId,
+    employeeDbId: employee.id,
     requestedBy: userContext.sub,
     requestId: context.awsRequestId,
   });

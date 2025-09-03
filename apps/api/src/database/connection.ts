@@ -180,7 +180,7 @@ export function getDatabaseConfig(): DatabaseConfig {
     port: parseInt(process.env.DB_PORT || '5432'),
     database: process.env.DB_NAME || 'travel_manager_dev',
     username: process.env.DB_USERNAME || 'nissim',
-    password: process.env.DB_PASSWORD || '',
+    password: process.env.DB_PASSWORD || 'devpass123', // Docker PostgreSQL password
     ssl: false,
     maxConnections: 10, // Larger pool for development
     connectionTimeoutMs: 10000,

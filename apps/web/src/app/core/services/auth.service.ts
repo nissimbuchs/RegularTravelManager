@@ -62,70 +62,12 @@ export class AuthService {
   }
 
   private initializeMockAuth(): void {
-    // Check for user override in localStorage for testing (defaults to employee1)
-    const userOverride = localStorage.getItem('mockUser') as
-      | 'employee1'
-      | 'employee2'
-      | 'manager1'
-      | 'manager2'
-      | 'admin1'
-      | 'admin2'
-      | null;
-    const selectedUser = userOverride || 'employee1';
-
-    // Production-matching test users
-    const mockUsers = {
-      employee1: {
-        id: 'employee1-cognito-id',
-        email: 'employee1@company.com',
-        name: 'John Employee',
-        role: 'employee' as const,
-        groups: ['employees'],
-      },
-      employee2: {
-        id: 'employee2-cognito-id',
-        email: 'employee2@company.com',
-        name: 'Jane Worker',
-        role: 'employee' as const,
-        groups: ['employees'],
-      },
-      manager1: {
-        id: 'manager1-cognito-id',
-        email: 'manager1@company.com',
-        name: 'Bob Manager',
-        role: 'manager' as const,
-        groups: ['managers', 'employees'],
-      },
-      manager2: {
-        id: 'manager2-cognito-id',
-        email: 'manager2@company.com',
-        name: 'Alice Director',
-        role: 'manager' as const,
-        groups: ['managers', 'employees'],
-      },
-      admin1: {
-        id: 'admin1-cognito-id',
-        email: 'admin1@company.com',
-        name: 'Sarah Admin',
-        role: 'admin' as const,
-        groups: ['administrators', 'managers', 'employees'],
-      },
-      admin2: {
-        id: 'admin2-cognito-id',
-        email: 'admin2@company.com',
-        name: 'David SuperAdmin',
-        role: 'admin' as const,
-        groups: ['administrators', 'managers', 'employees'],
-      },
-    };
-
-    const mockUser = mockUsers[selectedUser];
-    this.currentUserSubject.next(mockUser);
-
-    console.log(`🧪 Mock authentication initialized with user: ${selectedUser}`, mockUser);
-    console.log(
-      '💡 To change user, run: localStorage.setItem("mockUser", "employee1|employee2|manager1|manager2|admin1|admin2"); window.location.reload()'
-    );
+    // In mock mode, start logged out - only login on explicit login attempt
+    this.currentUserSubject.next(null);
+    
+    console.log('🧪 Mock authentication initialized - ready for login');
+    console.log('💡 Available users: employee1@company.com, employee2@company.com, manager1@company.com, manager2@company.com, admin1@company.com, admin2@company.com');
+    console.log('💡 Use any password to login in development mode');
   }
 
   login(credentials: LoginCredentials): Observable<AuthResponse> {

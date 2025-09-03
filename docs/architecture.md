@@ -129,6 +129,91 @@ This is the **definitive technology selection** for RegularTravelManager. All de
 | Logging | AWS CloudWatch Logs | Current | Centralized logging | Structured logging with Lambda integration |
 | CSS Framework | Tailwind CSS | 3.3+ | Utility-first styling | Rapid UI development, works well with Ant Design for custom styling |
 
+## Employee Identification Strategy
+
+The system uses a three-ID pattern to handle different contexts of employee identification across authentication, business operations, and database management.
+
+### Three ID Types
+
+| ID Type | Purpose | Format | Usage Context | Example |
+|---------|---------|--------|---------------|---------|
+| **id** (UUID) | Database primary key | UUID v4 | Internal database operations, foreign keys | `550e8400-e29b-41d4-a716-446655440001` |
+| **employee_id** | Human-readable business identifier | `EMP-####` or `MGR-####` | User interfaces, reports, business communications | `EMP-0001`, `MGR-0001` |
+| **cognito_user_id** | AWS Cognito authentication identifier | String | API authentication, JWT token `sub` claim | `employee1-cognito-id` |
+
+### Frontend ID Usage Rules
+
+**For API Calls:**
+- Always use `cognito_user_id` when calling API endpoints
+- The JWT token's `sub` claim contains the `cognito_user_id`
+- Backend handlers query by `cognito_user_id` for security
+
+```typescript
+// ✅ Correct: Use cognito_user_id for API calls
+const userContext = this.authService.getCurrentUser();
+this.http.get(`/employees/${userContext.sub}`); // sub = cognito_user_id
+
+// ❌ Incorrect: Never use UUID id or employee_id for API calls
+this.http.get(`/employees/550e8400-e29b-41d4-a716-446655440001`);
+this.http.get(`/employees/EMP-0001`);
+```
+
+**For Display Purposes:**
+- Use `employee_id` for user-friendly identification in UI components
+- Display `firstName lastName (employee_id)` for employee selection
+
+```typescript
+// ✅ Correct: Display employee_id in UI
+<mat-option [value]="employee.cognito_user_id">
+  {{ employee.firstName }} {{ employee.lastName }} ({{ employee.employee_id }})
+</mat-option>
+```
+
+### Authentication Flow with ID Mapping
+
+```mermaid
+sequenceDiagram
+    participant Frontend
+    participant API
+    participant Cognito
+    participant Database
+    
+    Frontend->>Cognito: Login with email/password
+    Cognito->>Frontend: JWT token (sub = cognito_user_id)
+    Frontend->>API: Request with JWT token
+    API->>API: Extract cognito_user_id from token.sub
+    API->>Database: Query WHERE cognito_user_id = $1
+    Database->>API: Return employee record with all IDs
+    API->>Frontend: Response with employee data
+```
+
+### Database Query Patterns
+
+**Employee Profile Handler:**
+```typescript
+// ✅ Correct: Query by cognito_user_id for security
+async getEmployeeByCognitoId(cognitoUserId: string) {
+  const result = await db.query(
+    'SELECT * FROM employees WHERE cognito_user_id = $1', 
+    [cognitoUserId]
+  );
+  return result.rows[0];
+}
+
+// ❌ Incorrect: Never query by UUID from frontend
+async getEmployee(id: string) {
+  const result = await db.query('SELECT * FROM employees WHERE id = $1', [id]);
+  return result.rows[0];
+}
+```
+
+### Security Rationale
+
+- **Cognito ID for API calls** ensures users can only access their own data
+- **UUID for database** provides efficient primary keys and foreign key relationships  
+- **Employee ID for display** offers human-readable identification for business users
+- **Token validation** automatically maps JWT `sub` claim to database records
+
 ## Data Models
 
 Based on our brainstorming session and DDD approach, here are the core domain models that will be shared between frontend and backend:
@@ -341,10 +426,10 @@ components:
           format: uuid
         employeeId:
           type: string
-          format: uuid
+          description: Cognito user ID for authentication
         managerId:
           type: string
-          format: uuid
+          description: Manager's Cognito user ID
         projectId:
           type: string
           format: uuid
@@ -377,7 +462,7 @@ components:
           nullable: true
         processedBy:
           type: string
-          format: uuid
+          description: Processing manager's Cognito user ID
           nullable: true
         rejectionReason:
           type: string
@@ -401,7 +486,7 @@ paths:
               properties:
                 managerId:
                   type: string
-                  format: uuid
+                  description: Manager's Cognito user ID
                 projectId:
                   type: string
                   format: uuid
@@ -1027,12 +1112,88 @@ Frontend Unit (Jest + Angular)  Backend Unit (Vitest)
 - Integration tests for API endpoints
 - Database tests for repository implementations
 
+## API Response Handling
+
+### Response Interceptor Pattern
+
+The backend consistently returns wrapped API responses in this format:
+
+```typescript
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  timestamp: string;
+  requestId: string;
+}
+```
+
+**Frontend Response Handling Rule:** All HTTP services should expect unwrapped data types directly, as the response interceptor automatically extracts the `data` field from wrapped responses.
+
+### Implementation
+
+**Response Interceptor (`apps/web/src/app/core/interceptors/response.interceptor.ts`):**
+
+```typescript
+export const responseInterceptor: HttpInterceptorFn = (req, next) => {
+  return next(req).pipe(
+    map(event => {
+      if (event.type === HttpEventType.Response) {
+        const response = event as HttpResponse<any>;
+        
+        // Check if response has the wrapped format
+        if (response.body && 
+            typeof response.body === 'object' && 
+            'success' in response.body && 
+            'data' in response.body) {
+          
+          // Clone the response and replace body with unwrapped data
+          return response.clone({
+            body: response.body.data
+          });
+        }
+      }
+      
+      return event;
+    })
+  );
+};
+```
+
+**Service Implementation Pattern:**
+
+```typescript
+// ✅ Correct: Expect unwrapped data types directly
+getEmployee(cognitoUserId: string): Observable<EmployeeDto> {
+  return this.http.get<EmployeeDto>(`${this.baseUrl}/employees/${cognitoUserId}`);
+}
+
+// ❌ Incorrect: Manual unwrapping (interceptor handles this)
+getEmployee(cognitoUserId: string): Observable<EmployeeDto> {
+  return this.http.get<{data: EmployeeDto}>(`${this.baseUrl}/employees/${cognitoUserId}`)
+    .pipe(map(response => response.data));
+}
+```
+
+### Configuration
+
+The interceptor is registered in `app.config.ts`:
+
+```typescript
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideHttpClient(withInterceptors([authInterceptor, responseInterceptor])),
+    // ... other providers
+  ]
+};
+```
+
 ## Coding Standards
 
 ### Critical Fullstack Rules
 
 - **Type Sharing:** Always define types in packages/shared and import from there
 - **API Calls:** Never make direct HTTP calls - use the service layer
+- **Response Handling:** Always expect unwrapped data types in services - the response interceptor handles unwrapping automatically
 - **Environment Variables:** Access only through config objects, never process.env directly
 - **Error Handling:** All API routes must use the standard error handler
 - **State Updates:** Never mutate state directly - use proper state management patterns

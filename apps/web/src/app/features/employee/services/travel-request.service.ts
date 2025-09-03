@@ -62,11 +62,10 @@ export class TravelRequestService {
 
   calculatePreview(subprojectId: string, daysPerWeek: number): Observable<CalculationPreview> {
     return this.http
-      .post<{ data: CalculationPreview }>(`${this.apiUrl}/api/employees/travel-requests/preview`, {
+      .post<CalculationPreview>(`${this.apiUrl}/api/employees/travel-requests/preview`, {
         subprojectId,
         daysPerWeek,
-      })
-      .pipe(map(response => response.data));
+      });
   }
 
   submitRequest(formData: TravelRequestFormData): Observable<any> {
@@ -77,7 +76,6 @@ export class TravelRequestService {
     };
 
     return this.http
-      .post<{ data: any }>(`${this.apiUrl}/api/employees/travel-requests`, requestData)
-      .pipe(map(response => response.data));
+      .post<any>(`${this.apiUrl}/api/employees/travel-requests`, requestData);
   }
 }

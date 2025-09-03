@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgis/postgis:15-3.3
+    image: postgis/postgis:16-3.4
     platform: linux/amd64
     container_name: rtm-postgres
     environment:
@@ -22,7 +22,7 @@ services:
 
   # LocalStack for AWS Services
   localstack:
-    image: localstack/localstack:3.0  # Community edition
+    image: localstack/localstack:3.8  # Community edition
     container_name: rtm-localstack
     environment:
       - SERVICES=dynamodb,location,apigateway,lambda,s3,logs
@@ -46,7 +46,7 @@ services:
 
   # Redis for Caching (replacing ElastiCache)
   redis:
-    image: redis:7.2-alpine
+    image: redis:7.4-alpine
     container_name: rtm-redis
     ports:
       - "6379:6379"

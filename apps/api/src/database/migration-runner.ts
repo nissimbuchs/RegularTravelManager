@@ -142,7 +142,11 @@ export class MigrationRunner {
   }
 
   async runAllMigrations(): Promise<void> {
-    const migrations = [{ version: '001', filename: '001_initial_schema.sql' }];
+    const migrations = [
+      { version: '001', filename: '001_initial_schema.sql' },
+      { version: '002', filename: '002_add_cognito_fields.sql' },
+      { version: '003', filename: '003_distance_calculation_functions.sql' }
+    ];
 
     for (const migration of migrations) {
       await this.executeMigration(migration.version, migration.filename);
