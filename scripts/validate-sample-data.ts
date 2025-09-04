@@ -20,7 +20,13 @@ interface DatabaseStats {
   employees: { total: number; admins: number; managers: number; regular: number };
   projects: { total: number; active: number };
   subprojects: { total: number; active: number };
-  travelRequests: { total: number; pending: number; approved: number; rejected: number; withdrawn: number };
+  travelRequests: {
+    total: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+    withdrawn: number;
+  };
   auditRecords: { statusHistory: number; addressHistory: number };
 }
 
@@ -66,7 +72,7 @@ class SampleDataValidator {
 
     try {
       const result = await this.client.query(query);
-      
+
       if (result.rows.length > 0) {
         this.addResult(
           'Employee Hierarchy',
@@ -99,11 +105,7 @@ class SampleDataValidator {
         }
       }
     } catch (error) {
-      this.addResult(
-        'Employee Hierarchy',
-        false,
-        `Validation failed: ${error.message}`
-      );
+      this.addResult('Employee Hierarchy', false, `Validation failed: ${error.message}`);
     }
   }
 
@@ -201,8 +203,8 @@ class SampleDataValidator {
       }
 
       // Validate reasonable distance ranges
-      const extremeDistances = distanceCheck.rows.filter(row => 
-        row.calculated_distance_km < 0 || row.calculated_distance_km > 500
+      const extremeDistances = distanceCheck.rows.filter(
+        row => row.calculated_distance_km < 0 || row.calculated_distance_km > 500
       );
 
       if (extremeDistances.length > 0) {
@@ -249,11 +251,7 @@ class SampleDataValidator {
           invalidCosts.rows
         );
       } else {
-        this.addResult(
-          'Cost Rate Constraints',
-          true,
-          'All cost rates are positive values'
-        );
+        this.addResult('Cost Rate Constraints', true, 'All cost rates are positive values');
       }
 
       // Check days per week constraints
@@ -325,7 +323,7 @@ class SampleDataValidator {
             FROM employees e
             LEFT JOIN employees m ON e.manager_id = m.id
             WHERE e.manager_id IS NOT NULL AND m.id IS NULL
-          `
+          `,
         },
         {
           name: 'Travel Request Employee References',
@@ -334,7 +332,7 @@ class SampleDataValidator {
             FROM travel_requests tr
             LEFT JOIN employees e ON tr.employee_id = e.id
             WHERE e.id IS NULL
-          `
+          `,
         },
         {
           name: 'Travel Request Manager References',
@@ -343,7 +341,7 @@ class SampleDataValidator {
             FROM travel_requests tr
             LEFT JOIN employees m ON tr.manager_id = m.id
             WHERE m.id IS NULL
-          `
+          `,
         },
         {
           name: 'Travel Request Project References',
@@ -352,7 +350,7 @@ class SampleDataValidator {
             FROM travel_requests tr
             LEFT JOIN projects p ON tr.project_id = p.id
             WHERE p.id IS NULL
-          `
+          `,
         },
         {
           name: 'Travel Request Subproject References',
@@ -361,7 +359,7 @@ class SampleDataValidator {
             FROM travel_requests tr
             LEFT JOIN subprojects sp ON tr.subproject_id = sp.id
             WHERE sp.id IS NULL
-          `
+          `,
         },
         {
           name: 'Subproject Project References',
@@ -370,8 +368,8 @@ class SampleDataValidator {
             FROM subprojects sp
             LEFT JOIN projects p ON sp.project_id = p.id
             WHERE p.id IS NULL
-          `
-        }
+          `,
+        },
       ];
 
       let allIntegrityChecksPassed = true;
@@ -390,11 +388,7 @@ class SampleDataValidator {
       }
 
       if (allIntegrityChecksPassed) {
-        this.addResult(
-          'Foreign Key Integrity',
-          true,
-          'All foreign key references are valid'
-        );
+        this.addResult('Foreign Key Integrity', true, 'All foreign key references are valid');
       }
     } catch (error) {
       this.addResult(
@@ -546,7 +540,11 @@ class SampleDataValidator {
     }
   }
 
-  async runAllValidations(): Promise<{ results: ValidationResult[]; stats: DatabaseStats; passed: boolean }> {
+  async runAllValidations(): Promise<{
+    results: ValidationResult[];
+    stats: DatabaseStats;
+    passed: boolean;
+  }> {
     console.log('🔍 Starting comprehensive sample data validation...\n');
 
     await this.validateEmployeeHierarchy();
@@ -568,36 +566,40 @@ class SampleDataValidator {
     console.log(`  👨‍💼 Managers: ${stats.employees.managers}`);
     console.log(`  👥 Regular Employees: ${stats.employees.regular}`);
     console.log(`  📁 Total Employees: ${stats.employees.total}\n`);
-    
+
     console.log(`  🏢 Projects: ${stats.projects.total} (${stats.projects.active} active)`);
-    console.log(`  📍 Subprojects: ${stats.subprojects.total} (${stats.subprojects.active} active)\n`);
-    
+    console.log(
+      `  📍 Subprojects: ${stats.subprojects.total} (${stats.subprojects.active} active)\n`
+    );
+
     console.log(`  ✈️  Travel Requests: ${stats.travelRequests.total}`);
     console.log(`    - Pending: ${stats.travelRequests.pending}`);
     console.log(`    - Approved: ${stats.travelRequests.approved}`);
     console.log(`    - Rejected: ${stats.travelRequests.rejected}`);
     console.log(`    - Withdrawn: ${stats.travelRequests.withdrawn}\n`);
-    
+
     console.log(`  📜 Audit Records:`);
     console.log(`    - Status History: ${stats.auditRecords.statusHistory}`);
     console.log(`    - Address History: ${stats.auditRecords.addressHistory}\n`);
 
     console.log('🧪 Validation Results:');
-    console.log('=' .repeat(80));
-    
+    console.log('='.repeat(80));
+
     for (const result of results) {
       const icon = result.passed ? '✅' : '❌';
       console.log(`${icon} ${result.name}: ${result.message}`);
-      
+
       if (!result.passed && result.details) {
         console.log('   Details:', JSON.stringify(result.details, null, 2));
       }
     }
-    
-    console.log('=' .repeat(80));
-    
+
+    console.log('='.repeat(80));
+
     if (passed) {
-      console.log('🎉 All validations passed! Sample data is consistent and ready for development.');
+      console.log(
+        '🎉 All validations passed! Sample data is consistent and ready for development.'
+      );
     } else {
       console.log('⚠️  Some validations failed. Please review and fix the issues above.');
     }
@@ -606,17 +608,18 @@ class SampleDataValidator {
 
 // Main execution
 async function main() {
-  const databaseUrl = process.env.DATABASE_URL || 'postgresql://nissim:devpass123@localhost:5432/travel_manager_dev';
-  
+  const databaseUrl =
+    process.env.DATABASE_URL || 'postgresql://nissim:devpass123@localhost:5432/travel_manager_dev';
+
   console.log('🔗 Connecting to database:', databaseUrl.replace(/:[^:@]*@/, ':****@'));
-  
+
   const validator = new SampleDataValidator(databaseUrl);
-  
+
   try {
     await validator.connect();
     const { results, stats, passed } = await validator.runAllValidations();
     validator.printResults(results, stats, passed);
-    
+
     process.exit(passed ? 0 : 1);
   } catch (error) {
     console.error('❌ Validation failed:', error.message);

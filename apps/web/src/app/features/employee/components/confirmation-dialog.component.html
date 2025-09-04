@@ -4,6 +4,10 @@
     Request Submitted Successfully
   </h2>
 
+  <div class="auto-close-notice">
+    <small>Will automatically return to dashboard in {{ currentCountdown }} seconds...</small>
+  </div>
+
   <mat-dialog-content class="dialog-content">
     <div class="request-summary">
       <div class="request-id-section">
@@ -60,14 +64,14 @@
   </mat-dialog-content>
 
   <mat-dialog-actions class="dialog-actions">
+    <button mat-button (click)="onCreateNew()" class="secondary-button">
+      Create New Request
+    </button>
     <button mat-button (click)="onClose()" class="close-button">
       Close
     </button>
-    <button mat-button (click)="onViewRequests()" class="secondary-button">
+    <button mat-raised-button color="primary" (click)="onViewRequests()" class="primary-button">
       View My Requests
-    </button>
-    <button mat-raised-button color="primary" (click)="onCreateNew()" class="primary-button">
-      Create New Request
     </button>
   </mat-dialog-actions>
 </div>

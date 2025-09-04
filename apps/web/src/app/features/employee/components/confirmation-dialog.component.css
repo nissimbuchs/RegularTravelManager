@@ -16,6 +16,20 @@
   font-size: 1.5rem;
 }
 
+.auto-close-notice {
+  text-align: center;
+  padding: 0.5rem;
+  background-color: #e3f2fd;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  border: 1px solid #bbdefb;
+}
+
+.auto-close-notice small {
+  color: #1565c0;
+  font-weight: 500;
+}
+
 .dialog-content {
   padding: 0 1rem;
 }

@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, from, throwError } from 'rxjs';
 import { map, catchError, tap, switchMap } from 'rxjs/operators';
 import { signIn, signOut, getCurrentUser, fetchAuthSession, AuthUser } from '@aws-amplify/auth';
 import { environment } from '../../../environments/environment';
+import { MatDialog } from '@angular/material/dialog';
 
 export interface User {
   id: string;
@@ -29,6 +30,7 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   public isAuthenticated$ = this.currentUser$.pipe(map(user => !!user));
+  private dialog = inject(MatDialog);
 
   constructor() {
     this.initializeAuth();
@@ -191,6 +193,9 @@ export class AuthService {
   }
 
   logout(): Observable<void> {
+    // Close all open dialogs before logout to prevent persistence issues
+    this.dialog.closeAll();
+    
     if (environment.cognito.useMockAuth) {
       // Mock logout
       return from(

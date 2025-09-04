@@ -29,7 +29,12 @@ describe('TravelRequestFormComponent', () => {
     const employeeServiceSpy = jasmine.createSpyObj('EmployeeService', ['getManagers']);
 
     await TestBed.configureTestingModule({
-      imports: [TravelRequestFormComponent, ReactiveFormsModule, BrowserAnimationsModule, HttpClientTestingModule],
+      imports: [
+        TravelRequestFormComponent,
+        ReactiveFormsModule,
+        BrowserAnimationsModule,
+        HttpClientTestingModule,
+      ],
       providers: [
         FormBuilder,
         { provide: TravelRequestService, useValue: travelRequestServiceSpy },
@@ -305,15 +310,15 @@ describe('TravelRequestFormComponent', () => {
     // Ensure service mocks return successfully (not errors)
     mockTravelRequestService.getActiveProjects.and.returnValue(of([]));
     mockEmployeeService.getManagers.and.returnValue(of([]));
-    
+
     // Mock localStorage
     spyOn(localStorage, 'getItem').and.returnValue(JSON.stringify(draftData));
     spyOn(localStorage, 'setItem');
     spyOn(localStorage, 'removeItem');
-    
-    // Get the actual injected MatSnackBar service from the component  
+
+    // Get the actual injected MatSnackBar service from the component
     const injectedSnackBar = TestBed.inject(MatSnackBar);
-    
+
     // Clear any previous SnackBar calls and set up return value
     (injectedSnackBar.open as jasmine.Spy).calls.reset();
     const mockSnackBarRef = {
@@ -323,27 +328,27 @@ describe('TravelRequestFormComponent', () => {
 
     // Spy on the component's loadDraft method to verify it's called
     const loadDraftSpy = spyOn(component as any, 'loadDraft').and.callThrough();
-    
+
     component.ngOnInit();
 
     // Wait for async operations to complete
     await fixture.whenStable();
-    
+
     // Allow additional time for promises to resolve
     await new Promise(resolve => setTimeout(resolve, 50));
 
     expect(localStorage.getItem).toHaveBeenCalledWith('travel-request-draft');
     expect(loadDraftSpy).toHaveBeenCalled();
-    
+
     // Verify the form was actually populated with draft data
     expect(component.requestForm.get('projectId')?.value).toBe('proj-1');
-    expect(component.requestForm.get('managerId')?.value).toBe('mgr-456'); 
+    expect(component.requestForm.get('managerId')?.value).toBe('mgr-456');
     expect(component.requestForm.get('daysPerWeek')?.value).toBe(3);
     expect(component.requestForm.get('justification')?.value).toBe('Draft justification');
-    
+
     // Verify that loadDraft was called
     expect(loadDraftSpy).toHaveBeenCalled();
-    
+
     // Verify snackbar was called
     expect(injectedSnackBar.open).toHaveBeenCalledWith(
       'Draft restored',
@@ -355,7 +360,7 @@ describe('TravelRequestFormComponent', () => {
   it('should call snackBar when loadDraft is called directly', () => {
     const draftData = {
       projectId: 'proj-1',
-      managerId: 'mgr-456', 
+      managerId: 'mgr-456',
       daysPerWeek: 3,
       justification: 'Draft justification',
       timestamp: new Date().toISOString(),
@@ -363,10 +368,10 @@ describe('TravelRequestFormComponent', () => {
 
     // Mock localStorage
     spyOn(localStorage, 'getItem').and.returnValue(JSON.stringify(draftData));
-    
+
     // Get the actual injected MatSnackBar service
     const injectedSnackBar = TestBed.inject(MatSnackBar);
-    
+
     // Clear any previous SnackBar calls and set up return value
     (injectedSnackBar.open as jasmine.Spy).calls.reset();
     const mockSnackBarRef = {
@@ -377,7 +382,7 @@ describe('TravelRequestFormComponent', () => {
     // Call loadDraft directly
     (component as any).loadDraft();
 
-    // Verify form was populated 
+    // Verify form was populated
     expect(component.requestForm.get('projectId')?.value).toBe('proj-1');
 
     // Verify snackbar was called

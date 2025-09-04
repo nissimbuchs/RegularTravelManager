@@ -57,14 +57,14 @@ describe('ProjectsListComponent', () => {
 
     const dialogSpy = jasmine.createSpyObj('MatDialog', ['open'], {
       // Add mock openDialogs array to prevent "push" error
-      openDialogs: []
+      openDialogs: [],
     }) as any; // Use 'any' to bypass readonly restriction
     const snackBarSpy = jasmine.createSpyObj('MatSnackBar', ['open']);
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
     const activatedRouteSpy = jasmine.createSpyObj('ActivatedRoute', [], {
       snapshot: { params: {}, queryParams: {} },
       params: of({}),
-      queryParams: of({}) 
+      queryParams: of({}),
     });
 
     await TestBed.configureTestingModule({

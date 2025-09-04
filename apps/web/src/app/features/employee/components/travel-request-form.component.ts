@@ -2,15 +2,16 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MaterialModule } from '../../../material.module';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { TravelRequestFormData, CalculationPreview, ProjectDto, SubprojectDto } from '@rtm/shared';
 import { TravelRequestService } from '../services/travel-request.service';
 import { EmployeeService } from '../../../core/services/employee.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ConfirmationDialogComponent, ConfirmationData } from './confirmation-dialog.component';
-import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
-import { EMPTY, Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, tap, takeUntil } from 'rxjs/operators';
+import { EMPTY, Observable, Subject } from 'rxjs';
 
 interface Manager {
   id: string;
@@ -35,6 +36,10 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
   isSubmitting = false;
   private draftKey = 'travel-request-draft';
   private autoSaveTimer: any;
+  // Reference to confirmation dialog for cleanup
+  private confirmationDialogRef: MatDialogRef<ConfirmationDialogComponent> | null = null;
+  // Subject to cancel subscriptions on component destroy
+  private destroy$ = new Subject<void>();
 
   constructor(
     private fb: FormBuilder,
@@ -42,7 +47,8 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
     private employeeService: EmployeeService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) {
     this.requestForm = this.fb.group({
       projectId: ['', [Validators.required]],
@@ -80,8 +86,18 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Signal all subscriptions to complete
+    this.destroy$.next();
+    this.destroy$.complete();
+    
     if (this.autoSaveTimer) {
       clearInterval(this.autoSaveTimer);
+    }
+    
+    // Close any open confirmation dialog to prevent it from reappearing
+    if (this.confirmationDialogRef) {
+      this.confirmationDialogRef.close();
+      this.confirmationDialogRef = null;
     }
   }
 
@@ -203,11 +219,19 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
       this.isSubmitting = true;
       const formData: TravelRequestFormData = this.requestForm.value;
 
-      this.travelRequestService.submitRequest(formData).subscribe({
+      this.travelRequestService.submitRequest(formData)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
         next: response => {
           this.isSubmitting = false;
           this.clearDraft(); // Clear draft on successful submission
-          this.showConfirmationDialog(response.requestId, formData);
+          
+          // Check if user is still authenticated before showing dialog
+          this.authService.getCurrentUser().pipe(takeUntil(this.destroy$)).subscribe(user => {
+            if (user) {
+              this.showConfirmationDialog(response.requestId, formData);
+            }
+          });
         },
         error: error => {
           console.error('Failed to submit request:', error);
@@ -276,12 +300,17 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
       disableClose: false,
     });
 
+    // Store dialog reference for cleanup
+    this.confirmationDialogRef = dialogRef;
+
     dialogRef.afterClosed().subscribe(result => {
+      // Clear the dialog reference when closed
+      this.confirmationDialogRef = null;
+      
       if (result === 'create-new') {
         this.resetForm();
       } else if (result === 'view-requests') {
-        // Navigate to requests dashboard (to be implemented in future story)
-        this.snackBar.open('Requests dashboard coming soon!', 'Close', { duration: 3000 });
+        // Navigate to requests dashboard
         this.router.navigate(['/employee/dashboard']);
       } else {
         // Default: navigate back to dashboard when dialog is closed without action
