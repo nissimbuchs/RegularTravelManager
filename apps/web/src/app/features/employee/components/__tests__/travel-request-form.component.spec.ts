@@ -115,10 +115,10 @@ describe('TravelRequestFormComponent', () => {
         id: 'proj-1',
         name: 'Test Project',
         description: 'Test Description',
-        default_cost_per_km: 0.68,
-        is_active: true,
-        created_at: '2025-01-01',
-        updated_at: '2025-01-01',
+        defaultCostPerKm: 0.68,
+        isActive: true,
+        createdAt: '2025-01-01',
+        updatedAt: '2025-01-01',
       },
     ];
 
@@ -134,12 +134,12 @@ describe('TravelRequestFormComponent', () => {
     const mockSubprojects = [
       {
         id: 'subproj-1',
-        project_id: 'proj-1',
+        projectId: 'proj-1',
         name: 'Test Subproject',
-        location_city: 'Zurich',
-        is_active: true,
-        created_at: '2025-01-01',
-        updated_at: '2025-01-01',
+        locationCity: 'Zurich',
+        isActive: true,
+        createdAt: '2025-01-01',
+        updatedAt: '2025-01-01',
       },
     ];
 

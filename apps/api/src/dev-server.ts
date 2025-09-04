@@ -197,8 +197,8 @@ app.post('/api/employees/travel-requests', lambdaToExpress(createTravelRequest))
 // Manager Dashboard endpoints - using real database handlers
 app.get('/api/manager/dashboard', lambdaToExpress(getManagerDashboard));
 app.get('/api/manager/employee-context/:employeeId', lambdaToExpress(getEmployeeContext));
-app.post('/api/manager/requests/:requestId/approve', lambdaToExpress(approveRequest));
-app.post('/api/manager/requests/:requestId/reject', lambdaToExpress(rejectRequest));
+app.put('/api/manager/requests/:requestId/approve', lambdaToExpress(approveRequest));
+app.put('/api/manager/requests/:requestId/reject', lambdaToExpress(rejectRequest));
 
 // Initialize database and start server
 async function startServer() {

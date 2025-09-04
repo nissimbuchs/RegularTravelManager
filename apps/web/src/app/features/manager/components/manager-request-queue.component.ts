@@ -243,8 +243,8 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
   }
 
   private loadEmployeeContext(request: TravelRequestSummary): void {
-    // Extract employee ID from email - this will now match the service lookup correctly
-    const employeeId = request.employeeEmail.split('@')[0].replace('.', '');
+    // Use the full email as employee ID since it matches the cognito_user_id in database
+    const employeeId = request.employeeEmail;
 
     this.isLoadingContext = true;
     this.managerDashboardService

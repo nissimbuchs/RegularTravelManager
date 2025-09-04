@@ -356,15 +356,15 @@ describe('ManagerRequestQueueComponent', () => {
 
       expect(component.selectedRequest).toBe(request);
       expect(component.showEmployeePanel).toBeTrue();
-      expect(mockManagerDashboardService.getEmployeeContext).toHaveBeenCalledWith('johndoe');
+      expect(mockManagerDashboardService.getEmployeeContext).toHaveBeenCalledWith('john.doe@company.com');
     });
 
-    it('should extract employee ID from email correctly', () => {
+    it('should use full email as employee ID correctly', () => {
       const request = { ...mockTravelRequests[0], employeeEmail: 'jane.smith@company.com' };
 
       component.selectRequest(request);
 
-      expect(mockManagerDashboardService.getEmployeeContext).toHaveBeenCalledWith('janesmith');
+      expect(mockManagerDashboardService.getEmployeeContext).toHaveBeenCalledWith('jane.smith@company.com');
     });
 
     it('should load employee context successfully', fakeAsync(() => {

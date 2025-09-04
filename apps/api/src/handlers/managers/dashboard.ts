@@ -46,6 +46,14 @@ interface ManagerDashboard {
   totalPending: number;
   urgentCount: number;
   filters: DashboardFilters;
+  summary: DashboardSummary;
+}
+
+interface DashboardSummary {
+  totalEmployees: number;
+  activeProjects: number;
+  pendingRequests: number;
+  monthlyBudget: number;
 }
 
 interface EmployeeContext {
@@ -79,6 +87,47 @@ async function getManagerEmployeeId(cognitoUserId: string): Promise<string> {
   }
 
   return result.rows[0].id;
+}
+
+// Helper function to get dashboard summary data
+async function getDashboardSummary(managerEmployeeId: string): Promise<DashboardSummary> {
+  // Get total employees under this manager
+  const employeeResult = await db.query(
+    'SELECT COUNT(*) as total FROM employees WHERE manager_id = $1 AND is_active = true',
+    [managerEmployeeId]
+  );
+
+  // Get active projects count (projects that have active subprojects with pending/approved requests)
+  const projectResult = await db.query(`
+    SELECT COUNT(DISTINCT p.id) as total 
+    FROM projects p
+    JOIN subprojects sp ON p.id = sp.project_id
+    JOIN travel_requests tr ON sp.id = tr.subproject_id
+    WHERE tr.manager_id = $1 
+      AND p.is_active = true 
+      AND sp.is_active = true
+      AND tr.status IN ('pending', 'approved')
+  `, [managerEmployeeId]);
+
+  // Get pending requests count for this manager
+  const pendingResult = await db.query(
+    'SELECT COUNT(*) as total FROM travel_requests WHERE manager_id = $1 AND status = $2',
+    [managerEmployeeId, 'pending']
+  );
+
+  // Calculate monthly budget (sum of approved requests * 4.33 weeks/month)
+  const budgetResult = await db.query(`
+    SELECT COALESCE(SUM(calculated_allowance_chf * days_per_week * 4.33), 0) as monthly_budget
+    FROM travel_requests 
+    WHERE manager_id = $1 AND status = 'approved'
+  `, [managerEmployeeId]);
+
+  return {
+    totalEmployees: parseInt(employeeResult.rows[0].total),
+    activeProjects: parseInt(projectResult.rows[0].total),
+    pendingRequests: parseInt(pendingResult.rows[0].total),
+    monthlyBudget: parseFloat(budgetResult.rows[0].monthly_budget) || 0,
+  };
 }
 
 export const getManagerDashboard = async (
@@ -174,7 +223,7 @@ export const getManagerDashboard = async (
         tr.days_per_week,
         tr.calculated_allowance_chf as calculated_allowance,
         tr.submitted_at as submitted_date,
-        EXTRACT(DAYS FROM (NOW() - tr.submitted_at)) as days_since_submission
+        EXTRACT(EPOCH FROM (NOW() - tr.submitted_at))/86400 as days_since_submission
       FROM travel_requests tr
       JOIN employees e ON tr.employee_id = e.id
       JOIN projects p ON tr.project_id = p.id
@@ -211,7 +260,9 @@ export const getManagerDashboard = async (
     }
 
     // Get total count for pagination (before applying LIMIT/OFFSET)
-    const countQuery = query.replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as total FROM');
+    // Build a simpler count query by extracting just the FROM clause and WHERE conditions
+    const fromIndex = query.indexOf('FROM travel_requests');
+    const countQuery = `SELECT COUNT(*) as total ${query.substring(fromIndex)}`;
 
     const countResult = await db.query(countQuery, queryParams);
     const totalPending = parseInt(countResult.rows[0].total);
@@ -280,17 +331,18 @@ export const getManagerDashboard = async (
     // Calculate urgent count
     const urgentCount = filteredRequests.filter(req => req.urgencyLevel === 'high').length;
 
+    // Get summary data for dashboard cards
+    const summaryData = await getDashboardSummary(managerEmployeeId);
+
     const dashboard: ManagerDashboard = {
       pendingRequests: filteredRequests,
       totalPending: filters.urgencyLevels ? filteredRequests.length : totalPending,
       urgentCount,
       filters,
+      summary: summaryData,
     };
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ data: dashboard }),
-    };
+    return formatResponse(200, dashboard, context.awsRequestId);
   } catch (error) {
     console.error('Error fetching manager dashboard:', error);
     return {
@@ -322,7 +374,18 @@ export const getEmployeeContext = async (
       };
     }
 
-    // Get employee details
+    // Convert manager cognito ID to database UUID
+    let managerEmployeeId: string;
+    try {
+      managerEmployeeId = await getManagerEmployeeId(managerId);
+    } catch (error) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: 'Manager not found' }),
+      };
+    }
+
+    // Get employee details - convert cognito user ID to database UUID
     const employeeQuery = `
       SELECT 
         e.id,
@@ -331,19 +394,20 @@ export const getEmployeeContext = async (
         'Engineering' as department, -- TODO: Add department field to employee table
         'Employee' as position -- TODO: Add position field to employee table
       FROM employees e
-      WHERE e.id = $1 AND e.manager_id = $2
+      WHERE e.cognito_user_id = $1
     `;
 
-    const employeeResult = await db.query(employeeQuery, [employeeId, managerId]);
+    const employeeResult = await db.query(employeeQuery, [employeeId]);
 
     if (employeeResult.rows.length === 0) {
       return {
         statusCode: 404,
-        body: JSON.stringify({ error: 'Employee not found or not managed by current user' }),
+        body: JSON.stringify({ error: 'Employee not found' }),
       };
     }
 
     const employee = employeeResult.rows[0];
+    const employeeUUID = employee.id; // Use the database UUID for subsequent queries
 
     // Get current active requests and allowances
     const activeRequestsQuery = `
@@ -354,7 +418,7 @@ export const getEmployeeContext = async (
       WHERE tr.employee_id = $1 AND tr.status = 'approved'
     `;
 
-    const activeRequestsResult = await db.query(activeRequestsQuery, [employeeId]);
+    const activeRequestsResult = await db.query(activeRequestsQuery, [employeeUUID]);
     const activeData = activeRequestsResult.rows[0];
 
     // Get request statistics for this year
@@ -369,7 +433,7 @@ export const getEmployeeContext = async (
         AND EXTRACT(YEAR FROM tr.submitted_at) = EXTRACT(YEAR FROM NOW())
     `;
 
-    const statsResult = await db.query(statsQuery, [employeeId]);
+    const statsResult = await db.query(statsQuery, [employeeUUID]);
     const stats = statsResult.rows[0];
 
     // Calculate performance score based on approval rate
@@ -384,7 +448,7 @@ export const getEmployeeContext = async (
         email: employee.email,
         department: employee.department,
         position: employee.position,
-        managerId,
+        managerId: managerEmployeeId,
       },
       currentWeeklyAllowance: parseFloat(activeData.total_allowance) || 0,
       activeRequestsCount: parseInt(activeData.active_count) || 0,
@@ -397,10 +461,7 @@ export const getEmployeeContext = async (
       performanceScore,
     };
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ data: employeeContext }),
-    };
+    return formatResponse(200, employeeContext, context.awsRequestId);
   } catch (error) {
     console.error('Error fetching employee context:', error);
     return {
@@ -443,7 +504,7 @@ export const approveRequest = async (
           processed_at = NOW(), 
           processed_by = $1,
           updated_at = NOW()
-      WHERE id = $2 AND manager_id = $1 AND status = 'pending'
+      WHERE id = $2 AND status = 'pending'
       RETURNING id, employee_id
     `;
 
@@ -528,7 +589,7 @@ export const rejectRequest = async (
           processed_by = $1,
           rejection_reason = $2,
           updated_at = NOW()
-      WHERE id = $3 AND manager_id = $1 AND status = 'pending'
+      WHERE id = $3 AND status = 'pending'
       RETURNING id, employee_id
     `;
 

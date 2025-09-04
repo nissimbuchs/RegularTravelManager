@@ -3,7 +3,15 @@ export interface ManagerDashboard {
   totalPending: number;
   urgentCount: number;
   filters: DashboardFilters;
+  summary: DashboardSummary;
   employeeContext?: EmployeeContext;
+}
+
+export interface DashboardSummary {
+  totalEmployees: number;
+  activeProjects: number;
+  pendingRequests: number;
+  monthlyBudget: number;
 }
 
 export interface TravelRequestSummary {

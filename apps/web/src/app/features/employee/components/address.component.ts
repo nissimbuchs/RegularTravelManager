@@ -438,9 +438,7 @@ export class AddressComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: user => {
-          console.log('Auth user:', user); // Debug log
           if (user?.id) {
-            console.log('Loading profile for user ID:', user.id); // Debug log
             this.employeeService
               .getEmployeeProfile(user.id)
               .pipe(
@@ -449,7 +447,6 @@ export class AddressComponent implements OnInit, OnDestroy {
               )
               .subscribe({
                 next: employee => {
-                  console.log('Employee profile loaded:', employee); // Debug log
                   this.employee = employee;
                   this.populateForm();
                 },
@@ -463,7 +460,6 @@ export class AddressComponent implements OnInit, OnDestroy {
                 },
               });
           } else {
-            console.warn('No user ID available'); // Debug log
             this.snackBar.open('No user authentication found', 'Close', { duration: 3000 });
             this.loadingService.setLoading(false);
           }
