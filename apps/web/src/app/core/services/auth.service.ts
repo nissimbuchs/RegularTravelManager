@@ -67,7 +67,7 @@ export class AuthService {
 
     console.log('🧪 Mock authentication initialized - ready for login');
     console.log(
-      '💡 Available users: employee1@company.com, employee2@company.com, manager1@company.com, manager2@company.com, admin1@company.com, admin2@company.com'
+      '💡 Available users: employee1@company.ch, employee2@company.ch, employee3@company.ch, manager1@company.ch, manager2@company.ch, admin1@company.ch, admin2@company.ch'
     );
     console.log('💡 Use any password to login in development mode');
   }
@@ -110,47 +110,54 @@ export class AuthService {
   }
 
   private mockLogin(credentials: LoginCredentials): Observable<AuthResponse> {
-    // Mock users with their credentials
+    // Mock users matching comprehensive sample data (Swiss format)
     const mockUsers = {
-      'employee1@company.com': {
-        id: 'employee1-cognito-id',
-        email: 'employee1@company.com',
-        name: 'John Employee',
+      'employee1@company.ch': {
+        id: 'employee1@company.ch',
+        email: 'employee1@company.ch',
+        name: 'Anna Schneider',
         role: 'employee' as const,
         groups: ['employees'],
       },
-      'employee2@company.com': {
-        id: 'employee2-cognito-id',
-        email: 'employee2@company.com',
-        name: 'Jane Worker',
+      'employee2@company.ch': {
+        id: 'employee2@company.ch',
+        email: 'employee2@company.ch',
+        name: 'Marco Rossi',
         role: 'employee' as const,
         groups: ['employees'],
       },
-      'manager1@company.com': {
-        id: 'manager1-cognito-id',
-        email: 'manager1@company.com',
-        name: 'Bob Manager',
+      'employee3@company.ch': {
+        id: 'employee3@company.ch',
+        email: 'employee3@company.ch',
+        name: 'Lisa Meier',
+        role: 'employee' as const,
+        groups: ['employees'],
+      },
+      'manager1@company.ch': {
+        id: 'manager1@company.ch',
+        email: 'manager1@company.ch',
+        name: 'Thomas Müller',
         role: 'manager' as const,
         groups: ['managers', 'employees'],
       },
-      'manager2@company.com': {
-        id: 'manager2-cognito-id',
-        email: 'manager2@company.com',
-        name: 'Alice Director',
+      'manager2@company.ch': {
+        id: 'manager2@company.ch',
+        email: 'manager2@company.ch',
+        name: 'Sophie Dubois',
         role: 'manager' as const,
         groups: ['managers', 'employees'],
       },
-      'admin1@company.com': {
-        id: 'admin1-cognito-id',
-        email: 'admin1@company.com',
-        name: 'Sarah Admin',
+      'admin1@company.ch': {
+        id: 'admin1@company.ch',
+        email: 'admin1@company.ch',
+        name: 'Hans Zimmermann',
         role: 'admin' as const,
         groups: ['administrators', 'managers', 'employees'],
       },
-      'admin2@company.com': {
-        id: 'admin2-cognito-id',
-        email: 'admin2@company.com',
-        name: 'David SuperAdmin',
+      'admin2@company.ch': {
+        id: 'admin2@company.ch',
+        email: 'admin2@company.ch',
+        name: 'Maria Weber',
         role: 'admin' as const,
         groups: ['administrators', 'managers', 'employees'],
       },
@@ -162,7 +169,7 @@ export class AuthService {
       return throwError(
         () =>
           new Error(
-            'User not found. Use: employee1@company.com, employee2@company.com, manager1@company.com, manager2@company.com, admin1@company.com, or admin2@company.com'
+            'User not found. Use: employee1@company.ch, employee2@company.ch, employee3@company.ch, manager1@company.ch, manager2@company.ch, admin1@company.ch, or admin2@company.ch'
           )
       );
     }

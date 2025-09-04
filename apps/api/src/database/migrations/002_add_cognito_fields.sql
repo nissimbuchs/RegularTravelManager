@@ -32,7 +32,7 @@ CREATE INDEX idx_employees_employee_id ON employees(employee_id);
 -- Add constraint to ensure valid employee ID format
 ALTER TABLE employees 
 ADD CONSTRAINT chk_employee_id_format 
-CHECK (employee_id ~ '^EMP-[0-9]{4}$');
+CHECK (employee_id ~ '^(EMP|MGR|ADM)-[0-9]{4}$');
 
 -- Function to sync employee data with Cognito user
 CREATE OR REPLACE FUNCTION sync_employee_with_cognito(

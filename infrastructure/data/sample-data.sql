@@ -9,6 +9,8 @@
 -- - Projects and subprojects with accurate Swiss coordinates
 -- - Complete travel request lifecycle examples
 -- - Audit trail and status change history
+--
+-- NOTE: This script assumes a clean database schema created by init-db.sql
 
 -- =============================================================================
 -- EMPLOYEE DATA - Swiss business context with realistic names and addresses
@@ -597,7 +599,7 @@ INSERT INTO request_status_history (
 INSERT INTO employee_address_history (
     employee_id, previous_street, previous_city, previous_postal_code, previous_country, previous_location,
     new_street, new_city, new_postal_code, new_country, new_location,
-    change_reason, changed_by
+    reason, changed_by
 ) VALUES (
     '99999999-9999-9999-9999-999999999999', -- Julia Fischer
     'Bahnhofstrasse 12',

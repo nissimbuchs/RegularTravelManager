@@ -85,10 +85,15 @@ for i in {1..30}; do
     sleep 1
 done
 
-# Step 2: Run database migrations
-print_status "Step 2: Setting up database schema..."
-npm run db:migrate
-print_success "Database migrations completed"
+# Step 2: Check if database is already initialized, skip migrations if so
+print_status "Step 2: Checking database initialization..."
+if docker exec rtm-postgres psql -U nissim -d travel_manager_dev -c "SELECT version FROM schema_migrations WHERE version = 'init_complete_v17';" | grep -q "init_complete_v17"; then
+    print_success "Database already initialized, skipping migrations"
+else
+    print_status "Running database migrations..."
+    npm run db:migrate
+    print_success "Database migrations completed"
+fi
 
 # Step 3: Load comprehensive sample data
 print_status "Step 3: Loading comprehensive sample data..."

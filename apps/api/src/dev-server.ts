@@ -65,14 +65,14 @@ function lambdaToExpress(lambdaHandler) {
         authorizer: {
           // Raw claims (what the real authorizer would pass)
           claims: {
-            sub: req.headers['x-user-id'] || 'employee1-cognito-id', // Mock user for dev
-            email: req.headers['x-user-email'] || 'employee1@company.com',
+            sub: req.headers['x-user-id'] || 'employee1@company.ch', // Mock user for dev
+            email: req.headers['x-user-email'] || 'employee1@company.ch',
             'cognito:groups': req.headers['x-user-groups'] || 'employees',
           },
           // Processed context (what auth-utils expects)
-          sub: req.headers['x-user-id'] || 'employee1-cognito-id',
-          email: req.headers['x-user-email'] || 'employee1@company.com',
-          cognitoUsername: req.headers['x-user-email'] || 'employee1@company.com',
+          sub: req.headers['x-user-id'] || 'employee1@company.ch',
+          email: req.headers['x-user-email'] || 'employee1@company.ch',
+          cognitoUsername: req.headers['x-user-email'] || 'employee1@company.ch',
           isManager: isManager.toString(),
           groups: JSON.stringify(userGroups),
         },

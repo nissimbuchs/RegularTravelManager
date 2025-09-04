@@ -14,15 +14,15 @@
 # 1. Clone and install
 npm install
 
-# 2. Start development environment
-npm run dev:env           # Start infrastructure (PostgreSQL, Redis, LocalStack)
-npm run localstack:init   # Initialize AWS services (DynamoDB, S3)
+# 2. Start development environment (complete setup + start apps)
+npm run run:local:setup   # Complete setup + start API & web apps
 ./test-setup.sh          # Verify environment health
 
-# 3. Start development
-npm run dev:full          # Start infrastructure + API + web app
-npm run dev:api:local     # API server against local infrastructure  
-npm run dev:web           # Angular frontend
+# Alternative: individual commands
+npm run run:local:env           # Start infrastructure only (PostgreSQL, Redis, LocalStack)
+npm run run:aws:localstack      # Initialize AWS services (DynamoDB, S3)
+npm run run:local:api           # API server against local infrastructure  
+npm run run:local:web           # Angular frontend
 ```
 
 ### Development Environment Benefits
@@ -35,20 +35,31 @@ npm run dev:web           # Angular frontend
 ## Environment Management Commands
 
 ```bash
+# Quick commands (recommended)
+npm run run:local:setup   # Complete setup + start everything
+npm run run:local         # Alias for run:local:setup
+
 # Environment management
-npm run dev:env           # Start all Docker services
-npm run dev:env:logs      # View service logs  
-npm run dev:env:clean     # Stop & remove all containers
-npm run dev:env:restart   # Clean restart all services
+npm run run:local:env           # Start all Docker services
+npm run run:local:env:logs      # View service logs  
+npm run run:local:env:clean     # Stop & remove all containers
+npm run run:local:env:restart   # Clean restart all services
 
 # Development servers
-npm run dev:full          # Start everything
-npm run dev:api:local     # API server only
-npm run dev:web           # Angular app only
+npm run run:local:api           # API server only
+npm run run:local:web           # Angular app only
+
+# AWS/LocalStack
+npm run run:aws:localstack            # Start LocalStack + initialization
+npm run run:aws:localstack:status     # Check LocalStack health
 
 # Utilities
-npm run localstack:status # Check LocalStack health
 ./test-setup.sh          # Verify environment
+
+# Legacy aliases (backward compatibility)
+npm run dev               # Same as run:local:setup
+npm run dev:env           # Same as run:local:env
+npm run localstack:status # Same as run:aws:localstack:status
 ```
 
 ## Automatic Environment Configuration

@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { MaterialModule } from '../../../material.module';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 import { TravelRequestFormData, CalculationPreview, ProjectDto, SubprojectDto } from '@rtm/shared';
 import { TravelRequestService } from '../services/travel-request.service';
 import { EmployeeService } from '../../../core/services/employee.service';
@@ -40,7 +41,8 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
     private travelRequestService: TravelRequestService,
     private employeeService: EmployeeService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private router: Router
   ) {
     this.requestForm = this.fb.group({
       projectId: ['', [Validators.required]],
@@ -280,6 +282,10 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
       } else if (result === 'view-requests') {
         // Navigate to requests dashboard (to be implemented in future story)
         this.snackBar.open('Requests dashboard coming soon!', 'Close', { duration: 3000 });
+        this.router.navigate(['/employee/dashboard']);
+      } else {
+        // Default: navigate back to dashboard when dialog is closed without action
+        this.router.navigate(['/employee/dashboard']);
       }
     });
   }

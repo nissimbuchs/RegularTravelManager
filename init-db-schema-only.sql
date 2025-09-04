@@ -216,9 +216,9 @@ $$ LANGUAGE plpgsql;
 
 -- Record schema migrations as completed
 INSERT INTO schema_migrations (version, filename, checksum) VALUES 
-  ('001_initial_schema', '001_initial_schema.sql', 'LS0gTWlncmF0aW9uOiAwMDFfaW5pdGlh'),
-  ('002_add_cognito_fields', '002_add_cognito_fields.sql', 'LS0gTWlncmF0aW9uOiAwMDJfYWRkX2Nv'),
-  ('003_distance_calculation_functions', '003_distance_calculation_functions.sql', 'LS0gTWlncmF0aW9uOiBEaXN0YW5jZSBh');
+  ('001_initial_schema', '001_initial_schema.sql', 'init_checksum_001'),
+  ('002_add_cognito_fields', '002_add_cognito_fields.sql', 'init_checksum_002'),
+  ('003_distance_calculation_functions', '003_distance_calculation_functions.sql', 'init_checksum_003');
 
 -- Database initialization completed (schema only, no sample data)
 INSERT INTO schema_migrations (version, filename, checksum) VALUES ('init_complete_v17', 'init-db-schema-only.sql', 'init_schema_only_checksum');

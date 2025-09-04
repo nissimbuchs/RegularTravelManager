@@ -56,30 +56,36 @@ npm install
 ### 2. Start Development Environment
 
 ```bash
-# Complete setup (infrastructure + database + sample data)
-npm run dev:setup
+# Complete setup (infrastructure + database + sample data + start apps)
+npm run run:local:setup
 
 # Verify setup
 ./test-setup.sh
 ```
 
-**What `npm run dev:setup` does automatically:**
+**What `npm run run:local:setup` does automatically:**
 - ✅ Starts infrastructure services (PostgreSQL, Redis, LocalStack)
 - ✅ Waits for services to be ready
 - ✅ Runs database migrations
 - ✅ Loads comprehensive Swiss business sample data
 - ✅ Initializes AWS services in LocalStack
+- ✅ Starts API server on :3000 and Angular app on :4200
 - ✅ Verifies complete environment setup
 
-### 3. Start Development
+### 3. Alternative Development Options
 
 ```bash
-# Option A: Complete setup + start everything
-npm run dev:full
+# Option A: Complete setup + start everything (recommended)
+npm run run:local:setup
 
-# Option B: Start services individually (after setup)
-npm run dev:api:local    # API server on :3000
-npm run dev:web         # Angular app on :4200
+# Option B: Start services individually
+npm run run:local:env     # Infrastructure services only
+npm run run:local:api     # API server only (after env setup)
+npm run run:local:web     # Angular app only
+
+# Option C: Legacy aliases (backward compatibility)
+npm run dev               # Same as run:local:setup
+npm run dev:full          # Same as run:local:setup
 ```
 
 ### 4. Verify Setup
@@ -181,39 +187,85 @@ Our development environment provides **95% production parity** using LocalStack:
 
 ### Development Commands
 
+#### **Quick Start**
 ```bash
-# Complete Environment Setup
-npm run dev:setup         # Complete setup (infrastructure + database + sample data)
-npm run dev:full          # Complete setup + start development servers
+npm run run:local:setup   # Complete setup + start everything (recommended)
+npm run dev               # Legacy alias for run:local:setup
+./test-setup.sh          # Verify environment + sample data
+```
 
-# Environment Management
-npm run dev:env           # Start infrastructure services only
-npm run dev:env:logs      # View service logs  
-npm run dev:env:clean     # Stop & remove all containers
-npm run dev:env:restart   # Clean restart with complete setup
+#### **Build Commands**
+```bash
+npm run build             # Build entire project (packages → domains → apps → infrastructure)
+npm run build:packages    # Build shared packages only
+npm run build:apps        # Build API and web applications only
+npm run build:infrastructure # Build AWS CDK infrastructure only
+```
 
-# Development Servers (run after setup)
-npm run dev:api:local     # API server only
-npm run dev:web           # Angular app only
+#### **Deploy Commands**  
+```bash
+npm run deploy            # Build + deploy to default environment
+npm run deploy:staging    # Build + deploy to staging environment
+npm run deploy:production # Build + deploy to production environment
+```
 
-# Database Management
+#### **Run Commands - Local Development**
+```bash
+npm run run:local:setup   # Complete setup + start API & web apps
+npm run run:local:api     # Start API server only
+npm run run:local:web     # Start Angular app only
+npm run run:local:env     # Start infrastructure services (Docker)
+npm run run:local:env:logs      # View service logs
+npm run run:local:env:restart   # Clean restart with complete setup
+npm run run:local:env:clean     # Stop and remove all containers
+```
+
+#### **Run Commands - AWS/LocalStack**
+```bash
+npm run run:aws:localstack        # Start LocalStack with initialization
+npm run run:aws:localstack:status # Check LocalStack health
+npm run run:aws:localstack:pro    # Switch to LocalStack Pro mode
+npm run run:aws:sam               # Start SAM local API Gateway
+```
+
+#### **Database Commands**
+```bash
+npm run db:setup          # Run migrations + load sample data
 npm run db:migrate        # Run database migrations only
 npm run db:seed           # Load comprehensive sample data only
-npm run db:setup          # Run migrations + load sample data
+npm run db:status         # Check migration status
+npm run db:reset          # Reset database and reload (⚠️ Removes all data)
 npm run db:validate       # Validate sample data integrity
+```
 
-# Utilities
-npm run localstack:status # Check LocalStack health
-./test-setup.sh          # Verify environment + sample data
+#### **Test Commands**
+```bash
+npm run test              # All tests
+npm run test:integration  # Integration tests against LocalStack
+npm run test:e2e          # E2E tests
+```
+
+#### **Utility Commands**
+```bash
+npm run clean             # Clean build artifacts and cache
+npm run lint              # Run ESLint with auto-fix
+npm run format            # Format code with Prettier
+npm run type-check        # TypeScript type checking
+npm run debug:api         # Start API in debug mode
 ```
 
 ### Building the Project
 
 ```bash
-# Build all workspaces
+# Build all workspaces (packages → domains → apps → infrastructure)
 npm run build
 
-# Build specific workspace
+# Build specific components
+npm run build:packages        # Build shared packages only
+npm run build:apps           # Build API and web applications only
+npm run build:infrastructure # Build AWS CDK infrastructure only
+
+# Build specific workspace (direct)
 npm run build --workspace=apps/web
 npm run build --workspace=apps/api
 ```
@@ -223,10 +275,14 @@ npm run build --workspace=apps/api
 The project includes a streamlined deployment process using AWS CDK:
 
 ```bash
-# Deploy to AWS (builds automatically)
+# Deploy to default environment (builds automatically)
 npm run deploy
 
-# This command will:
+# Deploy to specific environments
+npm run deploy:staging       # Deploy to staging environment
+npm run deploy:production    # Deploy to production environment
+
+# Each deploy command will:
 # 1. Build all workspaces (packages, domains, apps, infrastructure)
 # 2. Deploy infrastructure using AWS CDK
 # 3. Deploy Lambda functions and API Gateway
@@ -260,7 +316,7 @@ npm run test
 npm run test:integration
 
 # E2E tests in local environment  
-npm run test:e2e:local
+npm run test:e2e
 
 # Validate sample data integrity
 npm run db:validate
@@ -322,17 +378,71 @@ The project enforces code quality through:
 
 ## Available Scripts
 
-### Root Level Scripts
+### Main Commands (Organized)
 
+#### **Build Commands**
 ```bash
-npm run dev           # Start all development servers
-npm run build         # Build all workspaces
-npm run deploy        # Build and deploy to AWS
-npm run test          # Run tests in all workspaces
-npm run lint          # Lint all code
-npm run format        # Format all code with Prettier
-npm run type-check    # Run TypeScript compiler checks
-npm run clean         # Clean build artifacts and caches
+npm run build             # Build entire project (packages → domains → apps → infrastructure)
+npm run build:packages    # Build shared packages only
+npm run build:apps        # Build API and web applications only
+npm run build:infrastructure # Build AWS CDK infrastructure only
+```
+
+#### **Deploy Commands**  
+```bash
+npm run deploy            # Build + deploy to default environment
+npm run deploy:staging    # Build + deploy to staging environment
+npm run deploy:production # Build + deploy to production environment
+```
+
+#### **Run Commands - Local Development**
+```bash
+npm run run:local:setup   # Complete setup + start API & web apps
+npm run run:local:api     # Start API server only
+npm run run:local:web     # Start Angular app only
+npm run run:local:env     # Start infrastructure services (Docker)
+```
+
+#### **Run Commands - AWS/LocalStack**
+```bash
+npm run run:aws:localstack        # Start LocalStack with initialization
+npm run run:aws:localstack:status # Check LocalStack health
+npm run run:aws:sam               # Start SAM local API Gateway
+```
+
+#### **Database Commands**
+```bash
+npm run db:setup          # Run migrations + load sample data
+npm run db:migrate        # Run database migrations only
+npm run db:seed           # Load comprehensive sample data only
+npm run db:status         # Check migration status
+npm run db:reset          # Reset database and reload
+npm run db:validate       # Validate sample data integrity
+```
+
+#### **Test Commands**
+```bash
+npm run test              # All tests
+npm run test:integration  # Integration tests against LocalStack
+npm run test:e2e          # E2E tests
+```
+
+#### **Utility Commands**
+```bash
+npm run clean             # Clean build artifacts and cache
+npm run lint              # Run ESLint with auto-fix
+npm run format            # Format code with Prettier
+npm run type-check        # TypeScript type checking
+npm run debug:api         # Start API in debug mode
+```
+
+#### **Legacy Aliases (backward compatibility)**
+```bash
+npm run dev               # Same as run:local:setup
+npm run dev:full          # Same as run:local:setup
+npm run dev:env           # Same as run:local:env
+npm run dev:api:local     # Same as run:local:api
+npm run dev:web           # Same as run:local:web
 ```
 
 ### Workspace-Specific Scripts
@@ -385,19 +495,19 @@ Common issues and solutions:
 
 ```bash
 # Services not starting
-npm run dev:env:restart
+npm run run:local:env:restart
 
 # LocalStack connection issues  
-npm run localstack:status
+npm run run:aws:localstack:status
 docker logs rtm-localstack
 
 # Database connection errors
 docker logs rtm-postgres
 
 # Reset everything
-npm run dev:env:clean
-npm run dev:env
-npm run localstack:init
+npm run run:local:env:clean
+npm run run:local:env
+npm run run:aws:localstack
 ```
 
 ## Contributing

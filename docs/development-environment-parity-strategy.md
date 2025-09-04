@@ -392,14 +392,22 @@ export class MockLocationClient {
 {
   "scripts": {
     "dev:env": "docker-compose -f docker-compose.dev.yml up -d",
-    "dev:env:logs": "docker-compose -f docker-compose.dev.yml logs -f",
-    "dev:env:clean": "docker-compose -f docker-compose.dev.yml down -v",
-    "dev:api": "cd apps/api && npm run dev",
-    "dev:web": "cd apps/web && ng serve",
-    "dev:full": "concurrently \"npm run dev:env\" \"npm run dev:api\" \"npm run dev:web\"",
+    "run:local:env:logs": "docker-compose -f docker-compose.dev.yml logs -f",
+    "run:local:env:clean": "docker-compose -f docker-compose.dev.yml down -v",
+    "run:local:api": "cd apps/api && npm run dev",
+    "run:local:web": "cd apps/web && ng serve",
+    "run:local:setup": "concurrently \"npm run run:local:env\" \"npm run run:local:api\" \"npm run run:local:web\"",
     "test:integration": "jest --config jest.integration.config.js",
-    "test:e2e:local": "playwright test --config=playwright.local.config.ts",
-    "sam:local": "sam local start-api --template apps/api/template.local.yaml --docker-network rtm_default"
+    "test:e2e": "playwright test --config=playwright.local.config.ts",
+    
+    // Legacy aliases for backward compatibility
+    "dev:env:logs": "npm run run:local:env:logs",
+    "dev:env:clean": "npm run run:local:env:clean",
+    "dev:api": "npm run run:local:api",
+    "dev:web": "npm run run:local:web",
+    "dev:full": "npm run run:local:setup",
+    "run:aws:sam": "sam local start-api --template apps/api/template.local.yaml --docker-network rtm_default",
+    "sam:local": "npm run run:aws:sam"  // Legacy alias
   }
 }
 ```
