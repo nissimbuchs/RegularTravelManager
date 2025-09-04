@@ -53,6 +53,7 @@ export const authorizerHandler = async (
       email: payload.email,
       cognitoUsername: payload['cognito:username'],
       isManager: isUserManager(payload),
+      isAdmin: isUserAdmin(payload),
       groups: JSON.stringify(payload['cognito:groups'] || []),
     };
 
@@ -122,6 +123,11 @@ async function verifyToken(token: string): Promise<CognitoPayload> {
 function isUserManager(payload: CognitoPayload): boolean {
   const groups = payload['cognito:groups'] || [];
   return groups.includes('managers');
+}
+
+function isUserAdmin(payload: CognitoPayload): boolean {
+  const groups = payload['cognito:groups'] || [];
+  return groups.includes('administrators');
 }
 
 function generatePolicy(

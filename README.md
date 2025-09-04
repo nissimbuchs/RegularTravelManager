@@ -56,23 +56,28 @@ npm install
 ### 2. Start Development Environment
 
 ```bash
-# Start infrastructure services (PostgreSQL, Redis, LocalStack)
-npm run dev:env
-
-# Initialize AWS services (DynamoDB, S3)
-npm run localstack:init
+# Complete setup (infrastructure + database + sample data)
+npm run dev:setup
 
 # Verify setup
 ./test-setup.sh
 ```
 
+**What `npm run dev:setup` does automatically:**
+- ✅ Starts infrastructure services (PostgreSQL, Redis, LocalStack)
+- ✅ Waits for services to be ready
+- ✅ Runs database migrations
+- ✅ Loads comprehensive Swiss business sample data
+- ✅ Initializes AWS services in LocalStack
+- ✅ Verifies complete environment setup
+
 ### 3. Start Development
 
 ```bash
-# Option A: Start everything
+# Option A: Complete setup + start everything
 npm run dev:full
 
-# Option B: Start services individually  
+# Option B: Start services individually (after setup)
 npm run dev:api:local    # API server on :3000
 npm run dev:web         # Angular app on :4200
 ```
@@ -94,24 +99,59 @@ Visit: http://localhost:3000/health (when API is running)
 }
 ```
 
-### 5. Development Authentication
+### 5. Development Authentication & Sample Data
 
-The development environment includes production-matching test users for authentication testing:
+The development environment includes comprehensive sample data with production-matching test users:
 
+#### Admin Users (Full System Access)
 | User | Email | Name | Role | Employee ID |
 |------|-------|------|------|-------------|
-| **employee1** | employee1@company.com | John Employee | Employee | EMP001 |
-| **employee2** | employee2@company.com | Jane Worker | Employee | EMP002 |
-| **manager1** | manager1@company.com | Bob Manager | Manager | MGR001 |
-| **manager2** | manager2@company.com | Alice Director | Manager | MGR002 |
+| **admin1** | admin1@company.ch | Hans Zimmermann | CEO/Admin | ADM-0001 |
+| **admin2** | admin2@company.ch | Maria Weber | IT Admin | ADM-0002 |
+
+#### Managers
+| User | Email | Name | Role | Employee ID |
+|------|-------|------|------|-------------|
+| **manager1** | manager1@company.ch | Thomas Müller | Regional Manager | MGR-0001 |
+| **manager2** | manager2@company.ch | Sophie Dubois | Regional Manager | MGR-0002 |
+
+#### Employees
+| User | Email | Name | Role | Employee ID | City |
+|------|-------|------|------|-------------|------|
+| **employee1** | employee1@company.ch | Anna Schneider | Developer | EMP-0001 | Bern |
+| **employee2** | employee2@company.ch | Marco Rossi | Project Coordinator | EMP-0002 | Lugano |
+| **employee3** | employee3@company.ch | Lisa Meier | Business Analyst | EMP-0003 | St. Gallen |
+| **employee4** | employee4@company.ch | Pierre Martin | Marketing Specialist | EMP-0004 | Lausanne |
+| **employee5** | employee5@company.ch | Julia Fischer | Technical Consultant | EMP-0005 | Basel |
+| **employee6** | employee6@company.ch | Michael Keller | Sales Representative | EMP-0006 | Winterthur |
+
+#### Sample Data Includes:
+- **4 Projects**: Digital Transformation, Infrastructure Modernization, Customer Experience, Sustainability
+- **8 Subprojects**: Precise Swiss locations with accurate coordinates
+- **5 Travel Requests**: Complete lifecycle examples (pending, approved, rejected, withdrawn)
+- **Audit Trails**: Status change history and address change tracking
+- **Swiss Geographic Coverage**: All major cities with real coordinates
 
 **To switch users in development:**
 ```javascript
 // In browser console (F12) - No passwords required in development
-localStorage.setItem('mockUser', 'employee1');  // Default user
-localStorage.setItem('mockUser', 'employee2');  // Jane Worker
-localStorage.setItem('mockUser', 'manager1');   // Bob Manager  
-localStorage.setItem('mockUser', 'manager2');   // Alice Director
+
+// Admin Users (full system access)
+localStorage.setItem('mockUser', 'admin1');     // Hans Zimmermann (CEO)
+localStorage.setItem('mockUser', 'admin2');     // Maria Weber (IT Admin)
+
+// Managers
+localStorage.setItem('mockUser', 'manager1');   // Thomas Müller
+localStorage.setItem('mockUser', 'manager2');   // Sophie Dubois
+
+// Employees (default: employee1)
+localStorage.setItem('mockUser', 'employee1');  // Anna Schneider (Bern)
+localStorage.setItem('mockUser', 'employee2');  // Marco Rossi (Lugano)
+localStorage.setItem('mockUser', 'employee3');  // Lisa Meier (St. Gallen)
+localStorage.setItem('mockUser', 'employee4');  // Pierre Martin (Lausanne)
+localStorage.setItem('mockUser', 'employee5');  // Julia Fischer (Basel)
+localStorage.setItem('mockUser', 'employee6');  // Michael Keller (Winterthur)
+
 window.location.reload();
 ```
 
@@ -142,20 +182,29 @@ Our development environment provides **95% production parity** using LocalStack:
 ### Development Commands
 
 ```bash
-# Environment management
-npm run dev:env           # Start all Docker services
+# Complete Environment Setup
+npm run dev:setup         # Complete setup (infrastructure + database + sample data)
+npm run dev:full          # Complete setup + start development servers
+
+# Environment Management
+npm run dev:env           # Start infrastructure services only
 npm run dev:env:logs      # View service logs  
 npm run dev:env:clean     # Stop & remove all containers
-npm run dev:env:restart   # Clean restart
+npm run dev:env:restart   # Clean restart with complete setup
 
-# Development servers
-npm run dev:full          # Start everything
+# Development Servers (run after setup)
 npm run dev:api:local     # API server only
 npm run dev:web           # Angular app only
 
+# Database Management
+npm run db:migrate        # Run database migrations only
+npm run db:seed           # Load comprehensive sample data only
+npm run db:setup          # Run migrations + load sample data
+npm run db:validate       # Validate sample data integrity
+
 # Utilities
 npm run localstack:status # Check LocalStack health
-./test-setup.sh          # Verify environment
+./test-setup.sh          # Verify environment + sample data
 ```
 
 ### Building the Project
@@ -207,11 +256,14 @@ npm run deploy
 # Run tests for all workspaces
 npm run test
 
-# Integration tests against LocalStack
+# Integration tests against LocalStack (with sample data)
 npm run test:integration
 
 # E2E tests in local environment  
 npm run test:e2e:local
+
+# Validate sample data integrity
+npm run db:validate
 ```
 
 ## Workspace Organization

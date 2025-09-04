@@ -153,13 +153,21 @@ export class MigrationRunner {
     }
   }
 
-  async seedDatabase(): Promise<void> {
-    const seedPath = join(__dirname, 'seeds', '001_initial_seed_data.sql');
-    const seedContent = readFileSync(seedPath, 'utf8');
-
-    console.log('Seeding database with initial data...');
-    await this.client.query(seedContent);
-    console.log('Database seeding completed.');
+  async loadSampleData(): Promise<void> {
+    const dataPath = join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      'infrastructure',
+      'data',
+      'sample-data.sql'
+    );
+    const dataContent = readFileSync(dataPath, 'utf8');
+    console.log('Loading comprehensive sample data...');
+    await this.client.query(dataContent);
+    console.log('Sample data loading completed.');
   }
 
   async reset(): Promise<void> {
@@ -185,11 +193,11 @@ async function runCommand(runner: MigrationRunner, command: string): Promise<voi
         await runner.runAllMigrations();
         break;
       case 'seed':
-        await runner.seedDatabase();
+        await runner.loadSampleData();
         break;
       case 'setup':
         await runner.runAllMigrations();
-        await runner.seedDatabase();
+        await runner.loadSampleData();
         break;
       case 'reset':
         await runner.reset();
@@ -202,6 +210,7 @@ async function runCommand(runner: MigrationRunner, command: string): Promise<voi
       }
       default:
         console.log('Available commands: migrate, seed, setup, reset, status');
+        console.log('Note: seed loads comprehensive Swiss business sample data');
     }
   } catch (error) {
     console.error('Migration error:', error);

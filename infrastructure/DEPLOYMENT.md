@@ -45,13 +45,38 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS postgis_topology;
 ```
 
-### 2. AWS SES Domain Verification
+### 2. Load Sample Data (Development/Staging)
+For development and staging environments, load comprehensive sample data:
+```bash
+# Connect to the deployed RDS instance and run:
+psql $DATABASE_URL -f infrastructure/data/sample-data.sql
+
+# Or use the migration runner:
+DATABASE_URL=$DEPLOYED_DATABASE_URL npm run db:seed
+```
+
+**Sample Data Includes:**
+- 2 Admin users with full system access
+- 2 Regional managers
+- 6 Employees across major Swiss cities  
+- 4 Complete business projects
+- 8 Subprojects with precise Swiss coordinates
+- 5 Travel requests covering all status types
+- Complete audit trails and status change history
+
+**Admin Users for Testing:**
+- `admin1@company.ch` - Hans Zimmermann (CEO/System Admin)
+- `admin2@company.ch` - Maria Weber (IT Administrator)
+
+**Note:** These are test accounts for development/staging only. Production should use real user accounts through Cognito.
+
+### 3. AWS SES Domain Verification
 If deploying with a domain name:
 1. Check AWS SES Console for DNS records
 2. Add DKIM, SPF, and DMARC records to your domain
 3. Request production access (move out of sandbox)
 
-### 3. Location Service Testing
+### 4. Location Service Testing
 Test geocoding with sample Swiss addresses:
 ```bash
 aws location search-place-index-for-text \

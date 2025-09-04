@@ -1,12 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
 import { createTravelRequest, calculatePreview } from '../../../handlers/employees/travel-requests';
-import * as authUtils from '../../../handlers/auth/auth-utils';
-import * as dbConnection from '../../../database/connection';
 
 // Mock dependencies
-vi.mock('../../../database/connection');
-vi.mock('../../../handlers/auth/auth-utils');
+const mockDbQuery = vi.fn();
+vi.mock('../../../database/connection', () => ({
+  db: {
+    query: mockDbQuery,
+    getPool: vi.fn(),
+  },
+}));
+vi.mock('../../../handlers/auth/auth-utils', () => ({
+  getUserContextFromEvent: vi.fn(),
+  requireAuthenticated: vi.fn(),
+}));
 
 const mockContext: Context = {
   awsRequestId: 'test-request-id',
@@ -103,10 +110,11 @@ const validTravelRequestBody = {
 };
 
 describe('Travel Request Handlers', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
 
     // Mock getUserContextFromEvent
+    const authUtils = await import('../../../handlers/auth/auth-utils');
     vi.mocked(authUtils.getUserContextFromEvent).mockReturnValue({
       sub: 'employee1-cognito-id',
       email: 'employee1@company.com',
@@ -119,9 +127,8 @@ describe('Travel Request Handlers', () => {
   describe('createTravelRequest', () => {
     it('should create travel request with selected manager successfully', async () => {
       const mockEvent = createMockEvent('POST', validTravelRequestBody);
-      const { db } = dbConnection;
 
-      vi.mocked(db.query)
+      mockDbQuery
         // Get employee details
         .mockResolvedValueOnce({
           rows: [mockEmployee],
@@ -202,9 +209,8 @@ describe('Travel Request Handlers', () => {
         ...validTravelRequestBody,
         manager_id: 'invalid-manager-id',
       });
-      const { db } = dbConnection;
 
-      vi.mocked(db.query)
+      mockDbQuery
         // Get employee details
         .mockResolvedValueOnce({
           rows: [mockEmployee],
@@ -223,9 +229,8 @@ describe('Travel Request Handlers', () => {
 
     it('should reject request when selected manager is inactive', async () => {
       const mockEvent = createMockEvent('POST', validTravelRequestBody);
-      const { db } = dbConnection;
 
-      vi.mocked(db.query)
+      mockDbQuery
         // Get employee details
         .mockResolvedValueOnce({
           rows: [mockEmployee],
@@ -247,9 +252,8 @@ describe('Travel Request Handlers', () => {
         ...validTravelRequestBody,
         manager_id: 'employee2-cognito-id', // Regular employee, not manager
       });
-      const { db } = dbConnection;
 
-      vi.mocked(db.query)
+      mockDbQuery
         // Get employee details
         .mockResolvedValueOnce({
           rows: [mockEmployee],
@@ -268,9 +272,8 @@ describe('Travel Request Handlers', () => {
 
     it('should reject request when employee not found', async () => {
       const mockEvent = createMockEvent('POST', validTravelRequestBody);
-      const { db } = dbConnection;
 
-      vi.mocked(db.query)
+      mockDbQuery
         // Get employee details (not found)
         .mockResolvedValueOnce({
           rows: [],
@@ -285,9 +288,8 @@ describe('Travel Request Handlers', () => {
 
     it('should reject request when employee has no home address', async () => {
       const mockEvent = createMockEvent('POST', validTravelRequestBody);
-      const { db } = dbConnection;
 
-      vi.mocked(db.query)
+      mockDbQuery
         // Get employee details (no home location)
         .mockResolvedValueOnce({
           rows: [{ ...mockEmployee, home_location: null }],
@@ -306,9 +308,8 @@ describe('Travel Request Handlers', () => {
 
     it('should reject request when subproject not found', async () => {
       const mockEvent = createMockEvent('POST', validTravelRequestBody);
-      const { db } = dbConnection;
 
-      vi.mocked(db.query)
+      mockDbQuery
         // Get employee details
         .mockResolvedValueOnce({
           rows: [mockEmployee],
@@ -333,6 +334,7 @@ describe('Travel Request Handlers', () => {
       const mockEvent = createMockEvent('POST', validTravelRequestBody);
 
       // Mock unauthorized user context
+      const authUtils = await import('../../../handlers/auth/auth-utils');
       vi.mocked(authUtils.getUserContextFromEvent).mockReturnValue({
         sub: null, // No user ID
         email: null,
@@ -350,9 +352,8 @@ describe('Travel Request Handlers', () => {
 
     it('should handle database errors gracefully', async () => {
       const mockEvent = createMockEvent('POST', validTravelRequestBody);
-      const { db } = dbConnection;
 
-      vi.mocked(db.query).mockRejectedValueOnce(new Error('Database connection failed'));
+      mockDbQuery.mockRejectedValueOnce(new Error('Database connection failed'));
 
       const result = await createTravelRequest(mockEvent, mockContext);
 
@@ -370,9 +371,8 @@ describe('Travel Request Handlers', () => {
 
     it('should calculate preview successfully', async () => {
       const mockEvent = createMockEvent('POST', previewBody);
-      const { db } = dbConnection;
 
-      vi.mocked(db.query)
+      mockDbQuery
         // Get employee home location
         .mockResolvedValueOnce({
           rows: [mockEmployee],

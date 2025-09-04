@@ -7,10 +7,14 @@ vi.mock('../../../database/connection', () => ({
   db: {
     query: vi.fn(),
     getPool: vi.fn(),
-  }
+  },
 }));
 vi.mock('../../../handlers/auth/auth-utils');
-vi.mock('../../../services/geocoding-service');
+vi.mock('../../../services/geocoding-service', () => ({
+  GeocodingService: vi.fn(),
+  GeocodeResult: {},
+  GeocodeRequest: {},
+}));
 
 const mockContext: Context = {
   awsRequestId: 'test-request-id',
@@ -217,7 +221,9 @@ describe('Employee Profile Handlers', () => {
       const mockPool = {
         connect: vi.fn().mockResolvedValue(mockClient),
       };
-      vi.mocked((await import('../../../database/connection')).db.getPool).mockResolvedValue(mockPool);
+      vi.mocked((await import('../../../database/connection')).db.getPool).mockResolvedValue(
+        mockPool
+      );
 
       mockClient.query
         .mockResolvedValueOnce() // BEGIN
@@ -311,7 +317,9 @@ describe('Employee Profile Handlers', () => {
       const mockPool = {
         connect: vi.fn().mockResolvedValue(mockClient),
       };
-      vi.mocked((await import('../../../database/connection')).db.getPool).mockResolvedValue(mockPool);
+      vi.mocked((await import('../../../database/connection')).db.getPool).mockResolvedValue(
+        mockPool
+      );
 
       mockClient.query
         .mockResolvedValueOnce() // BEGIN
@@ -320,7 +328,9 @@ describe('Employee Profile Handlers', () => {
         .mockResolvedValueOnce() // INSERT history
         .mockResolvedValueOnce(); // COMMIT
 
-      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({ rows: [] }); // pending requests
+      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
+        rows: [],
+      }); // pending requests
 
       const result = await updateEmployeeAddress(mockEvent, mockContext);
 

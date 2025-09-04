@@ -11,12 +11,23 @@ import {
   toggleProjectStatus,
   checkProjectReferences,
 } from '../../../handlers/projects/management';
-import { db } from '../../../database/connection';
 import { GeocodingService } from '../../../services/geocoding-service';
+import { extractUserContext, requireManager } from '../../../handlers/auth/auth-utils';
 
 // Mock dependencies
-vi.mock('../../../database/connection');
+const mockDbQuery = vi.fn();
+vi.mock('../../../database/connection', () => ({
+  db: {
+    query: mockDbQuery,
+    getPool: vi.fn(),
+  },
+}));
 vi.mock('../../../services/geocoding-service');
+vi.mock('../../../handlers/auth/auth-utils', () => ({
+  extractUserContext: vi.fn(),
+  requireManager: vi.fn(),
+  getUserContextFromEvent: vi.fn(),
+}));
 vi.mock('../../middleware/logger', () => ({
   logger: {
     info: vi.fn(),
@@ -25,8 +36,9 @@ vi.mock('../../middleware/logger', () => ({
   },
 }));
 
-const mockDb = vi.mocked(db);
 const mockGeocodingService = vi.mocked(GeocodingService);
+const mockExtractUserContext = vi.mocked(extractUserContext);
+const mockRequireManager = vi.mocked(requireManager);
 
 describe('Project Management API', () => {
   const mockContext: Context = {
@@ -86,7 +98,22 @@ describe('Project Management API', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockDb.query.mockResolvedValue({ rows: [] });
+    mockDbQuery.mockResolvedValue({ rows: [] });
+
+    // Mock manager user context
+    mockExtractUserContext.mockReturnValue({
+      sub: 'manager-123',
+      email: 'manager@test.com',
+      isManager: true,
+      groups: ['managers'],
+    });
+
+    // Mock requireManager to not throw for manager users
+    mockRequireManager.mockImplementation(userContext => {
+      if (!userContext.isManager) {
+        throw new Error('Manager role required');
+      }
+    });
   });
 
   afterEach(() => {
@@ -104,7 +131,7 @@ describe('Project Management API', () => {
         }),
       } as APIGatewayProxyEvent;
 
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [mockProject],
       });
 
@@ -112,7 +139,7 @@ describe('Project Management API', () => {
 
       expect(result.statusCode).toBe(201);
       expect(JSON.parse(result.body).data).toEqual(mockProject);
-      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO projects'), [
+      expect(mockDbQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO projects'), [
         'New Project',
         'Project Description',
         0.75,
@@ -187,7 +214,7 @@ describe('Project Management API', () => {
       } as APIGatewayProxyEvent;
 
       // Mock project exists check
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ id: 'project-123', default_cost_per_km: 0.5 }],
       });
 
@@ -201,7 +228,7 @@ describe('Project Management API', () => {
       mockGeocodingService.mockImplementation(() => mockGeocodingInstance);
 
       // Mock subproject creation
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [mockSubproject],
       });
 
@@ -229,7 +256,7 @@ describe('Project Management API', () => {
       } as APIGatewayProxyEvent;
 
       // Mock project exists
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ id: 'project-123', default_cost_per_km: 0.5 }],
       });
 
@@ -240,14 +267,14 @@ describe('Project Management API', () => {
       mockGeocodingService.mockImplementation(() => mockGeocodingInstance);
 
       // Mock subproject creation with default coordinates
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ ...mockSubproject, location: 'POINT(7.447447 46.947974)' }],
       });
 
       const result = await createSubproject(event, mockContext);
 
       expect(result.statusCode).toBe(201);
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDbQuery).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO subprojects'),
         expect.arrayContaining(['POINT(7.447447 46.947974)'])
       );
@@ -263,7 +290,7 @@ describe('Project Management API', () => {
       } as APIGatewayProxyEvent;
 
       // Mock project not found
-      mockDb.query.mockResolvedValueOnce({ rows: [] });
+      mockDbQuery.mockResolvedValueOnce({ rows: [] });
 
       const result = await createSubproject(event, mockContext);
 
@@ -295,16 +322,37 @@ describe('Project Management API', () => {
         { ...mockProject, id: 'project-456', subproject_count: '0' },
       ];
 
-      mockDb.query.mockResolvedValueOnce({ rows: mockProjects });
+      mockDbQuery.mockResolvedValueOnce({ rows: mockProjects });
 
       const event = { ...mockManagerEvent } as APIGatewayProxyEvent;
       const result = await getActiveProjects(event, mockContext);
 
       expect(result.statusCode).toBe(200);
-      expect(JSON.parse(result.body).data.projects).toEqual(mockProjects);
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE p.is_active = true')
-      );
+      // Expect camelCase format as returned by handler
+      const expectedProjects = [
+        {
+          id: 'project-123',
+          name: 'Test Project',
+          description: 'Test Description',
+          defaultCostPerKm: 0.5,
+          isActive: true,
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+          subprojectCount: 2,
+        },
+        {
+          id: 'project-456',
+          name: 'Test Project',
+          description: 'Test Description',
+          defaultCostPerKm: 0.5,
+          isActive: true,
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+          subprojectCount: 0,
+        },
+      ];
+      expect(JSON.parse(result.body).data.projects).toEqual(expectedProjects);
+      expect(mockDbQuery).toHaveBeenCalledWith(expect.stringContaining('WHERE p.is_active = true'));
     });
   });
 
@@ -316,7 +364,7 @@ describe('Project Management API', () => {
       } as APIGatewayProxyEvent;
 
       // Mock project exists
-      mockDb.query.mockResolvedValueOnce({ rows: [mockProject] });
+      mockDbQuery.mockResolvedValueOnce({ rows: [mockProject] });
 
       // Mock subprojects query
       const mockSubprojects = [
@@ -326,7 +374,7 @@ describe('Project Management API', () => {
           latitude: 47.3769,
         },
       ];
-      mockDb.query.mockResolvedValueOnce({ rows: mockSubprojects });
+      mockDbQuery.mockResolvedValueOnce({ rows: mockSubprojects });
 
       const result = await getSubprojectsForProject(event, mockContext);
 
@@ -334,7 +382,7 @@ describe('Project Management API', () => {
       const response = JSON.parse(result.body).data;
       expect(response.project).toBe(mockProject.name);
       expect(response.subprojects).toHaveLength(1);
-      expect(response.subprojects[0].location_coordinates).toEqual({
+      expect(response.subprojects[0]).toHaveProperty('locationCoordinates', {
         latitude: 47.3769,
         longitude: 8.5417,
       });
@@ -346,7 +394,7 @@ describe('Project Management API', () => {
         pathParameters: { projectId: 'non-existent' },
       } as APIGatewayProxyEvent;
 
-      mockDb.query.mockResolvedValueOnce({ rows: [] });
+      mockDbQuery.mockResolvedValueOnce({ rows: [] });
 
       const result = await getSubprojectsForProject(event, mockContext);
 
@@ -362,7 +410,7 @@ describe('Project Management API', () => {
       } as APIGatewayProxyEvent;
 
       const mockResults = [mockProject];
-      mockDb.query.mockResolvedValueOnce({ rows: mockResults });
+      mockDbQuery.mockResolvedValueOnce({ rows: mockResults });
 
       const result = await searchProjects(event, mockContext);
 
@@ -370,7 +418,7 @@ describe('Project Management API', () => {
       const response = JSON.parse(result.body).data;
       expect(response.query).toBe('test');
       expect(response.projects).toEqual(mockResults);
-      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('ILIKE $1'), ['%test%']);
+      expect(mockDbQuery).toHaveBeenCalledWith(expect.stringContaining('ILIKE $1'), ['%test%']);
     });
 
     it('should require minimum search length', async () => {
@@ -391,11 +439,11 @@ describe('Project Management API', () => {
         queryStringParameters: { q: 'test' },
       } as APIGatewayProxyEvent;
 
-      mockDb.query.mockResolvedValueOnce({ rows: [mockProject] });
+      mockDbQuery.mockResolvedValueOnce({ rows: [mockProject] });
 
       await searchProjects(event, mockContext);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDbQuery).toHaveBeenCalledWith(
         expect.stringContaining('LIMIT 50'),
         expect.any(Array)
       );
@@ -413,14 +461,14 @@ describe('Project Management API', () => {
         }),
       } as APIGatewayProxyEvent;
 
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ ...mockProject, name: 'Updated Project', default_cost_per_km: 0.8 }],
       });
 
       const result = await updateProject(event, mockContext);
 
       expect(result.statusCode).toBe(200);
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDbQuery).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE projects'),
         expect.arrayContaining(['Updated Project', 0.8, 'project-123'])
       );
@@ -450,7 +498,7 @@ describe('Project Management API', () => {
         }),
       } as APIGatewayProxyEvent;
 
-      mockDb.query.mockResolvedValueOnce({ rows: [] });
+      mockDbQuery.mockResolvedValueOnce({ rows: [] });
 
       const result = await updateProject(event, mockContext);
 
@@ -466,12 +514,12 @@ describe('Project Management API', () => {
       } as APIGatewayProxyEvent;
 
       // Mock getting current project
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ ...mockProject, is_active: true }],
       });
 
       // Mock update result
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ ...mockProject, is_active: false }],
       });
 
@@ -488,7 +536,7 @@ describe('Project Management API', () => {
         pathParameters: { id: 'non-existent' },
       } as APIGatewayProxyEvent;
 
-      mockDb.query.mockResolvedValueOnce({ rows: [] });
+      mockDbQuery.mockResolvedValueOnce({ rows: [] });
 
       const result = await toggleProjectStatus(event, mockContext);
 
@@ -504,12 +552,12 @@ describe('Project Management API', () => {
       } as APIGatewayProxyEvent;
 
       // Mock canDeleteProject check
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ count: '0' }],
       });
 
       // Mock reference count query
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ count: '0' }],
       });
 
@@ -531,12 +579,12 @@ describe('Project Management API', () => {
       } as APIGatewayProxyEvent;
 
       // Mock canDeleteProject check (returns false)
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ count: '3' }],
       });
 
       // Mock reference count query
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ count: '3' }],
       });
 
@@ -557,32 +605,32 @@ describe('Project Management API', () => {
       } as APIGatewayProxyEvent;
 
       // Mock canDeleteProject check
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ count: '0' }],
       });
 
       // Mock getProject
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [mockProject],
       });
 
       // Mock subprojects deletion
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [],
       });
 
       // Mock project deletion
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [mockProject],
       });
 
       const result = await deleteProject(event, mockContext);
 
       expect(result.statusCode).toBe(204);
-      expect(mockDb.query).toHaveBeenCalledWith('DELETE FROM subprojects WHERE project_id = $1', [
+      expect(mockDbQuery).toHaveBeenCalledWith('DELETE FROM subprojects WHERE project_id = $1', [
         'project-123',
       ]);
-      expect(mockDb.query).toHaveBeenCalledWith('DELETE FROM projects WHERE id = $1 RETURNING *', [
+      expect(mockDbQuery).toHaveBeenCalledWith('DELETE FROM projects WHERE id = $1 RETURNING *', [
         'project-123',
       ]);
     });
@@ -594,7 +642,7 @@ describe('Project Management API', () => {
       } as APIGatewayProxyEvent;
 
       // Mock canDeleteProject check (returns false)
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ count: '2' }],
       });
 
@@ -613,12 +661,12 @@ describe('Project Management API', () => {
       } as APIGatewayProxyEvent;
 
       // Mock canDeleteProject check
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ count: '0' }],
       });
 
       // Mock getProject (not found)
-      mockDb.query.mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [],
       });
 
@@ -642,7 +690,7 @@ describe('Project Management API', () => {
           }),
         } as APIGatewayProxyEvent;
 
-        mockDb.query.mockResolvedValueOnce({
+        mockDbQuery.mockResolvedValueOnce({
           rows: [{ ...mockProject, default_cost_per_km: cost }],
         });
 
@@ -679,11 +727,11 @@ describe('Project Management API', () => {
         } as APIGatewayProxyEvent;
 
         // Mock project exists
-        mockDb.query.mockResolvedValueOnce({
+        mockDbQuery.mockResolvedValueOnce({
           rows: [{ id: 'project-123', default_cost_per_km: 0.5 }],
         });
 
-        mockDb.query.mockResolvedValueOnce({
+        mockDbQuery.mockResolvedValueOnce({
           rows: [mockSubproject],
         });
 

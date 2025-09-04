@@ -10,21 +10,29 @@ RegularTravelManager is a Swiss employee travel allowance management system buil
 
 ### Quick Start
 ```bash
-# Start development environment (< 15 minutes)
-npm run dev:env           # Start infrastructure (PostgreSQL, Redis, LocalStack)
-npm run localstack:init   # Initialize AWS services (S3, Location)
+# Complete development environment setup (< 15 minutes)
+npm run dev:setup         # Complete setup (infrastructure + database + sample data)
 ./test-setup.sh          # Verify environment health
 
 # Start development
-npm run dev:full          # Start everything
-npm run dev:api:local     # API server only
-npm run dev:web           # Angular app only
+npm run dev:full          # Complete setup + start everything
+npm run dev:api:local     # API server only (after setup)
+npm run dev:web           # Angular app only (after setup)
+
+# Sample Data Management
+npm run db:migrate        # Run database migrations only
+npm run db:seed           # Load comprehensive sample data only
+npm run db:setup          # Run migrations + load sample data
+npm run db:validate       # Validate sample data integrity
+npm run db:status         # Check migration status
+npm run db:reset          # Reset database and reload (⚠️ Removes all data)
 ```
 
 ### Environment Management
 ```bash
+npm run dev:env           # Start infrastructure services only
 npm run dev:env:logs      # View service logs
-npm run dev:env:restart   # Clean restart all services
+npm run dev:env:restart   # Clean restart with complete setup
 npm run dev:env:clean     # Stop and remove all containers
 npm run localstack:status # Check LocalStack health
 ```
@@ -98,26 +106,59 @@ RegularTravelManager/
 └── test-setup.sh          # Environment verification script
 ```
 
-## Development Authentication
+## Development Authentication & Sample Data
 
-### Production-Matching Test Users
-The development environment uses mock authentication with production-matching test users:
+### Comprehensive Sample Data
+The development environment includes complete Swiss business data with production-matching test users:
 
-| User | Email | Name | Role | Employee ID |
-|------|-------|------|------|-------------|
-| **employee1** | employee1@company.com | John Employee | Employee | EMP001 |
-| **employee2** | employee2@company.com | Jane Worker | Employee | EMP002 |
-| **manager1** | manager1@company.com | Bob Manager | Manager | MGR001 |
-| **manager2** | manager2@company.com | Alice Director | Manager | MGR002 |
+**Admin Users (Full System Access):**
+| User | Email | Name | Role | Employee ID | City |
+|------|-------|------|------|-------------|------|
+| **admin1** | admin1@company.ch | Hans Zimmermann | CEO/System Admin | ADM-0001 | Zürich |
+| **admin2** | admin2@company.ch | Maria Weber | IT Administrator | ADM-0002 | Basel |
+
+**Managers:**
+| User | Email | Name | Role | Employee ID | City |
+|------|-------|------|------|-------------|------|
+| **manager1** | manager1@company.ch | Thomas Müller | Regional Manager | MGR-0001 | Zürich |
+| **manager2** | manager2@company.ch | Sophie Dubois | Regional Manager | MGR-0002 | Genève |
+
+**Employees:**
+| User | Email | Name | Role | Employee ID | City |
+|------|-------|------|------|-------------|------|
+| **employee1** | employee1@company.ch | Anna Schneider | Software Developer | EMP-0001 | Bern |
+| **employee2** | employee2@company.ch | Marco Rossi | Project Coordinator | EMP-0002 | Lugano |
+| **employee3** | employee3@company.ch | Lisa Meier | Business Analyst | EMP-0003 | St. Gallen |
+| **employee4** | employee4@company.ch | Pierre Martin | Marketing Specialist | EMP-0004 | Lausanne |
+| **employee5** | employee5@company.ch | Julia Fischer | Technical Consultant | EMP-0005 | Basel |
+| **employee6** | employee6@company.ch | Michael Keller | Sales Representative | EMP-0006 | Winterthur |
+
+**Sample Data Includes:**
+- 4 Business Projects with varying cost rates (0.65-0.80 CHF/km)
+- 8 Subprojects across major Swiss cities with precise coordinates
+- 5 Travel Requests covering complete lifecycle (pending, approved, rejected, withdrawn)
+- Complete audit trails for status changes and address history
+- Realistic Swiss business scenarios and geographic coverage
 
 ### Switching Users in Development
 In the browser console (F12), run:
 ```javascript
-// Switch to different users (default: employee1)
-localStorage.setItem('mockUser', 'employee1');
-localStorage.setItem('mockUser', 'employee2');
-localStorage.setItem('mockUser', 'manager1');
-localStorage.setItem('mockUser', 'manager2');
+// Admin Users (Full system access)
+localStorage.setItem('mockUser', 'admin1');     // Hans Zimmermann (CEO)
+localStorage.setItem('mockUser', 'admin2');     // Maria Weber (IT Admin)
+
+// Managers  
+localStorage.setItem('mockUser', 'manager1');   // Thomas Müller
+localStorage.setItem('mockUser', 'manager2');   // Sophie Dubois
+
+// Employees (default: employee1)
+localStorage.setItem('mockUser', 'employee1');  // Anna Schneider (Developer)
+localStorage.setItem('mockUser', 'employee2');  // Marco Rossi (PM)
+localStorage.setItem('mockUser', 'employee3');  // Lisa Meier (BA)
+localStorage.setItem('mockUser', 'employee4');  // Pierre Martin (Marketing)
+localStorage.setItem('mockUser', 'employee5');  // Julia Fischer (Consultant)
+localStorage.setItem('mockUser', 'employee6');  // Michael Keller (Sales)
+
 window.location.reload();
 ```
 
@@ -130,8 +171,21 @@ window.location.reload();
 ## Notes
 
 - **Environment parity**: Local development provides 95% AWS production parity
-- **Authentication parity**: Production-matching users with easy role switching
+- **Sample Data**: Comprehensive Swiss business data with admin, manager, and employee users
+- **Admin Interface**: Full user and project management capabilities
+- **Geographic Coverage**: All major Swiss cities with accurate coordinates and realistic business scenarios
 - **Cost savings**: ~€200/month per developer using LocalStack vs real AWS
 - **Setup time**: < 15 minutes for new developers
 - **Offline development**: Full development capability without internet
 - **Documentation**: See DEVELOPMENT_SETUP.md for detailed troubleshooting
+- **Data Validation**: Built-in integrity checks for geographic calculations, business constraints, and audit trails
+
+## Important: Essential Development Files
+
+**⚠️ NEVER REMOVE these directories - they are essential development infrastructure:**
+
+- **`.bmad-core/`** - BMAD agent system files for proper development workflow
+- **`.claude/commands/BMad/`** - Claude commands directory for development assistance
+- **`web-bundles/`** - Essential files for correct development practices
+
+These are **development tooling files**, not project artifacts. Removing them will break the development workflow.

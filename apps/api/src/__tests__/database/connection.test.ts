@@ -2,20 +2,26 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { db, getDatabaseConfig } from '../../database/connection';
 
 // Mock pg module
+const mockQuery = vi.fn();
+const mockEnd = vi.fn();
+const mockOn = vi.fn();
+
+const MockPool = vi.fn().mockImplementation(() => ({
+  query: mockQuery,
+  end: mockEnd,
+  on: mockOn,
+  totalCount: 0,
+  idleCount: 0,
+  waitingCount: 0,
+  options: {
+    max: 5,
+    idleTimeoutMillis: 1000,
+    connectionTimeoutMillis: 10000,
+  },
+}));
+
 vi.mock('pg', () => ({
-  Pool: vi.fn().mockImplementation(() => ({
-    query: vi.fn(),
-    end: vi.fn(),
-    on: vi.fn(),
-    totalCount: 0,
-    idleCount: 0,
-    waitingCount: 0,
-    options: {
-      max: 5,
-      idleTimeoutMillis: 1000,
-      connectionTimeoutMillis: 10000,
-    },
-  })),
+  Pool: MockPool,
   Client: vi.fn().mockImplementation(() => ({
     connect: vi.fn(),
     query: vi.fn(),
@@ -24,11 +30,7 @@ vi.mock('pg', () => ({
 }));
 
 describe('Database Connection Tests', () => {
-  let mockPool: any;
-
   beforeEach(() => {
-    const { Pool } = require('pg');
-    mockPool = new Pool();
     vi.clearAllMocks();
   });
 
@@ -48,8 +50,7 @@ describe('Database Connection Tests', () => {
 
       db.configure(config);
 
-      const { Pool } = require('pg');
-      expect(Pool).toHaveBeenCalledWith(
+      expect(MockPool).toHaveBeenCalledWith(
         expect.objectContaining({
           host: 'localhost',
           port: 5432,
@@ -79,8 +80,7 @@ describe('Database Connection Tests', () => {
 
       db.configure(config);
 
-      const { Pool } = require('pg');
-      expect(Pool).toHaveBeenCalledWith(
+      expect(MockPool).toHaveBeenCalledWith(
         expect.objectContaining({
           ssl: { rejectUnauthorized: false },
         })
@@ -101,11 +101,11 @@ describe('Database Connection Tests', () => {
       db.configure(config);
 
       const mockQueryResult = { rows: [{ id: 1, name: 'test' }] };
-      mockPool.query.mockResolvedValue(mockQueryResult);
+      vi.mocked(mockQuery).mockResolvedValue(mockQueryResult);
 
       const result = await db.query('SELECT * FROM test WHERE id = $1', [1]);
 
-      expect(mockPool.query).toHaveBeenCalledWith('SELECT * FROM test WHERE id = $1', [1]);
+      expect(vi.mocked(mockQuery)).toHaveBeenCalledWith('SELECT * FROM test WHERE id = $1', [1]);
       expect(result).toEqual(mockQueryResult);
     });
 
@@ -121,7 +121,7 @@ describe('Database Connection Tests', () => {
       db.configure(config);
 
       const mockError = new Error('Database connection failed');
-      mockPool.query.mockRejectedValue(mockError);
+      vi.mocked(mockQuery).mockRejectedValue(mockError);
 
       await expect(db.query('SELECT * FROM test')).rejects.toThrow('Database connection failed');
     });
@@ -166,7 +166,7 @@ describe('Database Connection Tests', () => {
       db.configure(config);
       await db.close();
 
-      expect(mockPool.end).toHaveBeenCalled();
+      expect(vi.mocked(mockEnd)).toHaveBeenCalled();
     });
   });
 
@@ -205,11 +205,7 @@ describe('Database Connection Tests', () => {
       process.env = {
         ...originalEnv,
         NODE_ENV: 'development',
-        DB_HOST: 'localhost',
-        DB_PORT: '5432',
-        DB_NAME: 'travel_manager_dev',
-        DB_USERNAME: 'nissim',
-        DB_PASSWORD: '',
+        // Don't set DB_PASSWORD to test default fallback
       };
 
       const config = getDatabaseConfig();
@@ -219,7 +215,7 @@ describe('Database Connection Tests', () => {
         port: 5432,
         database: 'travel_manager_dev',
         username: 'nissim',
-        password: '',
+        password: 'devpass123',
         ssl: false,
         maxConnections: 10,
         connectionTimeoutMs: 10000,
@@ -242,14 +238,14 @@ describe('Database Connection Tests', () => {
 
       db.configure(config);
 
-      mockPool.query.mockResolvedValue({
+      vi.mocked(mockQuery).mockResolvedValue({
         rows: [{ current_time: '2023-08-30T10:00:00Z', db_version: 'PostgreSQL 15.0' }],
       });
 
       const result = await db.testConnection();
 
       expect(result).toBe(true);
-      expect(mockPool.query).toHaveBeenCalledWith(
+      expect(vi.mocked(mockQuery)).toHaveBeenCalledWith(
         'SELECT NOW() as current_time, version() as db_version'
       );
     });
@@ -266,14 +262,14 @@ describe('Database Connection Tests', () => {
       db.configure(config);
 
       // Mock PostGIS distance calculation (Zürich to Bern ~94.5 km)
-      mockPool.query.mockResolvedValue({
+      vi.mocked(mockQuery).mockResolvedValue({
         rows: [{ distance_km: '94.567' }],
       });
 
       const result = await db.testPostGIS();
 
       expect(result).toBe(true);
-      expect(mockPool.query).toHaveBeenCalledWith(expect.stringContaining('ST_Distance'));
+      expect(vi.mocked(mockQuery)).toHaveBeenCalledWith(expect.stringContaining('ST_Distance'));
     });
 
     it('should fail PostGIS test with incorrect distance', async () => {
@@ -288,7 +284,7 @@ describe('Database Connection Tests', () => {
       db.configure(config);
 
       // Mock incorrect distance calculation
-      mockPool.query.mockResolvedValue({
+      vi.mocked(mockQuery).mockResolvedValue({
         rows: [{ distance_km: '500.0' }], // Way too far for Zürich-Bern
       });
 

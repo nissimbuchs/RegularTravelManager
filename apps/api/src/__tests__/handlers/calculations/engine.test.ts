@@ -9,12 +9,13 @@ import {
   cleanupExpiredCache,
 } from '../../../handlers/calculations/engine';
 
-// Mock dependencies  
+// Mock dependencies
+const mockDbQuery = vi.fn();
 vi.mock('../../../database/connection', () => ({
   db: {
-    query: vi.fn(),
+    query: mockDbQuery,
     getPool: vi.fn(),
-  }
+  },
 }));
 vi.mock('../../../handlers/auth/auth-utils');
 
@@ -125,7 +126,7 @@ describe('Calculation Engine Handlers', async () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock database query for cached distance calculation
-            vi.mocked(db.query).mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ distance: 93.752 }], // Approximate distance Zurich-Bern
       });
 
@@ -157,7 +158,7 @@ describe('Calculation Engine Handlers', async () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock direct distance calculation
-            vi.mocked(db.query).mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ distance: 93.752 }],
       });
 
@@ -179,7 +180,7 @@ describe('Calculation Engine Handlers', async () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock allowance calculation (93.752 * 0.68 = 63.75)
-      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ allowance: 63.75 }],
       });
 
@@ -203,7 +204,7 @@ describe('Calculation Engine Handlers', async () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock allowance calculation (50 * 0.70 = 35.00 per day)
-      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ allowance: 35.0 }],
       });
 
@@ -282,7 +283,7 @@ describe('Calculation Engine Handlers', async () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock empty employee result
-      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [],
       });
 
@@ -321,7 +322,7 @@ describe('Calculation Engine Handlers', async () => {
       });
 
       // Mock audit query
-      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [
           {
             id: 'audit-123',
@@ -361,7 +362,7 @@ describe('Calculation Engine Handlers', async () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock cache invalidation
-      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ deleted_count: 5 }],
       });
 
@@ -381,7 +382,7 @@ describe('Calculation Engine Handlers', async () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock cache invalidation
-      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rowCount: 3,
       });
 
@@ -399,7 +400,7 @@ describe('Calculation Engine Handlers', async () => {
       const mockEvent = createMockEvent('POST');
 
       // Mock cache cleanup
-      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ deleted_count: 12 }],
       });
 
@@ -422,7 +423,7 @@ describe('Calculation Engine Handlers', async () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock zero distance result
-      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ distance: 0.0 }],
       });
 
@@ -442,7 +443,7 @@ describe('Calculation Engine Handlers', async () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock database error
-      vi.mocked((await import('../../../database/connection')).db.query).mockRejectedValueOnce(
+      mockDbQuery.mockRejectedValueOnce(
         new Error('Coordinates must be in WGS84 coordinate system')
       );
 
@@ -459,7 +460,7 @@ describe('Calculation Engine Handlers', async () => {
       const mockEvent = createMockEvent('POST', requestBody);
 
       // Mock allowance calculation with proper rounding
-      vi.mocked((await import('../../../database/connection')).db.query).mockResolvedValueOnce({
+      mockDbQuery.mockResolvedValueOnce({
         rows: [{ allowance: 64.03 }], // Properly rounded CHF amount
       });
 

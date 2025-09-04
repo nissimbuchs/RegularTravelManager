@@ -17,6 +17,11 @@
     "deploy:dev": "./scripts/deploy.sh dev",
     "deploy:staging": "./scripts/deploy.sh staging",
     "deploy:prod": "./scripts/deploy.sh prod",
+    "db:migrate": "tsx src/database/migration-runner.ts migrate",
+    "db:sample-data": "tsx src/database/migration-runner.ts seed",
+    "db:setup": "tsx src/database/migration-runner.ts setup",
+    "db:reset": "tsx src/database/migration-runner.ts reset",
+    "db:status": "tsx src/database/migration-runner.ts status",
     "logs": "sam logs -n RTMApiFunction --stack-name rtm-api-dev --tail"
   },
   "dependencies": {
