@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ProjectDto, SubprojectDto, TravelRequestFormData, CalculationPreview } from '@rtm/shared';
+import { TravelRequestFormData, CalculationPreview } from '@rtm/shared';
+import { Project, Subproject } from '../../../core/models/project.model';
 import { ProjectService } from '../../../core/services/project.service';
 import { environment } from '../../../../environments/environment';
 
@@ -17,42 +18,14 @@ export class TravelRequestService {
     private projectService: ProjectService
   ) {}
 
-  getActiveProjects(): Observable<ProjectDto[]> {
-    // Use the actual project service and convert to DTO format
-    return this.projectService.getActiveProjects().pipe(
-      map(projects =>
-        projects.map(project => ({
-          id: project.id,
-          name: project.name,
-          description: project.description || '',
-          default_cost_per_km: project.defaultCostPerKm,
-          is_active: project.isActive,
-          created_at: project.createdAt,
-          updated_at: project.createdAt,
-        }))
-      )
-    );
+  getActiveProjects(): Observable<Project[]> {
+    // Use the actual project service (already returns camelCase per API conventions)
+    return this.projectService.getActiveProjects();
   }
 
-  getActiveSubprojects(projectId: string): Observable<SubprojectDto[]> {
-    // Use the actual project service and convert to DTO format
-    return this.projectService.getActiveSubprojects(projectId).pipe(
-      map(subprojects =>
-        subprojects.map(subproject => ({
-          id: subproject.id,
-          project_id: subproject.projectId,
-          name: subproject.name,
-          location_street: subproject.locationStreet,
-          location_city: subproject.locationCity,
-          location_postal_code: subproject.locationPostalCode,
-          location_coordinates: subproject.locationCoordinates,
-          cost_per_km: subproject.costPerKm,
-          is_active: subproject.isActive,
-          created_at: subproject.createdAt,
-          updated_at: subproject.createdAt,
-        }))
-      )
-    );
+  getActiveSubprojects(projectId: string): Observable<Subproject[]> {
+    // Use the actual project service (already returns camelCase per API conventions)
+    return this.projectService.getActiveSubprojects(projectId);
   }
 
   calculatePreview(subprojectId: string, daysPerWeek: number): Observable<CalculationPreview> {
@@ -66,10 +39,10 @@ export class TravelRequestService {
 
   submitRequest(formData: TravelRequestFormData): Observable<any> {
     const requestData = {
-      subproject_id: formData.subProjectId,
-      days_per_week: formData.daysPerWeek,
+      subprojectId: formData.subProjectId,  // ✅ Fixed: Use camelCase for API
+      daysPerWeek: formData.daysPerWeek,  // ✅ Fixed: Use camelCase for API
       justification: formData.justification,
-      manager_id: formData.managerId,
+      managerId: formData.managerId,  // ✅ Fixed: Use camelCase for API
     };
 
     return this.http.post<any>(`${this.apiUrl}/api/employees/travel-requests`, requestData);

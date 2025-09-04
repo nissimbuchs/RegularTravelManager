@@ -52,19 +52,19 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
             <div class="address-info">
               <mat-icon class="address-icon">place</mat-icon>
               <div class="address-text">
-                <div class="street">{{ employee.home_street }}</div>
+                <div class="street">{{ employee.homeStreet }}</div>
                 <div class="city-postal">
-                  {{ employee.home_postal_code }} {{ employee.home_city }}
+                  {{ employee.homePostalCode }} {{ employee.homeCity }}
                 </div>
-                <div class="country">{{ employee.home_country }}</div>
+                <div class="country">{{ employee.homeCountry }}</div>
               </div>
             </div>
 
-            <div class="coordinates" *ngIf="employee.home_location">
+            <div class="coordinates" *ngIf="employee.homeLocation">
               <mat-icon class="coords-icon">my_location</mat-icon>
               <span class="coords-text">
-                {{ employee.home_location.latitude | number: '1.6-6' }},
-                {{ employee.home_location.longitude | number: '1.6-6' }}
+                {{ employee.homeLocation.latitude | number: '1.6-6' }},
+                {{ employee.homeLocation.longitude | number: '1.6-6' }}
               </span>
             </div>
           </div>
@@ -104,15 +104,15 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                 <mat-label>Street Address</mat-label>
                 <input
                   matInput
-                  formControlName="home_street"
+                  formControlName="homeStreet"
                   placeholder="e.g. Bahnhofstrasse 45"
                   maxlength="255"
                 />
                 <mat-icon matSuffix>home</mat-icon>
-                <mat-error *ngIf="addressForm.get('home_street')?.errors?.['required']">
+                <mat-error *ngIf="addressForm.get('homeStreet')?.errors?.['required']">
                   Street address is required
                 </mat-error>
-                <mat-error *ngIf="addressForm.get('home_street')?.errors?.['minlength']">
+                <mat-error *ngIf="addressForm.get('homeStreet')?.errors?.['minlength']">
                   Street address must be at least 3 characters
                 </mat-error>
               </mat-form-field>
@@ -123,15 +123,15 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                 <mat-label>City</mat-label>
                 <input
                   matInput
-                  formControlName="home_city"
+                  formControlName="homeCity"
                   placeholder="e.g. Zurich"
                   maxlength="100"
                 />
                 <mat-icon matSuffix>location_city</mat-icon>
-                <mat-error *ngIf="addressForm.get('home_city')?.errors?.['required']">
+                <mat-error *ngIf="addressForm.get('homeCity')?.errors?.['required']">
                   City is required
                 </mat-error>
-                <mat-error *ngIf="addressForm.get('home_city')?.errors?.['minlength']">
+                <mat-error *ngIf="addressForm.get('homeCity')?.errors?.['minlength']">
                   City must be at least 2 characters
                 </mat-error>
               </mat-form-field>
@@ -140,15 +140,15 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                 <mat-label>Postal Code</mat-label>
                 <input
                   matInput
-                  formControlName="home_postal_code"
+                  formControlName="homePostalCode"
                   placeholder="e.g. 8001"
                   maxlength="4"
                 />
                 <mat-icon matSuffix>markunread_mailbox</mat-icon>
-                <mat-error *ngIf="addressForm.get('home_postal_code')?.errors?.['required']">
+                <mat-error *ngIf="addressForm.get('homePostalCode')?.errors?.['required']">
                   Postal code is required
                 </mat-error>
-                <mat-error *ngIf="addressForm.get('home_postal_code')?.errors?.['pattern']">
+                <mat-error *ngIf="addressForm.get('homePostalCode')?.errors?.['pattern']">
                   Swiss postal code must be 4 digits
                 </mat-error>
               </mat-form-field>
@@ -157,13 +157,13 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
             <div class="form-row">
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Country</mat-label>
-                <mat-select formControlName="home_country">
+                <mat-select formControlName="homeCountry">
                   <mat-option *ngFor="let country of supportedCountries" [value]="country">
                     {{ country }}
                   </mat-option>
                 </mat-select>
                 <mat-icon matSuffix>flag</mat-icon>
-                <mat-error *ngIf="addressForm.get('home_country')?.errors?.['required']">
+                <mat-error *ngIf="addressForm.get('homeCountry')?.errors?.['required']">
                   Country is required
                 </mat-error>
               </mat-form-field>
@@ -199,10 +199,10 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
               <mat-icon>event</mat-icon>
               <div>
                 <strong>Last Updated</strong>
-                <p>{{ employee.updated_at | date: 'medium' }}</p>
+                <p>{{ employee.updatedAt | date: 'medium' }}</p>
               </div>
             </div>
-            <div class="info-item" *ngIf="employee.home_location">
+            <div class="info-item" *ngIf="employee.homeLocation">
               <mat-icon>map</mat-icon>
               <div>
                 <strong>Geocoding Status</strong>
@@ -422,10 +422,10 @@ export class AddressComponent implements OnInit, OnDestroy {
 
   private createAddressForm(): FormGroup {
     return this.fb.group({
-      home_street: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],
-      home_city: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
-      home_postal_code: ['', [Validators.required, Validators.pattern(/^[0-9]{4}$/)]],
-      home_country: ['Switzerland', [Validators.required]],
+      homeStreet: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],
+      homeCity: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      homePostalCode: ['', [Validators.required, Validators.pattern(/^[0-9]{4}$/)]],
+      homeCountry: ['Switzerland', [Validators.required]],
     });
   }
 
@@ -479,19 +479,19 @@ export class AddressComponent implements OnInit, OnDestroy {
   private populateForm(): void {
     if (this.employee && this.hasAddress()) {
       this.addressForm.patchValue({
-        home_street: this.employee.home_street,
-        home_city: this.employee.home_city,
-        home_postal_code: this.employee.home_postal_code,
-        home_country: this.employee.home_country,
+        homeStreet: this.employee.homeStreet,
+        homeCity: this.employee.homeCity,
+        homePostalCode: this.employee.homePostalCode,
+        homeCountry: this.employee.homeCountry,
       });
     }
   }
 
   hasAddress(): boolean {
     return !!(
-      this.employee?.home_street &&
-      this.employee?.home_city &&
-      this.employee?.home_postal_code
+      this.employee?.homeStreet &&
+      this.employee?.homeCity &&
+      this.employee?.homePostalCode
     );
   }
 
@@ -501,7 +501,7 @@ export class AddressComponent implements OnInit, OnDestroy {
       this.populateForm();
     } else {
       this.addressForm.reset();
-      this.addressForm.patchValue({ home_country: 'Switzerland' });
+      this.addressForm.patchValue({ homeCountry: 'Switzerland' });
     }
   }
 
@@ -556,7 +556,7 @@ export class AddressComponent implements OnInit, OnDestroy {
                   this.employee = updatedEmployee;
                   this.isEditMode = false;
                   this.snackBar.open(
-                    updatedEmployee.home_location
+                    updatedEmployee.homeLocation
                       ? 'Address updated and geocoded successfully'
                       : 'Address updated (geocoding in progress)',
                     'Close',

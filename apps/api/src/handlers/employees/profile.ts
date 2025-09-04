@@ -71,20 +71,21 @@ class EmployeeServiceImpl implements EmployeeService {
     console.log('Found employee:', employee.first_name, employee.last_name);
 
     // Convert PostGIS point to lat/lng
+    let homeLocation = null;
     if (employee.home_location) {
       try {
         const locationResult = await db.query(
           'SELECT ST_X($1::geometry) as longitude, ST_Y($1::geometry) as latitude',
           [employee.home_location]
         );
-        employee.home_location = {
+        homeLocation = {
           latitude: locationResult.rows[0].latitude,
           longitude: locationResult.rows[0].longitude,
         };
       } catch (error) {
         console.error('PostGIS location conversion failed:', error);
         // If location conversion fails, set to default location (Bern)
-        employee.home_location = {
+        homeLocation = {
           latitude: 46.947974,
           longitude: 7.447447,
         };
@@ -92,7 +93,23 @@ class EmployeeServiceImpl implements EmployeeService {
     }
 
     console.log('Returning employee:', employee.id);
-    return employee;
+    
+    // Transform snake_case to camelCase for API response
+    return {
+      id: employee.id,
+      cognitoUserId: employee.cognito_user_id,
+      email: employee.email,
+      firstName: employee.first_name,
+      lastName: employee.last_name,
+      employeeId: employee.employee_id,
+      homeStreet: employee.home_street,
+      homeCity: employee.home_city,
+      homePostalCode: employee.home_postal_code,
+      homeCountry: employee.home_country,
+      homeLocation: homeLocation,
+      createdAt: employee.created_at,
+      updatedAt: employee.updated_at,
+    };
   }
 
   async getEmployeeByEmployeeId(employeeId: string) {
@@ -210,13 +227,25 @@ class EmployeeServiceImpl implements EmployeeService {
 
       await client.query('COMMIT');
 
-      // Convert PostGIS point to lat/lng for response
-      updatedEmployee.home_location = coordinates;
-
       // Check for pending travel requests that need recalculation
       await this.recalculatePendingRequests(command.id);
 
-      return updatedEmployee;
+      // Transform snake_case to camelCase for API response
+      return {
+        id: updatedEmployee.id,
+        cognitoUserId: updatedEmployee.cognito_user_id,
+        email: updatedEmployee.email,
+        firstName: updatedEmployee.first_name,
+        lastName: updatedEmployee.last_name,
+        employeeId: updatedEmployee.employee_id,
+        homeStreet: updatedEmployee.home_street,
+        homeCity: updatedEmployee.home_city,
+        homePostalCode: updatedEmployee.home_postal_code,
+        homeCountry: updatedEmployee.home_country,
+        homeLocation: coordinates,
+        createdAt: updatedEmployee.created_at,
+        updatedAt: updatedEmployee.updated_at,
+      };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -296,14 +325,14 @@ export const updateEmployeeAddress = validateRequest({
     id: { required: true, type: 'string' },
   },
   body: {
-    home_street: { required: true, type: 'string', minLength: 1, maxLength: 255 },
-    home_city: { required: true, type: 'string', minLength: 1, maxLength: 100 },
-    home_postal_code: {
+    homeStreet: { required: true, type: 'string', minLength: 1, maxLength: 255 },
+    homeCity: { required: true, type: 'string', minLength: 1, maxLength: 100 },
+    homePostalCode: {
       required: true,
       type: 'string',
       pattern: /^[0-9]{4}$/, // Swiss postal code format
     },
-    home_country: {
+    homeCountry: {
       required: true,
       type: 'string',
       enum: ['Switzerland', 'Germany', 'France', 'Italy', 'Austria'],
@@ -336,10 +365,10 @@ export const updateEmployeeAddress = validateRequest({
 
   const command: UpdateEmployeeAddressCommand = {
     id: employee.id, // Use the actual database ID, not the Cognito ID
-    home_street: body.home_street,
-    home_city: body.home_city,
-    home_postal_code: body.home_postal_code,
-    home_country: body.home_country,
+    home_street: body.homeStreet,
+    home_city: body.homeCity,
+    home_postal_code: body.homePostalCode,
+    home_country: body.homeCountry,
   };
 
   const updatedEmployee = await employeeService.updateEmployeeAddress(command);
@@ -381,7 +410,7 @@ export const getManagers = validateRequest({})(async (
   const managers = result.rows.map((row: any) => ({
     id: row.id,
     name: row.name,
-    employeeId: row.employee_id,
+    employeeId: row.employee_id,  // Already using snake_case alias from SQL query
   }));
 
   return formatResponse(200, { managers }, context.awsRequestId);

@@ -1206,7 +1206,50 @@ export const appConfig: ApplicationConfig = {
 | Services | PascalCase + 'Service' | - | `AuthService` |
 | Directives | camelCase | - | `appHighlight` |
 | API Routes | - | kebab-case | `/api/user-profile` |
+| **API Request/Response Fields** | **camelCase** | **camelCase** | `defaultCostPerKm`, `isActive` |
 | Database Tables | - | snake_case | `user_profiles` |
+| Database Columns | - | snake_case | `default_cost_per_km`, `is_active` |
+
+### API Field Naming Rules
+
+**CRITICAL**: All API request/response bodies MUST use camelCase field names for consistency across frontend and backend.
+
+#### Frontend to Backend Communication
+- **Frontend models**: Use camelCase (e.g., `defaultCostPerKm`, `isActive`)
+- **API requests**: Send camelCase fields to backend
+- **API responses**: Receive camelCase fields from backend
+- **Database queries**: Backend converts camelCase ↔ snake_case internally
+
+#### Implementation Pattern
+```typescript
+// ✅ Correct: Frontend sends camelCase
+const projectData = {
+  name: "Project Name",
+  defaultCostPerKm: 0.75,
+  isActive: true
+};
+
+// ✅ Correct: Backend receives camelCase, converts to snake_case for DB
+const dbFields = {
+  name: projectData.name,
+  default_cost_per_km: projectData.defaultCostPerKm,  // Convert for DB
+  is_active: projectData.isActive
+};
+
+// ✅ Correct: Backend returns camelCase to frontend
+return {
+  id: row.id,
+  name: row.name,
+  defaultCostPerKm: parseFloat(row.default_cost_per_km),  // Convert from DB
+  isActive: row.is_active
+};
+```
+
+#### Rationale
+- **Frontend consistency**: TypeScript/Angular standards use camelCase
+- **API consistency**: Single naming convention across all endpoints
+- **Database separation**: Internal DB schema uses snake_case as per SQL standards
+- **Developer experience**: No field name confusion between layers
 
 ## Error Handling Strategy
 

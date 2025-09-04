@@ -9,6 +9,7 @@ import {
   CreateProjectCommand,
   CreateSubprojectCommand,
   UpdateProjectCommand,
+  UpdateSubprojectCommand,
 } from '../../../../domains/project-management/ProjectService';
 import { GeocodingService, GeocodeResult, GeocodeRequest } from '../../services/geocoding-service';
 import { getUserContextFromEvent, requireManager } from '../auth/auth-utils';
@@ -371,6 +372,186 @@ class ProjectServiceImpl implements ProjectService {
     }));
   }
 
+  async updateSubproject(command: UpdateSubprojectCommand) {
+    logger.info('Updating subproject', {
+      id: command.id,
+      projectId: command.project_id,
+      name: command.name,
+    });
+
+    // Verify subproject exists and belongs to the project
+    const existingResult = await db.query(
+      'SELECT * FROM subprojects WHERE id = $1 AND project_id = $2',
+      [command.id, command.project_id]
+    );
+
+    if (existingResult.rows.length === 0) {
+      throw new NotFoundError('Subproject');
+    }
+
+    const existing = existingResult.rows[0];
+    let coordinates: GeocodeResult | null = null;
+
+    // Check if location has changed and geocode if needed
+    const hasLocationChanged =
+      command.street_address !== existing.street_address ||
+      command.city !== existing.city ||
+      command.postal_code !== existing.postal_code;
+
+    if (hasLocationChanged && command.street_address && command.city && command.postal_code) {
+      try {
+        coordinates = await this.geocodingService.geocodeAddress({
+          street: command.street_address,
+          city: command.city,
+          postalCode: command.postal_code,
+          country: command.country || 'Switzerland',
+        });
+
+        logger.info('Subproject geocoding successful', {
+          id: command.id,
+          coordinates,
+        });
+      } catch (error) {
+        logger.warn('Subproject geocoding failed, keeping existing coordinates', {
+          error: error.message,
+          id: command.id,
+        });
+      }
+    }
+
+    // Build update query dynamically based on provided fields
+    const updateFields: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (command.name !== undefined) {
+      updateFields.push(`name = $${paramCount++}`);
+      values.push(command.name);
+    }
+
+    if (command.street_address !== undefined) {
+      updateFields.push(`street_address = $${paramCount++}`);
+      values.push(command.street_address);
+    }
+
+    if (command.city !== undefined) {
+      updateFields.push(`city = $${paramCount++}`);
+      values.push(command.city);
+    }
+
+    if (command.postal_code !== undefined) {
+      updateFields.push(`postal_code = $${paramCount++}`);
+      values.push(command.postal_code);
+    }
+
+    if (command.country !== undefined) {
+      updateFields.push(`country = $${paramCount++}`);
+      values.push(command.country);
+    }
+
+    if (command.cost_per_km !== undefined) {
+      updateFields.push(`cost_per_km = $${paramCount++}`);
+      values.push(command.cost_per_km);
+    }
+
+    if (command.is_active !== undefined) {
+      updateFields.push(`is_active = $${paramCount++}`);
+      values.push(command.is_active);
+    }
+
+    if (coordinates) {
+      updateFields.push(`location = ST_SetSRID(ST_MakePoint($${paramCount++}, $${paramCount++}), 4326)`);
+      values.push(coordinates.longitude, coordinates.latitude);
+    }
+
+    if (updateFields.length === 0) {
+      // No updates needed, return existing subproject
+      return this.getSubproject(command.id);
+    }
+
+    updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(command.id, command.project_id); // Add WHERE clause parameters
+
+    const query = `
+      UPDATE subprojects 
+      SET ${updateFields.join(', ')}
+      WHERE id = $${paramCount++} AND project_id = $${paramCount}
+      RETURNING *
+    `;
+
+    const result = await db.query(query, values);
+    const row = result.rows[0];
+
+    // Get coordinates for response
+    const coordsResult = await db.query(
+      'SELECT ST_X(location) as longitude, ST_Y(location) as latitude FROM subprojects WHERE id = $1',
+      [row.id]
+    );
+
+    const coords = coordsResult.rows[0];
+
+    return {
+      id: row.id,
+      projectId: row.project_id,
+      name: row.name,
+      locationStreet: row.street_address,
+      locationCity: row.city,
+      locationPostalCode: row.postal_code,
+      locationCoordinates:
+        coords.longitude && coords.latitude
+          ? {
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+            }
+          : null,
+      costPerKm: parseFloat(row.cost_per_km),
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  async deleteSubproject(projectId: string, subprojectId: string) {
+    logger.info('Deleting subproject', {
+      projectId,
+      subprojectId,
+    });
+
+    // Check if subproject exists and belongs to the project
+    const existingResult = await db.query(
+      'SELECT * FROM subprojects WHERE id = $1 AND project_id = $2',
+      [subprojectId, projectId]
+    );
+
+    if (existingResult.rows.length === 0) {
+      throw new NotFoundError('Subproject');
+    }
+
+    // Check for active travel requests referencing this subproject
+    const requestsResult = await db.query(
+      'SELECT COUNT(*) as count FROM travel_requests WHERE subproject_id = $1 AND status IN ($2, $3)',
+      [subprojectId, 'pending', 'approved']
+    );
+
+    const activeRequestCount = parseInt(requestsResult.rows[0].count);
+    if (activeRequestCount > 0) {
+      throw new ValidationError(
+        `Cannot delete subproject: ${activeRequestCount} active travel requests are referencing this location`
+      );
+    }
+
+    // Soft delete by marking as inactive instead of hard delete
+    await db.query(
+      'UPDATE subprojects SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND project_id = $2',
+      [subprojectId, projectId]
+    );
+
+    logger.info('Subproject deleted successfully', {
+      projectId,
+      subprojectId,
+    });
+  }
+
   async canDeleteProject(projectId: string) {
     // Check for active travel requests referencing this project's subprojects
     const result = await db.query(
@@ -394,7 +575,7 @@ export const createProject = validateRequest({
   body: {
     name: { required: true, type: 'string', minLength: 1, maxLength: 255 },
     description: { required: false, type: 'string', maxLength: 1000 },
-    default_cost_per_km: { required: true, type: 'number' },
+    defaultCostPerKm: { required: true, type: 'number' },
   },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const userContext = getUserContextFromEvent(event);
@@ -409,14 +590,14 @@ export const createProject = validateRequest({
   });
 
   // Validate cost per km is positive
-  if (body.default_cost_per_km <= 0) {
+  if (body.defaultCostPerKm <= 0) {
     throw new ValidationError('Cost per kilometer must be positive');
   }
 
   const command: CreateProjectCommand = {
     name: body.name,
     description: body.description,
-    default_cost_per_km: body.default_cost_per_km,
+    default_cost_per_km: body.defaultCostPerKm,  // Convert camelCase to snake_case for DB
   };
 
   const project = await projectService.createProject(command);
@@ -625,8 +806,8 @@ export const updateProject = validateRequest({
   body: {
     name: { required: false, type: 'string', minLength: 1, maxLength: 255 },
     description: { required: false, type: 'string', maxLength: 1000 },
-    default_cost_per_km: { required: false, type: 'number' },
-    is_active: { required: false, type: 'boolean' },
+    defaultCostPerKm: { required: false, type: 'number' },
+    isActive: { required: false, type: 'boolean' },
   },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const projectId = event.pathParameters?.id;
@@ -642,7 +823,7 @@ export const updateProject = validateRequest({
   });
 
   // Validate cost per km if provided
-  if (body.default_cost_per_km !== undefined && body.default_cost_per_km <= 0) {
+  if (body.defaultCostPerKm !== undefined && body.defaultCostPerKm <= 0) {
     throw new ValidationError('Cost per kilometer must be positive');
   }
 
@@ -650,8 +831,8 @@ export const updateProject = validateRequest({
     id: projectId!,
     name: body.name,
     description: body.description,
-    default_cost_per_km: body.default_cost_per_km,
-    is_active: body.is_active,
+    default_cost_per_km: body.defaultCostPerKm,  // Convert camelCase to snake_case for DB
+    is_active: body.isActive,  // Convert camelCase to snake_case for DB
   };
 
   const project = await projectService.updateProject(command);
@@ -704,6 +885,43 @@ export const toggleProjectStatus = validateRequest({
 });
 
 // Check project references (admin only)
+// Get single subproject by ID
+export const getSubprojectById = validateRequest({
+  pathParams: {
+    projectId: { required: true, type: 'string' },
+    subprojectId: { required: true, type: 'string' },
+  },
+})(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
+  const projectId = event.pathParameters?.projectId;
+  const subprojectId = event.pathParameters?.subprojectId;
+  const userContext = getUserContextFromEvent(event);
+
+  logger.info('Getting subproject by ID', {
+    projectId,
+    subprojectId,
+    requestedBy: userContext.sub,
+    requestId: context.awsRequestId,
+  });
+
+  // Verify project exists first
+  const project = await projectService.getProject(projectId!);
+  if (!project) {
+    throw new NotFoundError('Project');
+  }
+
+  const subproject = await projectService.getSubproject(subprojectId!);
+  if (!subproject) {
+    throw new NotFoundError('Subproject');
+  }
+
+  // Verify the subproject belongs to the specified project
+  if (subproject.projectId !== projectId) {
+    throw new NotFoundError('Subproject not found in specified project');
+  }
+
+  return formatResponse(200, subproject, context.awsRequestId);
+});
+
 export const checkProjectReferences = validateRequest({
   pathParams: {
     id: { required: true, type: 'string' },
@@ -903,3 +1121,97 @@ export const geocodeAddress = validateRequest({
     );
   }
 });
+
+// Update subproject (admin only)
+export const updateSubproject = validateRequest({
+  body: {
+    name: { required: false, type: 'string', minLength: 1, maxLength: 255 },
+    locationStreet: { required: false, type: 'string', maxLength: 255 },
+    locationCity: { required: false, type: 'string', maxLength: 100 },
+    locationPostalCode: {
+      required: false,
+      type: 'string',
+      pattern: /^[0-9]{4}$/,
+    },
+    costPerKm: { required: false, type: 'number' },
+    isActive: { required: false, type: 'boolean' },
+  },
+})(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
+  const userContext = getUserContextFromEvent(event);
+  requireManager(userContext);
+
+  const projectId = event.pathParameters?.projectId;
+  const subprojectId = event.pathParameters?.subprojectId;
+  const body = JSON.parse(event.body!);
+
+  if (!projectId || !subprojectId) {
+    throw new ValidationError('Project ID and Subproject ID are required');
+  }
+
+  logger.info('Updating subproject', {
+    subprojectId,
+    projectId,
+    updatedBy: userContext.sub,
+    requestId: context.awsRequestId,
+  });
+
+  // Validate cost per km is positive if provided
+  if (body.costPerKm !== undefined && body.costPerKm <= 0) {
+    throw new ValidationError('Cost per kilometer must be positive');
+  }
+
+  const command: UpdateSubprojectCommand = {
+    id: subprojectId,
+    project_id: projectId,
+    name: body.name,
+    street_address: body.locationStreet,
+    city: body.locationCity,
+    postal_code: body.locationPostalCode,
+    country: 'Switzerland',
+    cost_per_km: body.costPerKm,
+    is_active: body.isActive,
+  };
+
+  const subproject = await projectService.updateSubproject(command);
+
+  logger.info('Subproject updated successfully', {
+    subprojectId: subproject.id,
+    name: subproject.name,
+    requestId: context.awsRequestId,
+  });
+
+  return formatResponse(200, subproject, context.awsRequestId);
+});
+
+// Delete subproject (admin only)
+export const deleteSubproject = async (
+  event: APIGatewayProxyEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> => {
+  const userContext = getUserContextFromEvent(event);
+  requireManager(userContext);
+
+  const projectId = event.pathParameters?.projectId;
+  const subprojectId = event.pathParameters?.subprojectId;
+
+  if (!projectId || !subprojectId) {
+    throw new ValidationError('Project ID and Subproject ID are required');
+  }
+
+  logger.info('Deleting subproject', {
+    subprojectId,
+    projectId,
+    deletedBy: userContext.sub,
+    requestId: context.awsRequestId,
+  });
+
+  await projectService.deleteSubproject(projectId, subprojectId);
+
+  logger.info('Subproject deleted successfully', {
+    subprojectId,
+    projectId,
+    requestId: context.awsRequestId,
+  });
+
+  return formatResponse(204, null, context.awsRequestId);
+};

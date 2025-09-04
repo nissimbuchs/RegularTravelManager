@@ -47,6 +47,18 @@ export interface UpdateProjectCommand {
   is_active?: boolean;
 }
 
+export interface UpdateSubprojectCommand {
+  id: string;
+  project_id: string;
+  name?: string;
+  street_address?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
+  cost_per_km?: number;
+  is_active?: boolean;
+}
+
 export interface ProjectService {
   /**
    * Create a new project
@@ -87,6 +99,16 @@ export interface ProjectService {
    * Search projects by name
    */
   searchProjects(searchTerm: string): Promise<Project[]>;
+
+  /**
+   * Update an existing subproject
+   */
+  updateSubproject(command: UpdateSubprojectCommand): Promise<Subproject>;
+
+  /**
+   * Delete a subproject
+   */
+  deleteSubproject(projectId: string, subprojectId: string): Promise<void>;
 
   /**
    * Check if project can be deleted (no active references)

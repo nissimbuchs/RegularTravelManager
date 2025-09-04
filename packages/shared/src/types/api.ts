@@ -30,33 +30,33 @@ export interface HealthStatus {
 // Employee Types
 export interface EmployeeDto {
   id: string;
-  cognito_user_id: string;
+  cognitoUserId: string;  // ✅ Fixed: Use camelCase per API field naming conventions
   email: string;
-  first_name: string;
-  last_name: string;
-  employee_id: string;
-  home_street: string;
-  home_city: string;
-  home_postal_code: string;
-  home_country: string;
-  home_location: { latitude: number; longitude: number };
-  created_at: string;
-  updated_at: string;
+  firstName: string;      // ✅ Fixed: Use camelCase per API field naming conventions
+  lastName: string;       // ✅ Fixed: Use camelCase per API field naming conventions
+  employeeId: string;     // ✅ Fixed: Use camelCase per API field naming conventions
+  homeStreet: string;     // ✅ Fixed: Use camelCase per API field naming conventions
+  homeCity: string;       // ✅ Fixed: Use camelCase per API field naming conventions
+  homePostalCode: string; // ✅ Fixed: Use camelCase per API field naming conventions
+  homeCountry: string;    // ✅ Fixed: Use camelCase per API field naming conventions
+  homeLocation: { latitude: number; longitude: number };  // ✅ Fixed: Use camelCase per API field naming conventions
+  createdAt: string;      // ✅ Fixed: Use camelCase per API field naming conventions
+  updatedAt: string;      // ✅ Fixed: Use camelCase per API field naming conventions
 }
 
 export interface CreateEmployeeRequest {
-  cognito_user_id: string;
+  cognitoUserId: string;  // ✅ Fixed: Use camelCase per API field naming conventions
   email: string;
-  first_name: string;
-  last_name: string;
-  employee_id: string;
+  firstName: string;      // ✅ Fixed: Use camelCase per API field naming conventions
+  lastName: string;       // ✅ Fixed: Use camelCase per API field naming conventions
+  employeeId: string;     // ✅ Fixed: Use camelCase per API field naming conventions
 }
 
 export interface UpdateEmployeeAddressRequest {
-  home_street: string;
-  home_city: string;
-  home_postal_code: string;
-  home_country: string;
+  homeStreet: string;     // ✅ Fixed: Use camelCase per API field naming conventions
+  homeCity: string;       // ✅ Fixed: Use camelCase per API field naming conventions
+  homePostalCode: string; // ✅ Fixed: Use camelCase per API field naming conventions
+  homeCountry: string;    // ✅ Fixed: Use camelCase per API field naming conventions
 }
 
 // Project Types
@@ -64,60 +64,60 @@ export interface ProjectDto {
   id: string;
   name: string;
   description?: string;
-  default_cost_per_km: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  defaultCostPerKm: number;  // ✅ Fixed: Use camelCase per API field naming conventions
+  isActive: boolean;         // ✅ Fixed: Use camelCase per API field naming conventions
+  createdAt: string;         // ✅ Fixed: Use camelCase per API field naming conventions
+  updatedAt: string;         // ✅ Fixed: Use camelCase per API field naming conventions
 }
 
 export interface SubprojectDto {
   id: string;
-  project_id: string;
+  projectId: string;             // ✅ Fixed: Use camelCase per API field naming conventions
   name: string;
-  location_street?: string;
-  location_city?: string;
-  location_postal_code?: string;
-  location_coordinates?: { latitude: number; longitude: number };
-  cost_per_km?: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  locationStreet?: string;       // ✅ Fixed: Use camelCase per API field naming conventions
+  locationCity?: string;         // ✅ Fixed: Use camelCase per API field naming conventions
+  locationPostalCode?: string;   // ✅ Fixed: Use camelCase per API field naming conventions
+  locationCoordinates?: { latitude: number; longitude: number };  // ✅ Fixed: Use camelCase per API field naming conventions
+  costPerKm?: number;            // ✅ Fixed: Use camelCase per API field naming conventions
+  isActive: boolean;             // ✅ Fixed: Use camelCase per API field naming conventions
+  createdAt: string;             // ✅ Fixed: Use camelCase per API field naming conventions
+  updatedAt: string;             // ✅ Fixed: Use camelCase per API field naming conventions
 }
 
 export interface CreateProjectRequest {
   name: string;
   description?: string;
-  default_cost_per_km: number;
+  defaultCostPerKm: number;  // ✅ Fixed: Use camelCase per API field naming conventions
 }
 
 export interface CreateSubprojectRequest {
-  project_id: string;
+  projectId: string;          // ✅ Fixed: Use camelCase per API field naming conventions
   name: string;
-  location_street?: string;
-  location_city?: string;
-  location_postal_code?: string;
-  cost_per_km?: number;
+  locationStreet?: string;    // ✅ Fixed: Use camelCase per API field naming conventions
+  locationCity?: string;      // ✅ Fixed: Use camelCase per API field naming conventions
+  locationPostalCode?: string; // ✅ Fixed: Use camelCase per API field naming conventions
+  costPerKm?: number;         // ✅ Fixed: Use camelCase per API field naming conventions
 }
 
 // Travel Request Types
 export interface TravelRequestDto {
   id: string;
-  employee_id: string;
-  subproject_id: string;
-  request_date: string;
+  employeeId: string;      // ✅ Fixed: Use camelCase per API field naming conventions
+  subprojectId: string;    // ✅ Fixed: Use camelCase per API field naming conventions
+  requestDate: string;     // ✅ Fixed: Use camelCase per API field naming conventions
   status: 'pending' | 'approved' | 'rejected';
-  distance_km: number;
-  allowance_amount: number;
+  distanceKm: number;      // ✅ Fixed: Use camelCase per API field naming conventions
+  allowanceAmount: number; // ✅ Fixed: Use camelCase per API field naming conventions
   notes?: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;       // ✅ Fixed: Use camelCase per API field naming conventions
+  updatedAt: string;       // ✅ Fixed: Use camelCase per API field naming conventions
 }
 
 export interface CreateTravelRequestRequest {
-  employee_id: string;
-  subproject_id: string;
-  manager_name: string;
-  days_per_week: number;
+  employeeId: string;      // ✅ Fixed: Use camelCase per API field naming conventions
+  subprojectId: string;    // ✅ Fixed: Use camelCase per API field naming conventions
+  managerName: string;     // ✅ Fixed: Use camelCase per API field naming conventions
+  daysPerWeek: number;     // ✅ Fixed: Use camelCase per API field naming conventions
   justification: string;
 }
 
@@ -128,9 +128,9 @@ export interface UpdateTravelRequestRequest {
 
 // Calculation Types
 export interface TravelAllowanceCalculation {
-  distance_km: number;
-  allowance_amount: number;
-  cost_per_km: number;
+  distanceKm: number;      // ✅ Fixed: Use camelCase per API field naming conventions
+  allowanceAmount: number; // ✅ Fixed: Use camelCase per API field naming conventions
+  costPerKm: number;       // ✅ Fixed: Use camelCase per API field naming conventions
 }
 
 export interface CalculationPreview {

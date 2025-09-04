@@ -14,10 +14,13 @@ import {
   createProject,
   createSubproject,
   updateProject,
+  updateSubproject,
+  deleteSubproject,
   toggleProjectStatus,
   checkProjectReferences,
   deleteProject,
   getSubprojectsForProject,
+  getSubprojectById,
   searchProjects,
   geocodeAddress,
 } from './handlers/projects/management';
@@ -169,6 +172,7 @@ app.get('/health', async (req, res) => {
 app.get('/projects/active', lambdaToExpress(getActiveProjects));
 app.get('/projects/search', lambdaToExpress(searchProjects));
 app.get('/projects/geocode', lambdaToExpress(geocodeAddress));
+app.get('/projects/:projectId/subprojects/:subprojectId', lambdaToExpress(getSubprojectById));
 app.get('/projects/:projectId/subprojects', lambdaToExpress(getSubprojectsForProject));
 app.get('/projects/:id/references', lambdaToExpress(checkProjectReferences));
 app.patch('/projects/:id/toggle-status', lambdaToExpress(toggleProjectStatus));
@@ -176,6 +180,8 @@ app.get('/projects/:id', lambdaToExpress(getProjectById));
 app.get('/projects', lambdaToExpress(getAllProjects)); // General projects endpoint for admin (all projects)
 app.post('/projects', lambdaToExpress(createProject));
 app.post('/projects/:projectId/subprojects', lambdaToExpress(createSubproject));
+app.put('/projects/:projectId/subprojects/:subprojectId', lambdaToExpress(updateSubproject));
+app.delete('/projects/:projectId/subprojects/:subprojectId', lambdaToExpress(deleteSubproject));
 app.put('/projects/:id', lambdaToExpress(updateProject));
 app.delete('/projects/:id', lambdaToExpress(deleteProject));
 

@@ -5,7 +5,8 @@ import { MaterialModule } from '../../../material.module';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
-import { TravelRequestFormData, CalculationPreview, ProjectDto, SubprojectDto } from '@rtm/shared';
+import { TravelRequestFormData, CalculationPreview } from '@rtm/shared';
+import { Project, Subproject } from '../../../core/models/project.model';
 import { TravelRequestService } from '../services/travel-request.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -28,8 +29,8 @@ interface Manager {
 })
 export class TravelRequestFormComponent implements OnInit, OnDestroy {
   requestForm: FormGroup;
-  projects: ProjectDto[] = [];
-  subprojects: SubprojectDto[] = [];
+  projects: Project[] = [];  // ✅ Fixed: Use Project model instead of DTO
+  subprojects: Subproject[] = [];  // ✅ Fixed: Use Subproject model instead of DTO
   managers: Manager[] = [];
   calculationPreview: CalculationPreview | null = null;
   isCalculating = false;
