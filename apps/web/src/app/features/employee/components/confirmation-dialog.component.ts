@@ -65,7 +65,7 @@ export class ConfirmationDialogComponent implements OnInit, OnDestroy {
         clearInterval(this.countdownInterval);
         return;
       }
-      
+
       this.currentCountdown--;
       if (this.currentCountdown <= 0) {
         clearInterval(this.countdownInterval);

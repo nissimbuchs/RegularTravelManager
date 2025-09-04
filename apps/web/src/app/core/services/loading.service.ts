@@ -20,6 +20,11 @@ export class LoadingService {
     this.loadingSubject.next(this.loadingCount > 0);
   }
 
+  resetLoading(): void {
+    this.loadingCount = 0;
+    this.loadingSubject.next(false);
+  }
+
   isLoading(): boolean {
     return this.loadingSubject.value;
   }

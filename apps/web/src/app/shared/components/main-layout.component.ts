@@ -328,12 +328,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   logout(): void {
     this.authService.logout().subscribe({
       next: () => {
-        this.loadingService.setLoading(false);
+        this.loadingService.resetLoading();
         this.router.navigate(['/login']);
       },
       error: error => {
         console.error('Logout error:', error);
-        this.loadingService.setLoading(false);
+        this.loadingService.resetLoading();
         // Navigate anyway in case of error
         this.router.navigate(['/login']);
       },

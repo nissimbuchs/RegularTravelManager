@@ -197,7 +197,7 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     // Reset loading state when component initializes
-    this.loadingService.setLoading(false);
+    this.loadingService.resetLoading();
 
     // Check if already authenticated
     this.authService.isAuthenticated$.subscribe(isAuth => {

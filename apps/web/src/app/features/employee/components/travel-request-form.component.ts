@@ -89,11 +89,11 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
     // Signal all subscriptions to complete
     this.destroy$.next();
     this.destroy$.complete();
-    
+
     if (this.autoSaveTimer) {
       clearInterval(this.autoSaveTimer);
     }
-    
+
     // Close any open confirmation dialog to prevent it from reappearing
     if (this.confirmationDialogRef) {
       this.confirmationDialogRef.close();
@@ -219,61 +219,65 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
       this.isSubmitting = true;
       const formData: TravelRequestFormData = this.requestForm.value;
 
-      this.travelRequestService.submitRequest(formData)
+      this.travelRequestService
+        .submitRequest(formData)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-        next: response => {
-          this.isSubmitting = false;
-          this.clearDraft(); // Clear draft on successful submission
-          
-          // Check if user is still authenticated before showing dialog
-          this.authService.getCurrentUser().pipe(takeUntil(this.destroy$)).subscribe(user => {
-            if (user) {
-              this.showConfirmationDialog(response.requestId, formData);
+          next: response => {
+            this.isSubmitting = false;
+            this.clearDraft(); // Clear draft on successful submission
+
+            // Check if user is still authenticated before showing dialog
+            this.authService
+              .getCurrentUser()
+              .pipe(takeUntil(this.destroy$))
+              .subscribe(user => {
+                if (user) {
+                  this.showConfirmationDialog(response.requestId, formData);
+                }
+              });
+          },
+          error: error => {
+            console.error('Failed to submit request:', error);
+            this.isSubmitting = false;
+
+            // Provide specific error messages based on error type
+            let errorMessage = 'Unable to submit your travel request. ';
+            let actionText = 'Close';
+            const duration = 8000;
+
+            if (error?.status === 400) {
+              errorMessage += 'Please check your form data and try again.';
+            } else if (error?.status === 401 || error?.status === 403) {
+              errorMessage +=
+                'You may not have permission to submit requests. Please contact your manager.';
+            } else if (error?.status === 409) {
+              errorMessage +=
+                'A similar request may already exist. Please check your pending requests.';
+            } else if (error?.status >= 500) {
+              errorMessage +=
+                'Our system is temporarily unavailable. Please try again in a few minutes.';
+              actionText = 'Retry';
+            } else if (!navigator.onLine) {
+              errorMessage += 'Please check your internet connection and try again.';
+              actionText = 'Retry';
+            } else {
+              errorMessage += 'Please try again or contact support if the problem persists.';
             }
-          });
-        },
-        error: error => {
-          console.error('Failed to submit request:', error);
-          this.isSubmitting = false;
 
-          // Provide specific error messages based on error type
-          let errorMessage = 'Unable to submit your travel request. ';
-          let actionText = 'Close';
-          const duration = 8000;
-
-          if (error?.status === 400) {
-            errorMessage += 'Please check your form data and try again.';
-          } else if (error?.status === 401 || error?.status === 403) {
-            errorMessage +=
-              'You may not have permission to submit requests. Please contact your manager.';
-          } else if (error?.status === 409) {
-            errorMessage +=
-              'A similar request may already exist. Please check your pending requests.';
-          } else if (error?.status >= 500) {
-            errorMessage +=
-              'Our system is temporarily unavailable. Please try again in a few minutes.';
-            actionText = 'Retry';
-          } else if (!navigator.onLine) {
-            errorMessage += 'Please check your internet connection and try again.';
-            actionText = 'Retry';
-          } else {
-            errorMessage += 'Please try again or contact support if the problem persists.';
-          }
-
-          const snackBarRef = this.snackBar.open(errorMessage, actionText, {
-            duration,
-            horizontalPosition: 'center',
-            verticalPosition: 'top',
-          });
-
-          if (actionText === 'Retry') {
-            snackBarRef.onAction().subscribe(() => {
-              this.onSubmit();
+            const snackBarRef = this.snackBar.open(errorMessage, actionText, {
+              duration,
+              horizontalPosition: 'center',
+              verticalPosition: 'top',
             });
-          }
-        },
-      });
+
+            if (actionText === 'Retry') {
+              snackBarRef.onAction().subscribe(() => {
+                this.onSubmit();
+              });
+            }
+          },
+        });
     }
   }
 
@@ -306,7 +310,7 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe(result => {
       // Clear the dialog reference when closed
       this.confirmationDialogRef = null;
-      
+
       if (result === 'create-new') {
         this.resetForm();
       } else if (result === 'view-requests') {

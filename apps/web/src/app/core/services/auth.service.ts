@@ -195,7 +195,7 @@ export class AuthService {
   logout(): Observable<void> {
     // Close all open dialogs before logout to prevent persistence issues
     this.dialog.closeAll();
-    
+
     if (environment.cognito.useMockAuth) {
       // Mock logout
       return from(
