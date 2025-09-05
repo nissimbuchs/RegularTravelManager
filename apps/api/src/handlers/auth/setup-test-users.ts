@@ -1,65 +1,24 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { logger } from '../../middleware/logger';
 import { formatResponse } from '../../middleware/response-formatter';
-import { createTestUsers, CognitoAdminService, TEST_USERS } from './auth-utils';
+import { CognitoAdminService } from './auth-utils';
 
-// Handler to create test users (for development/testing only)
+// Handler to create test users (deprecated - users are now managed through infrastructure)
 export const setupTestUsersHandler = async (
   event: APIGatewayProxyEvent,
   context: Context
 ): Promise<APIGatewayProxyResult> => {
-  logger.info('Setting up test users', { requestId: context.awsRequestId });
+  logger.info('Test user setup requested (deprecated)', { requestId: context.awsRequestId });
 
-  // Only allow in development environment
-  if (process.env.NODE_ENV === 'production') {
-    return formatResponse(
-      403,
-      {
-        message: 'Test user creation not allowed in production',
-      },
-      context.awsRequestId
-    );
-  }
-
-  try {
-    await createTestUsers();
-
-    const testUserInfo = TEST_USERS.map(user => ({
-      email: user.email,
-      name: `${user.firstName} ${user.lastName}`,
-      role: user.isManager ? 'manager' : 'employee',
-      password: '***', // Don't expose passwords in response
-    }));
-
-    logger.info('Test users setup completed', {
-      count: TEST_USERS.length,
-      requestId: context.awsRequestId,
-    });
-
-    return formatResponse(
-      200,
-      {
-        message: 'Test users created successfully',
-        users: testUserInfo,
-        note: 'Use the original passwords provided in the configuration for testing',
-      },
-      context.awsRequestId
-    );
-  } catch (error) {
-    logger.error('Failed to setup test users', {
-      error: error.message,
-      requestId: context.awsRequestId,
-    });
-
-    return formatResponse(
-      500,
-      {
-        message: 'Failed to create test users',
-        error: error.message,
-      },
-      context.awsRequestId
-    );
-  }
+  return formatResponse(
+    200,
+    {
+      message: 'Test user creation is deprecated',
+      note: 'Users are now created through infrastructure setup with proper credentials',
+      documentation: 'See README.md for current user credentials',
+    },
+    context.awsRequestId
+  );
 };
 
 // Handler to list current users (admin only)

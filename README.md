@@ -168,6 +168,36 @@ window.location.reload();
 
 **Note:** Development uses mock authentication - no passwords required. Production uses AWS Cognito with real authentication.
 
+### 6. Production Environment Testing (AWS Cognito)
+
+**AWS Frontend URL**: https://d3tsrt2aaweqwh.cloudfront.net
+
+For testing the deployed AWS environment, use these credentials with real AWS Cognito authentication:
+
+#### Production Test Users & Passwords
+
+**Admin Users:**
+- **admin1@company.ch** (Hans Zimmermann, CEO) - Password: `AdminPass123!Test`
+- **admin2@company.ch** (Maria Weber, IT Admin) - Password: `AdminPass123!Test`
+
+**Managers:**
+- **manager1@company.ch** (Thomas Müller, Regional Manager) - Password: `ManagerPass123!`
+- **manager2@company.ch** (Sophie Dubois, Regional Manager) - Password: `ManagerPass123!`
+
+**Employees:**
+- **employee1@company.ch** (Anna Schneider, Developer) - Password: `EmployeePass123!`
+- **employee2@company.ch** (Marco Rossi, Project Coordinator) - Password: `EmployeePass123!`
+- **employee3@company.ch** (Lisa Meier, Business Analyst) - Password: `EmployeePass123!`
+
+**Production Environment Details:**
+- **Frontend URL:** `https://d3tsrt2aaweqwh.cloudfront.net` (Angular app with CloudFront CDN)
+- **API Endpoint:** `https://a8xznik0n8.execute-api.eu-central-1.amazonaws.com/dev/` (available through CloudFront at `/api/*`)
+- **Region:** `eu-central-1` (Frankfurt)  
+- **Database:** AWS RDS PostgreSQL with same sample data as local development
+- **Authentication:** AWS Cognito User Pool with real user management
+
+**Note:** Production environment contains identical sample data (10 employees, 4 projects, 8 subprojects, 5 travel requests) with the same Swiss business context as local development.
+
 ## Development Environment
 
 ### Local AWS Services (LocalStack)

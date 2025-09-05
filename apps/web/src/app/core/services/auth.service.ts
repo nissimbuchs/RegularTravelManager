@@ -40,7 +40,7 @@ export class AuthService {
     // Check if we should use mock authentication
     if (environment.cognito.useMockAuth) {
       console.log('🧪 Using mock authentication mode');
-      this.initializeMockAuth();
+      this.currentUserSubject.next(null);
       return;
     }
 
@@ -54,25 +54,10 @@ export class AuthService {
       }
     } catch (error) {
       console.log('⚠️ Real authentication failed, falling back to mock auth', error);
-      // Fallback to mock authentication
-      if (window.location.hostname === 'localhost') {
-        this.initializeMockAuth();
-      } else {
-        this.currentUserSubject.next(null);
-      }
+      this.currentUserSubject.next(null);
     }
   }
 
-  private initializeMockAuth(): void {
-    // In mock mode, start logged out - only login on explicit login attempt
-    this.currentUserSubject.next(null);
-
-    console.log('🧪 Mock authentication initialized - ready for login');
-    console.log(
-      '💡 Available users: employee1@company.ch, employee2@company.ch, employee3@company.ch, manager1@company.ch, manager2@company.ch, admin1@company.ch, admin2@company.ch'
-    );
-    console.log('💡 Use any password to login in development mode');
-  }
 
   login(credentials: LoginCredentials): Observable<AuthResponse> {
     // Handle mock authentication

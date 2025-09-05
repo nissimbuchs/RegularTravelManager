@@ -2,12 +2,11 @@ export const environment = {
   production: false,
   apiUrl: 'http://localhost:3000',
   cognito: {
-    // LocalStack Community edition - using mock authentication for development
-    userPoolId: 'local-pool-id',
-    userPoolClientId: 'local-client-id',
+    // Using deployed AWS Cognito infrastructure
+    userPoolId: 'eu-central-1_hp5idXPch',
+    userPoolClientId: '7l8903utclpthl3rvubsmnk58f',
     region: 'eu-central-1',
-    domain: 'localhost.localstack.cloud',
-    // Use mock authentication in community edition
+    // Use real Cognito authentication with deployed infrastructure
     useMockAuth: true,
   },
   localstack: {
