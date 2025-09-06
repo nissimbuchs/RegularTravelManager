@@ -356,7 +356,9 @@ describe('ManagerRequestQueueComponent', () => {
 
       expect(component.selectedRequest).toBe(request);
       expect(component.showEmployeePanel).toBeTrue();
-      expect(mockManagerDashboardService.getEmployeeContext).toHaveBeenCalledWith('john.doe@company.com');
+      expect(mockManagerDashboardService.getEmployeeContext).toHaveBeenCalledWith(
+        'john.doe@company.com'
+      );
     });
 
     it('should use full email as employee ID correctly', () => {
@@ -364,7 +366,9 @@ describe('ManagerRequestQueueComponent', () => {
 
       component.selectRequest(request);
 
-      expect(mockManagerDashboardService.getEmployeeContext).toHaveBeenCalledWith('jane.smith@company.com');
+      expect(mockManagerDashboardService.getEmployeeContext).toHaveBeenCalledWith(
+        'jane.smith@company.com'
+      );
     });
 
     it('should load employee context successfully', fakeAsync(() => {

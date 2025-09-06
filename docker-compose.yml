@@ -11,7 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      # Schema initialization now handled by API migrations: npm run db:setup
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nissim -d travel_manager_dev"]
       interval: 5s

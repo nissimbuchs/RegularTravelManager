@@ -176,6 +176,12 @@ export class InfrastructureStack extends cdk.Stack {
       description: 'Managers who can approve travel requests',
     });
 
+    new cognito.CfnUserPoolGroup(this, 'AdministratorsGroup', {
+      userPoolId: this.userPool.userPoolId,
+      groupName: 'administrators',
+      description: 'Administrators with full system access including project and user management',
+    });
+
     // User pool client
     this.userPoolClient = this.userPool.addClient('WebClient', {
       userPoolClientName: `rtm-${environment}-web-client`,
@@ -256,6 +262,9 @@ export class InfrastructureStack extends cdk.Stack {
           'cognito-idp:AdminGetUser',
           'cognito-idp:AdminListGroupsForUser',
           'cognito-idp:AdminUpdateUserAttributes',
+          'cognito-idp:AdminCreateUser',
+          'cognito-idp:AdminSetUserPassword',
+          'cognito-idp:AdminAddUserToGroup',
           'cognito-idp:ListUsers',
         ],
         resources: [this.userPool.userPoolArn],

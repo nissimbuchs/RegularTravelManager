@@ -460,7 +460,9 @@ class ProjectServiceImpl implements ProjectService {
     }
 
     if (coordinates) {
-      updateFields.push(`location = ST_SetSRID(ST_MakePoint($${paramCount++}, $${paramCount++}), 4326)`);
+      updateFields.push(
+        `location = ST_SetSRID(ST_MakePoint($${paramCount++}, $${paramCount++}), 4326)`
+      );
       values.push(coordinates.longitude, coordinates.latitude);
     }
 
@@ -597,7 +599,7 @@ export const createProject = validateRequest({
   const command: CreateProjectCommand = {
     name: body.name,
     description: body.description,
-    default_cost_per_km: body.defaultCostPerKm,  // Convert camelCase to snake_case for DB
+    default_cost_per_km: body.defaultCostPerKm, // Convert camelCase to snake_case for DB
   };
 
   const project = await projectService.createProject(command);
@@ -831,8 +833,8 @@ export const updateProject = validateRequest({
     id: projectId!,
     name: body.name,
     description: body.description,
-    default_cost_per_km: body.defaultCostPerKm,  // Convert camelCase to snake_case for DB
-    is_active: body.isActive,  // Convert camelCase to snake_case for DB
+    default_cost_per_km: body.defaultCostPerKm, // Convert camelCase to snake_case for DB
+    is_active: body.isActive, // Convert camelCase to snake_case for DB
   };
 
   const project = await projectService.updateProject(command);

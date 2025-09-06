@@ -30,7 +30,7 @@ RegularTravelManager/
 - **Frontend**: Angular 17+ with TypeScript
 - **Backend**: Node.js Lambda functions with TypeScript
 - **Infrastructure**: AWS CDK 2.100+ in TypeScript
-- **Database**: Amazon DynamoDB
+- **Database**: PostgreSQL with PostGIS (AWS RDS in production, Docker locally)
 - **Authentication**: AWS Cognito
 - **Testing**: Vitest for backend, Jest for Angular frontend
 - **Code Quality**: ESLint + Prettier with pre-commit hooks
@@ -42,6 +42,22 @@ RegularTravelManager/
 - **Docker Desktop** with Docker Compose
 - **Git**
 - **AWS CLI** (optional, for manual LocalStack testing)
+
+## Database Architecture
+
+The project uses a **consolidated database setup approach** with PostgreSQL as the primary database:
+
+- **Schema Management**: API migrations in `apps/api/src/database/migrations/` (source of truth)
+- **Sample Data**: Single file at `infrastructure/data/sample-data.sql` with dynamic Cognito user creation
+- **Local Development**: PostgreSQL with PostGIS via Docker
+- **Production**: AWS RDS PostgreSQL with PostGIS extension
+- **Migration System**: Professional incremental migrations with rollback support
+
+**Key Benefits:**
+- ✅ Single source of truth for database schema and sample data
+- ✅ Automatic Cognito user creation with real user IDs (no hardcoded values)
+- ✅ Environment consistency across development, staging, and production
+- ✅ Professional migration-based approach with version control
 
 ## Quick Start (< 15 minutes)
 
@@ -206,11 +222,11 @@ Our development environment provides **95% production parity** using LocalStack:
 
 | Service | Local Port | Production | Description |
 |---------|------------|------------|-------------|
-| PostgreSQL | :5432 | AWS RDS | Database with PostGIS |
+| PostgreSQL | :5432 | AWS RDS | Primary database with PostGIS extension |
 | Redis | :6379 | ElastiCache | Caching layer |
-| LocalStack | :4566 | AWS | DynamoDB, S3, Location Service |
-| DynamoDB | via :4566 | AWS DynamoDB | Projects, subprojects data |
+| LocalStack | :4566 | AWS | S3, Location Service, Lambda, etc. |
 | S3 | via :4566 | AWS S3 | Document storage |
+| Location Service | via :4566 | AWS Location | Geocoding and mapping |
 
 ### Key Benefits
 
@@ -251,13 +267,21 @@ npm run build:apps        # Build API and web applications only
 npm run build:infrastructure # Build AWS CDK infrastructure only
 ```
 
-#### **Database Management**
+#### **Database Management** (Consolidated Approach)
 ```bash
-npm run db:setup          # Run migrations + load sample data
-npm run db:migrate        # Run database migrations only
-npm run db:seed           # Load sample data only
+npm run db:setup          # Complete setup: migrations + sample data with dynamic Cognito users
+npm run db:migrate        # Run incremental schema migrations only (apps/api/src/database/migrations/)
+npm run db:seed           # Load sample data only (infrastructure/data/sample-data.sql)
+npm run db:status         # Check current migration status
 npm run db:reset          # Reset database completely
+npm run db:validate       # Validate sample data integrity
 ```
+
+**Database Setup Flow:**
+1. **Schema Creation**: Uses professional migration system with version control
+2. **Cognito Integration**: Automatically creates test users in Cognito with real IDs  
+3. **Sample Data**: Single source of truth with Swiss business data
+4. **Consistency**: Same setup process across all environments
 
 #### **Testing & Quality**
 ```bash
@@ -401,6 +425,7 @@ npm run test              # Run all tests
 npm run lint              # Lint and fix code
 npm run format            # Format code with Prettier
 npm run clean             # Clean build artifacts and cache
+npm run clean:all         # Complete project cleanup and fresh start
 ```
 
 ### Development Environment
@@ -423,10 +448,12 @@ npm run build:infrastructure # Build AWS CDK infrastructure only
 
 ### Database Management
 ```bash
-npm run db:setup          # Run migrations + load sample data
-npm run db:migrate        # Run database migrations only
-npm run db:seed           # Load sample data only
+npm run db:setup          # Complete setup: migrations + sample data with dynamic Cognito users
+npm run db:migrate        # Run incremental schema migrations (single source of truth)
+npm run db:seed           # Load consolidated sample data with automatic user creation  
+npm run db:status         # Check migration status and database health
 npm run db:reset          # Reset database completely
+npm run db:validate       # Validate sample data integrity
 ```
 
 ### Testing
@@ -439,6 +466,28 @@ npm run test:e2e          # E2E tests
 ```bash
 npm run localstack:init   # Initialize LocalStack services
 npm run localstack:status # Check LocalStack health
+```
+
+### Project Cleanup Commands
+```bash
+npm run clean:all         # Complete nuclear cleanup - fresh start
+npm run clean:docker      # Stop and remove Docker containers/volumes
+npm run clean:deps        # Remove all node_modules and package-lock files
+npm run clean:build       # Remove build artifacts and TypeScript cache
+npm run clean:cache       # Clear development tool caches
+```
+
+**Complete Fresh Start Process:**
+```bash
+# 1. Complete cleanup
+npm run clean:all
+
+# 2. Fresh install and build
+npm install
+npm run build
+
+# 3. Setup development environment
+npm run dev:setup
 ```
 
 ### Workspace-Specific Scripts
@@ -499,6 +548,11 @@ docker logs rtm-localstack
 
 # Database connection errors
 docker logs rtm-postgres
+
+# Database schema issues (after consolidation)
+npm run db:status          # Check migration status
+npm run db:migrate         # Apply any pending migrations
+npm run db:reset           # Complete database reset
 
 # Reset everything
 npm run dev:clean

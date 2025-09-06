@@ -55,6 +55,11 @@ const mockManagerPayload = {
   'cognito:groups': ['managers'],
 };
 
+const mockAdminPayload = {
+  ...mockValidPayload,
+  'cognito:groups': ['administrators'],
+};
+
 describe('Lambda Authorizer', () => {
   let mockVerify: Mock;
 
@@ -81,6 +86,7 @@ describe('Lambda Authorizer', () => {
     expect(result.context?.sub).toBe('user-123');
     expect(result.context?.email).toBe('test@company.com');
     expect(result.context?.isManager).toBe(false);
+    expect(result.context?.isAdmin).toBe(false);
   });
 
   it('should authorize valid manager token', async () => {
@@ -94,6 +100,21 @@ describe('Lambda Authorizer', () => {
     expect(result.principalId).toBe('user-123');
     expect(result.policyDocument.Statement[0].Effect).toBe('Allow');
     expect(result.context?.isManager).toBe(true);
+    expect(result.context?.isAdmin).toBe(false);
+  });
+
+  it('should authorize valid administrator token', async () => {
+    const mockEvent = createMockEvent('Bearer admin-token');
+
+    // Mock JWT verifier to return valid administrator payload
+    mockVerify.mockResolvedValue(mockAdminPayload);
+
+    const result = await authorizerHandler(mockEvent, mockContext);
+
+    expect(result.principalId).toBe('user-123');
+    expect(result.policyDocument.Statement[0].Effect).toBe('Allow');
+    expect(result.context?.isManager).toBe(false);
+    expect(result.context?.isAdmin).toBe(true);
   });
 
   it('should reject missing authorization header', async () => {

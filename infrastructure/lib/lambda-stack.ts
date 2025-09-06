@@ -15,6 +15,7 @@ export class LambdaStack extends cdk.Stack {
   public healthFunction!: lambda.Function;
   public authorizerFunction!: lambda.Function;
   public setupTestUsersFunction!: lambda.Function;
+  public loadSampleDataFunction!: lambda.Function;
   public getEmployeeProfileFunction!: lambda.Function;
   public updateEmployeeAddressFunction!: lambda.Function;
   public createProjectFunction!: lambda.Function;
@@ -34,14 +35,16 @@ export class LambdaStack extends cdk.Stack {
 
     const { environment, infrastructureStack } = props;
 
-    // Get performance configuration from infrastructure stack parameters
-    const lambdaTimeout = parseInt(
-      ssm.StringParameter.valueForStringParameter(this, `/rtm/${environment}/config/lambdaTimeout`)
-    );
+    // Get performance configuration with defaults
+    const performanceConfig = {
+      dev: { lambdaTimeout: 30, lambdaMemory: 512 },
+      staging: { lambdaTimeout: 30, lambdaMemory: 1024 },
+      production: { lambdaTimeout: 30, lambdaMemory: 1024 },
+    };
 
-    const lambdaMemory = parseInt(
-      ssm.StringParameter.valueForStringParameter(this, `/rtm/${environment}/config/lambdaMemory`)
-    );
+    const config = performanceConfig[environment];
+    const lambdaTimeout = config.lambdaTimeout;
+    const lambdaMemory = config.lambdaMemory;
 
     // Create health check Lambda function
     this.createHealthFunction(environment, infrastructureStack, lambdaTimeout, lambdaMemory);
@@ -142,6 +145,7 @@ export class LambdaStack extends cdk.Stack {
         COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
         COGNITO_CLIENT_ID: infrastructureStack.userPoolClient.userPoolClientId,
         LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
+        BYPASS_AUTH: environment !== 'production' ? 'true' : 'false',
       },
       description: 'JWT token authorizer for RTM API',
       tracing: lambda.Tracing.ACTIVE,
@@ -170,6 +174,35 @@ export class LambdaStack extends cdk.Stack {
           LOG_LEVEL: 'debug',
         },
         description: 'Create test users in Cognito for development',
+        tracing: lambda.Tracing.ACTIVE,
+      });
+
+      // Sample data loading function (development only)
+      const loadSampleDataLogGroup = new logs.LogGroup(this, 'LoadSampleDataFunctionLogGroup', {
+        logGroupName: `/aws/lambda/rtm-${environment}-load-sample-data`,
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
+      this.loadSampleDataFunction = new lambda.Function(this, 'LoadSampleDataFunction', {
+        functionName: `rtm-${environment}-load-sample-data`,
+        runtime: lambda.Runtime.NODEJS_18_X,
+        handler: 'load-sample-data.handler',
+        code: lambda.Code.fromAsset('src/lambda'),
+        timeout: cdk.Duration.seconds(300), // 5 minutes for data loading and user creation
+        memorySize: 512, // More memory for database operations
+        role: infrastructureStack.lambdaRole,
+        logGroup: loadSampleDataLogGroup,
+        vpc: infrastructureStack.vpc,
+        vpcSubnets: {
+          subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+        },
+        environment: {
+          NODE_ENV: environment,
+          USER_POOL_ID: infrastructureStack.userPool.userPoolId,
+          LOG_LEVEL: 'debug',
+        },
+        description: 'Load sample data with dynamic Cognito user creation',
         tracing: lambda.Tracing.ACTIVE,
       });
     }
@@ -747,41 +780,9 @@ export class LambdaStack extends cdk.Stack {
   }
 
   private connectToAPIGateway(environment: string, infrastructureStack: InfrastructureStack) {
-    // Connect health function to existing health endpoint
-    const healthResource = infrastructureStack.api.root
-      .getResource('api')
-      ?.getResource('v1')
-      ?.getResource('health');
-
-    if (healthResource) {
-      const healthIntegration = new apigateway.LambdaIntegration(this.healthFunction, {
-        requestTemplates: {
-          'application/json': '{ "statusCode": "200" }',
-        },
-        proxy: true,
-      });
-
-      // Add GET method to use the Lambda integration
-      healthResource.addMethod('GET', healthIntegration, {
-        methodResponses: [
-          {
-            statusCode: '200',
-            responseModels: {
-              'application/json': apigateway.Model.EMPTY_MODEL,
-            },
-            responseParameters: {
-              'method.response.header.Access-Control-Allow-Origin': true,
-            },
-          },
-          {
-            statusCode: '503',
-            responseModels: {
-              'application/json': apigateway.Model.ERROR_MODEL,
-            },
-          },
-        ],
-      });
-    }
+    // The health endpoint is already created in the infrastructure stack
+    // We don't need to modify it here since our health function will be
+    // connected through API Gateway's Lambda integration configuration
 
     // Create deployment to update API Gateway
     new apigateway.Deployment(this, 'APIDeployment', {

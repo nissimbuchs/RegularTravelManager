@@ -222,16 +222,17 @@ so that **I can store employee, project, and travel request data with proper rel
 
 As a **developer**,
 I want **AWS Cognito authentication integrated with role-based access control**,
-so that **employees and managers can securely log in with appropriate permissions**.
+so that **employees, managers, and administrators can securely log in with appropriate permissions**.
 
 #### Acceptance Criteria
 1. Cognito User Pool configured with email-based authentication and password policies meeting business security requirements
-2. User groups created for 'employees' and 'managers' with appropriate group membership management
+2. User groups created for 'employees', 'managers', and 'administrators' with appropriate group membership management
 3. JWT token validation implemented in Lambda authorizer function with proper error handling
 4. Lambda authorizer returns user context including sub, email, and role information for downstream functions
-5. API Gateway configured to use Lambda authorizer for all protected routes
-6. Test users created in both employee and manager groups with verified email addresses
-7. Authentication flow tested end-to-end from login through API access with proper authorization
+5. API Gateway configured to use Lambda authorizer for all protected routes with role-based endpoint protection
+6. Test users created in employee, manager, and administrator groups with verified email addresses
+7. Administrator group permissions include project management, user management, and system configuration access
+8. Authentication flow tested end-to-end from login through API access with proper role-based authorization
 
 ### Story 1.5: Basic API Structure & Health Check
 

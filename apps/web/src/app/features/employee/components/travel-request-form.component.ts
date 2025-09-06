@@ -29,8 +29,8 @@ interface Manager {
 })
 export class TravelRequestFormComponent implements OnInit, OnDestroy {
   requestForm: FormGroup;
-  projects: Project[] = [];  // ✅ Fixed: Use Project model instead of DTO
-  subprojects: Subproject[] = [];  // ✅ Fixed: Use Subproject model instead of DTO
+  projects: Project[] = []; // ✅ Fixed: Use Project model instead of DTO
+  subprojects: Subproject[] = []; // ✅ Fixed: Use Subproject model instead of DTO
   managers: Manager[] = [];
   calculationPreview: CalculationPreview | null = null;
   isCalculating = false;

@@ -53,8 +53,9 @@ export const listUsersHandler = async (
       context.awsRequestId
     );
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('Failed to list users', {
-      error: error.message,
+      error: errorMessage,
       requestId: context.awsRequestId,
     });
 
@@ -62,7 +63,7 @@ export const listUsersHandler = async (
       500,
       {
         message: 'Failed to list users',
-        error: error.message,
+        error: errorMessage,
       },
       context.awsRequestId
     );
@@ -99,14 +100,16 @@ export const getUserDetailsHandler = async (
       lastName: userDetails.attributes?.find(attr => attr.Name === 'family_name')?.Value,
       groups: userDetails.groups,
       isManager: userDetails.groups.includes('managers'),
+      isAdmin: userDetails.groups.includes('administrators'),
       status: userDetails.status,
       enabled: userDetails.enabled,
     };
 
     return formatResponse(200, formattedUser, context.awsRequestId);
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('Failed to get user details', {
-      error: error.message,
+      error: errorMessage,
       username,
       requestId: context.awsRequestId,
     });
@@ -115,7 +118,7 @@ export const getUserDetailsHandler = async (
       500,
       {
         message: 'Failed to get user details',
-        error: error.message,
+        error: errorMessage,
       },
       context.awsRequestId
     );

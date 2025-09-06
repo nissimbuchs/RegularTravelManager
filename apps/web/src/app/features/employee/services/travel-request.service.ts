@@ -39,10 +39,10 @@ export class TravelRequestService {
 
   submitRequest(formData: TravelRequestFormData): Observable<any> {
     const requestData = {
-      subprojectId: formData.subProjectId,  // ✅ Fixed: Use camelCase for API
-      daysPerWeek: formData.daysPerWeek,  // ✅ Fixed: Use camelCase for API
+      subprojectId: formData.subProjectId, // ✅ Fixed: Use camelCase for API
+      daysPerWeek: formData.daysPerWeek, // ✅ Fixed: Use camelCase for API
       justification: formData.justification,
-      managerId: formData.managerId,  // ✅ Fixed: Use camelCase for API
+      managerId: formData.managerId, // ✅ Fixed: Use camelCase for API
     };
 
     return this.http.post<any>(`${this.apiUrl}/api/employees/travel-requests`, requestData);

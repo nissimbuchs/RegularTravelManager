@@ -93,7 +93,7 @@ class EmployeeServiceImpl implements EmployeeService {
     }
 
     console.log('Returning employee:', employee.id);
-    
+
     // Transform snake_case to camelCase for API response
     return {
       id: employee.id,
@@ -410,7 +410,7 @@ export const getManagers = validateRequest({})(async (
   const managers = result.rows.map((row: any) => ({
     id: row.id,
     name: row.name,
-    employeeId: row.employee_id,  // Already using snake_case alias from SQL query
+    employeeId: row.employee_id, // Already using snake_case alias from SQL query
   }));
 
   return formatResponse(200, { managers }, context.awsRequestId);

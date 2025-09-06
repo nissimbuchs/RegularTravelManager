@@ -45,9 +45,9 @@ export class EmployeeService {
 
   // Format address for display
   formatAddress(employee: EmployeeDto): string {
-    if (!employee.homeStreet) return 'No address set';  // ✅ Fixed: Use camelCase per API field naming conventions
+    if (!employee.homeStreet) return 'No address set'; // ✅ Fixed: Use camelCase per API field naming conventions
 
-    return `${employee.homeStreet}, ${employee.homePostalCode} ${employee.homeCity}, ${employee.homeCountry}`;  // ✅ Fixed: Use camelCase per API field naming conventions
+    return `${employee.homeStreet}, ${employee.homePostalCode} ${employee.homeCity}, ${employee.homeCountry}`; // ✅ Fixed: Use camelCase per API field naming conventions
   }
 
   // Get supported countries

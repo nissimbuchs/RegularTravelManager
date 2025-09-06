@@ -14,10 +14,10 @@ interface CalculationPreview {
 }
 
 interface CreateTravelRequestBody {
-  subprojectId: string;  // ✅ Fixed: Use camelCase per API field naming conventions
-  daysPerWeek: number;   // ✅ Fixed: Use camelCase per API field naming conventions
+  subprojectId: string; // ✅ Fixed: Use camelCase per API field naming conventions
+  daysPerWeek: number; // ✅ Fixed: Use camelCase per API field naming conventions
   justification: string;
-  managerId: string;     // ✅ Fixed: Use camelCase per API field naming conventions
+  managerId: string; // ✅ Fixed: Use camelCase per API field naming conventions
 }
 
 export const calculatePreview = async (
@@ -138,13 +138,13 @@ export const createTravelRequest = async (
     }
 
     const body: CreateTravelRequestBody = JSON.parse(event.body || '{}');
-    const { subprojectId, daysPerWeek, justification, managerId } = body;  // ✅ Fixed: Use camelCase
+    const { subprojectId, daysPerWeek, justification, managerId } = body; // ✅ Fixed: Use camelCase
 
     if (!subprojectId || !daysPerWeek || !justification || !managerId) {
       return {
         statusCode: 400,
         body: JSON.stringify({
-          error: 'subprojectId, daysPerWeek, justification, and managerId are required',  // ✅ Fixed: Use camelCase in error message
+          error: 'subprojectId, daysPerWeek, justification, and managerId are required', // ✅ Fixed: Use camelCase in error message
         }),
       };
     }
@@ -174,7 +174,7 @@ export const createTravelRequest = async (
       WHERE cognito_user_id = $1 AND employee_id LIKE 'MGR-%' AND is_active = true
     `;
 
-    const managerResult = await db.query(managerQuery, [managerId]);  // ✅ Fixed: Use camelCase variable
+    const managerResult = await db.query(managerQuery, [managerId]); // ✅ Fixed: Use camelCase variable
 
     if (managerResult.rows.length === 0) {
       return {
@@ -200,7 +200,7 @@ export const createTravelRequest = async (
       WHERE sp.id = $1 AND sp.is_active = true AND p.is_active = true
     `;
 
-    const subprojectResult = await db.query(subprojectQuery, [subprojectId]);  // ✅ Fixed: Use camelCase variable
+    const subprojectResult = await db.query(subprojectQuery, [subprojectId]); // ✅ Fixed: Use camelCase variable
 
     if (subprojectResult.rows.length === 0) {
       return {
@@ -223,7 +223,7 @@ export const createTravelRequest = async (
     ]);
 
     const distanceKm = parseFloat(distanceResult.rows[0].distance_km);
-    const calculatedAllowanceChf = distanceKm * costPerKm * daysPerWeek;  // ✅ Fixed: Use camelCase variable
+    const calculatedAllowanceChf = distanceKm * costPerKm * daysPerWeek; // ✅ Fixed: Use camelCase variable
 
     // Create travel request
     const insertQuery = `
@@ -246,8 +246,8 @@ export const createTravelRequest = async (
       employee.id,
       selectedManager.id,
       subproject.project_id,
-      subprojectId,  // ✅ Fixed: Use camelCase variable (note: DB column remains snake_case)
-      daysPerWeek,   // ✅ Fixed: Use camelCase variable (note: DB column remains snake_case)
+      subprojectId, // ✅ Fixed: Use camelCase variable (note: DB column remains snake_case)
+      daysPerWeek, // ✅ Fixed: Use camelCase variable (note: DB column remains snake_case)
       justification,
       distanceKm,
       calculatedAllowanceChf,
@@ -268,7 +268,7 @@ export const createTravelRequest = async (
       body: JSON.stringify({
         data: {
           id: newRequest.id,
-          submittedAt: newRequest.submitted_at,  // Convert to camelCase for API response
+          submittedAt: newRequest.submitted_at, // Convert to camelCase for API response
           status: 'pending',
           message: 'Travel request submitted successfully',
         },

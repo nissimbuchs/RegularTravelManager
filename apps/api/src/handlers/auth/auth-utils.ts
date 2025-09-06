@@ -16,6 +16,7 @@ export interface UserContext {
   email: string;
   cognitoUsername: string;
   isManager: boolean;
+  isAdmin: boolean;
   groups: string[];
 }
 
@@ -33,6 +34,7 @@ export function getUserContextFromEvent(event: APIGatewayProxyEvent): UserContex
     email: authorizerContext.email,
     cognitoUsername: authorizerContext.cognitoUsername,
     isManager: authorizerContext.isManager === 'true',
+    isAdmin: authorizerContext.isAdmin === 'true',
     groups: JSON.parse(authorizerContext.groups || '[]'),
   };
 }
@@ -54,9 +56,9 @@ export class CognitoAdminService {
     firstName: string,
     lastName: string,
     tempPassword: string,
-    isManager: boolean = false
+    role: 'employee' | 'manager' | 'administrator' = 'employee'
   ): Promise<string> {
-    logger.info('Creating Cognito user', { email, isManager });
+    logger.info('Creating Cognito user', { email, role });
 
     try {
       // Create user
@@ -87,7 +89,8 @@ export class CognitoAdminService {
       await this.client.send(passwordCommand);
 
       // Add to appropriate group
-      const groupName = isManager ? 'managers' : 'employees';
+      const groupName =
+        role === 'administrator' ? 'administrators' : role === 'manager' ? 'managers' : 'employees';
       const groupCommand = new AdminAddUserToGroupCommand({
         UserPoolId: this.userPoolId,
         Username: username,
@@ -99,6 +102,7 @@ export class CognitoAdminService {
       logger.info('User created successfully', {
         username,
         email,
+        role,
         group: groupName,
       });
 
@@ -173,14 +177,26 @@ export class CognitoAdminService {
 
 // Permission checking utilities
 export function requireManager(userContext: UserContext): void {
-  if (!userContext.isManager) {
+  if (!userContext.isManager && !userContext.isAdmin) {
     throw new Error('Manager role required');
   }
 }
 
+export function requireAdmin(userContext: UserContext): void {
+  if (!userContext.isAdmin) {
+    throw new Error('Administrator role required');
+  }
+}
+
 export function requireSameUserOrManager(userContext: UserContext, targetUserId: string): void {
-  if (userContext.sub !== targetUserId && !userContext.isManager) {
+  if (userContext.sub !== targetUserId && !userContext.isManager && !userContext.isAdmin) {
     throw new Error('Access denied: can only access own data or manager required');
+  }
+}
+
+export function requireSameUserOrAdmin(userContext: UserContext, targetUserId: string): void {
+  if (userContext.sub !== targetUserId && !userContext.isAdmin) {
+    throw new Error('Access denied: can only access own data or administrator required');
   }
 }
 

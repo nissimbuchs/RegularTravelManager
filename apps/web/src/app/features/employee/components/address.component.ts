@@ -53,9 +53,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
               <mat-icon class="address-icon">place</mat-icon>
               <div class="address-text">
                 <div class="street">{{ employee.homeStreet }}</div>
-                <div class="city-postal">
-                  {{ employee.homePostalCode }} {{ employee.homeCity }}
-                </div>
+                <div class="city-postal">{{ employee.homePostalCode }} {{ employee.homeCity }}</div>
                 <div class="country">{{ employee.homeCountry }}</div>
               </div>
             </div>

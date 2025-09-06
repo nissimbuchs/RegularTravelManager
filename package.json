@@ -20,7 +20,11 @@
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
     "format": "prettier --write \"**/*.{ts,js,tsx,jsx,json,md}\"",
     "clean": "npm run clean --workspaces --if-present && rm -rf node_modules/.cache && find . -name \"tsconfig.tsbuildinfo\" -delete",
-    "clean:build": "rm -rf packages/*/dist domains/*/dist apps/*/dist && find . -name \"tsconfig.tsbuildinfo\" -delete",
+    "clean:all": "npm run clean:docker && npm run clean:build && npm run clean:deps && npm run clean:cache && echo '✅ Complete cleanup finished. Next steps: npm install && npm run build && npm run dev:setup'",
+    "clean:docker": "docker compose down -v --remove-orphans && docker system prune -f",
+    "clean:deps": "find . -name 'node_modules' -type d -exec rm -rf {} + 2>/dev/null || true && find . -name 'package-lock.json' -delete 2>/dev/null || true",
+    "clean:build": "rm -rf packages/*/dist domains/*/dist apps/*/dist infrastructure/cdk.out apps/web/.angular && find . -name '*.tsbuildinfo' -delete",
+    "clean:cache": "rm -rf node_modules/.cache ~/.npm/_cacache .eslintcache .prettiercache 2>/dev/null || true",
 
     "dev:api": "npm run dev --workspace=apps/api",
     "dev:web": "npm run dev --workspace=apps/web",

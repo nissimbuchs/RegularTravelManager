@@ -58,7 +58,6 @@ export class AuthService {
     }
   }
 
-
   login(credentials: LoginCredentials): Observable<AuthResponse> {
     // Handle mock authentication
     if (environment.cognito.useMockAuth) {

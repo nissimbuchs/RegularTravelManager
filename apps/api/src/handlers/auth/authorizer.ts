@@ -14,6 +14,13 @@ interface CognitoPayload {
   token_use: string;
 }
 
+interface MockPayload {
+  email: string;
+  isManager: boolean;
+  isAdmin: boolean;
+  groups: string[];
+}
+
 class AuthorizationError extends Error {
   constructor(message: string) {
     super(message);
@@ -28,6 +35,37 @@ const verifier = CognitoJwtVerifier.create({
   clientId: process.env.COGNITO_CLIENT_ID || '',
 });
 
+// Create mock payload from token for bypass mode
+function createMockPayload(token: string): MockPayload {
+  // Extract mock user email from token like "mock-jwt-token-employee1@company.ch"
+  let email = 'employee1@company.ch'; // Default fallback
+
+  if (token.startsWith('mock-jwt-token-')) {
+    email = token.replace('mock-jwt-token-', '');
+  }
+
+  // Determine role based on email pattern
+  let groups = ['employees'];
+  let isManager = false;
+  let isAdmin = false;
+
+  if (email.includes('admin')) {
+    groups = ['administrators', 'managers', 'employees'];
+    isManager = true;
+    isAdmin = true;
+  } else if (email.includes('manager')) {
+    groups = ['managers', 'employees'];
+    isManager = true;
+  }
+
+  return {
+    email,
+    isManager,
+    isAdmin,
+    groups,
+  };
+}
+
 export const authorizerHandler = async (
   event: APIGatewayTokenAuthorizerEvent,
   context: Context
@@ -35,13 +73,46 @@ export const authorizerHandler = async (
   logger.info('Authorizer invoked', {
     methodArn: event.methodArn,
     requestId: context.awsRequestId,
+    bypassAuth: process.env.BYPASS_AUTH,
   });
 
   try {
     // Extract token from Authorization header
     const token = extractTokenFromHeader(event.authorizationToken);
 
-    // Verify JWT token with Cognito
+    // Check if authorization bypass is enabled
+    if (process.env.BYPASS_AUTH === 'true') {
+      logger.info('Authorization bypass enabled - using mock authentication', {
+        requestId: context.awsRequestId,
+      });
+
+      const mockPayload = createMockPayload(token);
+
+      // Generate IAM policy for mock user
+      const policy = generatePolicy(mockPayload.email, 'Allow', event.methodArn);
+
+      // Add mock user context
+      policy.context = {
+        sub: mockPayload.email,
+        email: mockPayload.email,
+        cognitoUsername: mockPayload.email,
+        isManager: mockPayload.isManager.toString(),
+        isAdmin: mockPayload.isAdmin.toString(),
+        groups: JSON.stringify(mockPayload.groups),
+      };
+
+      logger.info('Mock authorization successful', {
+        sub: mockPayload.email,
+        email: mockPayload.email,
+        isManager: mockPayload.isManager,
+        isAdmin: mockPayload.isAdmin,
+        requestId: context.awsRequestId,
+      });
+
+      return policy;
+    }
+
+    // Normal Cognito JWT verification
     const payload = await verifyToken(token);
 
     // Generate IAM policy

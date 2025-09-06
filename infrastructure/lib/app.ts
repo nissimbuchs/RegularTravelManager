@@ -2,6 +2,7 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { InfrastructureStack } from './infrastructure-stack';
+import { LambdaStack } from './lambda-stack';
 
 const app = new cdk.App();
 
@@ -26,7 +27,7 @@ if (!['dev', 'staging', 'production'].includes(config.environment)) {
 const stackName = `rtm-${config.environment}-infrastructure`;
 
 // Create the infrastructure stack
-new InfrastructureStack(app, stackName, {
+const infrastructureStack = new InfrastructureStack(app, stackName, {
   environment: config.environment,
   domainName: config.domainName,
   env: {
@@ -34,6 +35,23 @@ new InfrastructureStack(app, stackName, {
     region: config.region, // Swiss data residency
   },
   description: `RegularTravelManager infrastructure for ${config.environment} environment`,
+  tags: {
+    Project: 'RegularTravelManager',
+    Environment: config.environment,
+    ManagedBy: 'CDK',
+  },
+});
+
+// Create the Lambda stack (depends on infrastructure)
+const lambdaStackName = `rtm-${config.environment}-lambda`;
+new LambdaStack(app, lambdaStackName, {
+  environment: config.environment,
+  infrastructureStack: infrastructureStack,
+  env: {
+    account: config.account,
+    region: config.region,
+  },
+  description: `RegularTravelManager Lambda functions for ${config.environment} environment`,
   tags: {
     Project: 'RegularTravelManager',
     Environment: config.environment,

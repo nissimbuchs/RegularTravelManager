@@ -98,7 +98,8 @@ async function getDashboardSummary(managerEmployeeId: string): Promise<Dashboard
   );
 
   // Get active projects count (projects that have active subprojects with pending/approved requests)
-  const projectResult = await db.query(`
+  const projectResult = await db.query(
+    `
     SELECT COUNT(DISTINCT p.id) as total 
     FROM projects p
     JOIN subprojects sp ON p.id = sp.project_id
@@ -107,7 +108,9 @@ async function getDashboardSummary(managerEmployeeId: string): Promise<Dashboard
       AND p.is_active = true 
       AND sp.is_active = true
       AND tr.status IN ('pending', 'approved')
-  `, [managerEmployeeId]);
+  `,
+    [managerEmployeeId]
+  );
 
   // Get pending requests count for this manager
   const pendingResult = await db.query(
@@ -116,11 +119,14 @@ async function getDashboardSummary(managerEmployeeId: string): Promise<Dashboard
   );
 
   // Calculate monthly budget (sum of approved requests * 4.33 weeks/month)
-  const budgetResult = await db.query(`
+  const budgetResult = await db.query(
+    `
     SELECT COALESCE(SUM(calculated_allowance_chf * days_per_week * 4.33), 0) as monthly_budget
     FROM travel_requests 
     WHERE manager_id = $1 AND status = 'approved'
-  `, [managerEmployeeId]);
+  `,
+    [managerEmployeeId]
+  );
 
   return {
     totalEmployees: parseInt(employeeResult.rows[0].total),
