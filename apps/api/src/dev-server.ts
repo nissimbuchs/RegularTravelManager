@@ -54,8 +54,9 @@ function lambdaToExpress(lambdaHandler) {
       ? req.headers['x-user-groups'].split(',')
       : ['employees'];
 
-    // Determine if user is a manager (admin counts as manager)
-    const isManager = userGroups.includes('managers') || userGroups.includes('administrators');
+    // Determine user roles
+    const isAdmin = userGroups.includes('administrators');
+    const isManager = userGroups.includes('managers') || isAdmin;
 
     const event = {
       httpMethod: req.method,
@@ -77,6 +78,7 @@ function lambdaToExpress(lambdaHandler) {
           email: req.headers['x-user-email'] || 'employee1@company.ch',
           cognitoUsername: req.headers['x-user-email'] || 'employee1@company.ch',
           isManager: isManager.toString(),
+          isAdmin: isAdmin.toString(),
           groups: JSON.stringify(userGroups),
         },
       },

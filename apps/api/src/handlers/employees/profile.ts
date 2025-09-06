@@ -205,7 +205,7 @@ class EmployeeServiceImpl implements EmployeeService {
           new_location,
           changed_at,
           changed_by,
-          reason
+          change_reason
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP, $12, $13)
       `,
         [
