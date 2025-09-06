@@ -184,13 +184,13 @@ window.location.reload();
 
 **Note:** Development uses mock authentication - no passwords required. Production uses AWS Cognito with real authentication.
 
-### 6. Production Environment Testing (AWS Cognito)
+### 6. AWS Dev Environment Testing
 
-**AWS Frontend URL**: https://d3tsrt2aaweqwh.cloudfront.net
+**AWS Frontend URL**: https://d2upsy2u9gmj8c.cloudfront.net
 
-For testing the deployed AWS environment, use these credentials with real AWS Cognito authentication:
+For testing the deployed AWS dev environment, you can use either mock authentication (current setup) or real AWS Cognito credentials:
 
-#### Production Test Users & Passwords
+#### AWS Cognito Test Users & Passwords
 
 **Admin Users:**
 - **admin1@company.ch** (Hans Zimmermann, CEO) - Password: `AdminPass123!Test`
@@ -205,14 +205,45 @@ For testing the deployed AWS environment, use these credentials with real AWS Co
 - **employee2@company.ch** (Marco Rossi, Project Coordinator) - Password: `EmployeePass123!`
 - **employee3@company.ch** (Lisa Meier, Business Analyst) - Password: `EmployeePass123!`
 
-**Production Environment Details:**
-- **Frontend URL:** `https://d3tsrt2aaweqwh.cloudfront.net` (Angular app with CloudFront CDN)
+**AWS Dev Environment Details:**
+- **Frontend URL:** `https://d2upsy2u9gmj8c.cloudfront.net` (Angular app with CloudFront CDN)
 - **API Endpoint:** `https://a8xznik0n8.execute-api.eu-central-1.amazonaws.com/dev/` (available through CloudFront at `/api/*`)
 - **Region:** `eu-central-1` (Frankfurt)  
 - **Database:** AWS RDS PostgreSQL with same sample data as local development
-- **Authentication:** AWS Cognito User Pool with real user management
+- **Authentication:** AWS Cognito User Pool (currently using mock auth for compatibility)
 
-**Note:** Production environment contains identical sample data (10 employees, 4 projects, 8 subprojects, 5 travel requests) with the same Swiss business context as local development.
+**Note:** AWS dev environment contains identical sample data (10 employees, 4 projects, 8 subprojects, 5 travel requests) with the same Swiss business context as local development.
+
+## Environment Configuration
+
+The project uses clear environment naming conventions:
+
+| Environment File | Purpose | API URL | Authentication |
+|------------------|---------|---------|----------------|
+| `environment.ts` | **Local Development** | `http://localhost:3000` | Mock authentication |
+| `environment.dev.ts` | **AWS Dev Environment** | AWS dev API endpoint | Mock authentication (current) |
+| `environment.staging.ts` | **AWS Staging** (Future) | Staging API endpoint | Real Cognito authentication |
+| `environment.prod.ts` | **AWS Production** (Future) | Production API endpoint | Real Cognito authentication |
+
+### Build Commands by Environment
+```bash
+# Local development (default)
+npm run dev
+
+# AWS Dev environment (current deployment)
+npm run build:frontend:dev
+npm run deploy:frontend:dev
+
+# Future staging environment
+npm run build:frontend:staging
+npm run deploy:frontend:staging
+
+# Future production environment
+npm run build:frontend:prod
+npm run deploy:frontend:prod
+```
+
+See [ENVIRONMENTS.md](./ENVIRONMENTS.md) for detailed environment configuration guide.
 
 ## Development Environment
 
@@ -265,6 +296,21 @@ npm run dev:restart       # Clean restart with complete setup
 npm run build:packages    # Build shared packages only
 npm run build:apps        # Build API and web applications only
 npm run build:infrastructure # Build AWS CDK infrastructure only
+
+# Environment-specific frontend builds
+npm run build:frontend:dev     # Build for AWS dev environment
+npm run build:frontend:staging # Build for AWS staging environment  
+npm run build:frontend:prod    # Build for AWS production environment
+
+# Environment-specific deployments
+npm run deploy:frontend:dev        # Deploy to AWS dev environment
+npm run deploy:frontend:staging    # Deploy to AWS staging environment
+npm run deploy:frontend:production # Deploy to AWS production environment
+
+# Infrastructure-only deployments
+npm run deploy:dev --workspace=infrastructure       # Deploy infrastructure to dev
+npm run deploy:staging --workspace=infrastructure   # Deploy infrastructure to staging  
+npm run deploy:production --workspace=infrastructure # Deploy infrastructure to production
 ```
 
 #### **Database Management** (Consolidated Approach)

@@ -1,10 +1,10 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://a8xznik0n8.execute-api.eu-central-1.amazonaws.com/dev',
+  apiUrl: 'https://api.regulartravelmanager.com', // TODO: Update when production API is deployed
   cognito: {
-    userPoolId: 'eu-central-1_hp5idXPch', // Actual deployed user pool
-    userPoolClientId: '7l8903utclpthl3rvubsmnk58f', // Actual deployed client
-    region: 'eu-central-1', // AWS region
-    useMockAuth: true, // Use mock auth to work with bypassed authorizer
+    userPoolId: 'eu-central-1_PRODUCTION_POOL', // TODO: Update when production Cognito is deployed
+    userPoolClientId: 'production-client-id', // TODO: Update when production Cognito is deployed
+    region: 'eu-central-1',
+    useMockAuth: false, // Use real Cognito authentication in production
   },
 };

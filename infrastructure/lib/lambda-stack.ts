@@ -31,6 +31,14 @@ export class LambdaStack extends cdk.Stack {
   public invalidateCalculationCacheFunction!: lambda.Function;
   public cleanupExpiredCacheFunction!: lambda.Function;
 
+  private getBaseEnvironmentVariables(environment: string): Record<string, string> {
+    return {
+      NODE_ENV: 'production', // Always production for Lambda
+      RTM_ENVIRONMENT: environment, // dev/staging/production
+      LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
+    };
+  }
+
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
 
@@ -95,12 +103,11 @@ export class LambdaStack extends cdk.Stack {
       },
       logGroup: healthLogGroup,
       environment: {
-        NODE_ENV: environment,
+        ...this.getBaseEnvironmentVariables(environment),
         DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
         DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
         DB_NAME: 'rtm_database',
         API_VERSION: '1.0.0',
-        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
       },
       description: 'Health check endpoint for RTM API',
       tracing: lambda.Tracing.ACTIVE,
@@ -141,10 +148,9 @@ export class LambdaStack extends cdk.Stack {
       role: infrastructureStack.lambdaRole,
       logGroup: authLogGroup,
       environment: {
-        NODE_ENV: environment,
+        ...this.getBaseEnvironmentVariables(environment),
         COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
         COGNITO_CLIENT_ID: infrastructureStack.userPoolClient.userPoolClientId,
-        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
         BYPASS_AUTH: environment !== 'production' ? 'true' : 'false',
       },
       description: 'JWT token authorizer for RTM API',
@@ -169,9 +175,8 @@ export class LambdaStack extends cdk.Stack {
         role: infrastructureStack.lambdaRole,
         logGroup: setupUsersLogGroup,
         environment: {
-          NODE_ENV: environment,
+          ...this.getBaseEnvironmentVariables(environment),
           COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
-          LOG_LEVEL: 'debug',
         },
         description: 'Create test users in Cognito for development',
         tracing: lambda.Tracing.ACTIVE,
@@ -188,7 +193,12 @@ export class LambdaStack extends cdk.Stack {
         functionName: `rtm-${environment}-load-sample-data`,
         runtime: lambda.Runtime.NODEJS_18_X,
         handler: 'load-sample-data.handler',
-        code: lambda.Code.fromAsset('src/lambda'),
+        code: lambda.Code.fromAsset('src/lambda', {
+          bundling: {
+            image: lambda.Runtime.NODEJS_18_X.bundlingImage,
+            command: ['bash', '-c', 'cp -r . /tmp && cd /tmp && npm ci --only=prod && cp -r . /asset-output/'],
+          },
+        }),
         timeout: cdk.Duration.seconds(300), // 5 minutes for data loading and user creation
         memorySize: 512, // More memory for database operations
         role: infrastructureStack.lambdaRole,
@@ -198,12 +208,18 @@ export class LambdaStack extends cdk.Stack {
           subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
         },
         environment: {
-          NODE_ENV: environment,
+          ...this.getBaseEnvironmentVariables(environment),
           USER_POOL_ID: infrastructureStack.userPool.userPoolId,
-          LOG_LEVEL: 'debug',
         },
         description: 'Load sample data with dynamic Cognito user creation',
         tracing: lambda.Tracing.ACTIVE,
+      });
+
+      // Create Log Group for Custom Resource
+      const customResourceLogGroup = new logs.LogGroup(this, 'LoadSampleDataCustomResourceLogGroup', {
+        logGroupName: `/aws/lambda/rtm-${environment}-load-sample-data-custom-resource`,
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
       });
 
       // Custom Resource to automatically load sample data on stack deployment
@@ -235,7 +251,7 @@ export class LambdaStack extends cdk.Stack {
             }),
           ]),
           timeout: cdk.Duration.minutes(10), // Allow time for sample data loading
-          logRetention: logs.RetentionDays.ONE_WEEK,
+          logGroup: customResourceLogGroup,
           installLatestAwsSdk: true,
         }
       );
@@ -275,11 +291,10 @@ export class LambdaStack extends cdk.Stack {
       },
       logGroup: profileLogGroup,
       environment: {
-        NODE_ENV: environment,
+        ...this.getBaseEnvironmentVariables(environment),
         DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
         DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
         DB_NAME: 'rtm_database',
-        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
       },
       description: 'Get employee profile information',
       tracing: lambda.Tracing.ACTIVE,
@@ -366,11 +381,10 @@ export class LambdaStack extends cdk.Stack {
       },
       logGroup: createProjectLogGroup,
       environment: {
-        NODE_ENV: environment,
+        ...this.getBaseEnvironmentVariables(environment),
         DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
         DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
         DB_NAME: 'rtm_database',
-        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
       },
       description: 'Create new project (manager only)',
       tracing: lambda.Tracing.ACTIVE,
@@ -399,12 +413,11 @@ export class LambdaStack extends cdk.Stack {
       },
       logGroup: createSubprojectLogGroup,
       environment: {
-        NODE_ENV: environment,
+        ...this.getBaseEnvironmentVariables(environment),
         DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
         DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
         DB_NAME: 'rtm_database',
         PLACE_INDEX_NAME: infrastructureStack.placeIndex.indexName,
-        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
       },
       description: 'Create new subproject with geocoding (manager only)',
       tracing: lambda.Tracing.ACTIVE,
@@ -433,11 +446,10 @@ export class LambdaStack extends cdk.Stack {
       },
       logGroup: getActiveProjectsLogGroup,
       environment: {
-        NODE_ENV: environment,
+        ...this.getBaseEnvironmentVariables(environment),
         DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
         DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
         DB_NAME: 'rtm_database',
-        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
       },
       description: 'Get all active projects for employee selection',
       tracing: lambda.Tracing.ACTIVE,
@@ -507,11 +519,10 @@ export class LambdaStack extends cdk.Stack {
       },
       logGroup: searchProjectsLogGroup,
       environment: {
-        NODE_ENV: environment,
+        ...this.getBaseEnvironmentVariables(environment),
         DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
         DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
         DB_NAME: 'rtm_database',
-        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
       },
       description: 'Search projects by name or description',
       tracing: lambda.Tracing.ACTIVE,
@@ -579,11 +590,10 @@ export class LambdaStack extends cdk.Stack {
       },
       logGroup: calculateDistanceLogGroup,
       environment: {
-        NODE_ENV: environment,
+        ...this.getBaseEnvironmentVariables(environment),
         DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
         DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
         DB_NAME: 'rtm_database',
-        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
       },
       description: 'Calculate distance between geographic points using PostGIS',
       tracing: lambda.Tracing.ACTIVE,
@@ -616,11 +626,10 @@ export class LambdaStack extends cdk.Stack {
       },
       logGroup: calculateAllowanceLogGroup,
       environment: {
-        NODE_ENV: environment,
+        ...this.getBaseEnvironmentVariables(environment),
         DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
         DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
         DB_NAME: 'rtm_database',
-        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
       },
       description: 'Calculate travel allowance from distance and rates',
       tracing: lambda.Tracing.ACTIVE,
@@ -653,11 +662,10 @@ export class LambdaStack extends cdk.Stack {
       },
       logGroup: calculateTravelCostLogGroup,
       environment: {
-        NODE_ENV: environment,
+        ...this.getBaseEnvironmentVariables(environment),
         DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
         DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
         DB_NAME: 'rtm_database',
-        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
       },
       description: 'Calculate complete travel cost with audit trail',
       tracing: lambda.Tracing.ACTIVE,
@@ -690,11 +698,10 @@ export class LambdaStack extends cdk.Stack {
       },
       logGroup: getCalculationAuditLogGroup,
       environment: {
-        NODE_ENV: environment,
+        ...this.getBaseEnvironmentVariables(environment),
         DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
         DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
         DB_NAME: 'rtm_database',
-        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
       },
       description: 'Retrieve calculation audit records for compliance',
       tracing: lambda.Tracing.ACTIVE,
@@ -768,11 +775,10 @@ export class LambdaStack extends cdk.Stack {
       },
       logGroup: cleanupExpiredCacheLogGroup,
       environment: {
-        NODE_ENV: environment,
+        ...this.getBaseEnvironmentVariables(environment),
         DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
         DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
         DB_NAME: 'rtm_database',
-        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
       },
       description: 'Cleanup expired calculation cache entries',
       tracing: lambda.Tracing.ACTIVE,

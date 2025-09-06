@@ -225,3 +225,4 @@ window.location.reload();
 - **`web-bundles/`** - Essential files for correct development practices
 
 These are **development tooling files**, not project artifacts. Removing them will break the development workflow.
+- always update the readme.md when you update package.json or other readme relevant files

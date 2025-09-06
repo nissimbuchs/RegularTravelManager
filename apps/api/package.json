@@ -16,7 +16,7 @@
     "deploy": "./scripts/deploy.sh",
     "deploy:dev": "./scripts/deploy.sh dev",
     "deploy:staging": "./scripts/deploy.sh staging",
-    "deploy:prod": "./scripts/deploy.sh prod",
+    "deploy:production": "./scripts/deploy.sh production",
     "db:migrate": "tsx src/database/migration-runner.ts migrate",
     "db:sample-data": "tsx src/database/migration-runner.ts seed",
     "db:setup": "tsx src/database/migration-runner.ts setup",

@@ -13,6 +13,11 @@ import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as cloudwatchActions from 'aws-cdk-lib/aws-cloudwatch-actions';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as path from 'path';
 
 export interface InfrastructureStackProps extends cdk.StackProps {
   environment: 'dev' | 'staging' | 'production';
@@ -28,6 +33,8 @@ export class InfrastructureStack extends cdk.Stack {
   public placeIndex!: location.CfnPlaceIndex;
   public lambdaRole!: iam.Role;
   public alertsTopic!: sns.Topic;
+  public webBucket!: s3.Bucket;
+  public distribution!: cloudfront.Distribution;
 
   constructor(scope: Construct, id: string, props: InfrastructureStackProps) {
     super(scope, id, props);
@@ -77,6 +84,9 @@ export class InfrastructureStack extends cdk.Stack {
 
     // CloudWatch monitoring and alerting
     this.setupMonitoring(environment);
+
+    // Web Hosting (S3 + CloudFront)
+    this.setupWebHosting(environment);
 
     // Environment-specific parameters
     this.setupEnvironmentParameters(environment);
@@ -660,6 +670,103 @@ export class InfrastructureStack extends cdk.Stack {
     ];
 
     dashboard.addWidgets(...rdsWidgets);
+  }
+
+  private setupWebHosting(environment: string) {
+    // S3 bucket for static web content
+    this.webBucket = new s3.Bucket(this, 'WebBucket', {
+      bucketName: `rtm-${environment}-web-${this.account}-${this.region}`,
+      websiteIndexDocument: 'index.html',
+      websiteErrorDocument: 'index.html',
+      publicReadAccess: false,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: environment !== 'production',
+    });
+
+    // Origin Access Control for CloudFront
+    const originAccessControl = new cloudfront.S3OriginAccessControl(this, 'OriginAccessControl', {
+      description: `OAC for ${this.webBucket.bucketName}`,
+    });
+
+    // CloudFront distribution
+    this.distribution = new cloudfront.Distribution(this, 'WebDistribution', {
+      defaultBehavior: {
+        origin: origins.S3BucketOrigin.withOriginAccessControl(this.webBucket, {
+          originAccessControl,
+        }),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+      },
+      defaultRootObject: 'index.html',
+      errorResponses: [
+        {
+          httpStatus: 404,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html',
+          ttl: cdk.Duration.minutes(5),
+        },
+        {
+          httpStatus: 403,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html',
+          ttl: cdk.Duration.minutes(5),
+        },
+      ],
+      priceClass: environment === 'production' ? cloudfront.PriceClass.PRICE_CLASS_ALL : cloudfront.PriceClass.PRICE_CLASS_100,
+      comment: `RTM ${environment} Web Distribution`,
+    });
+
+    // Deploy web application to S3
+    const webDeployment = new s3deploy.BucketDeployment(this, 'WebDeployment', {
+      sources: [s3deploy.Source.asset(path.join(__dirname, '../../apps/web/dist/web'))],
+      destinationBucket: this.webBucket,
+      distribution: this.distribution,
+      distributionPaths: ['/*'],
+    });
+
+    // Store web hosting configuration
+    new ssm.StringParameter(this, 'WebBucketName', {
+      parameterName: `/rtm/${environment}/web/bucket-name`,
+      stringValue: this.webBucket.bucketName,
+    });
+
+    new ssm.StringParameter(this, 'WebDistributionId', {
+      parameterName: `/rtm/${environment}/web/distribution-id`,
+      stringValue: this.distribution.distributionId,
+    });
+
+    new ssm.StringParameter(this, 'WebDistributionDomainName', {
+      parameterName: `/rtm/${environment}/web/domain-name`,
+      stringValue: this.distribution.distributionDomainName,
+    });
+
+    // CloudFront monitoring
+    const cloudFrontErrorsAlarm = new cloudwatch.Alarm(this, 'CloudFrontErrorsAlarm', {
+      alarmName: `rtm-${environment}-cloudfront-4xx-errors`,
+      alarmDescription: 'CloudFront 4xx error rate',
+      metric: new cloudwatch.Metric({
+        namespace: 'AWS/CloudFront',
+        metricName: '4xxErrorRate',
+        dimensionsMap: {
+          DistributionId: this.distribution.distributionId,
+        },
+        statistic: 'Average',
+        period: cdk.Duration.minutes(5),
+      }),
+      threshold: environment === 'production' ? 5 : 10,
+      evaluationPeriods: 2,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    });
+    cloudFrontErrorsAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.alertsTopic));
+
+    // Output the web URL
+    new cdk.CfnOutput(this, 'WebApplicationURL', {
+      description: 'Web application URL',
+      value: `https://${this.distribution.distributionDomainName}`,
+      exportName: `rtm-${environment}-web-url`,
+    });
   }
 
   private setupResourceTags(environment: string) {

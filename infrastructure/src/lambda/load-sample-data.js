@@ -156,6 +156,73 @@ async function ensureCognitoUser(cognitoClient, userPoolId, userInfo) {
   }
 }
 
+/**
+ * Simple migration runner for Lambda
+ * Runs SQL migration files in order
+ */
+async function runMigrations(client) {
+  // Create migrations table if it doesn't exist
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      version VARCHAR(50) PRIMARY KEY,
+      filename VARCHAR(255) NOT NULL,
+      executed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      checksum VARCHAR(64) NOT NULL
+    );
+  `);
+
+  // List of migration files in order
+  const migrationFiles = [
+    '001_initial_schema.sql',
+    '002_add_cognito_fields.sql',
+    '003_distance_calculation_functions.sql'
+  ];
+
+  for (const filename of migrationFiles) {
+    try {
+      const version = filename.replace('.sql', '');
+      
+      // Check if migration already executed
+      const existingResult = await client.query(
+        'SELECT version FROM schema_migrations WHERE version = $1',
+        [version]
+      );
+
+      if (existingResult.rows.length > 0) {
+        console.log(`Migration ${version} already executed, skipping.`);
+        continue;
+      }
+
+      // Read migration file
+      const migrationPath = path.join(__dirname, 'migrations', filename);
+      const migrationContent = fs.readFileSync(migrationPath, 'utf8');
+      const checksum = Buffer.from(migrationContent).toString('base64').slice(0, 32);
+
+      // Execute migration in transaction
+      await client.query('BEGIN');
+      try {
+        console.log(`Executing migration: ${version} - ${filename}`);
+        await client.query(migrationContent);
+
+        // Record migration execution
+        await client.query(
+          'INSERT INTO schema_migrations (version, filename, checksum) VALUES ($1, $2, $3)',
+          [version, filename, checksum]
+        );
+
+        await client.query('COMMIT');
+        console.log(`Migration ${version} completed successfully.`);
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      }
+    } catch (error) {
+      console.error(`Failed to execute migration ${filename}:`, error);
+      throw error;
+    }
+  }
+}
+
 exports.handler = async event => {
   const secretsManager = new AWS.SecretsManager();
   const cognitoClient = new AWS.CognitoIdentityServiceProvider();
@@ -185,18 +252,10 @@ exports.handler = async event => {
     console.log('Connecting to database...');
     await client.connect();
 
-    // Check if database schema needs to be created (using API migration approach)
-    console.log('Checking if database schema exists...');
-    
-    try {
-      // Check if the employees table exists (key table for our system)
-      await client.query("SELECT 1 FROM employees LIMIT 1");
-      console.log('Database schema already exists');
-    } catch (error) {
-      console.log('Database schema not found. Please run API migrations first:');
-      console.log('  cd apps/api && npm run db:setup');
-      throw new Error('Database schema must be created using API migrations before loading sample data');
-    }
+    // Run database migrations to ensure schema exists
+    console.log('Running database migrations...');
+    await runMigrations(client);
+    console.log('Database migrations completed successfully');
 
     // Load sample data from infrastructure/data directory (single source of truth)
     console.log('Reading sample data template from infrastructure/data/sample-data.sql...');

@@ -5,7 +5,14 @@ set -e
 
 # Configuration
 STACK_NAME="rtm-api"
-ENVIRONMENT="${1:-dev}"  # Default to dev, can pass staging/prod
+ENVIRONMENT="${1:-dev}"  # Default to dev, can pass staging/production
+
+# Validate environment parameter
+if [[ ! "$ENVIRONMENT" =~ ^(dev|staging|production)$ ]]; then
+    echo "❌ Invalid environment: $ENVIRONMENT"
+    echo "Valid options: dev, staging, production"
+    exit 1
+fi
 REGION="eu-central-1"
 
 echo "🚀 Starting API deployment to $ENVIRONMENT environment..."
@@ -60,7 +67,7 @@ echo "🌐 API URL: $API_URL"
 echo ""
 echo "📋 Next steps:"
 echo "1. Test the API endpoints"
-echo "2. Update frontend environment.prod.ts with the new API URL"
+echo "2. Update frontend environment.$ENVIRONMENT.ts with the new API URL"
 echo "3. Redeploy frontend if needed"
 echo ""
 echo "🔧 Useful commands:"
