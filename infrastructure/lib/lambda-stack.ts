@@ -4,6 +4,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as cr from 'aws-cdk-lib/custom-resources';
 import { InfrastructureStack } from './infrastructure-stack';
 
 export interface LambdaStackProps extends cdk.StackProps {
@@ -103,7 +104,6 @@ export class LambdaStack extends cdk.Stack {
       },
       description: 'Health check endpoint for RTM API',
       tracing: lambda.Tracing.ACTIVE,
-      reservedConcurrentExecutions: environment === 'production' ? 10 : 5,
     });
 
     // Store Lambda function ARN for monitoring
@@ -205,6 +205,44 @@ export class LambdaStack extends cdk.Stack {
         description: 'Load sample data with dynamic Cognito user creation',
         tracing: lambda.Tracing.ACTIVE,
       });
+
+      // Custom Resource to automatically load sample data on stack deployment
+      const loadSampleDataCustomResource = new cr.AwsCustomResource(
+        this,
+        'LoadSampleDataCustomResource',
+        {
+          onCreate: {
+            service: 'Lambda',
+            action: 'invoke',
+            parameters: {
+              FunctionName: this.loadSampleDataFunction.functionName,
+              InvocationType: 'RequestResponse',
+            },
+            physicalResourceId: cr.PhysicalResourceId.of('load-sample-data-trigger'),
+          },
+          onUpdate: {
+            service: 'Lambda', 
+            action: 'invoke',
+            parameters: {
+              FunctionName: this.loadSampleDataFunction.functionName,
+              InvocationType: 'RequestResponse',
+            },
+          },
+          policy: cr.AwsCustomResourcePolicy.fromStatements([
+            new cdk.aws_iam.PolicyStatement({
+              actions: ['lambda:InvokeFunction'],
+              resources: [this.loadSampleDataFunction.functionArn],
+            }),
+          ]),
+          timeout: cdk.Duration.minutes(10), // Allow time for sample data loading
+          logRetention: logs.RetentionDays.ONE_WEEK,
+          installLatestAwsSdk: true,
+        }
+      );
+
+      // Ensure custom resource depends on the Lambda function and database
+      loadSampleDataCustomResource.node.addDependency(this.loadSampleDataFunction);
+      loadSampleDataCustomResource.node.addDependency(infrastructureStack.database);
     }
   }
 

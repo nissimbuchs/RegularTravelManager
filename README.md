@@ -382,10 +382,11 @@ Domain workspaces contain business logic and are organized by bounded contexts:
 ### Infrastructure (`infrastructure/`)
 
 AWS CDK project defining cloud infrastructure including:
-- DynamoDB tables
 - Lambda functions
 - API Gateway
+- RDS PostgreSQL with PostGIS
 - Cognito User Pool
+- S3 buckets for document storage
 - IAM roles and policies
 
 ## Development Guidelines
@@ -595,8 +596,8 @@ The project follows DDD principles with clear separation of concerns:
 
 After completing the project setup, the next development phases include:
 
-1. **AWS Infrastructure**: Set up DynamoDB, Lambda, API Gateway, and Cognito
-2. **Database Schema**: Design and implement data models
+1. **AWS Infrastructure**: Set up RDS PostgreSQL, Lambda, API Gateway, and Cognito
+2. **Database Schema**: Design and implement data models with PostGIS
 3. **Authentication**: Implement Cognito-based authentication system
 4. **API Development**: Build REST API endpoints with Lambda functions
 5. **Frontend Development**: Create Angular components and services
