@@ -28,12 +28,26 @@ class AuthorizationError extends Error {
   }
 }
 
-// JWT Verifier instance for Cognito tokens
-const verifier = CognitoJwtVerifier.create({
-  userPoolId: process.env.COGNITO_USER_POOL_ID || '',
-  tokenUse: 'access',
-  clientId: process.env.COGNITO_CLIENT_ID || '',
-});
+// JWT Verifier instance for Cognito tokens (lazy initialization)
+let verifier: any = null;
+
+function getVerifier() {
+  if (!verifier) {
+    const userPoolId = process.env.COGNITO_USER_POOL_ID;
+    const clientId = process.env.COGNITO_CLIENT_ID;
+    
+    if (!userPoolId || !clientId) {
+      throw new Error('Missing required Cognito configuration: COGNITO_USER_POOL_ID and COGNITO_CLIENT_ID environment variables are required');
+    }
+    
+    verifier = CognitoJwtVerifier.create({
+      userPoolId,
+      tokenUse: 'access',
+      clientId,
+    });
+  }
+  return verifier;
+}
 
 // Create mock payload from token for bypass mode
 function createMockPayload(token: string): MockPayload {
@@ -164,7 +178,7 @@ function extractTokenFromHeader(authHeader: string): string {
 
 async function verifyToken(token: string): Promise<CognitoPayload> {
   try {
-    const payload = (await verifier.verify(token)) as CognitoPayload;
+    const payload = (await getVerifier().verify(token)) as CognitoPayload;
 
     // Additional token validation
     if (!payload.sub || !payload.email) {

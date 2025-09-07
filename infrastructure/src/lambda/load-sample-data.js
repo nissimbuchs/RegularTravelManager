@@ -259,7 +259,7 @@ exports.handler = async event => {
 
     // Load sample data from infrastructure/data directory (single source of truth)
     console.log('Reading sample data template from infrastructure/data/sample-data.sql...');
-    const sampleDataPath = path.join(__dirname, '../../data/sample-data.sql');
+    const sampleDataPath = path.join(__dirname, 'data/sample-data.sql');
     let sampleDataSQL = fs.readFileSync(sampleDataPath, 'utf8');
 
     // Create/verify Cognito users and get their actual IDs

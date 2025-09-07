@@ -101,6 +101,7 @@ export class LambdaStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
       logGroup: healthLogGroup,
       environment: {
         ...this.getBaseEnvironmentVariables(environment),
@@ -196,7 +197,7 @@ export class LambdaStack extends cdk.Stack {
         code: lambda.Code.fromAsset('src/lambda', {
           bundling: {
             image: lambda.Runtime.NODEJS_18_X.bundlingImage,
-            command: ['bash', '-c', 'cp -r . /tmp && cd /tmp && npm ci --only=prod && cp -r . /asset-output/'],
+            command: ['bash', '-c', 'cp -r . /tmp && cd /tmp && npm install --omit=dev && cp -r . /asset-output/'],
           },
         }),
         timeout: cdk.Duration.seconds(300), // 5 minutes for data loading and user creation
@@ -207,6 +208,7 @@ export class LambdaStack extends cdk.Stack {
         vpcSubnets: {
           subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
         },
+        securityGroups: [infrastructureStack.lambdaSecurityGroup],
         environment: {
           ...this.getBaseEnvironmentVariables(environment),
           USER_POOL_ID: infrastructureStack.userPool.userPoolId,
@@ -289,6 +291,7 @@ export class LambdaStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
       logGroup: profileLogGroup,
       environment: {
         ...this.getBaseEnvironmentVariables(environment),
@@ -379,6 +382,7 @@ export class LambdaStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
       logGroup: createProjectLogGroup,
       environment: {
         ...this.getBaseEnvironmentVariables(environment),
@@ -411,6 +415,7 @@ export class LambdaStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
       logGroup: createSubprojectLogGroup,
       environment: {
         ...this.getBaseEnvironmentVariables(environment),
@@ -444,6 +449,7 @@ export class LambdaStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
       logGroup: getActiveProjectsLogGroup,
       environment: {
         ...this.getBaseEnvironmentVariables(environment),
@@ -517,6 +523,7 @@ export class LambdaStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
       logGroup: searchProjectsLogGroup,
       environment: {
         ...this.getBaseEnvironmentVariables(environment),
@@ -588,6 +595,7 @@ export class LambdaStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
       logGroup: calculateDistanceLogGroup,
       environment: {
         ...this.getBaseEnvironmentVariables(environment),
@@ -624,6 +632,7 @@ export class LambdaStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
       logGroup: calculateAllowanceLogGroup,
       environment: {
         ...this.getBaseEnvironmentVariables(environment),
@@ -660,6 +669,7 @@ export class LambdaStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
       logGroup: calculateTravelCostLogGroup,
       environment: {
         ...this.getBaseEnvironmentVariables(environment),
@@ -696,6 +706,7 @@ export class LambdaStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
       logGroup: getCalculationAuditLogGroup,
       environment: {
         ...this.getBaseEnvironmentVariables(environment),
@@ -773,6 +784,7 @@ export class LambdaStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
       logGroup: cleanupExpiredCacheLogGroup,
       environment: {
         ...this.getBaseEnvironmentVariables(environment),

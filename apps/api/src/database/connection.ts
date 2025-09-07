@@ -156,13 +156,45 @@ export async function withDatabaseConnection<T>(handler: () => Promise<T>): Prom
 }
 
 // Configuration helpers for different environments
-export function getDatabaseConfig(): DatabaseConfig {
-  const isProduction = process.env.NODE_ENV === 'production';
+export async function getDatabaseConfig(): Promise<DatabaseConfig> {
+  const hasRdsProxy = !!process.env.RDS_PROXY_ENDPOINT;
+  const isLocal = process.env.DB_HOST === 'localhost' || !process.env.DB_HOST;
 
-  // In production, use RDS Proxy endpoint
-  if (isProduction) {
+  // For AWS Lambda, get credentials from Secrets Manager
+  if (!isLocal && !process.env.DB_USERNAME) {
+    // Use dynamic import to access AWS SDK that's available in Lambda runtime
+    const { SecretsManagerClient, GetSecretValueCommand } = await import('@aws-sdk/client-secrets-manager');
+    const secretsManager = new SecretsManagerClient({});
+    
+    try {
+      const secretId = `rtm-${process.env.RTM_ENVIRONMENT || 'dev'}-db-credentials`;
+      const command = new GetSecretValueCommand({ SecretId: secretId });
+      const secret = await secretsManager.send(command);
+      const credentials = JSON.parse(secret.SecretString!);
+      
+      const config: DatabaseConfig = {
+        host: process.env.DB_HOST || credentials.host,
+        port: parseInt(process.env.DB_PORT || credentials.port?.toString() || '5432'),
+        database: process.env.DB_NAME || credentials.dbname,
+        username: credentials.username,
+        password: credentials.password,
+        ssl: !isLocal,
+        maxConnections: 5,
+        connectionTimeoutMs: 10000,
+        idleTimeoutMs: 10000,
+      };
+
+      return config;
+    } catch (error) {
+      console.error('Failed to get database credentials from Secrets Manager:', error);
+      throw new Error('Database credentials not available');
+    }
+  }
+
+  // If RDS Proxy is configured, use it (typically production)
+  if (hasRdsProxy) {
     return {
-      host: process.env.RDS_PROXY_ENDPOINT || '',
+      host: process.env.RDS_PROXY_ENDPOINT!,
       port: parseInt(process.env.DB_PORT || '5432'),
       database: process.env.DB_NAME || 'travel_manager',
       username: process.env.DB_USERNAME || '',
@@ -174,15 +206,15 @@ export function getDatabaseConfig(): DatabaseConfig {
     };
   }
 
-  // Development/test configuration
+  // Local development configuration
   return {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432'),
     database: process.env.DB_NAME || 'travel_manager_dev',
     username: process.env.DB_USERNAME || 'nissim',
-    password: process.env.DB_PASSWORD || 'devpass123', // Docker PostgreSQL password
+    password: process.env.DB_PASSWORD || 'devpass123',
     ssl: false,
-    maxConnections: 10, // Larger pool for development
+    maxConnections: 10,
     connectionTimeoutMs: 10000,
     idleTimeoutMs: 30000,
   };
@@ -190,7 +222,7 @@ export function getDatabaseConfig(): DatabaseConfig {
 
 // Initialize database connection based on environment
 export async function initializeDatabase(): Promise<void> {
-  const config = getDatabaseConfig();
+  const config = await getDatabaseConfig();
   db.configure(config);
 
   // Test connections

@@ -32,6 +32,7 @@ export class InfrastructureStack extends cdk.Stack {
   public api!: apigateway.RestApi;
   public placeIndex!: location.CfnPlaceIndex;
   public lambdaRole!: iam.Role;
+  public lambdaSecurityGroup!: ec2.SecurityGroup;
   public alertsTopic!: sns.Topic;
   public webBucket!: s3.Bucket;
   public distribution!: cloudfront.Distribution;
@@ -142,6 +143,20 @@ export class InfrastructureStack extends cdk.Stack {
       deletionProtection: environment === 'production',
       enablePerformanceInsights: environment === 'production',
     });
+
+    // Lambda security group
+    this.lambdaSecurityGroup = new ec2.SecurityGroup(this, 'LambdaSecurityGroup', {
+      vpc: this.vpc,
+      description: 'Security group for Lambda functions',
+      allowAllOutbound: true,
+    });
+
+    // Allow Lambda functions to connect to database
+    dbSecurityGroup.addIngressRule(
+      this.lambdaSecurityGroup,
+      ec2.Port.tcp(5432),
+      'Allow Lambda functions to connect to PostgreSQL'
+    );
 
     // Store database connection details
     new ssm.StringParameter(this, 'DatabaseEndpoint', {
