@@ -22,6 +22,7 @@ export class LambdaStack extends cdk.Stack {
   public createProjectFunction!: lambda.Function;
   public createSubprojectFunction!: lambda.Function;
   public getActiveProjectsFunction!: lambda.Function;
+  public getAllProjectsFunction!: lambda.Function;
   public getSubprojectsForProjectFunction!: lambda.Function;
   public searchProjectsFunction!: lambda.Function;
   public calculateDistanceFunction!: lambda.Function;
@@ -469,6 +470,39 @@ export class LambdaStack extends cdk.Stack {
       tracing: lambda.Tracing.ACTIVE,
     });
 
+    // Get All Projects function (admin only)
+    const getAllProjectsLogGroup = new logs.LogGroup(this, 'GetAllProjectsFunctionLogGroup', {
+      logGroupName: `/aws/lambda/rtm-${environment}-get-all-projects`,
+      retention:
+        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
+      removalPolicy:
+        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+    });
+
+    this.getAllProjectsFunction = new lambda.Function(this, 'GetAllProjectsFunction', {
+      functionName: `rtm-${environment}-get-all-projects`,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'index.getAllProjects',
+      code: lambda.Code.fromAsset('../apps/api/dist'),
+      timeout: cdk.Duration.seconds(timeout),
+      memorySize: memory,
+      role: infrastructureStack.lambdaRole,
+      vpc: infrastructureStack.vpc,
+      vpcSubnets: {
+        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
+      logGroup: getAllProjectsLogGroup,
+      environment: {
+        ...this.getBaseEnvironmentVariables(environment),
+        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
+        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
+        DB_NAME: 'rtm_database',
+      },
+      description: 'Get all projects (active and inactive) for admin use',
+      tracing: lambda.Tracing.ACTIVE,
+    });
+
     // Get Subprojects for Project function
     const getSubprojectsLogGroup = new logs.LogGroup(
       this,
@@ -560,6 +594,12 @@ export class LambdaStack extends cdk.Stack {
       environment,
       'GetActiveProjects',
       this.getActiveProjectsFunction,
+      infrastructureStack
+    );
+    this.addLambdaAlarms(
+      environment,
+      'GetAllProjects',
+      this.getAllProjectsFunction,
       infrastructureStack
     );
     this.addLambdaAlarms(
@@ -844,16 +884,13 @@ export class LambdaStack extends cdk.Stack {
   }
 
   private connectToAPIGateway(environment: string, infrastructureStack: InfrastructureStack) {
-    // The health endpoint is already created in the infrastructure stack
-    // We don't need to modify it here since our health function will be
-    // connected through API Gateway's Lambda integration configuration
-
-    // Create deployment to update API Gateway
-    new apigateway.Deployment(this, 'APIDeployment', {
-      api: infrastructureStack.api,
-      stageName: environment,
-      description: `Deployment with health Lambda integration - ${new Date().toISOString()}`,
-    });
+    // API Gateway routes are managed manually for now to avoid circular dependencies
+    // The manual configuration includes:
+    // - /projects endpoint connected to getAllProjects Lambda
+    // - Lambda authorizer for authentication
+    // - Proper CORS and permissions
+    
+    // Future: Move to proper CDK configuration when circular dependency is resolved
   }
 
   private addLambdaAlarms(

@@ -77,6 +77,7 @@ import {
   createProject as createProjectHandler,
   createSubproject as createSubprojectHandler,
   getActiveProjects as getActiveProjectsHandler,
+  getAllProjects as getAllProjectsHandler,
   getSubprojectsForProject as getSubprojectsForProjectHandler,
   searchProjects as searchProjectsHandler,
   updateProject as updateProjectHandler,
@@ -104,6 +105,13 @@ export const getActiveProjects = errorHandler(
   corsMiddleware(async (event, context) => {
     await ensureDatabaseInitialized();
     return getActiveProjectsHandler(event, context);
+  })
+);
+
+export const getAllProjects = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return getAllProjectsHandler(event, context);
   })
 );
 

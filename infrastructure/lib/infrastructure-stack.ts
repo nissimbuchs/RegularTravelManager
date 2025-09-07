@@ -483,6 +483,9 @@ export class InfrastructureStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    // Note: Additional endpoints like /projects are managed manually via AWS CLI
+    // to avoid circular dependencies between infrastructure and lambda stacks
+
     // Store API configuration
     new ssm.StringParameter(this, 'APIGatewayId', {
       parameterName: `/rtm/${environment}/api/gateway-id`,
@@ -897,6 +900,13 @@ export class InfrastructureStack extends cdk.Stack {
       description: 'Web application URL',
       value: `https://${this.distribution.distributionDomainName}`,
       exportName: `rtm-${environment}-web-url`,
+    });
+
+    // Maintain the export that the deployed Lambda stack depends on
+    // Using the exact same output key to prevent CloudFormation from trying to delete/recreate
+    new cdk.CfnOutput(this, 'ExportsOutputRefAPI62EA1CFF96EF4E11', {
+      value: this.api.restApiId,
+      exportName: `${this.stackName}:ExportsOutputRefAPI62EA1CFF96EF4E11`,
     });
   }
 
