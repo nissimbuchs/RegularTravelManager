@@ -3,6 +3,7 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { InfrastructureStack } from './infrastructure-stack';
 import { LambdaStack } from './lambda-stack';
+import { ApiGatewayStack } from './api-gateway-stack';
 
 const app = new cdk.App();
 
@@ -44,7 +45,7 @@ const infrastructureStack = new InfrastructureStack(app, stackName, {
 
 // Create the Lambda stack (depends on infrastructure)
 const lambdaStackName = `rtm-${config.environment}-lambda`;
-new LambdaStack(app, lambdaStackName, {
+const lambdaStack = new LambdaStack(app, lambdaStackName, {
   environment: config.environment,
   infrastructureStack: infrastructureStack,
   env: {
@@ -58,6 +59,27 @@ new LambdaStack(app, lambdaStackName, {
     ManagedBy: 'CDK',
   },
 });
+
+// Create the API Gateway stack (depends only on Lambda exports)
+const apiGatewayStackName = `rtm-${config.environment}-api-gateway`;
+const apiGatewayStack = new ApiGatewayStack(app, apiGatewayStackName, {
+  environment: config.environment,
+  cloudFrontDomain: infrastructureStack.distribution.distributionDomainName,
+  env: {
+    account: config.account,
+    region: config.region,
+  },
+  description: `RegularTravelManager API Gateway for ${config.environment} environment`,
+  tags: {
+    Project: 'RegularTravelManager',
+    Environment: config.environment,
+    ManagedBy: 'CDK',
+  },
+});
+
+// Explicitly set dependencies: Infrastructure → Lambda → API Gateway
+apiGatewayStack.addDependency(lambdaStack);
+apiGatewayStack.addDependency(infrastructureStack);
 
 // Synthesize all stacks
 app.synth();

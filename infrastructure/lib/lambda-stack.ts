@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as cr from 'aws-cdk-lib/custom-resources';
@@ -98,6 +97,9 @@ export class LambdaStack extends cdk.Stack {
 
     // Connect Lambda functions to API Gateway
     this.connectToAPIGateway(environment, infrastructureStack);
+    
+    // Export Lambda function ARNs for API Gateway to reference
+    this.exportLambdaArns(environment);
   }
 
   private createHealthFunction(
@@ -1204,13 +1206,26 @@ export class LambdaStack extends cdk.Stack {
   }
 
   private connectToAPIGateway(environment: string, infrastructureStack: InfrastructureStack) {
-    // API Gateway routes are managed manually for now to avoid circular dependencies
-    // The manual configuration includes:
-    // - /projects endpoint connected to getAllProjects Lambda
-    // - Lambda authorizer for authentication
-    // - Proper CORS and permissions
-    
-    // Future: Move to proper CDK configuration when circular dependency is resolved
+    // API Gateway routes are managed in the separate ApiGatewayStack
+    // This method is kept for compatibility but no longer creates routes
+  }
+
+  private exportLambdaArns(environment: string) {
+    // Export Lambda function ARNs for API Gateway stack to import
+    new cdk.CfnOutput(this, 'HealthFunctionArnExport', {
+      value: this.healthFunction.functionArn,
+      exportName: `rtm-${environment}-health-function-arn`,
+    });
+
+    new cdk.CfnOutput(this, 'AuthorizerFunctionArnExport', {
+      value: this.authorizerFunction.functionArn,
+      exportName: `rtm-${environment}-authorizer-function-arn`,
+    });
+
+    new cdk.CfnOutput(this, 'GetActiveProjectsFunctionArnExport', {
+      value: this.getActiveProjectsFunction.functionArn,
+      exportName: `rtm-${environment}-get-active-projects-function-arn`,
+    });
   }
 
   private addLambdaAlarms(

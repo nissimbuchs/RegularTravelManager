@@ -3,7 +3,6 @@ import { Construct } from 'constructs';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ses from 'aws-cdk-lib/aws-ses';
 import * as location from 'aws-cdk-lib/aws-location';
@@ -33,7 +32,6 @@ export class InfrastructureStack extends cdk.Stack {
   public database!: rds.DatabaseInstance;
   public userPool!: cognito.UserPool;
   public userPoolClient!: cognito.UserPoolClient;
-  public api!: apigateway.RestApi;
   public placeIndex!: location.CfnPlaceIndex;
   public lambdaRole!: iam.Role;
   public lambdaSecurityGroup!: ec2.SecurityGroup;
@@ -81,8 +79,6 @@ export class InfrastructureStack extends cdk.Stack {
     // IAM Roles and Policies
     this.setupIAMRoles(environment);
 
-    // API Gateway
-    this.setupAPIGateway(environment);
 
     // AWS SES
     this.setupSES(environment, props.domainName);
@@ -439,71 +435,6 @@ export class InfrastructureStack extends cdk.Stack {
     );
   }
 
-  private setupAPIGateway(environment: string) {
-    this.api = new apigateway.RestApi(this, 'API', {
-      restApiName: `rtm-${environment}-api`,
-      description: `RegularTravelManager API - ${environment}`,
-      defaultCorsPreflightOptions: {
-        allowOrigins:
-          environment === 'production'
-            ? ['https://travel.company.com'] // Replace with actual domain
-            : apigateway.Cors.ALL_ORIGINS,
-        allowMethods: apigateway.Cors.ALL_METHODS,
-        allowHeaders: [
-          'Content-Type',
-          'X-Amz-Date',
-          'Authorization',
-          'X-Api-Key',
-          'X-Amz-Security-Token',
-        ],
-      },
-      deployOptions: {
-        stageName: environment,
-        tracingEnabled: true,
-        loggingLevel:
-          environment === 'production'
-            ? apigateway.MethodLoggingLevel.ERROR
-            : apigateway.MethodLoggingLevel.OFF,
-        dataTraceEnabled: false,
-        metricsEnabled: true,
-      },
-    });
-
-    // API resources will be added by Lambda functions
-    const apiV1 = this.api.root.addResource('api').addResource('v1');
-
-    // Cognito authorizer
-    const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'CognitoAuthorizer', {
-      cognitoUserPools: [this.userPool],
-      authorizerName: `rtm-${environment}-authorizer`,
-      identitySource: 'method.request.header.Authorization',
-    });
-
-    // Health check endpoint (no auth required)
-    const healthResource = apiV1.addResource('health');
-    healthResource.addMethod('GET');
-
-    // Example protected endpoint that uses the authorizer
-    const protectedResource = apiV1.addResource('protected');
-    protectedResource.addMethod('GET', undefined, {
-      authorizer: authorizer,
-      authorizationType: apigateway.AuthorizationType.COGNITO,
-    });
-
-    // Note: Additional endpoints like /projects are managed manually via AWS CLI
-    // to avoid circular dependencies between infrastructure and lambda stacks
-
-    // Store API configuration
-    new ssm.StringParameter(this, 'APIGatewayId', {
-      parameterName: `/rtm/${environment}/api/gateway-id`,
-      stringValue: this.api.restApiId,
-    });
-
-    new ssm.StringParameter(this, 'APIGatewayURL', {
-      parameterName: `/rtm/${environment}/api/base-url`,
-      stringValue: this.api.url,
-    });
-  }
 
   private setupSES(environment: string, domainName?: string) {
     if (domainName) {
@@ -649,45 +580,6 @@ export class InfrastructureStack extends cdk.Stack {
         environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
     });
 
-    // API Gateway Alarms
-    const apiGateway4xxAlarm = new cloudwatch.Alarm(this, 'APIGateway4xxAlarm', {
-      alarmName: `rtm-${environment}-api-4xx-errors`,
-      alarmDescription: 'API Gateway 4xx errors',
-      metric: this.api.metricClientError({
-        statistic: 'Sum',
-        period: cdk.Duration.minutes(5),
-      }),
-      threshold: environment === 'production' ? 10 : 50,
-      evaluationPeriods: 2,
-      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-    });
-    apiGateway4xxAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.alertsTopic));
-
-    const apiGateway5xxAlarm = new cloudwatch.Alarm(this, 'APIGateway5xxAlarm', {
-      alarmName: `rtm-${environment}-api-5xx-errors`,
-      alarmDescription: 'API Gateway 5xx errors',
-      metric: this.api.metricServerError({
-        statistic: 'Sum',
-        period: cdk.Duration.minutes(5),
-      }),
-      threshold: environment === 'production' ? 5 : 10,
-      evaluationPeriods: 1,
-      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-    });
-    apiGateway5xxAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.alertsTopic));
-
-    const apiGatewayLatencyAlarm = new cloudwatch.Alarm(this, 'APIGatewayLatencyAlarm', {
-      alarmName: `rtm-${environment}-api-high-latency`,
-      alarmDescription: 'API Gateway high latency',
-      metric: this.api.metricLatency({
-        statistic: 'Average',
-        period: cdk.Duration.minutes(5),
-      }),
-      threshold: environment === 'production' ? 2000 : 5000, // milliseconds
-      evaluationPeriods: 3,
-      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-    });
-    apiGatewayLatencyAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.alertsTopic));
 
     // RDS Alarms
     const dbCpuAlarm = new cloudwatch.Alarm(this, 'DBCpuAlarm', {
@@ -772,20 +664,6 @@ export class InfrastructureStack extends cdk.Stack {
       dashboardName: `rtm-${environment}-monitoring`,
     });
 
-    // API Gateway metrics widget
-    dashboard.addWidgets(
-      new cloudwatch.GraphWidget({
-        title: 'API Gateway Requests',
-        left: [this.api.metricCount()],
-        right: [this.api.metricLatency()],
-        width: 12,
-      }),
-      new cloudwatch.GraphWidget({
-        title: 'API Gateway Errors',
-        left: [this.api.metricClientError(), this.api.metricServerError()],
-        width: 12,
-      })
-    );
 
     // RDS metrics widget
     const rdsWidgets = [
@@ -909,12 +787,6 @@ export class InfrastructureStack extends cdk.Stack {
       exportName: `rtm-${environment}-web-url`,
     });
 
-    // Maintain the export that the deployed Lambda stack depends on
-    // Using the exact same output key to prevent CloudFormation from trying to delete/recreate
-    new cdk.CfnOutput(this, 'ExportsOutputRefAPI62EA1CFF96EF4E11', {
-      value: this.api.restApiId,
-      exportName: `${this.stackName}:ExportsOutputRefAPI62EA1CFF96EF4E11`,
-    });
   }
 
   private setupWebConfigGeneration(environment: string) {
@@ -979,7 +851,6 @@ export class InfrastructureStack extends cdk.Stack {
     // Ensure Custom Resource runs after all dependencies are ready
     configGeneratorResource.node.addDependency(this.webBucket);
     configGeneratorResource.node.addDependency(this.userPool);
-    configGeneratorResource.node.addDependency(this.api);
 
     console.log(`Configured web config generation for ${environment} environment`);
   }
