@@ -17,7 +17,11 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as lambdaNodejs from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as customResources from 'aws-cdk-lib/custom-resources';
 import * as path from 'path';
+import { getTestUsersForEnvironment } from './config/test-users';
 
 export interface InfrastructureStackProps extends cdk.StackProps {
   environment: 'dev' | 'staging' | 'production';
@@ -230,6 +234,110 @@ export class InfrastructureStack extends cdk.Stack {
       parameterName: `/rtm/${environment}/cognito/client-id`,
       stringValue: this.userPoolClient.userPoolClientId,
     });
+
+    // Create test users for non-production environments
+    this.setupTestUsers(environment);
+  }
+
+  private setupTestUsers(environment: string) {
+    const testUsers = getTestUsersForEnvironment(environment);
+
+    if (testUsers.length === 0) {
+      console.log(`No test users configured for environment: ${environment}`);
+      return;
+    }
+
+    // Create Lambda function for user creation
+    const userCreatorFunction = new lambdaNodejs.NodejsFunction(this, 'UserCreatorFunction', {
+      functionName: `rtm-${environment}-user-creator`,
+      entry: path.join(__dirname, 'lambda/create-cognito-users.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_18_X,
+      timeout: cdk.Duration.minutes(5),
+      memorySize: 256,
+      environment: {
+        // AWS_REGION is automatically set by Lambda runtime
+      },
+      bundling: {
+        externalModules: ['@aws-sdk/*'],
+        nodeModules: ['node-fetch', 'pg'],
+      },
+    });
+
+    // Grant permissions to manage Cognito users
+    userCreatorFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          'cognito-idp:AdminCreateUser',
+          'cognito-idp:AdminSetUserPassword',
+          'cognito-idp:AdminAddUserToGroup',
+          'cognito-idp:AdminGetUser',
+          'cognito-idp:ListUsers',
+        ],
+        resources: [this.userPool.userPoolArn],
+      })
+    );
+
+    // Grant permissions to access database secrets
+    userCreatorFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['secretsmanager:GetSecretValue'],
+        resources: [
+          `arn:aws:secretsmanager:${this.region}:${this.account}:secret:rtm-${environment}-db-credentials*`,
+        ],
+      })
+    );
+
+    // Grant VPC access if database is in VPC
+    if (this.database.vpc) {
+      userCreatorFunction.addToRolePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'ec2:CreateNetworkInterface',
+            'ec2:DescribeNetworkInterfaces',
+            'ec2:DeleteNetworkInterface',
+          ],
+          resources: ['*'],
+        })
+      );
+
+      // Add Lambda to VPC
+      const lambdaFunction = userCreatorFunction.node.defaultChild as lambda.CfnFunction;
+      lambdaFunction.addPropertyOverride('VpcConfig', {
+        SecurityGroupIds: [this.lambdaSecurityGroup.securityGroupId],
+        SubnetIds: this.vpc.privateSubnets.map(subnet => subnet.subnetId),
+      });
+    }
+
+    // Create Custom Resource to trigger user creation
+    const userCreatorProvider = new customResources.Provider(this, 'UserCreatorProvider', {
+      onEventHandler: userCreatorFunction,
+      logRetention: logs.RetentionDays.ONE_WEEK,
+    });
+
+    const userCreatorResource = new cdk.CustomResource(this, 'UserCreatorResource', {
+      serviceToken: userCreatorProvider.serviceToken,
+      properties: {
+        UserPoolId: this.userPool.userPoolId,
+        Users: testUsers,
+        DatabaseUrl: `postgresql://rtm_admin:[SECRET]@${this.database.instanceEndpoint.hostname}:5432/rtm_database`,
+        DatabaseSecretArn: this.database.secret?.secretArn || '',
+        Environment: environment,
+        // Add a timestamp to force updates when needed
+        Timestamp: Date.now().toString(),
+      },
+    });
+
+    // Ensure Custom Resource runs after all dependencies are ready
+    userCreatorResource.node.addDependency(this.userPool);
+    userCreatorResource.node.addDependency(this.database);
+
+    console.log(
+      `Configured to create ${testUsers.length} test users for ${environment} environment`
+    );
   }
 
   private setupLocationService(environment: string) {
@@ -695,7 +803,8 @@ export class InfrastructureStack extends cdk.Stack {
       websiteErrorDocument: 'index.html',
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      removalPolicy:
+        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: environment !== 'production',
     });
 
@@ -729,16 +838,20 @@ export class InfrastructureStack extends cdk.Stack {
           ttl: cdk.Duration.minutes(5),
         },
       ],
-      priceClass: environment === 'production' ? cloudfront.PriceClass.PRICE_CLASS_ALL : cloudfront.PriceClass.PRICE_CLASS_100,
+      priceClass:
+        environment === 'production'
+          ? cloudfront.PriceClass.PRICE_CLASS_ALL
+          : cloudfront.PriceClass.PRICE_CLASS_100,
       comment: `RTM ${environment} Web Distribution`,
     });
 
     // Deploy web application to S3
-    const webDeployment = new s3deploy.BucketDeployment(this, 'WebDeployment', {
-      sources: [s3deploy.Source.asset(path.join(__dirname, '../../apps/web/dist/web'))],
+    new s3deploy.BucketDeployment(this, 'WebDeployment', {
+      sources: [s3deploy.Source.asset(path.join(__dirname, '../../apps/web/dist/web/browser'))],
       destinationBucket: this.webBucket,
       distribution: this.distribution,
       distributionPaths: ['/*'],
+      exclude: ['assets/config/config.json', 'assets/config/config.*.json'], // Exclude dynamically generated config files
     });
 
     // Store web hosting configuration
@@ -776,12 +889,75 @@ export class InfrastructureStack extends cdk.Stack {
     });
     cloudFrontErrorsAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.alertsTopic));
 
+    // Generate web configuration file
+    this.setupWebConfigGeneration(environment);
+
     // Output the web URL
     new cdk.CfnOutput(this, 'WebApplicationURL', {
       description: 'Web application URL',
       value: `https://${this.distribution.distributionDomainName}`,
       exportName: `rtm-${environment}-web-url`,
     });
+  }
+
+  private setupWebConfigGeneration(environment: string) {
+    // Create Lambda function to generate web configuration
+    const configGeneratorFunction = new lambdaNodejs.NodejsFunction(this, 'WebConfigGeneratorFunction', {
+      functionName: `rtm-${environment}-web-config-generator`,
+      entry: path.join(__dirname, 'lambda/generate-web-config.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_18_X,
+      timeout: cdk.Duration.minutes(2),
+      memorySize: 256,
+      bundling: {
+        externalModules: ['@aws-sdk/*'],
+        nodeModules: ['node-fetch'],
+      },
+    });
+
+    // Grant permissions to read SSM parameters
+    configGeneratorFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['ssm:GetParameter'],
+        resources: [
+          `arn:aws:ssm:${this.region}:${this.account}:parameter/rtm/${environment}/*`,
+        ],
+      })
+    );
+
+    // Grant permissions to upload to S3 bucket
+    configGeneratorFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['s3:PutObject', 's3:PutObjectAcl'],
+        resources: [`${this.webBucket.bucketArn}/assets/config/*`],
+      })
+    );
+
+    // Create Custom Resource to trigger config generation
+    const configGeneratorProvider = new customResources.Provider(this, 'WebConfigGeneratorProvider', {
+      onEventHandler: configGeneratorFunction,
+      logRetention: logs.RetentionDays.ONE_WEEK,
+    });
+
+    const configGeneratorResource = new cdk.CustomResource(this, 'WebConfigGeneratorResource', {
+      serviceToken: configGeneratorProvider.serviceToken,
+      properties: {
+        Environment: environment,
+        WebBucketName: this.webBucket.bucketName,
+        Region: this.region,
+        // Add a timestamp to force updates when needed
+        Timestamp: Date.now().toString(),
+      },
+    });
+
+    // Ensure Custom Resource runs after all dependencies are ready
+    configGeneratorResource.node.addDependency(this.webBucket);
+    configGeneratorResource.node.addDependency(this.userPool);
+    configGeneratorResource.node.addDependency(this.api);
+
+    console.log(`Configured web config generation for ${environment} environment`);
   }
 
   private setupResourceTags(environment: string) {

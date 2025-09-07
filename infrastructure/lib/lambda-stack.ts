@@ -197,7 +197,11 @@ export class LambdaStack extends cdk.Stack {
         code: lambda.Code.fromAsset('src/lambda', {
           bundling: {
             image: lambda.Runtime.NODEJS_18_X.bundlingImage,
-            command: ['bash', '-c', 'cp -r . /tmp && cd /tmp && npm install --omit=dev && cp -r . /asset-output/'],
+            command: [
+              'bash',
+              '-c',
+              'cp -r . /tmp && cd /tmp && npm install --omit=dev && cp -r . /asset-output/',
+            ],
           },
         }),
         timeout: cdk.Duration.seconds(300), // 5 minutes for data loading and user creation
@@ -218,11 +222,15 @@ export class LambdaStack extends cdk.Stack {
       });
 
       // Create Log Group for Custom Resource
-      const customResourceLogGroup = new logs.LogGroup(this, 'LoadSampleDataCustomResourceLogGroup', {
-        logGroupName: `/aws/lambda/rtm-${environment}-load-sample-data-custom-resource`,
-        retention: logs.RetentionDays.ONE_WEEK,
-        removalPolicy: cdk.RemovalPolicy.DESTROY,
-      });
+      const customResourceLogGroup = new logs.LogGroup(
+        this,
+        'LoadSampleDataCustomResourceLogGroup',
+        {
+          logGroupName: `/aws/lambda/rtm-${environment}-load-sample-data-custom-resource`,
+          retention: logs.RetentionDays.ONE_WEEK,
+          removalPolicy: cdk.RemovalPolicy.DESTROY,
+        }
+      );
 
       // Custom Resource to automatically load sample data on stack deployment
       const loadSampleDataCustomResource = new cr.AwsCustomResource(
@@ -239,7 +247,7 @@ export class LambdaStack extends cdk.Stack {
             physicalResourceId: cr.PhysicalResourceId.of('load-sample-data-trigger'),
           },
           onUpdate: {
-            service: 'Lambda', 
+            service: 'Lambda',
             action: 'invoke',
             parameters: {
               FunctionName: this.loadSampleDataFunction.functionName,
