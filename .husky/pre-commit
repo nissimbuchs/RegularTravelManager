@@ -1,4 +1,28 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+echo "🔍 Running pre-commit checks..."
+
+# Run linting via lint-staged (existing behavior)
+echo "📝 Running lint-staged..."
 npx lint-staged
+
+# Run infrastructure validation for any API/Lambda changes
+if git diff --cached --name-only | grep -E "(apps/api/|infrastructure/)" > /dev/null; then
+    echo "🏗️  Detected infrastructure changes - validating..."
+    npm run infrastructure:validate
+    
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "❌ Infrastructure validation failed!"
+        echo "💡 Please ensure all API endpoints and Lambda functions are properly configured in CDK."
+        echo "   Run 'npm run story:complete' to validate your changes."
+        exit 1
+    fi
+    
+    echo "✅ Infrastructure validation passed!"
+else
+    echo "ℹ️  No infrastructure changes detected, skipping validation"
+fi
+
+echo "✅ All pre-commit checks completed successfully!"

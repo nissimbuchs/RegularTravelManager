@@ -68,6 +68,81 @@ sections:
     owner: scrum-master
     editors: [scrum-master, dev-agent]
 
+  - id: infrastructure-impact
+    title: Infrastructure Impact Assessment ⚠️ REQUIRED
+    instruction: |
+      ⚠️ CRITICAL: Complete this section during story planning to prevent infrastructure gaps.
+      This assessment must be completed BEFORE development begins.
+      Use `npm run story:start` for interactive assessment if needed.
+    elicit: true
+    owner: scrum-master
+    editors: [scrum-master]
+    sections:
+      - id: frontend-changes
+        title: Frontend Changes
+        type: checklist
+        instruction: Check all frontend changes required for this story
+        template: |
+          - [ ] **New Components/Pages** - List components that need creation:
+          - [ ] **State Management** - NgRx actions/effects/selectors needed:
+          - [ ] **Routing** - New routes or route guards required:
+          - [ ] **API Integration** - New HTTP service methods needed:
+        elicit: true
+        owner: scrum-master
+        editors: [scrum-master]
+
+      - id: backend-changes
+        title: Backend Changes
+        type: checklist
+        instruction: Check all backend changes required for this story
+        template: |
+          - [ ] **New API Endpoints** - List all new REST endpoints:
+            - [ ] `POST /endpoint-name` - Description:
+            - [ ] `GET /endpoint-name` - Description:
+          - [ ] **Lambda Functions** - New Lambda handlers required:
+            - [ ] Handler file: `apps/api/src/handlers/domain/function-name.ts`
+          - [ ] **Database Changes** - Schema modifications needed:
+            - [ ] Migration script: `migrations/xxx-migration-name.sql`
+            - [ ] New tables/columns/indexes:
+          - [ ] **Authentication** - Auth/authorization changes:
+            - [ ] New Cognito groups or permissions:
+            - [ ] API Gateway authorizer updates:
+        elicit: true
+        owner: scrum-master
+        editors: [scrum-master]
+
+      - id: infrastructure-changes
+        title: Infrastructure Changes (AWS CDK)
+        type: checklist
+        instruction: Check all AWS infrastructure changes required
+        template: |
+          - [ ] **API Gateway** - New routes/methods/cors:
+            - File: `infrastructure/src/api-gateway-stack.ts`
+          - [ ] **Lambda Configuration** - Function definitions:
+            - File: `infrastructure/src/lambda-stack.ts`
+          - [ ] **Database** - RDS changes or migrations:
+          - [ ] **Environment Variables** - New config needed:
+            - Development: `docker-compose.yml`
+            - Production: `infrastructure/src/parameter-store.ts`
+          - [ ] **IAM Permissions** - New service permissions:
+          - [ ] **Other AWS Services** - S3, SES, etc.:
+        elicit: true
+        owner: scrum-master
+        editors: [scrum-master]
+
+      - id: development-environment
+        title: Development Environment
+        type: checklist
+        instruction: Check development environment changes needed
+        template: |
+          - [ ] **Docker Services** - New services in docker-compose.yml:
+          - [ ] **LocalStack** - New mocked AWS services:
+          - [ ] **Sample Data** - Database seed updates needed:
+          - [ ] **Environment Setup** - New setup steps required:
+        elicit: true
+        owner: scrum-master
+        editors: [scrum-master]
+
   - id: dev-notes
     title: Dev Notes
     instruction: |
@@ -76,10 +151,23 @@ sections:
       - If known add Relevant Source Tree info that relates to this story
       - If there were important notes from previous story that are relevant to this one, include them here
       - Put enough information in this section so that the dev agent should NEVER need to read the architecture documents, these notes along with the tasks and subtasks must give the Dev Agent the complete context it needs to comprehend with the least amount of overhead the information to complete the story, meeting all AC and completing all tasks+subtasks
+      - IMPORTANT: Reference the Infrastructure Impact Assessment above - all infrastructure items must be implemented
     elicit: true
     owner: scrum-master
     editors: [scrum-master]
     sections:
+      - id: technical-design
+        title: Technical Design Notes
+        instruction: |
+          Describe technical approach, patterns, or architectural decisions:
+          - How infrastructure changes integrate with existing system
+          - Specific implementation patterns to follow
+          - Database design considerations
+          - API design decisions
+        elicit: true
+        owner: scrum-master
+        editors: [scrum-master]
+
       - id: testing-standards
         title: Testing
         instruction: |
@@ -88,9 +176,57 @@ sections:
           - Test standards
           - Testing frameworks and patterns to use
           - Any specific testing requirements for this story
+          - Infrastructure testing requirements (CDK synthesis, LocalStack)
         elicit: true
         owner: scrum-master
         editors: [scrum-master]
+
+  - id: definition-of-done
+    title: Definition of Done Checklist
+    instruction: |
+      ⚠️ CRITICAL: Story cannot be marked complete until ALL items are checked.
+      This checklist must be completed before creating Pull Request.
+    owner: scrum-master
+    editors: [scrum-master, dev-agent]
+    sections:
+      - id: development-complete
+        title: Development Complete
+        type: checklist
+        template: |
+          - [ ] All acceptance criteria implemented
+          - [ ] Unit tests written and passing
+          - [ ] Integration tests cover new functionality
+          - [ ] Code follows project conventions
+          - [ ] TypeScript types properly defined in packages/shared
+        owner: dev-agent
+        editors: [dev-agent]
+
+      - id: infrastructure-complete
+        title: Infrastructure Complete ⚠️ CRITICAL
+        type: checklist
+        template: |
+          - [ ] All infrastructure changes implemented in CDK
+          - [ ] CDK diff reviewed and approved (`npm run infrastructure:plan`)
+          - [ ] Environment variables configured (dev + prod)
+          - [ ] IAM permissions validated
+          - [ ] API Gateway routes deployed and tested
+          - [ ] Lambda functions deployed and tested
+          - [ ] Database migrations applied successfully
+          - [ ] Infrastructure validation passes (`npm run infrastructure:validate`)
+        owner: dev-agent
+        editors: [dev-agent]
+
+      - id: review-ready
+        title: Review Ready
+        type: checklist
+        template: |
+          - [ ] PR created with infrastructure checklist completed
+          - [ ] Code review completed
+          - [ ] Infrastructure review completed
+          - [ ] Documentation updated
+          - [ ] CLAUDE.md updated if commands changed
+        owner: dev-agent
+        editors: [dev-agent]
 
   - id: change-log
     title: Change Log

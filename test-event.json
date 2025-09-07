@@ -1,0 +1,18 @@
+{
+  "httpMethod": "GET",
+  "path": "/projects",
+  "pathParameters": null,
+  "queryStringParameters": null,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": null,
+  "requestContext": {
+    "authorizer": {
+      "principalId": "admin1",
+      "context": {
+        "role": "admin"
+      }
+    }
+  }
+}

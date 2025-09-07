@@ -1,0 +1,5 @@
+{
+  "type": "TOKEN",
+  "methodArn": "arn:aws:execute-api:eu-central-1:991687235565:17on7usyre/dev/GET/projects",
+  "authorizationToken": "Bearer mock-jwt-token-admin1@company.ch"
+}
