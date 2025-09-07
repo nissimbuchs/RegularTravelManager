@@ -127,7 +127,7 @@ Testing must be integrated into CI/CD pipeline with coverage requirements and au
 **Frontend Technology Stack:**
 - **Angular 17+** with TypeScript 5.3+ for type-safe component development
 - **Angular Material 17+** component library for Swiss business-appropriate UI
-- **Zustand 4.4+** for lightweight state management aligned with DDD domain separation
+- **RxJS Services** for reactive state management with BehaviorSubjects aligned with DDD domain separation
 - **Angular CLI 17+** build tool with esbuild bundling for optimal performance
 - **Tailwind CSS 3.3+** for utility-first styling complementing Angular Material
 

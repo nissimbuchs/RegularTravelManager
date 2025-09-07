@@ -84,7 +84,7 @@ sections:
         instruction: Check all frontend changes required for this story
         template: |
           - [ ] **New Components/Pages** - List components that need creation:
-          - [ ] **State Management** - NgRx actions/effects/selectors needed:
+          - [ ] **State Management** - RxJS service updates needed (BehaviorSubjects, observables):
           - [ ] **Routing** - New routes or route guards required:
           - [ ] **API Integration** - New HTTP service methods needed:
         elicit: true

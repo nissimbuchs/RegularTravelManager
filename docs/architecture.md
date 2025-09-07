@@ -110,7 +110,7 @@ This is the **definitive technology selection** for RegularTravelManager. All de
 | Frontend Language | TypeScript | 5.3+ | Type-safe frontend development | Essential for DDD value objects and domain models shared across layers |
 | Frontend Framework | Angular | 17+ | Full-featured frontend framework | Enterprise-grade framework with built-in DI, forms, routing, and TypeScript-first approach ideal for business applications |
 | UI Component Library | Angular Material | 17+ | Swiss-business appropriate UI components | Professional Material Design components with excellent form controls and accessibility for employee/manager interfaces |
-| State Management | NgRx | 17+ | Enterprise state management | Redux-based pattern with excellent TypeScript support, perfect for DDD command/query separation and complex business workflows |
+| State Management | RxJS Services | - | Reactive state management | Service-based pattern with BehaviorSubjects and observables for reactive data flow and state management |
 | Backend Language | TypeScript | 5.3+ | Unified language across stack | Shared domain models between frontend/backend, consistent DDD implementation |
 | Backend Framework | AWS Lambda + Fastify | Lambda Runtime v20, Fastify 4.24+ | Serverless HTTP framework | Fast startup times for Lambda, excellent TypeScript support, minimal overhead |
 | API Style | REST | OpenAPI 3.0 | HTTP API design | Clear contract definition, excellent tooling, aligns with AWS API Gateway |
@@ -761,6 +761,8 @@ apps/web/src/
 │   │   │   │   ├── dashboard/
 │   │   │   │   ├── new-request/
 │   │   │   │   └── travel-request-form/
+│   │   │   ├── services/
+│   │   │   │   └── travel-request.service.ts
 │   │   │   ├── employee.module.ts
 │   │   │   └── employee-routing.module.ts
 │   │   ├── manager/
@@ -768,6 +770,8 @@ apps/web/src/
 │   │   │   │   ├── dashboard/
 │   │   │   │   ├── approvals/
 │   │   │   │   └── pending-approvals-table/
+│   │   │   ├── services/
+│   │   │   │   └── manager-dashboard.service.ts
 │   │   │   ├── manager.module.ts
 │   │   │   └── manager-routing.module.ts
 │   ├── shared/
@@ -775,57 +779,88 @@ apps/web/src/
 │   │   │   ├── forms/
 │   │   │   └── tables/
 │   │   └── services/
-│   │       ├── travel-request.service.ts
 │   │       └── project.service.ts
 │   ├── core/
 │   │   ├── services/
 │   │   │   ├── auth.service.ts
-│   │   │   └── notification.service.ts
-│   │   └── guards/
-│   └── store/
-│       ├── travel-request/
-│       └── auth/
+│   │   │   ├── employee.service.ts
+│   │   │   └── config.service.ts
+│   │   ├── guards/
+│   │   └── interceptors/
+│   │       ├── auth.interceptor.ts
+│   │       └── response.interceptor.ts
 ```
 
 ### State Management
 
-NgRx stores following domain separation and feature-based organization:
+RxJS service-based state management pattern with reactive data flow:
 
 ```typescript
-// Travel Request State
-export interface TravelRequestState {
-  requests: TravelRequest[];
-  selectedRequest: TravelRequest | null;
-  loading: boolean;
-  error: string | null;
+// Service-based State Management with BehaviorSubjects
+@Injectable({ providedIn: 'root' })
+export class TravelRequestService {
+  private requestsSubject = new BehaviorSubject<TravelRequest[]>([]);
+  private loadingSubject = new BehaviorSubject<boolean>(false);
+  private errorSubject = new BehaviorSubject<string | null>(null);
+
+  // Public observables for reactive state
+  public requests$ = this.requestsSubject.asObservable();
+  public loading$ = this.loadingSubject.asObservable();
+  public error$ = this.errorSubject.asObservable();
+
+  constructor(private http: HttpClient) {}
+
+  async submitRequest(dto: CreateTravelRequestDto): Promise<TravelRequest> {
+    this.loadingSubject.next(true);
+    this.errorSubject.next(null);
+    
+    try {
+      const request = await firstValueFrom(
+        this.http.post<TravelRequest>('/api/travel-requests', dto)
+      );
+      
+      // Update state reactively
+      const currentRequests = this.requestsSubject.value;
+      this.requestsSubject.next([...currentRequests, request]);
+      
+      return request;
+    } catch (error) {
+      this.errorSubject.next(error.message);
+      throw error;
+    } finally {
+      this.loadingSubject.next(false);
+    }
+  }
+
+  loadRequests(): Observable<TravelRequest[]> {
+    this.loadingSubject.next(true);
+    
+    return this.http.get<TravelRequest[]>('/api/travel-requests').pipe(
+      tap(requests => {
+        this.requestsSubject.next(requests);
+        this.loadingSubject.next(false);
+      }),
+      catchError(error => {
+        this.errorSubject.next(error.message);
+        this.loadingSubject.next(false);
+        return throwError(error);
+      })
+    );
+  }
 }
 
-// Travel Request Actions
-export const TravelRequestActions = createActionGroup({
-  source: 'Travel Request',
-  events: {
-    'Submit Request': props<{ dto: CreateTravelRequestDto }>(),
-    'Submit Request Success': props<{ request: TravelRequest }>(),
-    'Submit Request Failure': props<{ error: string }>(),
-    'Approve Request': props<{ requestId: string }>(),
-    'Load Requests': emptyProps(),
-  },
-});
+// Component Usage Pattern
+@Component({...})
+export class EmployeeDashboardComponent {
+  requests$ = this.travelRequestService.requests$;
+  loading$ = this.travelRequestService.loading$;
+  error$ = this.travelRequestService.error$;
 
-// Travel Request Effects
-@Injectable()
-export class TravelRequestEffects {
-  submitRequest$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(TravelRequestActions.submitRequest),
-      switchMap(({ dto }) =>
-        this.travelRequestService.submitRequest(dto).pipe(
-          map(request => TravelRequestActions.submitRequestSuccess({ request })),
-          catchError(error => of(TravelRequestActions.submitRequestFailure({ error })))
-        )
-      )
-    )
-  );
+  constructor(private travelRequestService: TravelRequestService) {}
+
+  ngOnInit() {
+    this.travelRequestService.loadRequests().subscribe();
+  }
 }
 ```
 
@@ -1196,7 +1231,85 @@ export const appConfig: ApplicationConfig = {
 - **Response Handling:** Always expect unwrapped data types in services - the response interceptor handles unwrapping automatically
 - **Environment Variables:** Access only through config objects, never process.env directly
 - **Error Handling:** All API routes must use the standard error handler
-- **State Updates:** Never mutate state directly - use proper state management patterns
+- **State Updates:** Never mutate state directly - use immutable updates with BehaviorSubject.next()
+- **State Management:** Use RxJS services with BehaviorSubjects for reactive state management
+- **Service Observables:** Always expose state as observables (requests$, loading$, error$)
+
+### State Management Patterns
+
+#### Service-Based State Management
+
+**Core Pattern**: Each domain feature has a dedicated service that manages state using RxJS BehaviorSubjects.
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class FeatureStateService {
+  // Private state subjects
+  private dataSubject = new BehaviorSubject<DataType[]>([]);
+  private loadingSubject = new BehaviorSubject<boolean>(false);
+  private errorSubject = new BehaviorSubject<string | null>(null);
+
+  // Public observables (read-only)
+  public data$ = this.dataSubject.asObservable();
+  public loading$ = this.loadingSubject.asObservable(); 
+  public error$ = this.errorSubject.asObservable();
+
+  // State update methods
+  updateData(newData: DataType[]): void {
+    this.dataSubject.next(newData);
+  }
+}
+```
+
+**Key Principles:**
+- Use BehaviorSubjects for state that has a current value
+- Expose only observables publicly, keep subjects private
+- Follow immutable update patterns
+- Include loading and error state management
+- Use async/await for API calls, tap operator for state updates
+
+#### Component Integration Pattern
+
+```typescript
+@Component({...})
+export class FeatureComponent implements OnInit, OnDestroy {
+  // Subscribe to state observables
+  data$ = this.stateService.data$;
+  loading$ = this.stateService.loading$;
+  error$ = this.stateService.error$;
+  
+  private destroy$ = new Subject<void>();
+
+  constructor(private stateService: FeatureStateService) {}
+
+  ngOnInit(): void {
+    // Load initial data
+    this.stateService.loadData()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}
+```
+
+#### Template Usage Pattern
+
+```html
+<!-- Use async pipe for automatic subscription management -->
+<div *ngIf="loading$ | async" class="loading-spinner">Loading...</div>
+
+<div *ngIf="error$ | async as error" class="error-message">
+  {{ error }}
+</div>
+
+<div *ngFor="let item of data$ | async">
+  {{ item.name }}
+</div>
+```
 
 ### Naming Conventions
 
