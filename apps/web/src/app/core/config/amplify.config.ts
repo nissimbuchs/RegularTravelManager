@@ -1,5 +1,5 @@
 import { Amplify } from 'aws-amplify';
-import { environment } from '../../../environments/environment';
+import { ConfigService } from '../services/config.service';
 
 export interface AmplifyConfig {
   Auth: {
@@ -11,14 +11,16 @@ export interface AmplifyConfig {
   };
 }
 
-export function configureAmplify(): void {
+export function configureAmplify(configService: ConfigService): void {
   // Skip configuration in test environment
   if (typeof window === 'undefined') {
     return;
   }
 
+  const cognitoConfig = configService.cognitoConfig;
+
   // Skip Amplify configuration if using mock authentication
-  if (environment.cognito.useMockAuth) {
+  if (cognitoConfig.useMockAuth) {
     console.log('🧪 Mock authentication enabled - skipping Amplify configuration');
     return;
   }
@@ -26,9 +28,9 @@ export function configureAmplify(): void {
   const config: AmplifyConfig = {
     Auth: {
       Cognito: {
-        userPoolId: environment.cognito.userPoolId,
-        userPoolClientId: environment.cognito.userPoolClientId,
-        region: environment.cognito.region,
+        userPoolId: cognitoConfig.userPoolId,
+        userPoolClientId: cognitoConfig.userPoolClientId,
+        region: cognitoConfig.region,
       },
     },
   };

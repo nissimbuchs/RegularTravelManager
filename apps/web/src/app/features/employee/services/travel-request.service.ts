@@ -1,22 +1,26 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { TravelRequestFormData, CalculationPreview } from '@rtm/shared';
 import { Project, Subproject } from '../../../core/models/project.model';
 import { ProjectService } from '../../../core/services/project.service';
-import { environment } from '../../../../environments/environment';
+import { ConfigService } from '../../../core/services/config.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TravelRequestService {
-  private apiUrl = environment.apiUrl;
+  private configService = inject(ConfigService);
 
   constructor(
     private http: HttpClient,
     private projectService: ProjectService
   ) {}
+
+  private get apiUrl(): string {
+    return this.configService.apiUrl;
+  }
 
   getActiveProjects(): Observable<Project[]> {
     // Use the actual project service (already returns camelCase per API conventions)

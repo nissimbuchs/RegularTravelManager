@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { ConfigService } from './config.service';
 import {
   Project,
   Subproject,
@@ -18,11 +18,15 @@ import {
   providedIn: 'root',
 })
 export class ProjectService {
-  private readonly baseUrl = `${environment.apiUrl}/projects`;
+  private configService = inject(ConfigService);
   private projectsSubject = new BehaviorSubject<Project[]>([]);
   public projects$ = this.projectsSubject.asObservable();
 
   constructor(private http: HttpClient) {}
+
+  private get baseUrl(): string {
+    return `${this.configService.apiUrl}/projects`;
+  }
 
   // Project CRUD Operations
   getProjects(filters?: ProjectSearchFilters): Observable<Project[]> {

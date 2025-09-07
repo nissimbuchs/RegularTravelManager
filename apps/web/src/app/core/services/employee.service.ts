@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { ConfigService } from './config.service';
 import {
   EmployeeDto,
   UpdateEmployeeAddressRequest,
@@ -18,9 +18,13 @@ interface Manager {
   providedIn: 'root',
 })
 export class EmployeeService {
-  private readonly baseUrl = `${environment.apiUrl}/employees`;
+  private configService = inject(ConfigService);
 
   constructor(private http: HttpClient) {}
+
+  private get baseUrl(): string {
+    return `${this.configService.apiUrl}/employees`;
+  }
 
   // Get employee profile by ID
   getEmployeeProfile(id: string): Observable<EmployeeDto> {
@@ -58,7 +62,7 @@ export class EmployeeService {
   // Get all managers for dropdown selection
   getManagers(): Observable<Manager[]> {
     return this.http
-      .get<{ managers: Manager[] }>(`${environment.apiUrl}/managers`)
+      .get<{ managers: Manager[] }>(`${this.configService.apiUrl}/managers`)
       .pipe(map(response => response.managers));
   }
 }

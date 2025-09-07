@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MaterialModule } from './material.module';
 import { configureAmplify } from './core/config/amplify.config';
+import { ConfigService } from './core/services/config.service';
 
 @Component({
   selector: 'app-root',
@@ -12,8 +13,14 @@ import { configureAmplify } from './core/config/amplify.config';
 })
 export class AppComponent implements OnInit {
   title = 'RegularTravelManager';
+  
+  private configService = inject(ConfigService);
 
-  ngOnInit(): void {
-    configureAmplify();
+  async ngOnInit(): Promise<void> {
+    // Wait for configuration to be loaded by APP_INITIALIZER
+    await this.configService.waitForConfig();
+    
+    // Configure Amplify with runtime configuration
+    configureAmplify(this.configService);
   }
 }

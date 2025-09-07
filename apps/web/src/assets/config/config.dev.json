@@ -1,0 +1,10 @@
+{
+  "apiUrl": "https://a8xznik0n8.execute-api.eu-central-1.amazonaws.com/dev",
+  "cognito": {
+    "userPoolId": "eu-central-1_Sj67j0X0j",
+    "userPoolClientId": "2flsscfk0cpb1bs7m8pfr7usml",
+    "region": "eu-central-1", 
+    "useMockAuth": false
+  },
+  "environment": "dev"
+}

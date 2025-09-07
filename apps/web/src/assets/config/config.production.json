@@ -1,0 +1,10 @@
+{
+  "apiUrl": "https://api.regulartravelmanager.com/production",
+  "cognito": {
+    "userPoolId": "eu-central-1_PRODUCTION_POOL", 
+    "userPoolClientId": "production-client-id",
+    "region": "eu-central-1",
+    "useMockAuth": false
+  },
+  "environment": "production"
+}

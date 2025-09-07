@@ -186,7 +186,7 @@ window.location.reload();
 
 ### 6. AWS Dev Environment Testing
 
-**AWS Frontend URL**: https://d2upsy2u9gmj8c.cloudfront.net
+**AWS Frontend URL**: https://d32zgf671buazq.cloudfront.net
 
 For testing the deployed AWS dev environment, you can use either mock authentication (current setup) or real AWS Cognito credentials:
 
@@ -206,8 +206,8 @@ For testing the deployed AWS dev environment, you can use either mock authentica
 - **employee3@company.ch** (Lisa Meier, Business Analyst) - Password: `EmployeePass123!`
 
 **AWS Dev Environment Details:**
-- **Frontend URL:** `https://d2upsy2u9gmj8c.cloudfront.net` (Angular app with CloudFront CDN)
-- **API Endpoint:** `https://a8xznik0n8.execute-api.eu-central-1.amazonaws.com/dev/` (available through CloudFront at `/api/*`)
+- **Frontend URL:** `https://d32zgf671buazq.cloudfront.net` (Angular app with CloudFront CDN)
+- **API Endpoint:** `https://17on7usyre.execute-api.eu-central-1.amazonaws.com/dev/` (available through CloudFront at `/api/*`)
 - **Region:** `eu-central-1` (Frankfurt)  
 - **Database:** AWS RDS PostgreSQL with same sample data as local development
 - **Authentication:** AWS Cognito User Pool (currently using mock auth for compatibility)

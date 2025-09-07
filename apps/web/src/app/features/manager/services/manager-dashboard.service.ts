@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, timer } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
@@ -9,13 +9,13 @@ import {
   PaginationConfig,
   SortConfig,
 } from '../models/dashboard.model';
-import { environment } from '../../../../environments/environment';
+import { ConfigService } from '../../../core/services/config.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ManagerDashboardService {
-  private readonly baseUrl = environment.apiUrl;
+  private configService = inject(ConfigService);
   private dashboardSubject = new BehaviorSubject<ManagerDashboard | null>(null);
   public dashboard$ = this.dashboardSubject.asObservable();
 
@@ -23,6 +23,10 @@ export class ManagerDashboardService {
   private autoRefreshSubscription?: any;
 
   constructor(private http: HttpClient) {}
+
+  private get baseUrl(): string {
+    return this.configService.apiUrl;
+  }
 
   getDashboardData(
     filters: DashboardFilters = {},

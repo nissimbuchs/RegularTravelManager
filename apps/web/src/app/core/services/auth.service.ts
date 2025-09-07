@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, from, throwError } from 'rxjs';
 import { map, catchError, tap, switchMap } from 'rxjs/operators';
 import { signIn, signOut, getCurrentUser, fetchAuthSession, AuthUser } from '@aws-amplify/auth';
-import { environment } from '../../../environments/environment';
+import { ConfigService } from './config.service';
 import { MatDialog } from '@angular/material/dialog';
 
 export interface User {
@@ -31,36 +31,49 @@ export class AuthService {
   public currentUser$ = this.currentUserSubject.asObservable();
   public isAuthenticated$ = this.currentUser$.pipe(map(user => !!user));
   private dialog = inject(MatDialog);
+  private configService = inject(ConfigService);
 
   constructor() {
+    // Initialize auth after config is loaded
+    this.initializeAuthWhenReady();
+  }
+
+  private async initializeAuthWhenReady(): Promise<void> {
+    // Wait for configuration to be loaded
+    await this.configService.waitForConfig();
     this.initializeAuth();
   }
 
   private async initializeAuth(): Promise<void> {
     // Check if we should use mock authentication
-    if (environment.cognito.useMockAuth) {
+    if (this.configService.cognitoConfig.useMockAuth) {
       console.log('🧪 Using mock authentication mode');
       this.currentUserSubject.next(null);
       return;
     }
 
     try {
+      // Only check for existing session, don't force authentication
       const user = await getCurrentUser();
       const session = await fetchAuthSession();
 
       if (user && session.tokens) {
         const userData = this.mapAuthUserToUser(user, session.tokens);
         this.currentUserSubject.next(userData);
+        console.log('✅ Restored existing authentication session');
+      } else {
+        this.currentUserSubject.next(null);
       }
     } catch (error) {
-      console.log('⚠️ Real authentication failed, falling back to mock auth', error);
+      // This is expected for unauthenticated users - don't log as error
+      console.log('ℹ️ No existing authentication session found');
       this.currentUserSubject.next(null);
     }
   }
 
   login(credentials: LoginCredentials): Observable<AuthResponse> {
     // Handle mock authentication
-    if (environment.cognito.useMockAuth) {
+    if (this.configService.cognitoConfig.useMockAuth) {
       return this.mockLogin(credentials);
     }
 
@@ -180,7 +193,7 @@ export class AuthService {
     // Close all open dialogs before logout to prevent persistence issues
     this.dialog.closeAll();
 
-    if (environment.cognito.useMockAuth) {
+    if (this.configService.cognitoConfig.useMockAuth) {
       // Mock logout
       return from(
         new Promise<void>(resolve => {
@@ -206,7 +219,7 @@ export class AuthService {
   }
 
   refreshToken(): Observable<string> {
-    if (environment.cognito.useMockAuth) {
+    if (this.configService.cognitoConfig.useMockAuth) {
       // Mock refresh token
       const currentUser = this.currentUserSubject.value;
       if (currentUser) {

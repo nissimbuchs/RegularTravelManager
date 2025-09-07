@@ -1,0 +1,10 @@
+{
+  "apiUrl": "https://api-staging.example.com/staging",
+  "cognito": {
+    "userPoolId": "eu-central-1_STAGING_POOL",
+    "userPoolClientId": "staging-client-id",
+    "region": "eu-central-1",
+    "useMockAuth": false
+  },
+  "environment": "staging"
+}
