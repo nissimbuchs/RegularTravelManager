@@ -18,7 +18,7 @@ class FeatureInfrastructureGenerator {
     console.log('🏗️  Generating CDK infrastructure from feature definitions...\n');
 
     const features = this.discoverFeatures();
-    
+
     for (const feature of features) {
       console.log(`Processing feature: ${feature.name}`);
       this.generateLambdaStack(feature);
@@ -31,18 +31,18 @@ class FeatureInfrastructureGenerator {
 
   discoverFeatures() {
     const features = [];
-    
+
     if (!fs.existsSync(this.featuresDir)) {
       console.log('⚠️  Features directory not found');
       return features;
     }
 
     const featureDirs = fs.readdirSync(this.featuresDir);
-    
+
     for (const featureDir of featureDirs) {
       const featurePath = path.join(this.featuresDir, featureDir);
       const infrastructureFile = path.join(featurePath, 'infrastructure.ts');
-      
+
       if (fs.statSync(featurePath).isDirectory() && fs.existsSync(infrastructureFile)) {
         try {
           // Dynamic import would be used in real implementation
@@ -50,7 +50,7 @@ class FeatureInfrastructureGenerator {
           features.push({
             name: featureDir,
             path: featurePath,
-            infrastructureFile: infrastructureFile
+            infrastructureFile: infrastructureFile,
           });
         } catch (error) {
           console.log(`⚠️  Could not load infrastructure for ${featureDir}: ${error.message}`);
@@ -71,16 +71,16 @@ class FeatureInfrastructureGenerator {
     }
 
     const lambdaStackTemplate = this.generateLambdaStackTemplate(feature);
-    
+
     fs.writeFileSync(outputPath, lambdaStackTemplate);
     console.log(`   Generated: ${path.relative(process.cwd(), outputPath)}`);
   }
 
   generateApiGatewayRoutes(feature) {
     const outputPath = path.join(this.infrastructureDir, `${feature.name}-api-routes.ts`);
-    
+
     const apiRoutesTemplate = this.generateApiRoutesTemplate(feature);
-    
+
     fs.writeFileSync(outputPath, apiRoutesTemplate);
     console.log(`   Generated: ${path.relative(process.cwd(), outputPath)}`);
   }
@@ -197,14 +197,20 @@ export class ${this.toPascalCase(feature.name)}ApiRoutes {
 
   generateMasterInfrastructureFile(features) {
     const outputPath = path.join(this.infrastructureDir, 'generated-infrastructure.ts');
-    
-    const imports = features.map(feature => 
-      `import { ${this.toPascalCase(feature.name)}LambdaStack } from './${feature.name}-lambda-stack';`
-    ).join('\n');
 
-    const exports = features.map(feature => 
-      `export { ${this.toPascalCase(feature.name)}LambdaStack } from './${feature.name}-lambda-stack';`
-    ).join('\n');
+    const imports = features
+      .map(
+        feature =>
+          `import { ${this.toPascalCase(feature.name)}LambdaStack } from './${feature.name}-lambda-stack';`
+      )
+      .join('\n');
+
+    const exports = features
+      .map(
+        feature =>
+          `export { ${this.toPascalCase(feature.name)}LambdaStack } from './${feature.name}-lambda-stack';`
+      )
+      .join('\n');
 
     const masterFile = `/**
  * Master Infrastructure File

@@ -1,4 +1,4 @@
-import { healthHandler } from './health';
+import { healthHandler } from './health/health-check';
 import { corsMiddleware } from '../middleware/cors';
 import { errorHandler } from '../middleware/error-handler';
 import { initializeDatabase } from '../database/connection';

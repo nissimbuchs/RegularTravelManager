@@ -39,29 +39,29 @@ export const travelRequestsInfrastructure: FeatureInfrastructure = {
       handler: 'apps/api/src/handlers/travel-requests/submit-request.handler',
       description: 'Handles travel request submission with distance calculation',
       timeout: 30, // seconds - needs time for PostGIS calculations
-      memory: 512  // MB - sufficient for geographic calculations
+      memory: 512, // MB - sufficient for geographic calculations
     },
     {
       name: 'get-travel-requests',
-      handler: 'apps/api/src/handlers/travel-requests/get-requests.handler', 
+      handler: 'apps/api/src/handlers/travel-requests/get-requests.handler',
       description: 'Retrieves travel requests for employees and managers',
       timeout: 10,
-      memory: 256
+      memory: 256,
     },
     {
       name: 'process-travel-request',
       handler: 'apps/api/src/handlers/travel-requests/process-request.handler',
       description: 'Handles manager approval/rejection of travel requests',
       timeout: 15,
-      memory: 256
+      memory: 256,
     },
     {
       name: 'withdraw-travel-request',
       handler: 'apps/api/src/handlers/travel-requests/withdraw-request.handler',
       description: 'Allows employees to withdraw pending requests',
       timeout: 10,
-      memory: 256
-    }
+      memory: 256,
+    },
   ],
 
   apiRoutes: [
@@ -70,80 +70,80 @@ export const travelRequestsInfrastructure: FeatureInfrastructure = {
       path: '/travel-requests',
       lambdaFunction: 'submit-travel-request',
       requiresAuth: true,
-      description: 'Employee submits new travel request'
+      description: 'Employee submits new travel request',
     },
     {
-      method: 'GET', 
+      method: 'GET',
       path: '/travel-requests',
       lambdaFunction: 'get-travel-requests',
       requiresAuth: true,
-      description: 'Get travel requests (filtered by user role)'
+      description: 'Get travel requests (filtered by user role)',
     },
     {
       method: 'GET',
       path: '/travel-requests/{id}',
-      lambdaFunction: 'get-travel-requests', 
+      lambdaFunction: 'get-travel-requests',
       requiresAuth: true,
-      description: 'Get specific travel request details'
+      description: 'Get specific travel request details',
     },
     {
       method: 'PUT',
       path: '/travel-requests/{id}/process',
       lambdaFunction: 'process-travel-request',
       requiresAuth: true,
-      description: 'Manager approves or rejects request'
+      description: 'Manager approves or rejects request',
     },
     {
       method: 'PUT',
       path: '/travel-requests/{id}/withdraw',
       lambdaFunction: 'withdraw-travel-request',
       requiresAuth: true,
-      description: 'Employee withdraws pending request'
+      description: 'Employee withdraws pending request',
     },
     {
       method: 'GET',
       path: '/manager/requests',
       lambdaFunction: 'get-travel-requests',
       requiresAuth: true,
-      description: 'Manager dashboard - get pending requests'
-    }
+      description: 'Manager dashboard - get pending requests',
+    },
   ],
 
   environmentVariables: [
-    'DATABASE_URL',        // PostgreSQL connection
-    'AWS_REGION',         // AWS region for services
-    'SES_FROM_EMAIL',     // Email notifications sender
-    'SES_ENDPOINT',       // SES endpoint (LocalStack in dev)
+    'DATABASE_URL', // PostgreSQL connection
+    'AWS_REGION', // AWS region for services
+    'SES_FROM_EMAIL', // Email notifications sender
+    'SES_ENDPOINT', // SES endpoint (LocalStack in dev)
     'COGNITO_USER_POOL_ID', // User authentication
-    'CORS_ORIGINS',       // Allowed frontend origins
-    'LOG_LEVEL'           // Logging configuration
+    'CORS_ORIGINS', // Allowed frontend origins
+    'LOG_LEVEL', // Logging configuration
   ],
 
   iamPermissions: [
-    'rds-db:connect',           // Database access
-    'ses:SendEmail',            // Email notifications
-    'ses:SendRawEmail',         // Email notifications  
-    'cognito-idp:GetUser',      // User information
-    'logs:CreateLogGroup',      // CloudWatch logging
-    'logs:CreateLogStream',     // CloudWatch logging
-    'logs:PutLogEvents'         // CloudWatch logging
+    'rds-db:connect', // Database access
+    'ses:SendEmail', // Email notifications
+    'ses:SendRawEmail', // Email notifications
+    'cognito-idp:GetUser', // User information
+    'logs:CreateLogGroup', // CloudWatch logging
+    'logs:CreateLogStream', // CloudWatch logging
+    'logs:PutLogEvents', // CloudWatch logging
   ],
 
   databaseMigrations: [
     '001_create_travel_requests_table.sql',
     '002_add_travel_request_indexes.sql',
     '003_create_request_status_history.sql',
-    '004_add_withdrawal_status.sql'
+    '004_add_withdrawal_status.sql',
   ],
 
   awsServices: [
-    'API Gateway',    // REST API endpoints
-    'Lambda',         // Function execution
+    'API Gateway', // REST API endpoints
+    'Lambda', // Function execution
     'RDS PostgreSQL', // Data storage with PostGIS
-    'SES',           // Email notifications
-    'Cognito',       // Authentication
-    'CloudWatch'     // Logging and monitoring
-  ]
+    'SES', // Email notifications
+    'Cognito', // Authentication
+    'CloudWatch', // Logging and monitoring
+  ],
 };
 
 /**
@@ -152,7 +152,7 @@ export const travelRequestsInfrastructure: FeatureInfrastructure = {
  */
 export function validateTravelRequestsInfrastructure(): string[] {
   const errors: string[] = [];
-  
+
   // Validate that all handler files exist
   travelRequestsInfrastructure.lambdaFunctions.forEach(func => {
     const handlerPath = `${func.handler}.ts`;
@@ -162,11 +162,13 @@ export function validateTravelRequestsInfrastructure(): string[] {
     }
   });
 
-  // Validate API routes reference valid Lambda functions  
+  // Validate API routes reference valid Lambda functions
   const lambdaNames = new Set(travelRequestsInfrastructure.lambdaFunctions.map(f => f.name));
   travelRequestsInfrastructure.apiRoutes.forEach(route => {
     if (!lambdaNames.has(route.lambdaFunction)) {
-      errors.push(`API route ${route.method} ${route.path} references unknown Lambda function: ${route.lambdaFunction}`);
+      errors.push(
+        `API route ${route.method} ${route.path} references unknown Lambda function: ${route.lambdaFunction}`
+      );
     }
   });
 
@@ -178,7 +180,9 @@ export function validateTravelRequestsInfrastructure(): string[] {
  * Can be used by developers to quickly generate infrastructure boilerplate
  */
 export function generateCDKCode(): string {
-  const lambdaFunctions = travelRequestsInfrastructure.lambdaFunctions.map(func => `
+  const lambdaFunctions = travelRequestsInfrastructure.lambdaFunctions
+    .map(
+      func => `
     // ${func.description}
     const ${func.name.replace(/-/g, '')}Lambda = new Function(this, '${func.name}', {
       runtime: Runtime.NODEJS_20_X,
@@ -189,14 +193,20 @@ export function generateCDKCode(): string {
       environment: {
         ${travelRequestsInfrastructure.environmentVariables.map(env => `${env}: process.env.${env} || ''`).join(',\n        ')}
       }
-    });`).join('\n');
+    });`
+    )
+    .join('\n');
 
-  const apiRoutes = travelRequestsInfrastructure.apiRoutes.map(route => `
+  const apiRoutes = travelRequestsInfrastructure.apiRoutes
+    .map(
+      route => `
     // ${route.description}
     api.addMethod('${route.method}', '${route.path}', {
       integration: new LambdaIntegration(${route.lambdaFunction.replace(/-/g, '')}Lambda),
       authorizer: ${route.requiresAuth ? 'cognitoAuthorizer' : 'undefined'}
-    });`).join('\n');
+    });`
+    )
+    .join('\n');
 
   return `
 // Generated CDK code for Travel Requests feature

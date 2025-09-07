@@ -92,7 +92,7 @@ async function generateAndUploadConfig(
         userPoolId: userPoolId,
         userPoolClientId: clientId,
         region: region,
-        useMockAuth: false
+        useMockAuth: false,
       },
       environment: environment,
     };
@@ -100,12 +100,12 @@ async function generateAndUploadConfig(
     console.log('Generated config:', {
       apiUrl: config.apiUrl,
       userPoolId: config.cognito.userPoolId,
-      environment: config.environment
+      environment: config.environment,
     });
 
     // Upload to S3
     const configJson = JSON.stringify(config, null, 2);
-    
+
     const uploadCommand = new PutObjectCommand({
       Bucket: bucketName,
       Key: 'assets/config/config.json',
@@ -128,7 +128,6 @@ async function generateAndUploadConfig(
 
     await s3Client.send(envUploadCommand);
     console.log(`Successfully uploaded config.${environment}.json to S3 bucket: ${bucketName}`);
-
   } catch (error) {
     console.error('Failed to generate/upload config:', error);
     throw error;
@@ -140,14 +139,14 @@ async function getSSMParameter(parameterName: string): Promise<string> {
     const command = new GetParameterCommand({
       Name: parameterName,
     });
-    
+
     const response = await ssmClient.send(command);
     const value = response.Parameter?.Value;
-    
+
     if (!value) {
       throw new Error(`Parameter ${parameterName} has no value`);
     }
-    
+
     console.log(`Retrieved parameter ${parameterName}: ${value}`);
     return value;
   } catch (error) {

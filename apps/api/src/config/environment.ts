@@ -46,9 +46,13 @@ function getRTMEnvironment(): RTMEnvironment {
 
   // Fall back to NODE_ENV mapping for backward compatibility
   const nodeEnv = process.env.NODE_ENV;
-  if (nodeEnv === 'development') return 'local';
-  if (nodeEnv === 'production') return 'dev'; // Default AWS deployment is dev
-  
+  if (nodeEnv === 'development') {
+    return 'local';
+  }
+  if (nodeEnv === 'production') {
+    return 'dev';
+  } // Default AWS deployment is dev
+
   return 'local';
 }
 

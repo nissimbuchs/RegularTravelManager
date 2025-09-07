@@ -35,7 +35,7 @@ export const ENVIRONMENT_CONFIG: Record<string, EnvironmentConfig> = {
     },
     frontendDomains: {
       primary: 'http://localhost:4200',
-      additional: ['http://localhost:3000']
+      additional: ['http://localhost:3000'],
     },
     api: {
       customDomainEnabled: false,
@@ -54,7 +54,7 @@ export const ENVIRONMENT_CONFIG: Record<string, EnvironmentConfig> = {
     },
     frontendDomains: {
       primary: 'https://staging-travel.company.com',
-      additional: ['http://localhost:4200', 'http://localhost:3000']
+      additional: ['http://localhost:4200', 'http://localhost:3000'],
     },
     api: {
       domainName: 'api-staging.company.com',
@@ -73,7 +73,7 @@ export const ENVIRONMENT_CONFIG: Record<string, EnvironmentConfig> = {
       includeLocalhost: false, // No localhost in production
     },
     frontendDomains: {
-      primary: 'https://travel.company.com'
+      primary: 'https://travel.company.com',
     },
     api: {
       domainName: 'api.company.com',
@@ -93,13 +93,13 @@ export const ENVIRONMENT_CONFIG: Record<string, EnvironmentConfig> = {
  */
 export function getEnvironmentConfig(environment: string): EnvironmentConfig {
   const config = ENVIRONMENT_CONFIG[environment];
-  
+
   if (!config) {
     throw new Error(
       `Invalid environment: ${environment}. Must be one of: ${Object.keys(ENVIRONMENT_CONFIG).join(', ')}`
     );
   }
-  
+
   return config;
 }
 
@@ -112,18 +112,18 @@ export function getEnvironmentConfig(environment: string): EnvironmentConfig {
 export function getCorsOrigins(environment: string, cloudFrontDomain?: string): string[] {
   const config = getEnvironmentConfig(environment);
   const corsConfig = config.corsOrigins;
-  
-  let origins = [...corsConfig.static];
-  
+
+  const origins = [...corsConfig.static];
+
   // Add CloudFront domain if configured and provided
   if (corsConfig.includeCloudFrontDomain && cloudFrontDomain) {
     origins.push(`https://${cloudFrontDomain}`);
   }
-  
+
   // Add localhost domains if configured
   if (corsConfig.includeLocalhost) {
     origins.push('http://localhost:4200', 'http://localhost:3000');
   }
-  
+
   return origins;
 }

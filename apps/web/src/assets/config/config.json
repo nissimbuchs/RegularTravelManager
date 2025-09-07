@@ -1,5 +1,5 @@
 {
-  "apiUrl": "http://localhost:3000/dev",
+  "apiUrl": "http://localhost:3000",
   "cognito": {
     "userPoolId": "local",
     "userPoolClientId": "local", 

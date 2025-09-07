@@ -12,14 +12,14 @@ class WorkflowHelper {
   constructor() {
     this.rl = readline.createInterface({
       input: process.stdin,
-      output: process.stdout
+      output: process.stdout,
     });
   }
 
   async runGuidedWorkflow() {
     console.log('🚀 RegularTravelManager Development Workflow Helper');
-    console.log('='  .repeat(50));
-    
+    console.log('='.repeat(50));
+
     const action = await this.ask(`
 What would you like to do?
 1. Start working on a new story (infrastructure assessment)
@@ -59,10 +59,10 @@ Enter your choice (1-6): `);
 
   async startStoryWorkflow() {
     console.log('\n📝 Starting Story Workflow - Infrastructure Assessment');
-    console.log('-'  .repeat(50));
-    
+    console.log('-'.repeat(50));
+
     console.log('Running story infrastructure checker...\n');
-    
+
     try {
       execSync('npm run story:start', { stdio: 'inherit' });
     } catch (error) {
@@ -73,10 +73,10 @@ Enter your choice (1-6): `);
 
   async completeStoryWorkflow() {
     console.log('\n✅ Completing Story Workflow - Infrastructure Validation');
-    console.log('-'  .repeat(55));
-    
+    console.log('-'.repeat(55));
+
     console.log('Step 1: Validating infrastructure consistency...\n');
-    
+
     try {
       execSync('npm run infrastructure:validate', { stdio: 'inherit' });
       console.log('\n✅ Infrastructure validation passed!');
@@ -87,12 +87,12 @@ Enter your choice (1-6): `);
     }
 
     console.log('\nStep 2: Reviewing infrastructure changes...\n');
-    
+
     try {
       execSync('npm run infrastructure:plan', { stdio: 'inherit' });
-      
+
       const proceed = await this.ask('\nDo the infrastructure changes look correct? (y/n): ');
-      
+
       if (proceed.toLowerCase().startsWith('y')) {
         console.log('\n🎉 Story infrastructure validation complete!');
         console.log('Your story is ready for code review and deployment.');
@@ -108,8 +108,8 @@ Enter your choice (1-6): `);
 
   async generateInfrastructureWorkflow() {
     console.log('\n🏗️  Generating Infrastructure from Feature Definitions');
-    console.log('-'  .repeat(55));
-    
+    console.log('-'.repeat(55));
+
     try {
       execSync('npm run infrastructure:generate', { stdio: 'inherit' });
       console.log('\n✅ Infrastructure generation complete!');
@@ -121,8 +121,8 @@ Enter your choice (1-6): `);
 
   async validateInfrastructureWorkflow() {
     console.log('\n🔍 Validating Current Infrastructure State');
-    console.log('-'  .repeat(40));
-    
+    console.log('-'.repeat(40));
+
     try {
       execSync('npm run infrastructure:validate', { stdio: 'inherit' });
       console.log('\n✅ Infrastructure validation complete!');
@@ -134,8 +134,8 @@ Enter your choice (1-6): `);
 
   async planInfrastructureWorkflow() {
     console.log('\n📋 Planning Infrastructure Changes (CDK Diff)');
-    console.log('-'  .repeat(45));
-    
+    console.log('-'.repeat(45));
+
     try {
       execSync('npm run infrastructure:plan', { stdio: 'inherit' });
     } catch (error) {
@@ -146,8 +146,8 @@ Enter your choice (1-6): `);
 
   async quickSetupWorkflow() {
     console.log('\n⚡ Quick Development Environment Setup');
-    console.log('-'  .repeat(40));
-    
+    console.log('-'.repeat(40));
+
     console.log('Step 1: Starting development environment...');
     try {
       execSync('npm run dev:env', { stdio: 'inherit' });

@@ -13,13 +13,13 @@ import { ConfigService } from './core/services/config.service';
 })
 export class AppComponent implements OnInit {
   title = 'RegularTravelManager';
-  
+
   private configService = inject(ConfigService);
 
   async ngOnInit(): Promise<void> {
     // Wait for configuration to be loaded by APP_INITIALIZER
     await this.configService.waitForConfig();
-    
+
     // Configure Amplify with runtime configuration
     configureAmplify(this.configService);
   }

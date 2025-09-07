@@ -443,7 +443,7 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
       data: { title: 'Create New Project', project: null },
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(result => {
       if (result) {
         this.loadProjects();
         this.snackBar.open('Project created successfully', 'Close', { duration: 3000 });
@@ -457,7 +457,7 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
       data: { title: 'Edit Project', project },
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(result => {
       if (result) {
         this.loadProjects();
         this.snackBar.open('Project updated successfully', 'Close', { duration: 3000 });
@@ -476,7 +476,7 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
       },
     });
 
-    dialogRef.afterClosed().subscribe(confirmed => {
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(confirmed => {
       if (confirmed) {
         this.projectService
           .toggleProjectStatus(project.id)
@@ -520,7 +520,7 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
             },
           });
 
-          dialogRef.afterClosed().subscribe(confirmed => {
+          dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(confirmed => {
             if (confirmed) {
               this.projectService
                 .deleteProject(project.id)

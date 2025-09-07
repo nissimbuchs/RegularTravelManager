@@ -1,18 +1,18 @@
 /**
  * Enhanced Sample Data Loading Lambda Function
- * 
+ *
  * This Lambda function loads sample data for the RegularTravelManager application
  * with dynamic Cognito user creation and management.
- * 
+ *
  * Key features:
  * - Automatically creates/verifies Cognito users with proper group assignments
  * - Dynamically retrieves real Cognito user IDs instead of hardcoded values
  * - Idempotent operation - safe to run multiple times
  * - Supports all three user roles: administrators, managers, employees
- * 
+ *
  * Environment Variables Required:
  * - USER_POOL_ID: Cognito User Pool ID for user creation
- * 
+ *
  * IAM Permissions Required:
  * - cognito-idp:AdminGetUser
  * - cognito-idp:AdminCreateUser
@@ -32,76 +32,76 @@ const sampleUsers = [
     email: 'admin1@company.ch',
     firstName: 'Hans',
     lastName: 'Zimmermann',
-    role: 'administrators'
+    role: 'administrators',
   },
   {
     email: 'admin2@company.ch',
     firstName: 'Maria',
     lastName: 'Weber',
-    role: 'administrators'
+    role: 'administrators',
   },
   {
     email: 'manager1@company.ch',
     firstName: 'Thomas',
     lastName: 'Müller',
-    role: 'managers'
+    role: 'managers',
   },
   {
     email: 'manager2@company.ch',
     firstName: 'Sophie',
     lastName: 'Dubois',
-    role: 'managers'
+    role: 'managers',
   },
   {
     email: 'employee1@company.ch',
     firstName: 'Anna',
     lastName: 'Schneider',
-    role: 'employees'
+    role: 'employees',
   },
   {
     email: 'employee2@company.ch',
     firstName: 'Marco',
     lastName: 'Rossi',
-    role: 'employees'
+    role: 'employees',
   },
   {
     email: 'employee3@company.ch',
     firstName: 'Lisa',
     lastName: 'Meier',
-    role: 'employees'
+    role: 'employees',
   },
   {
     email: 'employee4@company.ch',
     firstName: 'Pierre',
     lastName: 'Martin',
-    role: 'employees'
+    role: 'employees',
   },
   {
     email: 'employee5@company.ch',
     firstName: 'Julia',
     lastName: 'Fischer',
-    role: 'employees'
+    role: 'employees',
   },
   {
     email: 'employee6@company.ch',
     firstName: 'Michael',
     lastName: 'Keller',
-    role: 'employees'
-  }
+    role: 'employees',
+  },
 ];
 
 async function ensureCognitoUser(cognitoClient, userPoolId, userInfo) {
   const { email, firstName, lastName, role } = userInfo;
-  
+
   try {
     console.log(`Checking if user ${email} exists in Cognito...`);
-    
+
     // Check if user exists
     const getUserParams = {
       UserPoolId: userPoolId,
-      Username: email
+      Username: email,
     };
-    
+
     try {
       const existingUser = await cognitoClient.adminGetUser(getUserParams).promise();
       console.log(`User ${email} already exists in Cognito`);
@@ -112,9 +112,9 @@ async function ensureCognitoUser(cognitoClient, userPoolId, userInfo) {
         throw err;
       }
     }
-    
+
     console.log(`Creating user ${email} in Cognito...`);
-    
+
     // Create user if doesn't exist
     const createParams = {
       UserPoolId: userPoolId,
@@ -123,33 +123,36 @@ async function ensureCognitoUser(cognitoClient, userPoolId, userInfo) {
         { Name: 'email', Value: email },
         { Name: 'given_name', Value: firstName },
         { Name: 'family_name', Value: lastName },
-        { Name: 'email_verified', Value: 'true' }
+        { Name: 'email_verified', Value: 'true' },
       ],
       TemporaryPassword: 'TempPass123!',
-      MessageAction: 'SUPPRESS'
+      MessageAction: 'SUPPRESS',
     };
-    
+
     const result = await cognitoClient.adminCreateUser(createParams).promise();
     console.log(`User ${email} created successfully`);
-    
+
     // Set permanent password
-    await cognitoClient.adminSetUserPassword({
-      UserPoolId: userPoolId,
-      Username: result.User.Username,
-      Password: 'DevPassword123!',
-      Permanent: true
-    }).promise();
-    
+    await cognitoClient
+      .adminSetUserPassword({
+        UserPoolId: userPoolId,
+        Username: result.User.Username,
+        Password: 'DevPassword123!',
+        Permanent: true,
+      })
+      .promise();
+
     // Add to appropriate group
-    await cognitoClient.adminAddUserToGroup({
-      UserPoolId: userPoolId,
-      Username: result.User.Username,
-      GroupName: role
-    }).promise();
-    
+    await cognitoClient
+      .adminAddUserToGroup({
+        UserPoolId: userPoolId,
+        Username: result.User.Username,
+        GroupName: role,
+      })
+      .promise();
+
     console.log(`User ${email} added to group ${role}`);
     return result.User.Username;
-    
   } catch (error) {
     console.error(`Failed to ensure user ${email}:`, error);
     throw error;
@@ -175,13 +178,13 @@ async function runMigrations(client) {
   const migrationFiles = [
     '001_initial_schema.sql',
     '002_add_cognito_fields.sql',
-    '003_distance_calculation_functions.sql'
+    '003_distance_calculation_functions.sql',
   ];
 
   for (const filename of migrationFiles) {
     try {
       const version = filename.replace('.sql', '');
-      
+
       // Check if migration already executed
       const existingResult = await client.query(
         'SELECT version FROM schema_migrations WHERE version = $1',
@@ -268,7 +271,7 @@ exports.handler = async event => {
     if (!userPoolId) {
       throw new Error('USER_POOL_ID environment variable not set');
     }
-    
+
     const cognitoIdMappings = {};
     for (const userInfo of sampleUsers) {
       try {

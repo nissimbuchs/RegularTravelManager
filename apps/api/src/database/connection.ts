@@ -163,15 +163,17 @@ export async function getDatabaseConfig(): Promise<DatabaseConfig> {
   // For AWS Lambda, get credentials from Secrets Manager
   if (!isLocal && !process.env.DB_USERNAME) {
     // Use dynamic import to access AWS SDK that's available in Lambda runtime
-    const { SecretsManagerClient, GetSecretValueCommand } = await import('@aws-sdk/client-secrets-manager');
+    const { SecretsManagerClient, GetSecretValueCommand } = await import(
+      '@aws-sdk/client-secrets-manager'
+    );
     const secretsManager = new SecretsManagerClient({});
-    
+
     try {
       const secretId = `rtm-${process.env.RTM_ENVIRONMENT || 'dev'}-db-credentials`;
       const command = new GetSecretValueCommand({ SecretId: secretId });
       const secret = await secretsManager.send(command);
       const credentials = JSON.parse(secret.SecretString!);
-      
+
       const config: DatabaseConfig = {
         host: process.env.DB_HOST || credentials.host,
         port: parseInt(process.env.DB_PORT || credentials.port?.toString() || '5432'),

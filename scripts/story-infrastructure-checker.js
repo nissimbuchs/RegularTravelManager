@@ -13,20 +13,20 @@ class StoryInfrastructureChecker {
   constructor() {
     this.rl = readline.createInterface({
       input: process.stdin,
-      output: process.stdout
+      output: process.stdout,
     });
-    
+
     this.checklist = {
       frontend: [],
       backend: [],
       infrastructure: [],
-      environment: []
+      environment: [],
     };
   }
 
   async runInteractiveCheck() {
     console.log('🚀 Story Infrastructure Checker');
-    console.log('='  .repeat(40));
+    console.log('='.repeat(40));
     console.log('This tool helps ensure your story has all required infrastructure updates.\n');
 
     const storyName = await this.ask('📝 What is your story name/ID? ');
@@ -43,7 +43,7 @@ class StoryInfrastructureChecker {
 
   async checkFrontendChanges() {
     console.log('🎨 Frontend Changes Assessment');
-    console.log('-'  .repeat(30));
+    console.log('-'.repeat(30));
 
     if (await this.askYesNo('Will you create new Angular components or pages?')) {
       const components = await this.ask('List the component names (comma-separated): ');
@@ -70,12 +70,12 @@ class StoryInfrastructureChecker {
 
   async checkBackendChanges() {
     console.log('⚡ Backend Changes Assessment');
-    console.log('-'  .repeat(30));
+    console.log('-'.repeat(30));
 
     if (await this.askYesNo('Will you create new API endpoints?')) {
       const endpoints = await this.ask('List endpoints (e.g., POST /users, GET /users/{id}): ');
       this.checklist.backend.push(`New API endpoints: ${endpoints}`);
-      
+
       const lambdaFunctions = await this.ask('List Lambda handler files needed: ');
       this.checklist.backend.push(`Lambda functions: ${lambdaFunctions}`);
     }
@@ -83,7 +83,7 @@ class StoryInfrastructureChecker {
     if (await this.askYesNo('Will you modify the database schema?')) {
       const dbChanges = await this.ask('Describe database changes (tables, columns, indexes): ');
       this.checklist.backend.push(`Database changes: ${dbChanges}`);
-      
+
       const migration = await this.ask('Migration script name: ');
       this.checklist.backend.push(`Migration: ${migration}`);
     }
@@ -98,16 +98,20 @@ class StoryInfrastructureChecker {
 
   async checkInfrastructureChanges() {
     console.log('🏗️  Infrastructure Changes Assessment');
-    console.log('-'  .repeat(35));
+    console.log('-'.repeat(35));
 
     if (this.checklist.backend.some(item => item.includes('endpoints'))) {
       console.log('⚠️  Detected API endpoints - API Gateway routes required!');
-      this.checklist.infrastructure.push('✅ Update API Gateway routes in infrastructure/src/api-gateway-stack.ts');
+      this.checklist.infrastructure.push(
+        '✅ Update API Gateway routes in infrastructure/src/api-gateway-stack.ts'
+      );
     }
 
     if (this.checklist.backend.some(item => item.includes('Lambda'))) {
       console.log('⚠️  Detected Lambda functions - CDK Lambda stack update required!');
-      this.checklist.infrastructure.push('✅ Update Lambda functions in infrastructure/src/lambda-stack.ts');
+      this.checklist.infrastructure.push(
+        '✅ Update Lambda functions in infrastructure/src/lambda-stack.ts'
+      );
     }
 
     if (await this.askYesNo('Will you need new environment variables?')) {
@@ -130,7 +134,7 @@ class StoryInfrastructureChecker {
 
   async checkEnvironmentChanges() {
     console.log('🐳 Development Environment Changes');
-    console.log('-'  .repeat(35));
+    console.log('-'.repeat(35));
 
     if (await this.askYesNo('Will you need new Docker services in development?')) {
       const services = await this.ask('Describe Docker services needed: ');
@@ -152,10 +156,10 @@ class StoryInfrastructureChecker {
 
   generateSummary(storyName) {
     console.log('📋 Infrastructure Checklist Summary');
-    console.log('='  .repeat(40));
-    
-    const hasInfrastructureWork = 
-      this.checklist.backend.length > 0 || 
+    console.log('='.repeat(40));
+
+    const hasInfrastructureWork =
+      this.checklist.backend.length > 0 ||
       this.checklist.infrastructure.length > 0 ||
       this.checklist.environment.length > 0;
 
@@ -196,7 +200,7 @@ class StoryInfrastructureChecker {
     console.log('   2. Run "npm run infrastructure:validate" to check your work');
     console.log('   3. Run "npm run infrastructure:plan" to review CDK changes');
     console.log('   4. Include infrastructure checklist in your PR');
-    
+
     console.log('\n⚠️  IMPORTANT: Do not mark story as complete until infrastructure is updated!');
   }
 

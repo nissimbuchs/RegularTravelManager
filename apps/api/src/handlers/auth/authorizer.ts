@@ -35,11 +35,13 @@ function getVerifier() {
   if (!verifier) {
     const userPoolId = process.env.COGNITO_USER_POOL_ID;
     const clientId = process.env.COGNITO_CLIENT_ID;
-    
+
     if (!userPoolId || !clientId) {
-      throw new Error('Missing required Cognito configuration: COGNITO_USER_POOL_ID and COGNITO_CLIENT_ID environment variables are required');
+      throw new Error(
+        'Missing required Cognito configuration: COGNITO_USER_POOL_ID and COGNITO_CLIENT_ID environment variables are required'
+      );
     }
-    
+
     verifier = CognitoJwtVerifier.create({
       userPoolId,
       tokenUse: 'access',

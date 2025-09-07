@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { logger } from '../middleware/logger';
-import { formatResponse } from '../middleware/response-formatter';
-import { testDatabaseConnection } from '../database/connection';
+import { logger } from '../../middleware/logger';
+import { formatResponse } from '../../middleware/response-formatter';
+import { testDatabaseConnection } from '../../database/connection';
 
 export interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';

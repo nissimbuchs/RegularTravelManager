@@ -150,7 +150,14 @@ export class ProjectService {
   }
 
   private refreshProjects(): void {
-    this.getProjects().subscribe();
+    this.getProjects().subscribe({
+      error: (error) => {
+        // Ignore auth errors silently during logout
+  if (error.status !== 401 && error.status !== 403) {
+          console.error('Failed to refresh projects:', error);
+        }
+      }
+    });
   }
 
   // Validation helpers

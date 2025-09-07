@@ -34,10 +34,10 @@ class InfrastructureValidator {
 
     const handlerFiles = this.findHandlerFiles();
     const apiGatewayConfig = this.readApiGatewayConfig();
-    
+
     for (const handlerFile of handlerFiles) {
       const endpoints = this.extractEndpointsFromHandler(handlerFile);
-      
+
       for (const endpoint of endpoints) {
         if (!this.isEndpointInApiGateway(endpoint, apiGatewayConfig)) {
           this.errors.push(
@@ -58,7 +58,7 @@ class InfrastructureValidator {
 
     for (const handlerFile of handlerFiles) {
       const functionName = this.deriveFunctionName(handlerFile);
-      
+
       if (!this.isLambdaInStack(functionName, lambdaStackConfig)) {
         this.errors.push(
           `❌ Lambda function ${functionName} (${handlerFile}) not found in Lambda stack CDK configuration`
@@ -78,7 +78,7 @@ class InfrastructureValidator {
 
     for (const handlerFile of handlerFiles) {
       const envVars = this.extractEnvVarsFromHandler(handlerFile);
-      
+
       for (const envVar of envVars) {
         // Check if env var is configured in development (docker-compose)
         if (!this.isEnvVarInDockerCompose(envVar, dockerComposeConfig)) {
@@ -111,17 +111,21 @@ class InfrastructureValidator {
 
   findHandlerFiles() {
     const handlerFiles = [];
-    
-    const scanDirectory = (dir) => {
+
+    const scanDirectory = dir => {
       const files = fs.readdirSync(dir);
-      
+
       for (const file of files) {
         const filePath = path.join(dir, file);
         const stat = fs.statSync(filePath);
-        
+
         if (stat.isDirectory()) {
           scanDirectory(filePath);
-        } else if (file.endsWith('.ts') && !file.endsWith('.test.ts') && !file.endsWith('.spec.ts')) {
+        } else if (
+          file.endsWith('.ts') &&
+          !file.endsWith('.test.ts') &&
+          !file.endsWith('.spec.ts')
+        ) {
           handlerFiles.push(filePath);
         }
       }
@@ -142,10 +146,10 @@ class InfrastructureValidator {
     const patterns = [
       // Fastify route definitions
       /fastify\.(get|post|put|delete|patch)\s*\(\s*['"`]([^'"`]+)['"`]/gi,
-      // Express-style route definitions  
+      // Express-style route definitions
       /router\.(get|post|put|delete|patch)\s*\(\s*['"`]([^'"`]+)['"`]/gi,
       // API Gateway event path patterns
-      /event\.httpMethod\s*===\s*['"`](GET|POST|PUT|DELETE|PATCH)['"`].*event\.path\s*===\s*['"`]([^'"`]+)['"`]/gi
+      /event\.httpMethod\s*===\s*['"`](GET|POST|PUT|DELETE|PATCH)['"`].*event\.path\s*===\s*['"`]([^'"`]+)['"`]/gi,
     ];
 
     for (const pattern of patterns) {
@@ -154,7 +158,7 @@ class InfrastructureValidator {
         endpoints.push({
           method: match[1].toUpperCase(),
           path: match[2],
-          file: handlerFile
+          file: handlerFile,
         });
       }
     }
@@ -169,7 +173,7 @@ class InfrastructureValidator {
     // Extract process.env.VARIABLE_NAME patterns
     const envPattern = /process\.env\.([A-Z_][A-Z0-9_]*)/g;
     let match;
-    
+
     while ((match = envPattern.exec(content)) !== null) {
       envVars.add(match[1]);
     }
@@ -179,7 +183,7 @@ class InfrastructureValidator {
 
   readApiGatewayConfig() {
     const apiGatewayPath = path.join(this.infrastructureDir, 'api-gateway-stack.ts');
-    
+
     if (!fs.existsSync(apiGatewayPath)) {
       this.warnings.push('⚠️  API Gateway stack file not found');
       return '';
@@ -190,7 +194,7 @@ class InfrastructureValidator {
 
   readLambdaStackConfig() {
     const lambdaStackPath = path.join(this.infrastructureDir, 'lambda-stack.ts');
-    
+
     if (!fs.existsSync(lambdaStackPath)) {
       this.warnings.push('⚠️  Lambda stack file not found');
       return '';
@@ -201,7 +205,7 @@ class InfrastructureValidator {
 
   readDockerComposeConfig() {
     const dockerComposePath = path.join(process.cwd(), 'docker-compose.yml');
-    
+
     if (!fs.existsSync(dockerComposePath)) {
       this.warnings.push('⚠️  docker-compose.yml not found');
       return '';
@@ -214,7 +218,7 @@ class InfrastructureValidator {
     // Simple pattern matching - could be enhanced with AST parsing
     const pathPattern = endpoint.path.replace(/\{[^}]+\}/g, '\\{[^}]+\\}'); // Convert {id} to regex
     const routeRegex = new RegExp(`${endpoint.method}.*['"\`]${pathPattern}['"\`]`, 'i');
-    
+
     return routeRegex.test(apiGatewayConfig);
   }
 
@@ -238,13 +242,13 @@ class InfrastructureValidator {
       .replace(/\.ts$/, '')
       .replace(/[\/\\]/g, '-')
       .replace(/[^a-zA-Z0-9-]/g, '');
-    
+
     return functionName;
   }
 
   printResults() {
     console.log('\n📋 Infrastructure Validation Results:');
-    console.log('='  .repeat(50));
+    console.log('='.repeat(50));
 
     if (this.errors.length === 0 && this.warnings.length === 0) {
       console.log('✅ All infrastructure validations passed!');
@@ -264,7 +268,7 @@ class InfrastructureValidator {
     console.log('   1. Update infrastructure CDK files');
     console.log('   2. Run "npm run infrastructure:plan" to see changes');
     console.log('   3. Run this validator again');
-    console.log('='  .repeat(50));
+    console.log('='.repeat(50));
   }
 }
 

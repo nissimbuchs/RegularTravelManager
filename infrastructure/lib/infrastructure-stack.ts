@@ -79,7 +79,6 @@ export class InfrastructureStack extends cdk.Stack {
     // IAM Roles and Policies
     this.setupIAMRoles(environment);
 
-
     // AWS SES
     this.setupSES(environment, props.domainName);
 
@@ -435,7 +434,6 @@ export class InfrastructureStack extends cdk.Stack {
     );
   }
 
-
   private setupSES(environment: string, domainName?: string) {
     if (domainName) {
       // Domain identity
@@ -580,7 +578,6 @@ export class InfrastructureStack extends cdk.Stack {
         environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
     });
 
-
     // RDS Alarms
     const dbCpuAlarm = new cloudwatch.Alarm(this, 'DBCpuAlarm', {
       alarmName: `rtm-${environment}-db-high-cpu`,
@@ -663,7 +660,6 @@ export class InfrastructureStack extends cdk.Stack {
     const dashboard = new cloudwatch.Dashboard(this, 'MonitoringDashboard', {
       dashboardName: `rtm-${environment}-monitoring`,
     });
-
 
     // RDS metrics widget
     const rdsWidgets = [
@@ -786,32 +782,33 @@ export class InfrastructureStack extends cdk.Stack {
       value: `https://${this.distribution.distributionDomainName}`,
       exportName: `rtm-${environment}-web-url`,
     });
-
   }
 
   private setupWebConfigGeneration(environment: string) {
     // Create Lambda function to generate web configuration
-    const configGeneratorFunction = new lambdaNodejs.NodejsFunction(this, 'WebConfigGeneratorFunction', {
-      functionName: `rtm-${environment}-web-config-generator`,
-      entry: path.join(__dirname, 'lambda/generate-web-config.ts'),
-      handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_18_X,
-      timeout: cdk.Duration.minutes(2),
-      memorySize: 256,
-      bundling: {
-        externalModules: ['@aws-sdk/*'],
-        nodeModules: ['node-fetch'],
-      },
-    });
+    const configGeneratorFunction = new lambdaNodejs.NodejsFunction(
+      this,
+      'WebConfigGeneratorFunction',
+      {
+        functionName: `rtm-${environment}-web-config-generator`,
+        entry: path.join(__dirname, 'lambda/generate-web-config.ts'),
+        handler: 'handler',
+        runtime: lambda.Runtime.NODEJS_18_X,
+        timeout: cdk.Duration.minutes(2),
+        memorySize: 256,
+        bundling: {
+          externalModules: ['@aws-sdk/*'],
+          nodeModules: ['node-fetch'],
+        },
+      }
+    );
 
     // Grant permissions to read SSM parameters
     configGeneratorFunction.addToRolePolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ['ssm:GetParameter'],
-        resources: [
-          `arn:aws:ssm:${this.region}:${this.account}:parameter/rtm/${environment}/*`,
-        ],
+        resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter/rtm/${environment}/*`],
       })
     );
 
@@ -832,10 +829,14 @@ export class InfrastructureStack extends cdk.Stack {
     });
 
     // Create Custom Resource to trigger config generation
-    const configGeneratorProvider = new customResources.Provider(this, 'WebConfigGeneratorProvider', {
-      onEventHandler: configGeneratorFunction,
-      logGroup: configGeneratorLogGroup,
-    });
+    const configGeneratorProvider = new customResources.Provider(
+      this,
+      'WebConfigGeneratorProvider',
+      {
+        onEventHandler: configGeneratorFunction,
+        logGroup: configGeneratorLogGroup,
+      }
+    );
 
     const configGeneratorResource = new cdk.CustomResource(this, 'WebConfigGeneratorResource', {
       serviceToken: configGeneratorProvider.serviceToken,
