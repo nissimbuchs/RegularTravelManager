@@ -312,10 +312,17 @@ export class InfrastructureStack extends cdk.Stack {
       });
     }
 
+    // Create log group for user creator provider
+    const userCreatorLogGroup = new logs.LogGroup(this, 'UserCreatorProviderLogs', {
+      logGroupName: `/aws/lambda/rtm-${environment}-user-creator-provider`,
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
     // Create Custom Resource to trigger user creation
     const userCreatorProvider = new customResources.Provider(this, 'UserCreatorProvider', {
       onEventHandler: userCreatorFunction,
-      logRetention: logs.RetentionDays.ONE_WEEK,
+      logGroup: userCreatorLogGroup,
     });
 
     const userCreatorResource = new cdk.CustomResource(this, 'UserCreatorResource', {
@@ -945,10 +952,17 @@ export class InfrastructureStack extends cdk.Stack {
       })
     );
 
+    // Create log group for config generator provider
+    const configGeneratorLogGroup = new logs.LogGroup(this, 'WebConfigGeneratorProviderLogs', {
+      logGroupName: `/aws/lambda/rtm-${environment}-web-config-generator-provider`,
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
     // Create Custom Resource to trigger config generation
     const configGeneratorProvider = new customResources.Provider(this, 'WebConfigGeneratorProvider', {
       onEventHandler: configGeneratorFunction,
-      logRetention: logs.RetentionDays.ONE_WEEK,
+      logGroup: configGeneratorLogGroup,
     });
 
     const configGeneratorResource = new cdk.CustomResource(this, 'WebConfigGeneratorResource', {

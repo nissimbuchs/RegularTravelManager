@@ -7,16 +7,15 @@
     "target": "ES2022",
     "module": "CommonJS",
     "moduleResolution": "Node",
-    "types": ["node"],
+    "types": ["node", "jest"],
     "exactOptionalPropertyTypes": false
   },
   "include": [
-    "lib/**/*"
+    "lib/**/*",
+    "test/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.spec.ts"
+    "dist"
   ]
 }

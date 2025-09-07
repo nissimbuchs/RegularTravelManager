@@ -12,7 +12,7 @@ const { execSync } = require('child_process');
 class InfrastructureValidator {
   constructor() {
     this.apiDir = path.join(process.cwd(), 'apps/api/src/handlers');
-    this.infrastructureDir = path.join(process.cwd(), 'infrastructure/src');
+    this.infrastructureDir = path.join(process.cwd(), 'infrastructure/lib');
     this.errors = [];
     this.warnings = [];
   }
