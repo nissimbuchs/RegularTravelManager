@@ -4,7 +4,7 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
-import { getCorsOrigins, getEnvironmentConfig } from './config/environment-config';
+import { getEnvironmentConfig } from './config/environment-config';
 
 export interface ApiGatewayStackProps extends cdk.StackProps {
   environment: 'dev' | 'staging' | 'production';
@@ -18,23 +18,11 @@ export class ApiGatewayStack extends cdk.Stack {
 
     const { environment } = props;
 
-    // Create API Gateway
+    // Create API Gateway without CORS (CloudFront reverse proxy handles same-origin requests)
     this.restApi = new apigateway.RestApi(this, 'API', {
       restApiName: `rtm-${environment}-api`,
       description: `RegularTravelManager API - ${environment}`,
-      defaultCorsPreflightOptions: {
-        allowOrigins: getCorsOrigins(environment),
-        allowHeaders: [
-          'Content-Type',
-          'X-Amz-Date',
-          'Authorization',
-          'X-Api-Key',
-          'X-Amz-Security-Token',
-          'X-Amz-User-Agent',
-        ],
-        allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        allowCredentials: true,
-      },
+      // No CORS configuration needed - CloudFront reverse proxy makes requests same-origin
       deployOptions: {
         stageName: environment,
         loggingLevel: getEnvironmentConfig(environment).monitoring.enableDetailedLogs

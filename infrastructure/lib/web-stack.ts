@@ -33,6 +33,10 @@ export class WebStack extends cdk.Stack {
     const userPoolClientId = cdk.Fn.importValue(`rtm-${environment}-user-pool-client-id`);
     const alertsTopicArn = cdk.Fn.importValue(`rtm-${environment}-alerts-topic-arn`);
 
+    // Extract API Gateway domain from the full URL for CloudFront origin
+    // API URL format: https://xxxxxxxxxx.execute-api.eu-central-1.amazonaws.com/dev/
+    const apiGatewayDomain = cdk.Fn.select(2, cdk.Fn.split('/', apiUrl)); // Gets the domain part
+
     // Create S3 bucket for static web content
     this.webBucket = new s3.Bucket(this, 'WebBucket', {
       bucketName: `rtm-${environment}-web-${this.account}-${this.region}`,
@@ -50,7 +54,7 @@ export class WebStack extends cdk.Stack {
       description: `OAC for ${this.webBucket.bucketName}`,
     });
 
-    // CloudFront distribution
+    // CloudFront distribution with API Gateway reverse proxy
     this.distribution = new cloudfront.Distribution(this, 'WebDistribution', {
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(this.webBucket, {
@@ -59,6 +63,17 @@ export class WebStack extends cdk.Stack {
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+      },
+      additionalBehaviors: {
+        '/api/*': {
+          origin: new origins.HttpOrigin(apiGatewayDomain, {
+            originPath: `/${environment}`, // Add environment stage path
+          }),
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, // Disable caching for API calls
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL, // Support all HTTP methods
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER, // Forward all headers
+        },
       },
       defaultRootObject: 'index.html',
       errorResponses: [
@@ -79,7 +94,7 @@ export class WebStack extends cdk.Stack {
         environment === 'production'
           ? cloudfront.PriceClass.PRICE_CLASS_ALL
           : cloudfront.PriceClass.PRICE_CLASS_100,
-      comment: `RTM ${environment} Web Distribution`,
+      comment: `RTM ${environment} Web Distribution with API Proxy`,
     });
 
     // Deploy web application to S3

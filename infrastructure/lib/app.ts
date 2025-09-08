@@ -62,7 +62,7 @@ const lambdaStack = new LambdaStack(app, lambdaStackName, {
 });
 
 // Create the API Gateway stack (depends only on Lambda exports)
-// Note: CORS will use static origins initially, CloudFront domain can be added via update later
+// Note: CORS includes both static origins from environment-config.ts and dynamic CloudFront domain from WebStack
 const apiGatewayStackName = `rtm-${config.environment}-api-gateway`;
 const apiGatewayStack = new ApiGatewayStack(app, apiGatewayStackName, {
   environment: config.environment,

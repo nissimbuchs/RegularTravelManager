@@ -85,16 +85,18 @@ async function generateAndUploadConfig(
     const userPoolId = await getSSMParameter(`/rtm/${environment}/cognito/user-pool-id`);
     const clientId = await getSSMParameter(`/rtm/${environment}/cognito/client-id`);
 
-    // Generate configuration object
+    // Generate configuration object with relative API URL for CloudFront reverse proxy
     const config = {
-      apiUrl: apiUrl,
+      apiUrl: '/api', // Use relative path since CloudFront will route /api/* to API Gateway
       cognito: {
         userPoolId: userPoolId,
         userPoolClientId: clientId,
         region: region,
-        useMockAuth: environment === 'dev', // Enable mock auth for dev environment
+        useMockAuth: false // environment === 'dev', // Dont enable mock auth for dev environment
       },
       environment: environment,
+      // Store the original API URL for reference/debugging
+      _originalApiUrl: apiUrl,
     };
 
     console.log('Generated config:', {
