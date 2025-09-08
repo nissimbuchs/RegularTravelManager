@@ -67,7 +67,7 @@ export class WebStack extends cdk.Stack {
       additionalBehaviors: {
         '/api/*': {
           origin: new origins.HttpOrigin(apiGatewayDomain, {
-            originPath: `/${environment}`, // Add environment stage path
+            originPath: `/${environment}`, // API Gateway stage path
           }),
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, // Disable caching for API calls
@@ -76,25 +76,12 @@ export class WebStack extends cdk.Stack {
         },
       },
       defaultRootObject: 'index.html',
-      errorResponses: [
-        {
-          httpStatus: 404,
-          responseHttpStatus: 200,
-          responsePagePath: '/index.html',
-          ttl: cdk.Duration.minutes(5),
-        },
-        {
-          httpStatus: 403,
-          responseHttpStatus: 200,
-          responsePagePath: '/index.html',
-          ttl: cdk.Duration.minutes(5),
-        },
-      ],
+      // Removed errorResponses - let API errors pass through as JSON instead of serving HTML
       priceClass:
         environment === 'production'
           ? cloudfront.PriceClass.PRICE_CLASS_ALL
           : cloudfront.PriceClass.PRICE_CLASS_100,
-      comment: `RTM ${environment} Web Distribution with API Proxy`,
+      comment: `RTM ${environment} Web Distribution with API Proxy - Updated`,
     });
 
     // Deploy web application to S3

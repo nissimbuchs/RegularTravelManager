@@ -310,8 +310,11 @@ export class ApiGatewayStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.CUSTOM,
     };
 
+    // Create /api resource to handle CloudFront reverse proxy routing
+    const apiResource = this.restApi.root.addResource('api');
+
     // Health endpoint (public - no auth required)
-    const healthResource = this.restApi.root.addResource('health');
+    const healthResource = apiResource.addResource('health');
     const healthIntegration = new apigateway.LambdaIntegration(healthFunction);
     healthResource.addMethod('GET', healthIntegration, {
       authorizationType: apigateway.AuthorizationType.NONE,
@@ -321,7 +324,7 @@ export class ApiGatewayStack extends cdk.Stack {
     healthFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
 
     // Projects endpoint (protected)
-    const projectsResource = this.restApi.root.addResource('projects');
+    const projectsResource = apiResource.addResource('projects');
     const projectsIntegration = new apigateway.LambdaIntegration(getActiveProjectsFunction);
     projectsResource.addMethod('GET', projectsIntegration, defaultMethodOptions);
 
@@ -329,7 +332,7 @@ export class ApiGatewayStack extends cdk.Stack {
     getActiveProjectsFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
 
     // Employee endpoints (protected)
-    const employeesResource = this.restApi.root.addResource('employees');
+    const employeesResource = apiResource.addResource('employees');
     const employeeByIdResource = employeesResource.addResource('{cognitoUserId}');
 
     // GET /employees/{cognitoUserId} - Get employee profile
@@ -354,7 +357,7 @@ export class ApiGatewayStack extends cdk.Stack {
     updateEmployeeAddressFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
 
     // Geocoding endpoint (protected)
-    const geocodingResource = this.restApi.root.addResource('geocoding');
+    const geocodingResource = apiResource.addResource('geocoding');
     const geocodingAddressResource = geocodingResource.addResource('address');
 
     // POST /geocoding/address - Geocode address to coordinates
@@ -382,7 +385,7 @@ export class ApiGatewayStack extends cdk.Stack {
     subprojectsResource.addMethod('GET', getSubprojectsIntegration, defaultMethodOptions);
 
     // Subproject management endpoints
-    const subprojectsRootResource = this.restApi.root.addResource('subprojects');
+    const subprojectsRootResource = apiResource.addResource('subprojects');
     
     // POST /subprojects - Create new subproject
     const createSubprojectIntegration = new apigateway.LambdaIntegration(createSubprojectFunction);
@@ -395,7 +398,7 @@ export class ApiGatewayStack extends cdk.Stack {
     subprojectByIdResource.addMethod('DELETE', projectManagementIntegration, defaultMethodOptions);
 
     // Admin project management endpoints
-    const adminResource = this.restApi.root.addResource('admin');
+    const adminResource = apiResource.addResource('admin');
     const adminProjectsResource = adminResource.addResource('projects');
     const adminProjectManagementIntegration = new apigateway.LambdaIntegration(adminProjectManagementFunction);
     
@@ -417,7 +420,7 @@ export class ApiGatewayStack extends cdk.Stack {
     adminProjectManagementFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
 
     // Calculation engine endpoints (protected)
-    const calculationsResource = this.restApi.root.addResource('calculations');
+    const calculationsResource = apiResource.addResource('calculations');
     
     // POST /calculations/distance - Calculate distance between coordinates
     const distanceResource = calculationsResource.addResource('distance');
@@ -462,7 +465,7 @@ export class ApiGatewayStack extends cdk.Stack {
     cleanupExpiredCacheFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
 
     // Travel request endpoints (protected)
-    const travelRequestsResource = this.restApi.root.addResource('travel-requests');
+    const travelRequestsResource = apiResource.addResource('travel-requests');
     
     // POST /travel-requests - Submit new travel request
     const employeesTravelRequestsIntegration = new apigateway.LambdaIntegration(employeesTravelRequestsFunction);
@@ -483,7 +486,7 @@ export class ApiGatewayStack extends cdk.Stack {
     adminUserManagementFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
 
     // Manager dashboard endpoints (protected)
-    const managerResource = this.restApi.root.addResource('manager');
+    const managerResource = apiResource.addResource('manager');
     const managerRequestsResource = managerResource.addResource('requests');
     
     // Manager dashboard integration
