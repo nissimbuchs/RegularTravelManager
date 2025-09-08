@@ -18,6 +18,7 @@ This unified approach combines what would traditionally be separate backend and 
 
 | Date | Version | Description | Author |
 |------|---------|-------------|--------|
+| 2025-09-08 | 1.3 | Implemented 4-stack CDK architecture with improved separation of concerns | Architect Winston |
 | 2025-09-01 | 1.2 | Added LocalStack development environment with 95% AWS parity | Architect Winston |
 | 2025-08-30 | 1.1 | Updated to use Angular instead of React | Architect Winston |
 | 2025-08-30 | 1.0 | Initial architecture document | Architect Winston |
@@ -41,6 +42,58 @@ RegularTravelManager will use **AWS serverless architecture** with an Angular-ba
 **Deployment Host and Regions:** 
 - Primary: eu-central-1 (Frankfurt) for Swiss data residency
 - CloudFront global edge locations for performance
+
+### AWS CDK Architecture (4-Stack Design)
+
+**Architecture Philosophy:** The infrastructure is organized into **4 independent CDK stacks** for better separation of concerns, deployment flexibility, and maintainability.
+
+#### Stack Overview
+
+1. **InfrastructureStack** (`rtm-{env}-infrastructure`)
+   - **Purpose:** Core backend services foundation
+   - **Resources:** VPC, RDS PostgreSQL, Cognito User Pool, Location Service, SES, SNS
+   - **Dependencies:** None (foundation layer)
+   - **Exports:** User Pool ID, Database endpoints, SNS Topic ARN, VPC configuration
+
+2. **LambdaStack** (`rtm-{env}-lambda`)
+   - **Purpose:** All serverless compute functions
+   - **Resources:** ~30 Lambda functions for business logic, API handlers, utilities
+   - **Dependencies:** InfrastructureStack (imports VPC, database, Cognito)
+   - **Exports:** Lambda function ARNs for API Gateway integration
+
+3. **ApiGatewayStack** (`rtm-{env}-api-gateway`)
+   - **Purpose:** REST API routing and Lambda integration
+   - **Resources:** API Gateway, routes, method configurations, authorizer
+   - **Dependencies:** LambdaStack (imports Lambda ARNs via CloudFormation exports)
+   - **Exports:** API Gateway URL
+
+4. **WebStack** (`rtm-{env}-web`)
+   - **Purpose:** Frontend hosting and distribution
+   - **Resources:** S3 bucket, CloudFront distribution, web deployment, config generation
+   - **Dependencies:** ApiGatewayStack + InfrastructureStack (imports API URL, Cognito config)
+   - **Exports:** CloudFront domain URL
+
+#### Deployment Flow
+
+```
+InfrastructureStack (foundation) 
+    ↓
+LambdaStack (compute layer)
+    ↓  
+ApiGatewayStack (API layer)
+    ↓
+WebStack (presentation layer)
+```
+
+#### Architecture Benefits
+
+- ✅ **Independent Deployments:** Update frontend without touching backend infrastructure
+- ✅ **No Circular Dependencies:** Clean linear dependency chain using CloudFormation exports
+- ✅ **Better CI/CD:** Each stack can have its own deployment pipeline and rollback strategy
+- ✅ **Cost Optimization:** Destroy/recreate individual stacks for testing without affecting others
+- ✅ **Faster Deployments:** Deploy only what changed (e.g., frontend-only updates)
+- ✅ **Clear Boundaries:** Each stack has a single, well-defined responsibility
+- ✅ **Easier Debugging:** Stack-specific issues are isolated and easier to troubleshoot
 
 ### Repository Structure
 
@@ -1026,6 +1079,23 @@ npm run dev:api:local     # API server against local infrastructure
 npm run dev:web           # Angular frontend
 npm run dev:env:logs      # View all service logs
 npm run dev:env:restart   # Clean restart all services
+
+# Deployment commands (4-stack architecture)
+npm run deploy            # Deploy all stacks to dev environment
+npm run deploy:staging    # Deploy all stacks to staging
+npm run deploy:production # Deploy all stacks to production
+
+# Stack-specific deployment (from infrastructure workspace)
+cd infrastructure
+npm run deploy:infrastructure:dev  # Core services only
+npm run deploy:lambda:dev         # Lambda functions only
+npm run deploy:api:dev           # API Gateway only  
+npm run deploy:web:dev           # Frontend only
+
+# Frontend-only deployment (faster for UI changes)
+npm run deploy:frontend:dev      # Build + deploy frontend to dev
+npm run deploy:frontend:staging  # Build + deploy frontend to staging
+npm run deploy:frontend:production # Build + deploy frontend to production
 ```
 
 ### Development Environment Configuration

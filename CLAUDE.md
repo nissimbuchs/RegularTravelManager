@@ -29,9 +29,22 @@ npm run build:infrastructure # Build AWS CDK infrastructure only
 
 ### Deploy Commands  
 ```bash
-npm run deploy            # Build + deploy to default environment
-npm run deploy:staging    # Build + deploy to staging environment
-npm run deploy:production # Build + deploy to production environment
+# Full stack deployment
+npm run deploy            # Build + deploy all stacks to dev environment
+npm run deploy:staging    # Build + deploy all stacks to staging environment
+npm run deploy:production # Build + deploy all stacks to production environment
+
+# Frontend-only deployment (faster for UI changes)
+npm run deploy:frontend          # Deploy frontend to dev environment
+npm run deploy:frontend:staging  # Deploy frontend to staging environment
+npm run deploy:frontend:production # Deploy frontend to production environment
+
+# Individual stack deployment (from infrastructure workspace)
+cd infrastructure
+npm run deploy:infrastructure:dev # Deploy core infrastructure only
+npm run deploy:lambda:dev        # Deploy Lambda functions only
+npm run deploy:api:dev           # Deploy API Gateway only
+npm run deploy:web:dev           # Deploy web stack only
 ```
 
 ### Run Commands - Local Development
@@ -95,6 +108,37 @@ npm run debug:api         # Start API in debug mode
 - **Database**: PostgreSQL 15 with PostGIS extension
 - **Infrastructure**: AWS CDK 2.100+ in TypeScript
 - **Development**: Docker Compose + LocalStack for AWS parity
+
+### AWS CDK Architecture (4-Stack Design)
+
+The infrastructure is organized into 4 independent CDK stacks for better separation of concerns and deployment flexibility:
+
+```
+1. InfrastructureStack (rtm-{env}-infrastructure)
+   └── Core backend resources: VPC, RDS, Cognito, Location Service, SES, SNS
+   └── Exports: User Pool ID, Database endpoints, SNS Topic ARN
+
+2. LambdaStack (rtm-{env}-lambda) 
+   └── All Lambda functions and their configurations
+   └── Depends on: InfrastructureStack (for VPC, database, etc.)
+   └── Exports: ~30 Lambda function ARNs
+
+3. ApiGatewayStack (rtm-{env}-api-gateway)
+   └── REST API, routes, and Lambda integrations
+   └── Depends on: LambdaStack (imports Lambda ARNs)
+   └── Exports: API Gateway URL
+
+4. WebStack (rtm-{env}-web)
+   └── Frontend hosting: S3, CloudFront, web deployment
+   └── Depends on: ApiGatewayStack + InfrastructureStack (via imports)
+   └── Exports: CloudFront domain URL
+```
+
+**Benefits of this architecture:**
+- **Independent deployments**: Update frontend without touching backend
+- **Clear dependencies**: No circular dependencies
+- **Better CI/CD**: Each stack can have its own deployment pipeline
+- **Cost optimization**: Destroy/recreate individual stacks as needed
 
 ### Key Service Configurations
 ```typescript

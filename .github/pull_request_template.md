@@ -20,8 +20,10 @@ Brief description of changes and why they were needed.
 > **CRITICAL:** All infrastructure-related items must be completed before merge
 
 ### API & Lambda Functions
-- [ ] All new API endpoints are configured in API Gateway CDK (`infrastructure/src/api-gateway-stack.ts`)
-- [ ] All Lambda functions are defined in Lambda stack (`infrastructure/src/lambda-stack.ts`)
+- [ ] All new API endpoints are configured in API Gateway CDK (`infrastructure/lib/api-gateway-stack.ts`)
+- [ ] All Lambda functions are defined in Lambda stack (`infrastructure/lib/lambda-stack.ts`)
+- [ ] Frontend hosting changes are in Web stack (`infrastructure/lib/web-stack.ts`)
+- [ ] Core infrastructure changes are in Infrastructure stack (`infrastructure/lib/infrastructure-stack.ts`)
 - [ ] Lambda functions have appropriate timeout and memory settings
 - [ ] Handler files exist and are properly structured
 - [ ] Function naming follows project conventions
@@ -108,9 +110,17 @@ Brief description of changes and why they were needed.
 ## Deployment Readiness
 - [ ] Changes work in local development environment
 - [ ] Infrastructure changes tested with LocalStack
-- [ ] CDK synthesis succeeds without errors
+- [ ] CDK synthesis succeeds without errors for all stacks
+- [ ] Stack dependencies properly configured (Infrastructure → Lambda → API Gateway → Web)
+- [ ] Cross-stack references using exports/imports (no direct property access)
 - [ ] Migration scripts tested on development database
 - [ ] Environment-specific configurations verified
+
+### Stack-Specific Testing
+- [ ] InfrastructureStack: Core services (VPC, RDS, Cognito) deploy correctly
+- [ ] LambdaStack: All Lambda functions deploy and have proper permissions
+- [ ] ApiGatewayStack: API routes work and import Lambda ARNs correctly
+- [ ] WebStack: Frontend deploys to S3/CloudFront successfully
 
 ## Risk Assessment
 **Deployment Risk:** [Low/Medium/High]
@@ -137,6 +147,12 @@ Brief description of changes and why they were needed.
 npm run infrastructure:validate
 npm run test
 npm run build
+
+# CDK stack verification:
+cd infrastructure
+npx cdk synth --context environment=dev  # Should create all 4 stacks
+npm run deploy:infrastructure:dev         # Test individual stack deployment (if needed)
+npm run deploy:web:dev                   # Test frontend-only deployment (if needed)
 ```
 
 ## Related Issues/PRs

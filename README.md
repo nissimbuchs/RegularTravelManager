@@ -35,6 +35,39 @@ RegularTravelManager/
 - **Testing**: Vitest for backend, Jest for Angular frontend
 - **Code Quality**: ESLint + Prettier with pre-commit hooks
 
+## AWS Infrastructure Architecture
+
+The project uses a **4-stack CDK architecture** for better separation of concerns and deployment flexibility:
+
+### Stack Overview
+
+1. **InfrastructureStack** (`rtm-{env}-infrastructure`)
+   - Core backend resources: VPC, RDS, Cognito, Location Service, SES, SNS
+   - Exports: User Pool ID, Database endpoints, SNS Topic ARN
+
+2. **LambdaStack** (`rtm-{env}-lambda`)
+   - All Lambda functions and their configurations
+   - Depends on: InfrastructureStack
+   - Exports: ~30 Lambda function ARNs
+
+3. **ApiGatewayStack** (`rtm-{env}-api-gateway`)
+   - REST API, routes, and Lambda integrations
+   - Depends on: LambdaStack (via imports)
+   - Exports: API Gateway URL
+
+4. **WebStack** (`rtm-{env}-web`)
+   - Frontend hosting: S3, CloudFront, web deployment
+   - Depends on: ApiGatewayStack + InfrastructureStack (via imports)
+   - Exports: CloudFront domain URL
+
+### Deployment Benefits
+
+- ✅ **Independent deployments**: Update frontend without touching backend
+- ✅ **No circular dependencies**: Clean linear dependency chain
+- ✅ **Better CI/CD**: Each stack can have its own deployment pipeline
+- ✅ **Cost optimization**: Destroy/recreate individual stacks as needed
+- ✅ **Faster deployments**: Deploy only what changed
+
 ## Prerequisites
 
 - **Node.js** 20.0.0 or higher
