@@ -8,7 +8,6 @@ import { getCorsOrigins, getEnvironmentConfig } from './config/environment-confi
 
 export interface ApiGatewayStackProps extends cdk.StackProps {
   environment: 'dev' | 'staging' | 'production';
-  cloudFrontDomain?: string;
 }
 
 export class ApiGatewayStack extends cdk.Stack {
@@ -17,14 +16,14 @@ export class ApiGatewayStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ApiGatewayStackProps) {
     super(scope, id, props);
 
-    const { environment, cloudFrontDomain } = props;
+    const { environment } = props;
 
     // Create API Gateway
     this.restApi = new apigateway.RestApi(this, 'API', {
       restApiName: `rtm-${environment}-api`,
       description: `RegularTravelManager API - ${environment}`,
       defaultCorsPreflightOptions: {
-        allowOrigins: getCorsOrigins(environment, cloudFrontDomain),
+        allowOrigins: getCorsOrigins(environment),
         allowHeaders: [
           'Content-Type',
           'X-Amz-Date',

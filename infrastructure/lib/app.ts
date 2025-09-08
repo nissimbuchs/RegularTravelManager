@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib';
 import { InfrastructureStack } from './infrastructure-stack';
 import { LambdaStack } from './lambda-stack';
 import { ApiGatewayStack } from './api-gateway-stack';
+import { WebStack } from './web-stack';
 
 const app = new cdk.App();
 
@@ -61,10 +62,10 @@ const lambdaStack = new LambdaStack(app, lambdaStackName, {
 });
 
 // Create the API Gateway stack (depends only on Lambda exports)
+// Note: CORS will use static origins initially, CloudFront domain can be added via update later
 const apiGatewayStackName = `rtm-${config.environment}-api-gateway`;
 const apiGatewayStack = new ApiGatewayStack(app, apiGatewayStackName, {
   environment: config.environment,
-  cloudFrontDomain: infrastructureStack.distribution.distributionDomainName,
   env: {
     account: config.account,
     region: config.region,
@@ -77,9 +78,27 @@ const apiGatewayStack = new ApiGatewayStack(app, apiGatewayStackName, {
   },
 });
 
-// Explicitly set dependencies: Infrastructure → Lambda → API Gateway
+// Create the Web stack (frontend hosting)
+const webStackName = `rtm-${config.environment}-web`;
+const webStack = new WebStack(app, webStackName, {
+  environment: config.environment,
+  env: {
+    account: config.account,
+    region: config.region,
+  },
+  description: `RegularTravelManager Web frontend for ${config.environment} environment`,
+  tags: {
+    Project: 'RegularTravelManager',
+    Environment: config.environment,
+    ManagedBy: 'CDK',
+  },
+});
+
+// Set up proper dependencies: Infrastructure → Lambda → API Gateway → Web
+lambdaStack.addDependency(infrastructureStack);
 apiGatewayStack.addDependency(lambdaStack);
-apiGatewayStack.addDependency(infrastructureStack);
+webStack.addDependency(apiGatewayStack);
+webStack.addDependency(infrastructureStack); // WebStack needs cognito exports from infrastructure
 
 // Synthesize all stacks
 app.synth();
