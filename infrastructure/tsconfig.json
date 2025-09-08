@@ -2,7 +2,6 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./lib",
     "composite": true,
     "target": "ES2022",
     "module": "CommonJS",
@@ -11,11 +10,11 @@
     "exactOptionalPropertyTypes": false
   },
   "include": [
-    "lib/**/*",
-    "test/**/*"
+    "lib/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "test"
   ]
 }

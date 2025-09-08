@@ -98,7 +98,7 @@ The infrastructure creates these SSM parameters for application configuration:
 
 ### API Gateway
 - `/rtm/{env}/api/gateway-id`
-- `/rtm/{env}/api/base-url`
+- `/rtm/{env}/api/gateway-url`
 
 ### Location Service
 - `/rtm/{env}/location/place-index-name`

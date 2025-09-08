@@ -77,11 +77,17 @@ export class AuthService {
       return this.mockLogin(credentials);
     }
 
-    // Handle real Cognito authentication
+    // Handle real Cognito authentication - sign out first if already authenticated
     return from(
-      signIn({
+      signOut().then(() => signIn({
         username: credentials.email,
         password: credentials.password,
+      })).catch(async () => {
+        // If signOut fails (e.g., no user signed in), proceed with signIn
+        return signIn({
+          username: credentials.email,
+          password: credentials.password,
+        });
       })
     ).pipe(
       switchMap(async () => {

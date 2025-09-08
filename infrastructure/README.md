@@ -99,7 +99,7 @@ All configuration is stored in AWS Systems Manager Parameter Store under `/rtm/{
 
 ### API
 - `api/gateway-id` - API Gateway ID
-- `api/base-url` - API Gateway URL
+- `api/gateway-url` - API Gateway URL
 
 ### Location Service
 - `location/place-index-name` - Place index for geocoding
@@ -190,7 +190,7 @@ npm run cdk -- list
 
 ### Cleanup
 
-  **Warning**: This will delete all data and resources
+ï¿½ **Warning**: This will delete all data and resources
 
 ```bash
 npm run destroy

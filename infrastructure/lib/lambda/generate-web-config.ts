@@ -81,7 +81,7 @@ async function generateAndUploadConfig(
 
   try {
     // Fetch configuration values from SSM
-    const apiUrl = await getSSMParameter(`/rtm/${environment}/api/base-url`);
+    const apiUrl = await getSSMParameter(`/rtm/${environment}/api/gateway-url`);
     const userPoolId = await getSSMParameter(`/rtm/${environment}/cognito/user-pool-id`);
     const clientId = await getSSMParameter(`/rtm/${environment}/cognito/client-id`);
 
@@ -92,7 +92,7 @@ async function generateAndUploadConfig(
         userPoolId: userPoolId,
         userPoolClientId: clientId,
         region: region,
-        useMockAuth: false,
+        useMockAuth: environment === 'dev', // Enable mock auth for dev environment
       },
       environment: environment,
     };
