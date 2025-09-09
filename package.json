@@ -26,6 +26,22 @@
     "deploy:frontend:staging": "npm run build:frontend:staging && npm run deploy:web:staging --workspace=infrastructure", 
     "deploy:frontend:production": "npm run build:frontend:prod && npm run deploy:web:production --workspace=infrastructure",
     
+    "deploy:safe": "./scripts/deployment-health-check.sh dev && npm run deploy:dev",
+    "deploy:safe:staging": "./scripts/deployment-health-check.sh staging && npm run deploy:staging",
+    "deploy:safe:production": "./scripts/deployment-health-check.sh production && npm run deploy:production",
+    
+    "destroy:clean": "npm run destroy:dev --workspace=infrastructure && ./scripts/cleanup-log-groups.sh dev",
+    "destroy:clean:staging": "npm run destroy:staging --workspace=infrastructure && ./scripts/cleanup-log-groups.sh staging",
+    "destroy:clean:production": "npm run destroy:production --workspace=infrastructure && ./scripts/cleanup-log-groups.sh production",
+    
+    "health:check": "./scripts/deployment-health-check.sh dev",
+    "health:check:staging": "./scripts/deployment-health-check.sh staging",
+    "health:check:production": "./scripts/deployment-health-check.sh production",
+    
+    "cleanup:logs": "./scripts/cleanup-log-groups.sh dev",
+    "cleanup:logs:staging": "./scripts/cleanup-log-groups.sh staging",
+    "cleanup:logs:production": "./scripts/cleanup-log-groups.sh production",
+    
     "sync:web:dev": "./scripts/generate-web-config.sh dev",
     "sync:web:staging": "./scripts/generate-web-config.sh staging", 
     "sync:web:production": "./scripts/generate-web-config.sh production",

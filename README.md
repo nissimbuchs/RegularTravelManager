@@ -219,7 +219,7 @@ window.location.reload();
 
 ### 6. AWS Dev Environment Testing
 
-**AWS Frontend URL**: https://d32zgf671buazq.cloudfront.net
+**AWS Frontend URL**: https://d1asiy62ilf86t.cloudfront.net
 
 For testing the deployed AWS dev environment, you can use either mock authentication (current setup) or real AWS Cognito credentials:
 
@@ -239,11 +239,12 @@ For testing the deployed AWS dev environment, you can use either mock authentica
 - **employee3@company.ch** (Lisa Meier, Business Analyst) - Password: `EmployeePass123!`
 
 **AWS Dev Environment Details:**
-- **Frontend URL:** `https://d32zgf671buazq.cloudfront.net` (Angular app with CloudFront CDN)
-- **API Endpoint:** `https://17on7usyre.execute-api.eu-central-1.amazonaws.com/dev/` (available through CloudFront at `/api/*`)
+- **Frontend URL:** `https://d1asiy62ilf86t.cloudfront.net` (Angular app with CloudFront CDN)
+- **API Endpoint:** `https://i7kfvsf0pb.execute-api.eu-central-1.amazonaws.com/dev/` (available through CloudFront at `/api/*`)
 - **Region:** `eu-central-1` (Frankfurt)  
 - **Database:** AWS RDS PostgreSQL with same sample data as local development
 - **Authentication:** AWS Cognito User Pool (currently using mock auth for compatibility)
+- **Architecture:** CloudFront distribution with reverse proxy to API Gateway for CORS-free API access
 
 **Note:** AWS dev environment contains identical sample data (10 employees, 4 projects, 8 subprojects, 5 travel requests) with the same Swiss business context as local development.
 
@@ -251,12 +252,12 @@ For testing the deployed AWS dev environment, you can use either mock authentica
 
 The project uses clear environment naming conventions:
 
-| Environment File | Purpose | API URL | Authentication |
-|------------------|---------|---------|----------------|
-| `environment.ts` | **Local Development** | `http://localhost:3000` | Mock authentication |
-| `environment.dev.ts` | **AWS Dev Environment** | AWS dev API endpoint | Mock authentication (current) |
-| `environment.staging.ts` | **AWS Staging** (Future) | Staging API endpoint | Real Cognito authentication |
-| `environment.prod.ts` | **AWS Production** (Future) | Production API endpoint | Real Cognito authentication |
+| Environment File | Purpose | Frontend URL | API Access | Authentication |
+|------------------|---------|--------------|-------------|----------------|
+| `environment.ts` | **Local Development** | `http://localhost:4200` | `http://localhost:3000` | Mock authentication |
+| `environment.dev.ts` | **AWS Dev Environment** | `https://d1asiy62ilf86t.cloudfront.net` | `/api/*` (CloudFront proxy) | Mock authentication (current) |
+| `environment.staging.ts` | **AWS Staging** (Future) | Staging CloudFront URL | `/api/*` (CloudFront proxy) | Real Cognito authentication |
+| `environment.prod.ts` | **AWS Production** (Future) | Production CloudFront URL | `/api/*` (CloudFront proxy) | Real Cognito authentication |
 
 ### Build Commands by Environment
 ```bash
@@ -266,6 +267,11 @@ npm run dev
 # AWS Dev environment (current deployment)
 npm run build:frontend:dev
 npm run deploy:frontend:dev
+
+# Safe deployments (recommended)
+npm run deploy:safe              # Deploy with health checks
+npm run deploy:safe:staging      # Deploy staging with health checks  
+npm run deploy:safe:production   # Deploy production with health checks
 
 # Future staging environment
 npm run build:frontend:staging
@@ -335,6 +341,11 @@ npm run build:frontend:dev     # Build for AWS dev environment
 npm run build:frontend:staging # Build for AWS staging environment  
 npm run build:frontend:prod    # Build for AWS production environment
 
+# Safe deployment commands (recommended)
+npm run deploy:safe              # Safe deploy to dev with health checks
+npm run deploy:safe:staging      # Safe deploy to staging with health checks
+npm run deploy:safe:production   # Safe deploy to production with health checks
+
 # Environment-specific deployments
 npm run deploy:frontend:dev        # Deploy to AWS dev environment
 npm run deploy:frontend:staging    # Deploy to AWS staging environment
@@ -344,6 +355,14 @@ npm run deploy:frontend:production # Deploy to AWS production environment
 npm run deploy:dev --workspace=infrastructure       # Deploy infrastructure to dev
 npm run deploy:staging --workspace=infrastructure   # Deploy infrastructure to staging  
 npm run deploy:production --workspace=infrastructure # Deploy infrastructure to production
+
+# Health checks and cleanup
+npm run health:check           # Check dev environment health
+npm run health:check:staging   # Check staging environment health
+npm run health:check:production # Check production environment health
+npm run cleanup:logs           # Clean orphaned log groups (dev)
+npm run cleanup:logs:staging   # Clean orphaned log groups (staging)
+npm run cleanup:logs:production # Clean orphaned log groups (production)
 ```
 
 #### **Database Management** (Consolidated Approach)
@@ -393,17 +412,24 @@ npm run build --workspace=apps/api
 
 ### Deployment
 
-The project includes a streamlined deployment process using AWS CDK:
+The project includes a streamlined and safe deployment process using AWS CDK:
 
 ```bash
-# Deploy to AWS (builds automatically)
+# Safe deployment (recommended)
+npm run deploy:safe
+
+# Standard deployment
 npm run deploy
 
-# This command will:
-# 1. Build all workspaces (packages, domains, apps, infrastructure)
-# 2. Deploy infrastructure using AWS CDK
-# 3. Deploy Lambda functions and API Gateway
-# 4. Output the API endpoint URL
+# Safe deployment process:
+# 1. Run health check to identify potential conflicts
+# 2. Clean up orphaned CloudWatch log groups
+# 3. Build all workspaces (packages, domains, apps, infrastructure)
+# 4. Deploy 4 CDK stacks in correct order (Infrastructure → Lambda → API Gateway → Web)
+# 5. Output deployment URLs and status
+
+# Infrastructure cleanup (if needed)
+npm run destroy:clean     # Destroy stacks + clean log groups
 ```
 
 **Prerequisites for Deployment:**
@@ -417,10 +443,14 @@ npm run deploy
 - **Region**: eu-central-1 (Frankfurt) for Swiss data residency compliance
 
 **Infrastructure Components Deployed:**
-- AWS Lambda functions for API endpoints
-- API Gateway with proper CORS and authorization
+- AWS Lambda functions for API endpoints (~30 functions)
+- API Gateway with Lambda integrations
+- CloudFront distribution with S3 origin and API Gateway reverse proxy
 - Amazon RDS PostgreSQL with PostGIS extension
 - AWS Cognito User Pool for authentication
+- S3 bucket for web hosting
+- CloudWatch log groups with proper retention policies
+- SNS topics for monitoring and alerts
 - IAM roles and security policies
 
 ### Testing
@@ -501,6 +531,7 @@ The project enforces code quality through:
 npm run dev               # Start complete development environment
 npm run build             # Build entire project
 npm run deploy            # Build + deploy to AWS
+npm run deploy:safe       # Build + deploy with health checks (recommended)
 npm run test              # Run all tests
 npm run lint              # Lint and fix code
 npm run format            # Format code with Prettier
@@ -634,10 +665,17 @@ npm run db:status          # Check migration status
 npm run db:migrate         # Apply any pending migrations
 npm run db:reset           # Complete database reset
 
+# AWS deployment issues
+npm run health:check       # Check deployment health before deploying
+npm run cleanup:logs       # Clean problematic log groups
+npm run destroy:clean      # Clean destroy with log group cleanup
+
 # Reset everything
 npm run dev:clean
 npm run dev
 ```
+
+**For detailed troubleshooting guidance, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)**
 
 ## Contributing
 
@@ -688,6 +726,8 @@ This project is proprietary software. All rights reserved.
 ## Documentation
 
 - **[DEVELOPMENT_SETUP.md](./DEVELOPMENT_SETUP.md)** - Comprehensive local development guide
+- **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Deployment issues, recovery procedures, and best practices
+- **[ENVIRONMENTS.md](./ENVIRONMENTS.md)** - Detailed environment configuration guide
 - **[Development Environment Parity Strategy](./docs/development-environment-parity-strategy.md)** - Technical architecture details
 - **[Infrastructure README](./infrastructure/README.md)** - AWS deployment instructions
 
