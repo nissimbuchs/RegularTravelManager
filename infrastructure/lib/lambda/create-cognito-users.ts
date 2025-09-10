@@ -128,6 +128,9 @@ async function createOrUpdateUsers(
   // Initialize database connection
   const dbClient = new PgClient({
     connectionString: actualDatabaseUrl,
+    ssl: {
+      rejectUnauthorized: false  // Required for AWS RDS connections from Lambda
+    }
   });
   await dbClient.connect();
 

@@ -202,13 +202,15 @@ export class InfrastructureStack extends cdk.Stack {
     this.userPoolClient = this.userPool.addClient('WebClient', {
       userPoolClientName: `rtm-${environment}-web-client`,
       authFlows: {
-        userPassword: true,
-        userSrp: true,
+        userPassword: true,    // ALLOW_USER_PASSWORD_AUTH
+        userSrp: true,         // ALLOW_USER_SRP_AUTH
+        // Refresh tokens are enabled by default when other auth flows are enabled
       },
       generateSecret: false,
       accessTokenValidity: cdk.Duration.hours(1),
       idTokenValidity: cdk.Duration.hours(1),
       refreshTokenValidity: cdk.Duration.days(30),
+      // No OAuth configuration needed for direct authentication
     });
 
     // Store Cognito configuration
@@ -255,6 +257,11 @@ export class InfrastructureStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_18_X,
       timeout: cdk.Duration.minutes(5),
       memorySize: 256,
+      vpc: this.vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [this.lambdaSecurityGroup],
       environment: {
         // AWS_REGION is automatically set by Lambda runtime
       },
@@ -290,27 +297,7 @@ export class InfrastructureStack extends cdk.Stack {
       })
     );
 
-    // Grant VPC access if database is in VPC
-    if (this.database.vpc) {
-      userCreatorFunction.addToRolePolicy(
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'ec2:CreateNetworkInterface',
-            'ec2:DescribeNetworkInterfaces',
-            'ec2:DeleteNetworkInterface',
-          ],
-          resources: ['*'],
-        })
-      );
-
-      // Add Lambda to VPC
-      const lambdaFunction = userCreatorFunction.node.defaultChild as lambda.CfnFunction;
-      lambdaFunction.addPropertyOverride('VpcConfig', {
-        SecurityGroupIds: [this.lambdaSecurityGroup.securityGroupId],
-        SubnetIds: this.vpc.privateSubnets.map(subnet => subnet.subnetId),
-      });
-    }
+    // VPC permissions are automatically added when Lambda is configured with VPC
 
     // Create log group for user creator provider
     const userCreatorLogGroup = new logs.LogGroup(this, 'UserCreatorProviderLogs', {
