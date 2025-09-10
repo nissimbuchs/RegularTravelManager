@@ -54,6 +54,31 @@ export class WebStack extends cdk.Stack {
       description: `OAC for ${this.webBucket.bucketName}`,
     });
 
+    // CloudFront Function for SPA routing (exclude API paths)
+    const spaRoutingFunction = new cloudfront.Function(this, 'SpaRoutingFunction', {
+      functionName: `rtm-${environment}-spa-routing`,
+      code: cloudfront.FunctionCode.fromInline(`
+function handler(event) {
+  var request = event.request;
+  var uri = request.uri;
+  
+  // Don't modify API requests - let them pass through to API Gateway origin
+  if (uri.startsWith('/api/')) {
+    return request;
+  }
+  
+  // Check if the URI has a file extension
+  // If not, it's likely a SPA route, so serve index.html
+  if (!uri.includes('.')) {
+    request.uri = '/index.html';
+  }
+  
+  return request;
+}
+      `),
+      comment: 'Routes SPA paths to index.html while preserving API paths',
+    });
+
     // CloudFront distribution with API Gateway reverse proxy
     this.distribution = new cloudfront.Distribution(this, 'WebDistribution', {
       defaultBehavior: {
@@ -63,6 +88,12 @@ export class WebStack extends cdk.Stack {
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+        functionAssociations: [
+          {
+            function: spaRoutingFunction,
+            eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+          },
+        ],
       },
       additionalBehaviors: {
         '/api/*': {
@@ -72,11 +103,13 @@ export class WebStack extends cdk.Stack {
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, // Disable caching for API calls
           allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL, // Support all HTTP methods
-          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER, // Forward all headers
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER, // Forward all headers except Host
+          compress: false, // Don't compress API responses
+          smoothStreaming: false, // Not needed for API
         },
       },
       defaultRootObject: 'index.html',
-      // Removed errorResponses - let API errors pass through as JSON instead of serving HTML
+      // Error responses removed - SPA routing is now handled by CloudFront Function
       priceClass:
         environment === 'production'
           ? cloudfront.PriceClass.PRICE_CLASS_ALL
@@ -84,13 +117,22 @@ export class WebStack extends cdk.Stack {
       comment: `RTM ${environment} Web Distribution with API Proxy - Updated`,
     });
 
-    // Deploy web application to S3
+    // Deploy web application to S3 with environment-specific source map handling
+    const excludePatterns = ['assets/config/config.json', 'assets/config/config.*.json'];
+    
+    // Exclude source maps from staging and production for security
+    if (environment !== 'dev') {
+      excludePatterns.push('*.map');
+    }
+    
     new s3deploy.BucketDeployment(this, 'WebDeployment', {
       sources: [s3deploy.Source.asset(path.join(__dirname, '../../apps/web/dist/web/browser'))],
       destinationBucket: this.webBucket,
       distribution: this.distribution,
       distributionPaths: ['/*'],
-      exclude: ['assets/config/config.json', 'assets/config/config.*.json'], // Exclude dynamically generated config files
+      exclude: excludePatterns,
+      // Source maps (.map files) are included in dev environment for debugging
+      // but excluded from staging and production for security
     });
 
     // Generate web configuration file
