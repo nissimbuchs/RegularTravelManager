@@ -164,6 +164,60 @@ export const geocodeAddress = errorHandler(
   })
 );
 
+// Unified project management handler for routing PUT/DELETE operations
+import {
+  updateSubproject as updateSubprojectHandler,
+  deleteSubproject as deleteSubprojectHandler,
+} from './projects/management';
+
+export const projectsManagement = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    
+    const method = event.httpMethod;
+    const path = event.path;
+    
+    console.log('🔄 ProjectsManagement router:', {
+      method,
+      path,
+      requestId: context.awsRequestId,
+    });
+    
+    // Route based on HTTP method and path
+    if (method === 'PUT' && path.includes('/projects/')) {
+      console.log('🔄 Routing to updateProjectHandler');
+      const result = await updateProjectHandler(event, context);
+      console.log('✅ UpdateProjectHandler completed:', {
+        statusCode: result.statusCode,
+        requestId: context.awsRequestId,
+      });
+      return result;
+    } else if (method === 'DELETE' && path.includes('/projects/')) {
+      console.log('🔄 Routing to deleteProjectHandler');
+      return deleteProjectHandler(event, context);
+    } else if (method === 'PUT' && path.includes('/subprojects/')) {
+      console.log('🔄 Routing to updateSubprojectHandler');
+      return updateSubprojectHandler(event, context);
+    } else if (method === 'DELETE' && path.includes('/subprojects/')) {
+      console.log('🔄 Routing to deleteSubprojectHandler');
+      return deleteSubprojectHandler(event, context);
+    } else {
+      console.log('❌ No route matched:', { method, path });
+      return {
+        statusCode: 405,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({ 
+          error: 'Method Not Allowed',
+          message: `${method} ${path} is not supported by this handler`
+        }),
+      };
+    }
+  })
+);
+
 // Calculation engine handlers (require auth)
 import {
   calculateDistance as calculateDistanceHandler,

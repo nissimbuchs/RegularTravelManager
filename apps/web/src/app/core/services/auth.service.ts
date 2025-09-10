@@ -23,6 +23,11 @@ export interface AuthResponse {
   accessToken: string;
 }
 
+interface TokenCache {
+  token: string;
+  expiresAt: number; // Unix timestamp
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -32,10 +37,50 @@ export class AuthService {
   public isAuthenticated$ = this.currentUser$.pipe(map(user => !!user));
   private dialog = inject(MatDialog);
   private configService = inject(ConfigService);
+  
+  // Token caching with 5-minute buffer before expiration
+  private tokenCache: TokenCache | null = null;
+  private readonly TOKEN_EXPIRY_BUFFER_MS = 5 * 60 * 1000; // 5 minutes
 
   constructor() {
     // Initialize auth after config is loaded
     this.initializeAuthWhenReady();
+  }
+
+  private cacheToken(token: string, expiresAt?: number): void {
+    // Default to 1 hour expiration if not provided (from Cognito config)
+    const defaultExpirationMs = 60 * 60 * 1000; // 1 hour
+    const expirationTime = expiresAt || (Date.now() + defaultExpirationMs);
+    
+    this.tokenCache = {
+      token,
+      expiresAt: expirationTime,
+    };
+    
+    console.log('🔐 Token cached until:', new Date(expirationTime).toISOString());
+  }
+
+  private getCachedToken(): string | null {
+    if (!this.tokenCache) {
+      return null;
+    }
+
+    const now = Date.now();
+    const expiresWithBuffer = this.tokenCache.expiresAt - this.TOKEN_EXPIRY_BUFFER_MS;
+
+    if (now >= expiresWithBuffer) {
+      console.log('🔐 Cached token expired or about to expire, clearing cache');
+      this.clearTokenCache();
+      return null;
+    }
+
+    console.log('🔐 Using cached token (expires in', Math.floor((this.tokenCache.expiresAt - now) / 1000), 'seconds)');
+    return this.tokenCache.token;
+  }
+
+  private clearTokenCache(): void {
+    this.tokenCache = null;
+    console.log('🔐 Token cache cleared');
   }
 
   private async initializeAuthWhenReady(): Promise<void> {
@@ -102,9 +147,25 @@ export class AuthService {
         const userData = this.mapAuthUserToUser(user, session.tokens);
         this.currentUserSubject.next(userData);
 
+        const token = session.tokens.accessToken.toString();
+        
+        // Cache the token after successful login
+        let expiresAt: number | undefined;
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.exp) {
+            expiresAt = payload.exp * 1000; // Convert from seconds to milliseconds
+          }
+        } catch (e) {
+          console.warn('Could not parse token expiration during login, using default');
+        }
+        
+        this.cacheToken(token, expiresAt);
+        console.log('✅ Login successful, token cached');
+
         return {
           user: userData,
-          accessToken: session.tokens.accessToken.toString(),
+          accessToken: token,
         };
       }),
       catchError(error => {
@@ -203,6 +264,7 @@ export class AuthService {
       // Mock logout
       return from(
         new Promise<void>(resolve => {
+          this.clearTokenCache(); // Clear token cache
           this.currentUserSubject.next(null);
           console.log('🧪 Mock logout successful');
           resolve();
@@ -213,13 +275,64 @@ export class AuthService {
     // Real logout
     return from(signOut()).pipe(
       tap(() => {
+        this.clearTokenCache(); // Clear token cache
         this.currentUserSubject.next(null);
+        console.log('✅ Logout successful');
       }),
       catchError(error => {
         console.error('Logout failed:', error);
         // Even if logout fails, clear local state
+        this.clearTokenCache(); // Clear token cache even on error
         this.currentUserSubject.next(null);
         return throwError(() => new Error(error.message || 'Logout failed'));
+      })
+    );
+  }
+
+  getCurrentAccessToken(): Observable<string> {
+    if (this.configService.cognitoConfig.useMockAuth) {
+      // Mock current token
+      const currentUser = this.currentUserSubject.value;
+      if (currentUser) {
+        return from(Promise.resolve('mock-jwt-token-' + currentUser.id));
+      } else {
+        return throwError(() => new Error('No user logged in'));
+      }
+    }
+
+    // Check cache first
+    const cachedToken = this.getCachedToken();
+    if (cachedToken) {
+      return from(Promise.resolve(cachedToken));
+    }
+
+    // Cache miss - fetch from Cognito and cache result
+    return from(fetchAuthSession()).pipe(
+      map(session => {
+        if (!session.tokens?.accessToken) {
+          throw new Error('No access token available');
+        }
+        
+        const token = session.tokens.accessToken.toString();
+        
+        // Extract expiration from JWT token and cache it
+        let expiresAt: number | undefined;
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.exp) {
+            expiresAt = payload.exp * 1000; // Convert from seconds to milliseconds
+          }
+        } catch (e) {
+          console.warn('Could not parse token expiration, using default');
+        }
+        
+        this.cacheToken(token, expiresAt);
+        return token;
+      }),
+      catchError(error => {
+        console.error('Failed to get current access token:', error);
+        this.clearTokenCache(); // Clear cache on error
+        return throwError(() => new Error('Failed to get access token'));
       })
     );
   }
@@ -235,15 +348,35 @@ export class AuthService {
       }
     }
 
+    // Clear existing cache before refreshing
+    this.clearTokenCache();
+
     return from(fetchAuthSession({ forceRefresh: true })).pipe(
       map(session => {
         if (!session.tokens?.accessToken) {
           throw new Error('No access token available');
         }
-        return session.tokens.accessToken.toString();
+        
+        const token = session.tokens.accessToken.toString();
+        
+        // Extract expiration from JWT token and cache it
+        let expiresAt: number | undefined;
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.exp) {
+            expiresAt = payload.exp * 1000; // Convert from seconds to milliseconds
+          }
+        } catch (e) {
+          console.warn('Could not parse token expiration during refresh, using default');
+        }
+        
+        this.cacheToken(token, expiresAt);
+        console.log('🔄 Token refreshed and cached successfully');
+        return token;
       }),
       catchError(error => {
         console.error('Token refresh failed:', error);
+        this.clearTokenCache(); // Clear cache on refresh failure
         this.logout().subscribe(); // Auto logout on refresh failure
         return throwError(() => new Error('Token refresh failed'));
       })

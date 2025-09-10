@@ -25,7 +25,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         }
 
         // Production - get current token and add to request
-        return authService.refreshToken().pipe(
+        return authService.getCurrentAccessToken().pipe(
           switchMap(token => {
             const authReq = req.clone({
               setHeaders: {
@@ -34,11 +34,23 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             });
             return next(authReq);
           }),
-          catchError(error => {
-            // Token refresh failed - just return error without recursive logout
-            // The logout should only be initiated by user action, not by failed HTTP requests
-            console.warn('Token refresh failed during HTTP request:', error);
-            return throwError(() => error);
+          catchError(() => {
+            // Current token failed - try to refresh token once
+            return authService.refreshToken().pipe(
+              switchMap(refreshedToken => {
+                const authReq = req.clone({
+                  setHeaders: {
+                    Authorization: `Bearer ${refreshedToken}`,
+                  },
+                });
+                return next(authReq);
+              }),
+              catchError(refreshError => {
+                // Token refresh also failed - return original error
+                console.warn('Token refresh failed during HTTP request:', refreshError);
+                return throwError(() => refreshError);
+              })
+            );
           })
         );
       } else {
