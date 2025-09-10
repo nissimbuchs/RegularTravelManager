@@ -33,18 +33,42 @@ export class ConfigService {
       console.log('🔧 Loading runtime configuration...');
 
       // Try to load environment-specific config first
+      console.log('🌐 Fetching config from /assets/config/config.json...');
       const config = await firstValueFrom(this.http.get<AppConfig>('/assets/config/config.json'));
+      console.log('📄 Raw configuration loaded:', config);
+
+      // Validate the loaded configuration
+      if (!config.cognito) {
+        throw new Error('Missing cognito configuration');
+      }
+
+      if (!config.cognito.userPoolId) {
+        throw new Error('Missing userPoolId in configuration');
+      }
+
+      if (!config.cognito.userPoolClientId) {
+        throw new Error('Missing userPoolClientId in configuration');
+      }
 
       this._config = config;
       this.configSubject.next(config);
 
-      console.log('✅ Runtime configuration loaded:', {
+      console.log('✅ Runtime configuration loaded and validated:', {
         apiUrl: config.apiUrl,
         userPoolId: config.cognito.userPoolId,
+        userPoolClientId: config.cognito.userPoolClientId,
+        region: config.cognito.region,
+        useMockAuth: config.cognito.useMockAuth,
         environment: config.environment,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to load runtime configuration:', error);
+      console.error('❌ Error details:', {
+        message: error?.message,
+        status: error?.status,
+        statusText: error?.statusText,
+        url: error?.url
+      });
 
       // Fallback to default local development config
       const fallbackConfig: AppConfig = {
@@ -61,7 +85,7 @@ export class ConfigService {
       this._config = fallbackConfig;
       this.configSubject.next(fallbackConfig);
 
-      console.warn('⚠️ Using fallback configuration for local development');
+      console.warn('⚠️ Using fallback configuration for local development:', fallbackConfig);
     }
   }
 
