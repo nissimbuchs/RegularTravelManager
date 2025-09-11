@@ -4,6 +4,7 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { getEnvironmentConfig } from './config/environment-config';
 
 export interface ApiGatewayStackProps extends cdk.StackProps {
@@ -77,6 +78,15 @@ export class ApiGatewayStack extends cdk.Stack {
       }
     );
 
+    const getManagersFunction = lambda.Function.fromFunctionAttributes(
+      this,
+      'ImportedGetManagersFunction',
+      {
+        functionArn: cdk.Fn.importValue(`rtm-${environment}-get-managers-function-arn`),
+        sameEnvironment: true,
+      }
+    );
+
     // Import project management functions
     const createProjectFunction = lambda.Function.fromFunctionAttributes(
       this,
@@ -105,6 +115,15 @@ export class ApiGatewayStack extends cdk.Stack {
       }
     );
 
+    const getProjectByIdFunction = lambda.Function.fromFunctionAttributes(
+      this,
+      'ImportedGetProjectByIdFunction',
+      {
+        functionArn: cdk.Fn.importValue(`rtm-${environment}-get-project-by-id-function-arn`),
+        sameEnvironment: true,
+      }
+    );
+
     const getSubprojectsForProjectFunction = lambda.Function.fromFunctionAttributes(
       this,
       'ImportedGetSubprojectsForProjectFunction',
@@ -113,6 +132,25 @@ export class ApiGatewayStack extends cdk.Stack {
         sameEnvironment: true,
       }
     );
+
+    const getSubprojectByIdFunction = lambda.Function.fromFunctionAttributes(
+      this,
+      'ImportedGetSubprojectByIdFunction',
+      {
+        functionArn: cdk.Fn.importValue(`rtm-${environment}-get-subproject-by-id-function-arn`),
+        sameEnvironment: true,
+      }
+    );
+
+    const checkProjectReferencesFunction = lambda.Function.fromFunctionAttributes(
+      this,
+      'ImportedCheckProjectReferencesFunction',
+      {
+        functionArn: cdk.Fn.importValue(`rtm-${environment}-check-project-references-function-arn`),
+        sameEnvironment: true,
+      }
+    );
+
 
     const searchProjectsFunction = lambda.Function.fromFunctionAttributes(
       this,
@@ -225,16 +263,46 @@ export class ApiGatewayStack extends cdk.Stack {
       }
     );
 
-    // Create Lambda authorizer using the imported authorizer function
-    const authorizer = new apigateway.RequestAuthorizer(this, 'LambdaAuthorizer', {
+    // Create Lambda authorizer using TOKEN authorizer
+    // This is the correct approach for JWT Bearer tokens
+    const authorizer = new apigateway.TokenAuthorizer(this, 'LambdaAuthorizerV3', {
       handler: authorizerFunction,
-      identitySources: [apigateway.IdentitySource.header('Authorization')],
-      authorizerName: `rtm-${environment}-authorizer`,
-      resultsCacheTtl: cdk.Duration.minutes(5),
+      authorizerName: `rtm-${environment}-authorizer-v3`,
+      resultsCacheTtl: cdk.Duration.minutes(0), // Disable caching for development
     });
 
     // Grant API Gateway permission to invoke authorizer function
     authorizerFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+
+    // Enable API Gateway CloudWatch access logging for debugging
+    const accessLogGroup = new logs.LogGroup(this, 'ApiGatewayAccessLogGroup', {
+      logGroupName: `/aws/apigateway/rtm-${environment}-access-logs`,
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    // Configure stage with access logging
+    const stage = this.restApi.deploymentStage;
+    const cfnStage = stage.node.defaultChild as apigateway.CfnStage;
+    cfnStage.accessLogSetting = {
+      destinationArn: accessLogGroup.logGroupArn,
+      format: JSON.stringify({
+        requestId: '$context.requestId',
+        requestTime: '$context.requestTime',
+        httpMethod: '$context.httpMethod',
+        resourcePath: '$context.resourcePath',
+        status: '$context.status',
+        error: '$context.error.message',
+        authorizerError: '$context.authorizer.error',
+        authorizerLatency: '$context.authorizer.latency',
+        authorizerStatus: '$context.authorizer.status',
+        authorizerPrincipalId: '$context.authorizer.principalId',
+        integration: '$context.integration.error',
+        responseLength: '$context.responseLength',
+        ip: '$context.identity.sourceIp',
+        userAgent: '$context.identity.userAgent'
+      })
+    };
 
     // Configure API routes with imported Lambda functions
     this.configureRoutes(
@@ -244,10 +312,14 @@ export class ApiGatewayStack extends cdk.Stack {
       authorizer,
       getEmployeeProfileFunction,
       updateEmployeeAddressFunction,
+      getManagersFunction,
       createProjectFunction,
       createSubprojectFunction,
       getAllProjectsFunction,
+      getProjectByIdFunction,
       getSubprojectsForProjectFunction,
+      getSubprojectByIdFunction,
+      checkProjectReferencesFunction,
       searchProjectsFunction,
       projectsManagementFunction,
       adminProjectManagementFunction,
@@ -285,13 +357,17 @@ export class ApiGatewayStack extends cdk.Stack {
     environment: string,
     healthFunction: lambda.IFunction,
     getActiveProjectsFunction: lambda.IFunction,
-    authorizer: apigateway.RequestAuthorizer,
+    authorizer: apigateway.IAuthorizer,
     getEmployeeProfileFunction: lambda.IFunction,
     updateEmployeeAddressFunction: lambda.IFunction,
+    getManagersFunction: lambda.IFunction,
     createProjectFunction: lambda.IFunction,
     createSubprojectFunction: lambda.IFunction,
     getAllProjectsFunction: lambda.IFunction,
+    getProjectByIdFunction: lambda.IFunction,
     getSubprojectsForProjectFunction: lambda.IFunction,
+    getSubprojectByIdFunction: lambda.IFunction,
+    checkProjectReferencesFunction: lambda.IFunction,
     searchProjectsFunction: lambda.IFunction,
     projectsManagementFunction: lambda.IFunction,
     adminProjectManagementFunction: lambda.IFunction,
@@ -373,6 +449,10 @@ export class ApiGatewayStack extends cdk.Stack {
     const projectByIdResource = projectsResource.addResource('{id}');
     const projectManagementIntegration = new apigateway.LambdaIntegration(projectsManagementFunction);
     
+    // GET /projects/{id} - Get single project by ID
+    const getProjectByIdIntegration = new apigateway.LambdaIntegration(getProjectByIdFunction);
+    projectByIdResource.addMethod('GET', getProjectByIdIntegration, defaultMethodOptions);
+    
     // PUT /projects/{id} - Update project
     projectByIdResource.addMethod('PUT', projectManagementIntegration, defaultMethodOptions);
     
@@ -384,6 +464,11 @@ export class ApiGatewayStack extends cdk.Stack {
     const getSubprojectsIntegration = new apigateway.LambdaIntegration(getSubprojectsForProjectFunction);
     subprojectsResource.addMethod('GET', getSubprojectsIntegration, defaultMethodOptions);
 
+    // GET /projects/{id}/references - Check project references
+    const referencesResource = projectByIdResource.addResource('references');
+    const checkProjectReferencesIntegration = new apigateway.LambdaIntegration(checkProjectReferencesFunction);
+    referencesResource.addMethod('GET', checkProjectReferencesIntegration, defaultMethodOptions);
+
     // Subproject management endpoints
     const subprojectsRootResource = apiResource.addResource('subprojects');
     
@@ -391,19 +476,28 @@ export class ApiGatewayStack extends cdk.Stack {
     const createSubprojectIntegration = new apigateway.LambdaIntegration(createSubprojectFunction);
     subprojectsRootResource.addMethod('POST', createSubprojectIntegration, defaultMethodOptions);
 
+    // GET /subprojects/{id} - Get single subproject by ID
     // PUT /subprojects/{id} - Update subproject
     // DELETE /subprojects/{id} - Delete subproject
     const subprojectByIdResource = subprojectsRootResource.addResource('{id}');
+    const getSubprojectByIdIntegration = new apigateway.LambdaIntegration(getSubprojectByIdFunction);
+    subprojectByIdResource.addMethod('GET', getSubprojectByIdIntegration, defaultMethodOptions);
     subprojectByIdResource.addMethod('PUT', projectManagementIntegration, defaultMethodOptions);
     subprojectByIdResource.addMethod('DELETE', projectManagementIntegration, defaultMethodOptions);
 
-    // Admin project management endpoints
+    // Admin management endpoints
     const adminResource = apiResource.addResource('admin');
+    
+    // Admin project management
     const adminProjectsResource = adminResource.addResource('projects');
     const adminProjectManagementIntegration = new apigateway.LambdaIntegration(adminProjectManagementFunction);
     
     // GET /admin/projects - Admin list all projects with filtering
     adminProjectsResource.addMethod('GET', adminProjectManagementIntegration, defaultMethodOptions);
+
+    // Admin user management (temporarily disabled - will fix after deployment)
+    // const adminUsersResource = adminResource.addResource('users');
+    // TODO: Re-enable admin users endpoint after fixing handler
 
     // Project search endpoint
     const searchResource = projectsResource.addResource('search');
@@ -414,7 +508,10 @@ export class ApiGatewayStack extends cdk.Stack {
     createProjectFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
     createSubprojectFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
     getAllProjectsFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+    getProjectByIdFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
     getSubprojectsForProjectFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+    getSubprojectByIdFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+    checkProjectReferencesFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
     searchProjectsFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
     projectsManagementFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
     adminProjectManagementFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
@@ -474,23 +571,32 @@ export class ApiGatewayStack extends cdk.Stack {
     // GET /travel-requests - Get employee's travel requests (handled by same function)
     travelRequestsResource.addMethod('GET', employeesTravelRequestsIntegration, defaultMethodOptions);
 
+    // POST /travel-requests/preview - Calculate travel request preview
+    const travelRequestPreviewResource = travelRequestsResource.addResource('preview');
+    travelRequestPreviewResource.addMethod('POST', employeesTravelRequestsIntegration, defaultMethodOptions);
+
     // Employee manager endpoints - reuse existing employeesResource
     const managersResource = employeesResource.addResource('managers');
     
     // GET /employees/managers - Get managers for selection
-    const adminUserManagementIntegration = new apigateway.LambdaIntegration(adminUserManagementFunction);
-    managersResource.addMethod('GET', adminUserManagementIntegration, defaultMethodOptions);
+    const getManagersIntegration = new apigateway.LambdaIntegration(getManagersFunction);
+    managersResource.addMethod('GET', getManagersIntegration, defaultMethodOptions);
 
     // Grant API Gateway permission to invoke travel request functions
     employeesTravelRequestsFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+    getManagersFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
     adminUserManagementFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
 
     // Manager dashboard endpoints (protected)
     const managerResource = apiResource.addResource('manager');
+    const managerDashboardResource = managerResource.addResource('dashboard');
     const managerRequestsResource = managerResource.addResource('requests');
     
     // Manager dashboard integration
     const managersDashboardIntegration = new apigateway.LambdaIntegration(managersDashboardFunction);
+    
+    // GET /manager/dashboard - Get manager's dashboard data
+    managerDashboardResource.addMethod('GET', managersDashboardIntegration, defaultMethodOptions);
     
     // GET /manager/requests - Get manager's pending requests
     managerRequestsResource.addMethod('GET', managersDashboardIntegration, defaultMethodOptions);
