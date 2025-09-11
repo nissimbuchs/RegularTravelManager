@@ -393,7 +393,7 @@ export const getEmployeeContext = async (
       };
     }
 
-    // Get employee details - convert cognito user ID to database UUID
+    // Get employee details - look up by email (which is passed as employeeId parameter)
     const employeeQuery = `
       SELECT 
         e.id,
@@ -402,7 +402,7 @@ export const getEmployeeContext = async (
         'Engineering' as department, -- TODO: Add department field to employee table
         'Employee' as position -- TODO: Add position field to employee table
       FROM employees e
-      WHERE e.cognito_user_id = $1
+      WHERE e.email = $1
     `;
 
     const employeeResult = await db.query(employeeQuery, [employeeId]);
@@ -496,7 +496,7 @@ export const approveRequest = async (
     // Convert cognito_user_id to UUID for database queries
     const managerEmployeeId = await getManagerEmployeeId(managerCognitoId);
 
-    const requestId = event.pathParameters?.requestId;
+    const requestId = event.pathParameters?.id;
     if (!requestId) {
       return {
         statusCode: 400,
@@ -571,7 +571,7 @@ export const rejectRequest = async (
     // Convert cognito_user_id to UUID for database queries
     const managerEmployeeId = await getManagerEmployeeId(managerCognitoId);
 
-    const requestId = event.pathParameters?.requestId;
+    const requestId = event.pathParameters?.id;
     if (!requestId) {
       return {
         statusCode: 400,

@@ -93,7 +93,19 @@ export class AuthService {
     // Check if we should use mock authentication
     if (this.configService.cognitoConfig.useMockAuth) {
       console.log('🧪 Using mock authentication mode');
+      
+      // Clear any existing authentication state when switching to mock mode
+      this.clearTokenCache();
       this.currentUserSubject.next(null);
+      
+      // Also clear any AWS Amplify cached sessions
+      try {
+        await signOut();
+        console.log('🧪 Cleared existing Cognito session for mock mode');
+      } catch (error) {
+        // Ignore errors - user might not have been signed in
+        console.log('🧪 No existing Cognito session to clear');
+      }
       return;
     }
 
@@ -176,56 +188,77 @@ export class AuthService {
   }
 
   private mockLogin(credentials: LoginCredentials): Observable<AuthResponse> {
-    // Mock users matching comprehensive sample data (Swiss format)
+    // Mock users with predictable UUID format IDs matching backend database
     const mockUsers = {
-      'employee1@company.ch': {
-        id: 'employee1@company.ch',
-        email: 'employee1@company.ch',
-        name: 'Anna Schneider',
-        role: 'employee' as const,
-        groups: ['employees'],
-      },
-      'employee2@company.ch': {
-        id: 'employee2@company.ch',
-        email: 'employee2@company.ch',
-        name: 'Marco Rossi',
-        role: 'employee' as const,
-        groups: ['employees'],
-      },
-      'employee3@company.ch': {
-        id: 'employee3@company.ch',
-        email: 'employee3@company.ch',
-        name: 'Lisa Meier',
-        role: 'employee' as const,
-        groups: ['employees'],
-      },
-      'manager1@company.ch': {
-        id: 'manager1@company.ch',
-        email: 'manager1@company.ch',
-        name: 'Thomas Müller',
-        role: 'manager' as const,
-        groups: ['managers', 'employees'],
-      },
-      'manager2@company.ch': {
-        id: 'manager2@company.ch',
-        email: 'manager2@company.ch',
-        name: 'Sophie Dubois',
-        role: 'manager' as const,
-        groups: ['managers', 'employees'],
-      },
       'admin1@company.ch': {
-        id: 'admin1@company.ch',
+        id: '11111111-1111-1111-1111-111111111111',
         email: 'admin1@company.ch',
         name: 'Hans Zimmermann',
         role: 'admin' as const,
         groups: ['administrators', 'managers', 'employees'],
       },
       'admin2@company.ch': {
-        id: 'admin2@company.ch',
+        id: '22222222-2222-2222-2222-222222222222',
         email: 'admin2@company.ch',
         name: 'Maria Weber',
         role: 'admin' as const,
         groups: ['administrators', 'managers', 'employees'],
+      },
+      'manager1@company.ch': {
+        id: '33333333-3333-3333-3333-333333333333',
+        email: 'manager1@company.ch',
+        name: 'Thomas Müller',
+        role: 'manager' as const,
+        groups: ['managers', 'employees'],
+      },
+      'manager2@company.ch': {
+        id: '44444444-4444-4444-4444-444444444444',
+        email: 'manager2@company.ch',
+        name: 'Sophie Dubois',
+        role: 'manager' as const,
+        groups: ['managers', 'employees'],
+      },
+      'employee1@company.ch': {
+        id: '55555555-5555-5555-5555-555555555555',
+        email: 'employee1@company.ch',
+        name: 'Anna Schneider',
+        role: 'employee' as const,
+        groups: ['employees'],
+      },
+      'employee2@company.ch': {
+        id: '66666666-6666-6666-6666-666666666666',
+        email: 'employee2@company.ch',
+        name: 'Marco Rossi',
+        role: 'employee' as const,
+        groups: ['employees'],
+      },
+      'employee3@company.ch': {
+        id: '77777777-7777-7777-7777-777777777777',
+        email: 'employee3@company.ch',
+        name: 'Lisa Meier',
+        role: 'employee' as const,
+        groups: ['employees'],
+      },
+      'employee4@company.ch': {
+        id: '88888888-8888-8888-8888-888888888888',
+        email: 'employee4@company.ch',
+        name: 'Pierre Martin',
+        role: 'employee' as const,
+        groups: ['employees'],
+      },
+      'employee5@company.ch': {
+        id: '99999999-9999-9999-9999-999999999999',
+        email: 'employee5@company.ch',
+        name: 'Julia Fischer',
+        role: 'employee' as const,
+        groups: ['employees'],
+      },
+      'employee6@company.ch': {
+        id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        email: 'employee6@company.ch',
+        name: 'Michael Keller',
+        role: 'employee' as const,
+        groups: ['employees'],
       },
     };
 
@@ -415,5 +448,36 @@ export class AuthService {
 
   hasAnyRole(roles: ('employee' | 'manager' | 'admin')[]): Observable<boolean> {
     return this.currentUser$.pipe(map(user => (user ? roles.includes(user.role) : false)));
+  }
+
+  /**
+   * Force clear all authentication cache and state
+   * Useful for debugging or when switching between auth modes
+   */
+  async forceCleanAuthState(): Promise<void> {
+    console.log('🔄 Force clearing all authentication state...');
+    
+    // Clear in-memory cache
+    this.clearTokenCache();
+    this.currentUserSubject.next(null);
+    
+    // Clear AWS Amplify sessions
+    try {
+      await signOut();
+      console.log('✅ Cleared Cognito session');
+    } catch (error) {
+      console.log('ℹ️ No Cognito session to clear');
+    }
+    
+    // Clear browser storage (localStorage, sessionStorage)
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+      console.log('✅ Cleared browser storage');
+    } catch (error) {
+      console.log('⚠️ Could not clear browser storage');
+    }
+    
+    console.log('✅ Authentication state cleared - please refresh the page');
   }
 }

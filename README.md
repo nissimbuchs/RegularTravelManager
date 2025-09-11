@@ -2,6 +2,15 @@
 
 Employee travel allowance management system built with Angular, Node.js, and AWS CDK.
 
+## 🚀 Live Application Access
+
+**🌐 Production Application (Dev Environment):**
+- **Frontend**: https://dz57qvo83kxos.cloudfront.net
+- **API Endpoint**: https://1kkd1bbkmh.execute-api.eu-central-1.amazonaws.com/dev/
+- **Region**: eu-central-1 (Frankfurt)
+- **Database**: `rtm-dev-infrastructure-databaseb269d8bb-ynfofwwlfkkm.c18k2mga4rnh.eu-central-1.rds.amazonaws.com`
+- **Cognito User Pool**: `eu-central-1_LFA9Rhk2y`
+
 ## Overview
 
 RegularTravelManager is a comprehensive solution for managing employee travel allowances, enabling employees to submit travel requests and managers to review and approve them. The system calculates distance-based allowances and provides a streamlined workflow for travel expense management.
@@ -215,17 +224,27 @@ localStorage.setItem('mockUser', 'employee6');  // Michael Keller (Winterthur)
 window.location.reload();
 ```
 
+**Mock User ID Mapping (UUID format for consistency):**
+- admin1@company.ch → `11111111-1111-1111-1111-111111111111`
+- admin2@company.ch → `22222222-2222-2222-2222-222222222222`
+- manager1@company.ch → `33333333-3333-3333-3333-333333333333`
+- manager2@company.ch → `44444444-4444-4444-4444-444444444444`
+- employee1@company.ch → `55555555-5555-5555-5555-555555555555`
+- employee2@company.ch → `66666666-6666-6666-6666-666666666666`
+- employee3@company.ch → `77777777-7777-7777-7777-777777777777`
+- employee4@company.ch → `88888888-8888-8888-8888-888888888888`
+- employee5@company.ch → `99999999-9999-9999-9999-999999999999`
+- employee6@company.ch → `aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
+
 **Note:** Development uses mock authentication - no passwords required. Production uses AWS Cognito with real authentication.
 
-### 6. AWS Dev Environment Testing
+### 6. AWS Production Environment Access
 
-**AWS Frontend URL**: https://d1asiy62ilf86t.cloudfront.net
-
-For testing the deployed AWS dev environment, you can use either mock authentication (current setup) or real AWS Cognito credentials:
+**🌐 Live Application URL**: https://dz57qvo83kxos.cloudfront.net
 
 #### AWS Cognito Test Users & Passwords
 
-**Admin Users:**
+**Admin Users (Full System Access):**
 - **admin1@company.ch** (Hans Zimmermann, CEO) - Password: `AdminPass123!Test`
 - **admin2@company.ch** (Maria Weber, IT Admin) - Password: `AdminPass123!Test`
 
@@ -237,16 +256,25 @@ For testing the deployed AWS dev environment, you can use either mock authentica
 - **employee1@company.ch** (Anna Schneider, Developer) - Password: `EmployeePass123!`
 - **employee2@company.ch** (Marco Rossi, Project Coordinator) - Password: `EmployeePass123!`
 - **employee3@company.ch** (Lisa Meier, Business Analyst) - Password: `EmployeePass123!`
+- **employee4@company.ch** (Pierre Martin, Marketing Specialist) - Password: `EmployeePass123!`
+- **employee5@company.ch** (Julia Fischer, Technical Consultant) - Password: `EmployeePass123!`
+- **employee6@company.ch** (Michael Keller, Sales Representative) - Password: `EmployeePass123!`
 
-**AWS Dev Environment Details:**
-- **Frontend URL:** `https://d1asiy62ilf86t.cloudfront.net` (Angular app with CloudFront CDN)
-- **API Endpoint:** `https://i7kfvsf0pb.execute-api.eu-central-1.amazonaws.com/dev/` (available through CloudFront at `/api/*`)
+**AWS Production Environment Details:**
+- **Frontend URL:** `https://dz57qvo83kxos.cloudfront.net` (Angular app with CloudFront CDN)
+- **API Endpoint:** `https://1kkd1bbkmh.execute-api.eu-central-1.amazonaws.com/dev/` (available through CloudFront at `/api/*`)
 - **Region:** `eu-central-1` (Frankfurt)  
-- **Database:** AWS RDS PostgreSQL with same sample data as local development
-- **Authentication:** AWS Cognito User Pool (currently using mock auth for compatibility)
-- **Architecture:** CloudFront distribution with reverse proxy to API Gateway for CORS-free API access
+- **Database:** AWS RDS PostgreSQL with complete sample data
+- **Authentication:** AWS Cognito User Pool with real user management
+- **Architecture:** 4-stack CDK deployment with CloudFront distribution and API Gateway integration
 
-**Note:** AWS dev environment contains identical sample data (10 employees, 4 projects, 8 subprojects, 5 travel requests) with the same Swiss business context as local development.
+**✅ Available Features:**
+- Complete Swiss business sample data (10 employees, 4 projects, 8 subprojects, 5 travel requests)
+- Real-time distance calculations with PostGIS
+- Travel allowance management workflow
+- Manager approval processes
+- Admin user and project management
+- Comprehensive audit trails
 
 ## Environment Configuration
 
@@ -255,7 +283,7 @@ The project uses clear environment naming conventions:
 | Environment File | Purpose | Frontend URL | API Access | Authentication |
 |------------------|---------|--------------|-------------|----------------|
 | `environment.ts` | **Local Development** | `http://localhost:4200` | `http://localhost:3000` | Mock authentication |
-| `environment.dev.ts` | **AWS Dev Environment** | `https://d1asiy62ilf86t.cloudfront.net` | `/api/*` (CloudFront proxy) | Mock authentication (current) |
+| `environment.dev.ts` | **AWS Dev Environment** (Current) | `https://dz57qvo83kxos.cloudfront.net` | `/api/*` (CloudFront proxy) | AWS Cognito authentication |
 | `environment.staging.ts` | **AWS Staging** (Future) | Staging CloudFront URL | `/api/*` (CloudFront proxy) | Real Cognito authentication |
 | `environment.prod.ts` | **AWS Production** (Future) | Production CloudFront URL | `/api/*` (CloudFront proxy) | Real Cognito authentication |
 

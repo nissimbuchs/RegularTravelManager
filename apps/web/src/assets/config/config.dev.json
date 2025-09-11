@@ -4,7 +4,7 @@
     "userPoolId": "eu-central-1_n0KeuOqpo",
     "userPoolClientId": "62pmv71gidv9p6srtcmnoj36bg",
     "region": "eu-central-1", 
-    "useMockAuth": false
+    "useMockAuth": true
   },
   "environment": "dev"
 }

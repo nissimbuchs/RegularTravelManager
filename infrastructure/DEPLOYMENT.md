@@ -2,6 +2,21 @@
 
 This guide explains how to deploy the RegularTravelManager infrastructure using AWS CDK.
 
+## 🚀 Current Deployment Status
+
+**✅ Development Environment (Currently Deployed):**
+- **Frontend URL**: https://dz57qvo83kxos.cloudfront.net
+- **API Gateway URL**: https://1kkd1bbkmh.execute-api.eu-central-1.amazonaws.com/dev/
+- **CloudFront Distribution**: dz57qvo83kxos.cloudfront.net
+- **Database Endpoint**: rtm-dev-infrastructure-databaseb269d8bb-ynfofwwlfkkm.c18k2mga4rnh.eu-central-1.rds.amazonaws.com
+- **Cognito User Pool**: eu-central-1_LFA9Rhk2y
+- **Region**: eu-central-1 (Frankfurt)
+- **Stack Names**: 
+  - rtm-dev-infrastructure
+  - rtm-dev-lambda
+  - rtm-dev-api-gateway
+  - rtm-dev-web
+
 ## Prerequisites
 
 1. **AWS CLI Configuration**
@@ -45,30 +60,38 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS postgis_topology;
 ```
 
-### 2. Load Sample Data (Development/Staging)
-For development and staging environments, load comprehensive sample data:
-```bash
-# Connect to the deployed RDS instance and run:
-psql $DATABASE_URL -f infrastructure/data/sample-data.sql
+### 2. Sample Data (Already Loaded)
 
-# Or use the migration runner:
-DATABASE_URL=$DEPLOYED_DATABASE_URL npm run db:seed
-```
+**✅ Sample data has been automatically loaded in the current deployment:**
+
+**Test User Credentials (AWS Cognito):**
+
+**Admin Users (Full System Access):**
+- **admin1@company.ch** (Hans Zimmermann, CEO) - Password: `AdminPass123!Test`
+- **admin2@company.ch** (Maria Weber, IT Admin) - Password: `AdminPass123!Test`
+
+**Managers:**
+- **manager1@company.ch** (Thomas Müller, Regional Manager) - Password: `ManagerPass123!`
+- **manager2@company.ch** (Sophie Dubois, Regional Manager) - Password: `ManagerPass123!`
+
+**Employees:**
+- **employee1@company.ch** (Anna Schneider, Developer) - Password: `EmployeePass123!`
+- **employee2@company.ch** (Marco Rossi, Project Coordinator) - Password: `EmployeePass123!`
+- **employee3@company.ch** (Lisa Meier, Business Analyst) - Password: `EmployeePass123!`
+- **employee4@company.ch** (Pierre Martin, Marketing Specialist) - Password: `EmployeePass123!`
+- **employee5@company.ch** (Julia Fischer, Technical Consultant) - Password: `EmployeePass123!`
+- **employee6@company.ch** (Michael Keller, Sales Representative) - Password: `EmployeePass123!`
 
 **Sample Data Includes:**
-- 2 Admin users with full system access
-- 2 Regional managers
-- 6 Employees across major Swiss cities  
-- 4 Complete business projects
-- 8 Subprojects with precise Swiss coordinates
-- 5 Travel requests covering all status types
-- Complete audit trails and status change history
+- ✅ 10 Complete user profiles with proper Cognito integration
+- ✅ 4 Business projects with varying cost rates (0.65-0.80 CHF/km)
+- ✅ 8 Subprojects across major Swiss cities with precise coordinates
+- ✅ 5 Travel requests covering complete lifecycle (pending, approved, rejected, withdrawn)
+- ✅ Complete audit trails and status change history
+- ✅ Realistic Swiss business scenarios
 
-**Admin Users for Testing:**
-- `admin1@company.ch` - Hans Zimmermann (CEO/System Admin)
-- `admin2@company.ch` - Maria Weber (IT Administrator)
-
-**Note:** These are test accounts for development/staging only. Production should use real user accounts through Cognito.
+**Access the Live Application:**
+Visit https://dz57qvo83kxos.cloudfront.net and log in with any of the credentials above.
 
 ### 3. AWS SES Domain Verification
 If deploying with a domain name:
@@ -76,12 +99,15 @@ If deploying with a domain name:
 2. Add DKIM, SPF, and DMARC records to your domain
 3. Request production access (move out of sandbox)
 
-### 4. Location Service Testing
-Test geocoding with sample Swiss addresses:
+### 4. API Testing
+Test the deployed API endpoints:
 ```bash
-aws location search-place-index-for-text \
-  --index-name rtm-dev-places \
-  --text "Bahnhofstrasse 1, Zurich, Switzerland"
+# Health check
+curl https://1kkd1bbkmh.execute-api.eu-central-1.amazonaws.com/dev/health
+
+# Test authenticated endpoint (requires valid JWT token)
+curl -H "Authorization: Bearer $JWT_TOKEN" \
+     https://1kkd1bbkmh.execute-api.eu-central-1.amazonaws.com/dev/employees/profile
 ```
 
 ## Environment Variables
@@ -98,7 +124,7 @@ The infrastructure creates these SSM parameters for application configuration:
 
 ### API Gateway
 - `/rtm/{env}/api/gateway-id`
-- `/rtm/{env}/api/gateway-url`
+- `/rtm/{env}/api/gateway-url` (Current: https://1kkd1bbkmh.execute-api.eu-central-1.amazonaws.com/dev/)
 
 ### Location Service
 - `/rtm/{env}/location/place-index-name`

@@ -356,7 +356,7 @@ export const managersDashboard = errorHandler(
     if (method === 'GET' && path.includes('/manager/dashboard')) {
       console.log('🔄 Routing to getManagerDashboardHandler');
       return getManagerDashboardHandler(event, context);
-    } else if (method === 'GET' && path.includes('/context')) {
+    } else if (method === 'GET' && (path.includes('/employee-context/') || path.includes('/context'))) {
       console.log('🔄 Routing to getEmployeeContextHandler');
       return getEmployeeContextHandler(event, context);
     } else if (method === 'PUT' && path.includes('/approve')) {

@@ -291,10 +291,10 @@ const employeeService = new EmployeeServiceImpl();
 // Get employee profile
 export const getEmployeeProfile = validateRequest({
   pathParams: {
-    id: { required: true, type: 'string' },
+    cognitoUserId: { required: true, type: 'string' },
   },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
-  const employeeId = event.pathParameters?.id;
+  const employeeId = event.pathParameters?.cognitoUserId;
   const userContext = getUserContextFromEvent(event);
 
   logger.info('Getting employee profile', {
@@ -322,7 +322,7 @@ export const getEmployeeProfile = validateRequest({
 // Update employee address
 export const updateEmployeeAddress = validateRequest({
   pathParams: {
-    id: { required: true, type: 'string' },
+    cognitoUserId: { required: true, type: 'string' },
   },
   body: {
     homeStreet: { required: true, type: 'string', minLength: 1, maxLength: 255 },
@@ -339,7 +339,7 @@ export const updateEmployeeAddress = validateRequest({
     },
   },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
-  const cognitoUserId = event.pathParameters?.id;
+  const cognitoUserId = event.pathParameters?.cognitoUserId;
   const body = JSON.parse(event.body!);
   const userContext = getUserContextFromEvent(event);
 

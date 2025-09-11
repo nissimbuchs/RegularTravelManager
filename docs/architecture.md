@@ -4,6 +4,24 @@
 **Facilitator:** Business Analyst Mary
 **Participant:** RegularTravelManager Developer
 
+## 🚀 Current Deployment Status
+
+**✅ Production Environment (AWS Dev Stack):**
+- **Frontend Application**: https://dz57qvo83kxos.cloudfront.net
+- **API Gateway**: https://1kkd1bbkmh.execute-api.eu-central-1.amazonaws.com/dev/
+- **Database**: rtm-dev-infrastructure-databaseb269d8bb-ynfofwwlfkkm.c18k2mga4rnh.eu-central-1.rds.amazonaws.com
+- **Cognito User Pool**: eu-central-1_LFA9Rhk2y
+- **Region**: eu-central-1 (Frankfurt)
+- **Architecture**: 4-stack CDK deployment with complete sample data
+
+**Available Features:**
+- ✅ Real-time travel request submission and management
+- ✅ Manager approval workflows 
+- ✅ Distance calculations with PostGIS
+- ✅ Swiss business sample data (10 employees, 4 projects, 8 subprojects)
+- ✅ AWS Cognito authentication with test users
+- ✅ Complete audit trails and status tracking
+
 ## Introduction
 
 This document outlines the complete fullstack architecture for **RegularTravelManager**, including backend systems, frontend implementation, and their integration. It serves as the single source of truth for AI-driven development, ensuring consistency across the entire technology stack.
@@ -204,11 +222,12 @@ The system uses a three-ID pattern to handle different contexts of employee iden
 ```typescript
 // ✅ Correct: Use cognito_user_id for API calls
 const userContext = this.authService.getCurrentUser();
-this.http.get(`/employees/${userContext.sub}`); // sub = cognito_user_id
+this.http.get(`/api/employees/${userContext.sub}`); // sub = cognito_user_id
+// Example: GET /api/employees/93b46802-90c1-7066-8b6c-ae1fe5cd1fb6
 
 // ❌ Incorrect: Never use UUID id or employee_id for API calls
-this.http.get(`/employees/550e8400-e29b-41d4-a716-446655440001`);
-this.http.get(`/employees/EMP-0001`);
+this.http.get(`/api/employees/550e8400-e29b-41d4-a716-446655440001`);
+this.http.get(`/api/employees/EMP-0001`);
 ```
 
 **For Display Purposes:**
@@ -459,8 +478,10 @@ info:
   version: 1.0.0
   description: REST API for managing employee travel allowance requests and approvals
 servers:
-  - url: https://api.regulartravelmanager.com/v1
-    description: Production API
+  - url: https://1kkd1bbkmh.execute-api.eu-central-1.amazonaws.com/dev
+    description: Production API (Development Environment)
+  - url: https://dz57qvo83kxos.cloudfront.net/api
+    description: Production API via CloudFront proxy
     
 components:
   securitySchemes:
@@ -1151,6 +1172,7 @@ services:
 | Environment | Frontend | Backend | Database | AWS Services | Purpose |
 |-------------|----------|---------|----------|--------------|---------|
 | **Development** | localhost:4200 | localhost:3000 | PostgreSQL:5432 | LocalStack:4566 | Local development with AWS parity |
+| **AWS Dev** (Current) | https://dz57qvo83kxos.cloudfront.net | https://1kkd1bbkmh.execute-api.eu-central-1.amazonaws.com/dev/ | rtm-dev-infrastructure-databaseb269d8bb-ynfofwwlfkkm.c18k2mga4rnh.eu-central-1.rds.amazonaws.com | AWS eu-central-1 | Live AWS deployment for testing |
 | **Staging** | staging.travel.com | api-staging.travel.com | RDS Staging | AWS Staging | Pre-production testing |
 | **Production** | travel.com | api.travel.com | RDS Production | AWS Production | Live environment |
 

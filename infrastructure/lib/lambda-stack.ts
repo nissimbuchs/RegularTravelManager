@@ -390,9 +390,11 @@ export class LambdaStack extends cdk.Stack {
         vpcSubnets: {
           subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
         },
+        securityGroups: [infrastructureStack.lambdaSecurityGroup],
         logGroup: updateAddressLogGroup,
         environment: {
-          NODE_ENV: environment,
+          NODE_ENV: 'production',
+          RTM_ENVIRONMENT: environment,
           DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
           DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
           DB_NAME: 'rtm_database',
@@ -658,6 +660,7 @@ export class LambdaStack extends cdk.Stack {
         vpcSubnets: {
           subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
         },
+        securityGroups: [infrastructureStack.lambdaSecurityGroup],
         logGroup: getSubprojectsLogGroup,
         environment: {
           NODE_ENV: environment,
@@ -1044,6 +1047,7 @@ export class LambdaStack extends cdk.Stack {
         vpcSubnets: {
           subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
         },
+        securityGroups: [infrastructureStack.lambdaSecurityGroup],
         logGroup: invalidateCalculationCacheLogGroup,
         environment: {
           NODE_ENV: environment,

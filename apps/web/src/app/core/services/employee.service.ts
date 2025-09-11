@@ -26,25 +26,27 @@ export class EmployeeService {
     return `${this.configService.apiUrl}/employees`;
   }
 
-  // Get employee profile by ID (expects cognitoUserId, which is the email)
+  // Get employee profile by ID (expects cognitoUserId, which is a UUID)
   getEmployeeProfile(cognitoUserId: string): Observable<EmployeeDto> {
     const url = `${this.baseUrl}/${cognitoUserId}`;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cognitoUserId);
+    
     console.log('🔍 EmployeeService.getEmployeeProfile() called with:', {
       cognitoUserId,
       url,
       isEmail: cognitoUserId.includes('@'),
-      isUuid: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cognitoUserId),
+      isUuid: isUuid,
       stackTrace: new Error().stack?.split('\n').slice(1, 4).join('\n')
     });
     
-    if (!cognitoUserId.includes('@')) {
-      console.warn('⚠️  WARNING: getEmployeeProfile() called with non-email ID. Expected cognitoUserId (email), got:', cognitoUserId);
+    if (!isUuid) {
+      console.warn('⚠️  WARNING: getEmployeeProfile() called with non-UUID ID. Expected cognitoUserId (UUID), got:', cognitoUserId);
     }
     
     return this.http.get<EmployeeDto>(url);
   }
 
-  // Update employee address (expects cognitoUserId, which is the email)
+  // Update employee address (expects cognitoUserId, which is a UUID)
   updateEmployeeAddress(
     cognitoUserId: string,
     addressData: UpdateEmployeeAddressRequest
@@ -83,7 +85,7 @@ export class EmployeeService {
   // Get all managers for dropdown selection
   getManagers(): Observable<Manager[]> {
     return this.http
-      .get<{ managers: Manager[] }>(`${this.configService.apiUrl}/managers`)
+      .get<{ managers: Manager[] }>(`${this.baseUrl}/managers`)
       .pipe(map(response => response.managers));
   }
 }

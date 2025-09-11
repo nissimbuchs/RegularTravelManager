@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 RegularTravelManager is a Swiss employee travel allowance management system built with Angular 17+, Node.js Lambda functions, and AWS services. The project uses a **LocalStack development environment** providing 95% AWS production parity for local development.
 
+## 🚀 Live Application Access
+
+**Production Environment (Dev Stack):**
+- **Frontend Application**: https://dz57qvo83kxos.cloudfront.net
+- **API Endpoint**: https://1kkd1bbkmh.execute-api.eu-central-1.amazonaws.com/dev/
+- **Database**: `rtm-dev-infrastructure-databaseb269d8bb-ynfofwwlfkkm.c18k2mga4rnh.eu-central-1.rds.amazonaws.com`
+- **Cognito User Pool**: `eu-central-1_LFA9Rhk2y`
+
 ## Development Commands
 
 ### Quick Start
@@ -146,8 +154,11 @@ The infrastructure is organized into 4 independent CDK stacks for better separat
 const isLocal = process.env.NODE_ENV === 'development';
 const awsEndpoint = isLocal ? 'http://localhost:4566' : undefined;
 
-// Database connection
+// Local Database connection
 DATABASE_URL: 'postgresql://nissim:devpass123@localhost:5432/travel_manager_dev'
+
+// Production Database connection (AWS RDS)
+DATABASE_URL: 'postgresql://rtm_admin:[SECRET]@rtm-dev-infrastructure-databaseb269d8bb-ynfofwwlfkkm.c18k2mga4rnh.eu-central-1.rds.amazonaws.com:5432/rtm_database'
 ```
 
 ## Development Guidelines
@@ -220,7 +231,14 @@ The development environment includes complete Swiss business data with productio
 - Complete audit trails for status changes and address history
 - Realistic Swiss business scenarios and geographic coverage
 
-### Switching Users in Development
+**User Passwords (AWS Cognito):**
+- **Admin Users**: `AdminPass123!Test`
+- **Manager Users**: `ManagerPass123!`
+- **Employee Users**: `EmployeePass123!`
+
+### User Access
+
+**For Local Development (Mock Auth):**
 In the browser console (F12), run:
 ```javascript
 // Admin Users (Full system access)
@@ -242,11 +260,27 @@ localStorage.setItem('mockUser', 'employee6');  // Michael Keller (Sales)
 window.location.reload();
 ```
 
+**Mock User ID Mapping (UUID format for dev environment):**
+- admin1@company.ch → `11111111-1111-1111-1111-111111111111`
+- admin2@company.ch → `22222222-2222-2222-2222-222222222222`
+- manager1@company.ch → `33333333-3333-3333-3333-333333333333`
+- manager2@company.ch → `44444444-4444-4444-4444-444444444444`
+- employee1@company.ch → `55555555-5555-5555-5555-555555555555`
+- employee2@company.ch → `66666666-6666-6666-6666-666666666666`
+- employee3@company.ch → `77777777-7777-7777-7777-777777777777`
+- employee4@company.ch → `88888888-8888-8888-8888-888888888888`
+- employee5@company.ch → `99999999-9999-9999-9999-999999999999`
+- employee6@company.ch → `aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`
+
+**For Production/AWS Environment:**
+Use the email addresses and passwords listed above to log in directly via the Cognito authentication.
+
 ### Authentication Architecture
-- **Development**: Mock authentication with production user data
-- **Production**: AWS Cognito with real user management
-- **LocalStack**: Cognito is Pro feature - uses mock authentication
+- **Local Development**: Mock authentication with production user data
+- **Production/AWS**: AWS Cognito with real user management (deployed and working)
+- **LocalStack**: Cognito is Pro feature - uses mock authentication in local development
 - **User data**: Consistent across frontend auth service and backend API
+- **Test Users**: 10 fully configured users with proper permissions and sample data
 
 ## Notes
 

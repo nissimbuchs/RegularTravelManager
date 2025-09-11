@@ -26,67 +26,77 @@ const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
 
-// Sample users configuration with roles
+// Sample users configuration with roles and mock UUIDs for dev environment
 const sampleUsers = [
   {
     email: 'admin1@company.ch',
     firstName: 'Hans',
     lastName: 'Zimmermann',
     role: 'administrators',
+    mockId: '11111111-1111-1111-1111-111111111111',
   },
   {
     email: 'admin2@company.ch',
     firstName: 'Maria',
     lastName: 'Weber',
     role: 'administrators',
+    mockId: '22222222-2222-2222-2222-222222222222',
   },
   {
     email: 'manager1@company.ch',
     firstName: 'Thomas',
     lastName: 'Müller',
     role: 'managers',
+    mockId: '33333333-3333-3333-3333-333333333333',
   },
   {
     email: 'manager2@company.ch',
     firstName: 'Sophie',
     lastName: 'Dubois',
     role: 'managers',
+    mockId: '44444444-4444-4444-4444-444444444444',
   },
   {
     email: 'employee1@company.ch',
     firstName: 'Anna',
     lastName: 'Schneider',
     role: 'employees',
+    mockId: '55555555-5555-5555-5555-555555555555',
   },
   {
     email: 'employee2@company.ch',
     firstName: 'Marco',
     lastName: 'Rossi',
     role: 'employees',
+    mockId: '66666666-6666-6666-6666-666666666666',
   },
   {
     email: 'employee3@company.ch',
     firstName: 'Lisa',
     lastName: 'Meier',
     role: 'employees',
+    mockId: '77777777-7777-7777-7777-777777777777',
   },
   {
     email: 'employee4@company.ch',
     firstName: 'Pierre',
     lastName: 'Martin',
     role: 'employees',
+    mockId: '88888888-8888-8888-8888-888888888888',
   },
   {
     email: 'employee5@company.ch',
     firstName: 'Julia',
     lastName: 'Fischer',
     role: 'employees',
+    mockId: '99999999-9999-9999-9999-999999999999',
   },
   {
     email: 'employee6@company.ch',
     firstName: 'Michael',
     lastName: 'Keller',
     role: 'employees',
+    mockId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
   },
 ];
 
@@ -234,6 +244,11 @@ exports.handler = async event => {
     console.log('Starting database schema creation and sample data loading process...');
     console.log('Event:', JSON.stringify(event, null, 2));
 
+    // Detect environment - use mock IDs for dev/local environments
+    const environment = process.env.RTM_ENVIRONMENT || process.env.ENVIRONMENT || 'dev';
+    const useMockIds = environment === 'dev' || environment === 'development' || environment === 'local';
+    console.log(`Environment: ${environment}, Using mock IDs: ${useMockIds}`);
+
     // Check if we should clear existing data
     const clearData = event.clearData || event.force || false;
 
@@ -284,34 +299,19 @@ exports.handler = async event => {
     // Load sample data from infrastructure/data directory (single source of truth)
     console.log('Reading sample data template from infrastructure/data/sample-data.sql...');
     const sampleDataPath = path.join(__dirname, 'data/sample-data.sql');
-    let sampleDataSQL = fs.readFileSync(sampleDataPath, 'utf8');
+    const sampleDataSQL = fs.readFileSync(sampleDataPath, 'utf8');
 
-    // Create/verify Cognito users and get their actual IDs
-    console.log('Creating/verifying Cognito users and retrieving actual User IDs...');
-    const userPoolId = process.env.USER_POOL_ID;
-    if (!userPoolId) {
-      throw new Error('USER_POOL_ID environment variable not set');
-    }
-
-    const cognitoIdMappings = {};
-    for (const userInfo of sampleUsers) {
-      try {
-        const cognitoUserId = await ensureCognitoUser(cognitoClient, userPoolId, userInfo);
-        cognitoIdMappings[userInfo.email] = cognitoUserId;
-        console.log(`Mapped ${userInfo.email} → ${cognitoUserId}`);
-      } catch (error) {
-        console.error(`Failed to create/verify user ${userInfo.email}:`, error);
-        throw error;
+    if (useMockIds) {
+      console.log('Using mock authentication for dev environment - sample data already contains mock UUIDs');
+      // Sample data already contains the correct mock UUIDs, no replacement needed
+      for (const userInfo of sampleUsers) {
+        console.log(`Mock user: ${userInfo.email} → ${userInfo.mockId} (pre-configured in SQL)`);
       }
-    }
-
-    // Replace the cognito_user_id values in the sample data
-    // Use more specific replacement to avoid corrupting email fields
-    for (const [email, cognitoId] of Object.entries(cognitoIdMappings)) {
-      // Only replace cognito_user_id field values, not email field values
-      // Look for the pattern: cognito_user_id followed by email value
-      const cognitoIdPattern = new RegExp(`(cognito_user_id,\\s*employee_id,\\s*email[^)]*VALUES\\s*\\([^,]+,\\s*)'${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`, 'g');
-      sampleDataSQL = sampleDataSQL.replace(cognitoIdPattern, `$1'${cognitoId}'`);
+    } else {
+      console.log('Production environment detected - would need real Cognito user creation');
+      // TODO: Implement production Cognito user creation if needed
+      // For now, production environments should use real Cognito authentication
+      throw new Error('Production environment Cognito user creation not implemented yet');
     }
 
     console.log('Loading sample data...');
@@ -334,13 +334,14 @@ exports.handler = async event => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: 'Sample data loaded successfully with dynamic Cognito users',
-        cognitoUsers: Object.keys(cognitoIdMappings).length,
+        message: 'Sample data loaded successfully with mock UUIDs',
+        environment: environment,
+        useMockIds: useMockIds,
         employees: employeeCount.rows[0].count,
         projects: projectCount.rows[0].count,
         subprojects: subprojectCount.rows[0].count,
         requests: requestCount.rows[0].count,
-        cognitoMappings: Object.keys(cognitoIdMappings),
+        mockUsers: sampleUsers.map(u => u.email),
       }),
     };
   } catch (error) {

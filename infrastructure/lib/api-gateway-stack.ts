@@ -401,8 +401,6 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // Projects endpoint (protected)
     const projectsResource = apiResource.addResource('projects');
-    const projectsIntegration = new apigateway.LambdaIntegration(getActiveProjectsFunction);
-    projectsResource.addMethod('GET', projectsIntegration, defaultMethodOptions);
 
     // Grant API Gateway permission to invoke projects function
     getActiveProjectsFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
@@ -459,10 +457,35 @@ export class ApiGatewayStack extends cdk.Stack {
     // DELETE /projects/{id} - Delete project
     projectByIdResource.addMethod('DELETE', projectManagementIntegration, defaultMethodOptions);
 
+    // PATCH /projects/{id}/toggle-status - Toggle project status
+    const projectToggleStatusResource = projectByIdResource.addResource('toggle-status');
+    projectToggleStatusResource.addMethod('PATCH', projectManagementIntegration, defaultMethodOptions);
+
     // GET /projects/{id}/subprojects - Get subprojects for project
     const subprojectsResource = projectByIdResource.addResource('subprojects');
     const getSubprojectsIntegration = new apigateway.LambdaIntegration(getSubprojectsForProjectFunction);
     subprojectsResource.addMethod('GET', getSubprojectsIntegration, defaultMethodOptions);
+
+    // POST /projects/{id}/subprojects - Create subproject (proxy to flat endpoint)
+    const createSubprojectIntegration = new apigateway.LambdaIntegration(createSubprojectFunction);
+    subprojectsResource.addMethod('POST', createSubprojectIntegration, defaultMethodOptions);
+
+    // Nested subproject by ID routes: /projects/{id}/subprojects/{subprojectId}
+    const nestedSubprojectByIdResource = subprojectsResource.addResource('{subprojectId}');
+    const getSubprojectByIdNestedIntegration = new apigateway.LambdaIntegration(getSubprojectByIdFunction);
+    
+    // GET /projects/{id}/subprojects/{subprojectId} - Get single subproject
+    nestedSubprojectByIdResource.addMethod('GET', getSubprojectByIdNestedIntegration, defaultMethodOptions);
+    
+    // PUT /projects/{id}/subprojects/{subprojectId} - Update subproject
+    nestedSubprojectByIdResource.addMethod('PUT', projectManagementIntegration, defaultMethodOptions);
+    
+    // DELETE /projects/{id}/subprojects/{subprojectId} - Delete subproject
+    nestedSubprojectByIdResource.addMethod('DELETE', projectManagementIntegration, defaultMethodOptions);
+
+    // PATCH /projects/{id}/subprojects/{subprojectId}/toggle-status - Toggle subproject status
+    const subprojectToggleStatusResource = nestedSubprojectByIdResource.addResource('toggle-status');
+    subprojectToggleStatusResource.addMethod('PATCH', projectManagementIntegration, defaultMethodOptions);
 
     // GET /projects/{id}/references - Check project references
     const referencesResource = projectByIdResource.addResource('references');
@@ -473,15 +496,15 @@ export class ApiGatewayStack extends cdk.Stack {
     const subprojectsRootResource = apiResource.addResource('subprojects');
     
     // POST /subprojects - Create new subproject
-    const createSubprojectIntegration = new apigateway.LambdaIntegration(createSubprojectFunction);
-    subprojectsRootResource.addMethod('POST', createSubprojectIntegration, defaultMethodOptions);
+    const createSubprojectRootIntegration = new apigateway.LambdaIntegration(createSubprojectFunction);
+    subprojectsRootResource.addMethod('POST', createSubprojectRootIntegration, defaultMethodOptions);
 
     // GET /subprojects/{id} - Get single subproject by ID
     // PUT /subprojects/{id} - Update subproject
     // DELETE /subprojects/{id} - Delete subproject
     const subprojectByIdResource = subprojectsRootResource.addResource('{id}');
-    const getSubprojectByIdIntegration = new apigateway.LambdaIntegration(getSubprojectByIdFunction);
-    subprojectByIdResource.addMethod('GET', getSubprojectByIdIntegration, defaultMethodOptions);
+    const getSubprojectByIdRootIntegration = new apigateway.LambdaIntegration(getSubprojectByIdFunction);
+    subprojectByIdResource.addMethod('GET', getSubprojectByIdRootIntegration, defaultMethodOptions);
     subprojectByIdResource.addMethod('PUT', projectManagementIntegration, defaultMethodOptions);
     subprojectByIdResource.addMethod('DELETE', projectManagementIntegration, defaultMethodOptions);
 
@@ -503,6 +526,16 @@ export class ApiGatewayStack extends cdk.Stack {
     const searchResource = projectsResource.addResource('search');
     const searchProjectsIntegration = new apigateway.LambdaIntegration(searchProjectsFunction);
     searchResource.addMethod('GET', searchProjectsIntegration, defaultMethodOptions);
+
+    // GET /projects/active - Get active projects (after parameterized routes for correct precedence)
+    const activeProjectsResource = projectsResource.addResource('active');
+    const activeProjectsIntegration = new apigateway.LambdaIntegration(getActiveProjectsFunction);
+    activeProjectsResource.addMethod('GET', activeProjectsIntegration, defaultMethodOptions);
+
+    // GET /projects/geocode - Geocode compatibility route (after parameterized routes for correct precedence)
+    const projectsGeocodeResource = projectsResource.addResource('geocode');
+    const geocodingCompatIntegration = new apigateway.LambdaIntegration(updateEmployeeAddressFunction);
+    projectsGeocodeResource.addMethod('GET', geocodingCompatIntegration, defaultMethodOptions);
 
     // Grant API Gateway permission to invoke project management functions
     createProjectFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
@@ -581,6 +614,23 @@ export class ApiGatewayStack extends cdk.Stack {
     // GET /employees/managers - Get managers for selection
     const getManagersIntegration = new apigateway.LambdaIntegration(getManagersFunction);
     managersResource.addMethod('GET', getManagersIntegration, defaultMethodOptions);
+    
+    // Also add /managers route for backward compatibility (frontend calls this directly)
+    const managersDirectResource = apiResource.addResource('managers');
+    managersDirectResource.addMethod('GET', getManagersIntegration, defaultMethodOptions);
+
+    // Employee travel requests endpoints - proxy to existing travel-requests endpoints
+    const employeeTravelRequestsResource = employeesResource.addResource('travel-requests');
+    
+    // POST /employees/travel-requests - Submit new travel request (proxy to /travel-requests)
+    employeeTravelRequestsResource.addMethod('POST', employeesTravelRequestsIntegration, defaultMethodOptions);
+    
+    // GET /employees/travel-requests - Get employee's travel requests (proxy to /travel-requests)
+    employeeTravelRequestsResource.addMethod('GET', employeesTravelRequestsIntegration, defaultMethodOptions);
+    
+    // POST /employees/travel-requests/preview - Calculate travel request preview (proxy to /travel-requests/preview)
+    const employeeTravelRequestPreviewResource = employeeTravelRequestsResource.addResource('preview');
+    employeeTravelRequestPreviewResource.addMethod('POST', employeesTravelRequestsIntegration, defaultMethodOptions);
 
     // Grant API Gateway permission to invoke travel request functions
     employeesTravelRequestsFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
@@ -600,6 +650,11 @@ export class ApiGatewayStack extends cdk.Stack {
     
     // GET /manager/requests - Get manager's pending requests
     managerRequestsResource.addMethod('GET', managersDashboardIntegration, defaultMethodOptions);
+    
+    // GET /manager/employee-context/{employeeId} - Get employee context data
+    const employeeContextResource = managerResource.addResource('employee-context');
+    const employeeContextIdResource = employeeContextResource.addResource('{employeeId}');
+    employeeContextIdResource.addMethod('GET', managersDashboardIntegration, defaultMethodOptions);
     
     // Manager request actions with ID parameter
     const managerRequestIdResource = managerRequestsResource.addResource('{id}');

@@ -12,7 +12,7 @@ const app = new cdk.App();
 const getConfig = () => ({
   environment: app.node.tryGetContext('environment') || 'dev',
   domainName: app.node.tryGetContext('domainName'),
-  account: app.node.tryGetContext('account') || process.env.CDK_DEFAULT_ACCOUNT || '123456789012',
+  account: app.node.tryGetContext('account') || process.env.CDK_DEFAULT_ACCOUNT || '991687235565',
   region: app.node.tryGetContext('region') || process.env.CDK_DEFAULT_REGION || 'eu-central-1',
 });
 

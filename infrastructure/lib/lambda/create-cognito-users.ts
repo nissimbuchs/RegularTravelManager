@@ -65,6 +65,21 @@ export const handler = async (event: CustomResourceEvent): Promise<void> => {
   try {
     const { RequestType, ResourceProperties } = event;
 
+    // Check if we're in dev environment - skip real Cognito user creation
+    const environment = ResourceProperties.Environment || 'dev';
+    const isDevEnvironment = environment === 'dev' || environment === 'development' || environment === 'local';
+
+    if (isDevEnvironment) {
+      console.log(`Environment ${environment} detected - skipping real Cognito user creation (using mock users instead)`);
+      response.Data = {
+        Message: `Skipped user creation for ${environment} environment - using mock authentication`,
+        Environment: environment,
+        UseMockAuth: true,
+      };
+      await sendResponse(event.ResponseURL, response);
+      return;
+    }
+
     if (RequestType === 'Create' || RequestType === 'Update') {
       const { UserPoolId, Users, DatabaseUrl, DatabaseSecretArn } = ResourceProperties;
       await createOrUpdateUsers(UserPoolId, Users, DatabaseUrl, DatabaseSecretArn);
@@ -126,12 +141,20 @@ async function createOrUpdateUsers(
   }
 
   // Initialize database connection
-  const dbClient = new PgClient({
-    connectionString: actualDatabaseUrl,
-    ssl: {
-      rejectUnauthorized: false  // Required for AWS RDS connections from Lambda
-    }
-  });
+  console.log('Attempting to connect to database with URL pattern:', actualDatabaseUrl.replace(/:[^:@]+@/, ':***@'));
+  
+  let dbClient: PgClient;
+  try {
+    dbClient = new PgClient({
+      connectionString: actualDatabaseUrl,
+      ssl: {
+        rejectUnauthorized: false  // Required for AWS RDS connections from Lambda
+      }
+    });
+  } catch (parseError) {
+    console.error('Error creating database client:', parseError);
+    throw new Error(`Database URL parsing failed: ${parseError}`);
+  }
   await dbClient.connect();
 
   try {
