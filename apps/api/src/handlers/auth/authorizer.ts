@@ -1,4 +1,4 @@
-import { APIGatewayRequestAuthorizerEvent, APIGatewayAuthorizerResult, Context } from 'aws-lambda';
+import { APIGatewayRequestAuthorizerEvent, APIGatewayTokenAuthorizerEvent, APIGatewayAuthorizerResult, Context } from 'aws-lambda';
 import { CognitoJwtVerifier } from 'aws-jwt-verify';
 import { logger } from '../../middleware/logger';
 
@@ -110,36 +110,72 @@ function createMockPayload(token: string): MockPayload {
 }
 
 export const authorizerHandler = async (
-  event: APIGatewayRequestAuthorizerEvent,
+  event: APIGatewayRequestAuthorizerEvent | APIGatewayTokenAuthorizerEvent,
   context: Context
 ): Promise<APIGatewayAuthorizerResult> => {
   const correlationId = `auth-${context.awsRequestId.substring(0, 8)}`;
   
-  logger.info('Authorizer invoked', {
+  logger.info('Authorizer invoked with full event details', {
     methodArn: event.methodArn,
     requestId: context.awsRequestId,
     correlationId,
+    eventType: 'authorizationToken' in event ? 'TOKEN' : 'REQUEST',
     bypassAuth: process.env.BYPASS_AUTH,
     cognitoUserPoolId: process.env.COGNITO_USER_POOL_ID ? `${process.env.COGNITO_USER_POOL_ID.substring(0, 10)}...` : 'undefined',
     cognitoClientId: process.env.COGNITO_CLIENT_ID ? `${process.env.COGNITO_CLIENT_ID.substring(0, 10)}...` : 'undefined',
     awsRegion: process.env.AWS_REGION || 'eu-central-1',
+    // Log the full event structure for debugging
+    eventKeys: Object.keys(event),
+    fullEvent: JSON.stringify(event, null, 2),
   });
 
   try {
-    // Extract token from Authorization header (RequestAuthorizer format)
-    const authHeader = event.headers?.Authorization || event.headers?.authorization;
-    if (!authHeader) {
-      throw new AuthorizationError('Missing authorization header');
+    // Extract token from event (supports both TOKEN and REQUEST authorizer formats)
+    let token: string;
+    
+    logger.info('Starting token extraction', {
+      correlationId,
+      eventType: 'authorizationToken' in event ? 'TOKEN' : 'REQUEST',
+      hasAuthorizationToken: 'authorizationToken' in event,
+      authorizationTokenValue: 'authorizationToken' in event ? event.authorizationToken : 'N/A',
+      headers: 'headers' in event ? JSON.stringify(event.headers) : 'N/A',
+      requestContext: 'requestContext' in event ? JSON.stringify(event.requestContext) : 'N/A',
+    });
+    
+    if ('authorizationToken' in event) {
+      // TOKEN authorizer - token passed directly
+      logger.info('Using TOKEN authorizer path', {
+        correlationId,
+        authorizationTokenRaw: event.authorizationToken,
+      });
+      token = extractTokenFromHeader(event.authorizationToken);
+    } else {
+      // REQUEST authorizer - token in headers
+      logger.info('Using REQUEST authorizer path', {
+        correlationId,
+        allHeaders: JSON.stringify(event.headers),
+        authorizationHeader: event.headers?.Authorization,
+        authorizationHeaderLowercase: event.headers?.authorization,
+      });
+      
+      const authHeader = event.headers?.Authorization || event.headers?.authorization;
+      if (!authHeader) {
+        logger.error('Missing authorization header in REQUEST authorizer', {
+          correlationId,
+          availableHeaders: Object.keys(event.headers || {}),
+          headerValues: JSON.stringify(event.headers),
+        });
+        throw new AuthorizationError('Missing authorization header');
+      }
+      token = extractTokenFromHeader(authHeader);
     }
-    const token = extractTokenFromHeader(authHeader);
     
     logger.info('Token extracted successfully', {
       correlationId,
-      authHeader: authHeader ? `${authHeader.substring(0, 20)}...` : 'missing',
+      authorizerType: 'authorizationToken' in event ? 'TOKEN' : 'REQUEST',
       tokenLength: token?.length || 0,
       tokenPrefix: token ? `${token.substring(0, 20)}...` : 'none',
       hasToken: !!token,
-      headers: Object.keys(event.headers || {}),
     });
 
     // Check if authorization bypass is enabled
@@ -211,8 +247,6 @@ export const authorizerHandler = async (
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorName = error instanceof Error ? error.name : 'UnknownError';
     const errorStack = error instanceof Error ? error.stack?.substring(0, 1000) : 'No stack available';
-    const authHeader = event.headers?.Authorization || event.headers?.authorization;
-    
     logger.error('Authorization failed', {
       correlationId: correlationId || 'unknown',
       error: errorMessage,
@@ -222,8 +256,7 @@ export const authorizerHandler = async (
       requestId: context.awsRequestId,
       isAuthError: error instanceof AuthorizationError,
       bypassAuth: process.env.BYPASS_AUTH,
-      hasToken: !!authHeader,
-      tokenPrefix: authHeader ? `${authHeader.substring(0, 20)}...` : 'none',
+      authorizerType: 'authorizationToken' in event ? 'TOKEN' : 'REQUEST',
     });
 
     // Return deny policy for any authorization failures
@@ -232,16 +265,47 @@ export const authorizerHandler = async (
 };
 
 function extractTokenFromHeader(authHeader: string): string {
+  logger.info('Extracting token from header', {
+    authHeader: authHeader ? `${authHeader.substring(0, 50)}...` : 'null/undefined',
+    authHeaderLength: authHeader?.length || 0,
+    authHeaderType: typeof authHeader,
+  });
+
   if (!authHeader) {
+    logger.error('Authorization header is null/undefined');
     throw new AuthorizationError('Missing authorization header');
   }
 
   const parts = authHeader.split(' ');
+  logger.info('Authorization header parts', {
+    partsCount: parts.length,
+    firstPart: parts[0],
+    secondPartLength: parts[1]?.length || 0,
+    secondPartPrefix: parts[1] ? `${parts[1].substring(0, 20)}...` : 'none',
+  });
+
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    logger.error('Invalid authorization header format', {
+      partsCount: parts.length,
+      expectedFormat: 'Bearer <token>',
+      actualFirstPart: parts[0],
+      fullHeader: authHeader,
+    });
     throw new AuthorizationError('Invalid authorization header format');
   }
 
-  return parts[1];
+  const token = parts[1];
+  if (!token) {
+    logger.error('Token part is undefined');
+    throw new AuthorizationError('Invalid authorization header - missing token');
+  }
+
+  logger.info('Token extracted successfully from header', {
+    tokenLength: token.length,
+    tokenPrefix: `${token.substring(0, 20)}...`,
+  });
+
+  return token;
 }
 
 async function verifyToken(token: string): Promise<CognitoPayload> {
@@ -384,34 +448,36 @@ function generatePolicy(
   if (arnParts.length >= 6) {
     // The last part contains "api-id/stage/METHOD/path"
     const resourcePart = arnParts[5];
-    const resourceSegments = resourcePart.split('/');
-    
-    if (resourceSegments.length >= 2) {
-      // Create wildcard: "api-id/stage/*/*" to allow all methods and paths
-      const wildcardResource = `${resourceSegments[0]}/${resourceSegments[1]}/*/*`;
-      arnParts[5] = wildcardResource;
+    if (resourcePart) {
+      const resourceSegments = resourcePart.split('/');
       
-      const wildcardArn = arnParts.join(':');
-      
-      logger.info('Generated wildcard policy', {
-        originalResource: resource,
-        wildcardResource: wildcardArn,
-        principalId: principalId.substring(0, 8) + '...',
-      });
-      
-      return {
-        principalId,
-        policyDocument: {
-          Version: '2012-10-17',
-          Statement: [
-            {
-              Action: 'execute-api:Invoke',
-              Effect: effect,
-              Resource: wildcardArn,
-            },
-          ],
-        },
-      };
+      if (resourceSegments.length >= 2) {
+        // Create wildcard: "api-id/stage/*/*" to allow all methods and paths
+        const wildcardResource = `${resourceSegments[0]}/${resourceSegments[1]}/*/*`;
+        arnParts[5] = wildcardResource;
+        
+        const wildcardArn = arnParts.join(':');
+        
+        logger.info('Generated wildcard policy', {
+          originalResource: resource,
+          wildcardResource: wildcardArn,
+          principalId: principalId.substring(0, 8) + '...',
+        });
+        
+        return {
+          principalId,
+          policyDocument: {
+            Version: '2012-10-17',
+            Statement: [
+              {
+                Action: 'execute-api:Invoke',
+                Effect: effect,
+                Resource: wildcardArn,
+              },
+            ],
+          },
+        };
+      }
     }
   }
   
@@ -433,7 +499,7 @@ function generatePolicy(
 
 // Health check specific authorizer that allows unauthenticated access
 export const healthAuthorizerHandler = async (
-  event: APIGatewayRequestAuthorizerEvent,
+  event: APIGatewayRequestAuthorizerEvent | APIGatewayTokenAuthorizerEvent,
   _context: Context
 ): Promise<APIGatewayAuthorizerResult> => {
   // Allow health check without authentication
