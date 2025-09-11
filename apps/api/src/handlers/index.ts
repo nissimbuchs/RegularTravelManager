@@ -38,10 +38,12 @@ export {
 import {
   getEmployeeProfile as getEmployeeProfileHandler,
   updateEmployeeAddress as updateEmployeeAddressHandler,
+  getManagers as getManagersHandler,
 } from './employees/profile';
 import {
   calculatePreview as calculatePreviewHandler,
   createTravelRequest as createTravelRequestHandler,
+  employeesTravelRequests as employeesTravelRequestsHandler,
 } from './employees/travel-requests';
 
 export const getEmployeeProfile = errorHandler(
@@ -72,13 +74,29 @@ export const createTravelRequest = errorHandler(
   })
 );
 
+export const getManagers = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return getManagersHandler(event, context);
+  })
+);
+
+export const employeesTravelRequests = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return employeesTravelRequestsHandler(event, context);
+  })
+);
+
 // Project management handlers (require auth)
 import {
   createProject as createProjectHandler,
   createSubproject as createSubprojectHandler,
   getActiveProjects as getActiveProjectsHandler,
   getAllProjects as getAllProjectsHandler,
+  getProjectById as getProjectByIdHandler,
   getSubprojectsForProject as getSubprojectsForProjectHandler,
+  getSubprojectById as getSubprojectByIdHandler,
   searchProjects as searchProjectsHandler,
   updateProject as updateProjectHandler,
   deleteProject as deleteProjectHandler,
@@ -112,6 +130,13 @@ export const getAllProjects = errorHandler(
   corsMiddleware(async (event, context) => {
     await ensureDatabaseInitialized();
     return getAllProjectsHandler(event, context);
+  })
+);
+
+export const getProjectById = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return getProjectByIdHandler(event, context);
   })
 );
 
@@ -161,6 +186,13 @@ export const geocodeAddress = errorHandler(
   corsMiddleware(async (event, context) => {
     await ensureDatabaseInitialized();
     return geocodeAddressHandler(event, context);
+  })
+);
+
+export const getSubprojectById = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return getSubprojectByIdHandler(event, context);
   })
 );
 
@@ -305,3 +337,60 @@ export const rejectRequest = errorHandler(
     return rejectRequestHandler(event, context);
   })
 );
+
+// Router function for all manager dashboard endpoints
+export const managersDashboard = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    
+    const method = event.httpMethod;
+    const path = event.path;
+    
+    console.log('🔄 ManagersDashboard router:', {
+      method,
+      path,
+      requestId: context.awsRequestId,
+    });
+    
+    // Route based on HTTP method and path
+    if (method === 'GET' && path.includes('/manager/dashboard')) {
+      console.log('🔄 Routing to getManagerDashboardHandler');
+      return getManagerDashboardHandler(event, context);
+    } else if (method === 'GET' && path.includes('/context')) {
+      console.log('🔄 Routing to getEmployeeContextHandler');
+      return getEmployeeContextHandler(event, context);
+    } else if (method === 'PUT' && path.includes('/approve')) {
+      console.log('🔄 Routing to approveRequestHandler');
+      return approveRequestHandler(event, context);
+    } else if (method === 'PUT' && path.includes('/reject')) {
+      console.log('🔄 Routing to rejectRequestHandler');
+      return rejectRequestHandler(event, context);
+    } else {
+      console.log('❌ No route matched:', { method, path });
+      return {
+        statusCode: 405,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({ 
+          error: 'Method Not Allowed',
+          message: `${method} ${path} is not supported by this handler`
+        }),
+      };
+    }
+  })
+);
+
+// Admin user management handlers (require admin auth)
+// Temporarily disabled due to import issues - will fix after deployment
+// import {
+//   listUsersHandler,
+// } from './admin/user-management';
+
+// export const listAdminUsers = errorHandler(
+//   corsMiddleware(async (event, context) => {
+//     await ensureDatabaseInitialized();
+//     return listUsersHandler(event, context);
+//   })
+// );

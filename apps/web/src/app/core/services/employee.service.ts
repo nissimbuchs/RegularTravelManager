@@ -26,19 +26,40 @@ export class EmployeeService {
     return `${this.configService.apiUrl}/employees`;
   }
 
-  // Get employee profile by ID
-  getEmployeeProfile(id: string): Observable<EmployeeDto> {
-    const url = `${this.baseUrl}/${id}`;
-    console.log('Making API call to:', url); // Debug log
+  // Get employee profile by ID (expects cognitoUserId, which is the email)
+  getEmployeeProfile(cognitoUserId: string): Observable<EmployeeDto> {
+    const url = `${this.baseUrl}/${cognitoUserId}`;
+    console.log('🔍 EmployeeService.getEmployeeProfile() called with:', {
+      cognitoUserId,
+      url,
+      isEmail: cognitoUserId.includes('@'),
+      isUuid: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cognitoUserId),
+      stackTrace: new Error().stack?.split('\n').slice(1, 4).join('\n')
+    });
+    
+    if (!cognitoUserId.includes('@')) {
+      console.warn('⚠️  WARNING: getEmployeeProfile() called with non-email ID. Expected cognitoUserId (email), got:', cognitoUserId);
+    }
+    
     return this.http.get<EmployeeDto>(url);
   }
 
-  // Update employee address
+  // Update employee address (expects cognitoUserId, which is the email)
   updateEmployeeAddress(
-    id: string,
+    cognitoUserId: string,
     addressData: UpdateEmployeeAddressRequest
   ): Observable<EmployeeDto> {
-    return this.http.put<EmployeeDto>(`${this.baseUrl}/${id}/address`, addressData);
+    console.log('🔍 EmployeeService.updateEmployeeAddress() called with:', {
+      cognitoUserId,
+      isEmail: cognitoUserId.includes('@'),
+      addressData
+    });
+    
+    if (!cognitoUserId.includes('@')) {
+      console.warn('⚠️  WARNING: updateEmployeeAddress() called with non-email ID. Expected cognitoUserId (email), got:', cognitoUserId);
+    }
+    
+    return this.http.put<EmployeeDto>(`${this.baseUrl}/${cognitoUserId}/address`, addressData);
   }
 
   // Validation helper for Swiss postal codes

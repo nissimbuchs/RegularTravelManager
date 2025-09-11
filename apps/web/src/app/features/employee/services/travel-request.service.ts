@@ -34,7 +34,7 @@ export class TravelRequestService {
 
   calculatePreview(subprojectId: string, daysPerWeek: number): Observable<CalculationPreview> {
     return this.http
-      .post<{ data: CalculationPreview }>(`${this.apiUrl}/api/employees/travel-requests/preview`, {
+      .post<{ data: CalculationPreview }>(`${this.apiUrl}/employees/travel-requests/preview`, {
         subprojectId,
         daysPerWeek,
       })
@@ -49,6 +49,6 @@ export class TravelRequestService {
       managerId: formData.managerId, // ✅ Fixed: Use camelCase for API
     };
 
-    return this.http.post<any>(`${this.apiUrl}/api/employees/travel-requests`, requestData);
+    return this.http.post<any>(`${this.apiUrl}/employees/travel-requests`, requestData);
   }
 }

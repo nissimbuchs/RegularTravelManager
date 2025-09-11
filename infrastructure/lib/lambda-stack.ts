@@ -18,11 +18,16 @@ export class LambdaStack extends cdk.Stack {
   public loadSampleDataFunction!: lambda.Function;
   public getEmployeeProfileFunction!: lambda.Function;
   public updateEmployeeAddressFunction!: lambda.Function;
+  public getManagersFunction!: lambda.Function;
   public createProjectFunction!: lambda.Function;
   public createSubprojectFunction!: lambda.Function;
   public getActiveProjectsFunction!: lambda.Function;
   public getAllProjectsFunction!: lambda.Function;
+  public getProjectByIdFunction!: lambda.Function;
   public getSubprojectsForProjectFunction!: lambda.Function;
+  public getSubprojectByIdFunction!: lambda.Function;
+  public checkProjectReferencesFunction!: lambda.Function;
+  // public listAdminUsersFunction!: lambda.Function;
   public searchProjectsFunction!: lambda.Function;
   public calculateDistanceFunction!: lambda.Function;
   public calculateAllowanceFunction!: lambda.Function;
@@ -390,6 +395,40 @@ export class LambdaStack extends cdk.Stack {
       }
     );
 
+    // Get Managers function
+    const getManagersLogGroup = new logs.LogGroup(this, 'GetManagersFunctionLogGroup', {
+      logGroupName: `/aws/lambda/rtm-${environment}-get-managers`,
+      retention:
+        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
+      removalPolicy:
+        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+    });
+
+    this.getManagersFunction = new lambda.Function(this, 'GetManagersFunction', {
+      functionName: `rtm-${environment}-get-managers`,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'index.getManagers',
+      code: lambda.Code.fromAsset('../apps/api/dist'),
+      timeout: cdk.Duration.seconds(timeout),
+      memorySize: memory,
+      role: infrastructureStack.lambdaRole,
+      vpc: infrastructureStack.vpc,
+      vpcSubnets: {
+        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
+      logGroup: getManagersLogGroup,
+      environment: {
+        ...this.getBaseEnvironmentVariables(environment),
+        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
+        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
+        DB_NAME: 'rtm_database',
+        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
+      },
+      description: 'Get list of managers for dropdown selection',
+      tracing: lambda.Tracing.ACTIVE,
+    });
+
     // Add Lambda alarms for employee functions
     this.addLambdaAlarms(
       environment,
@@ -401,6 +440,12 @@ export class LambdaStack extends cdk.Stack {
       environment,
       'UpdateEmployeeAddress',
       this.updateEmployeeAddressFunction,
+      infrastructureStack
+    );
+    this.addLambdaAlarms(
+      environment,
+      'GetManagers',
+      this.getManagersFunction,
       infrastructureStack
     );
   }
@@ -544,6 +589,39 @@ export class LambdaStack extends cdk.Stack {
       tracing: lambda.Tracing.ACTIVE,
     });
 
+    // Get Project by ID function
+    const getProjectByIdLogGroup = new logs.LogGroup(this, 'GetProjectByIdFunctionLogGroup', {
+      logGroupName: `/aws/lambda/rtm-${environment}-get-project-by-id`,
+      retention:
+        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
+      removalPolicy:
+        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+    });
+
+    this.getProjectByIdFunction = new lambda.Function(this, 'GetProjectByIdFunction', {
+      functionName: `rtm-${environment}-get-project-by-id`,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'index.getProjectById',
+      code: lambda.Code.fromAsset('../apps/api/dist'),
+      timeout: cdk.Duration.seconds(timeout),
+      memorySize: memory,
+      role: infrastructureStack.lambdaRole,
+      vpc: infrastructureStack.vpc,
+      vpcSubnets: {
+        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
+      logGroup: getProjectByIdLogGroup,
+      environment: {
+        ...this.getBaseEnvironmentVariables(environment),
+        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
+        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
+        DB_NAME: 'rtm_database',
+      },
+      description: 'Get single project by ID',
+      tracing: lambda.Tracing.ACTIVE,
+    });
+
     // Get Subprojects for Project function
     const getSubprojectsLogGroup = new logs.LogGroup(
       this,
@@ -584,6 +662,105 @@ export class LambdaStack extends cdk.Stack {
         tracing: lambda.Tracing.ACTIVE,
       }
     );
+
+    // Get Subproject by ID function
+    const getSubprojectByIdLogGroup = new logs.LogGroup(this, 'GetSubprojectByIdFunctionLogGroup', {
+      logGroupName: `/aws/lambda/rtm-${environment}-get-subproject-by-id`,
+      retention:
+        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
+      removalPolicy:
+        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+    });
+
+    this.getSubprojectByIdFunction = new lambda.Function(this, 'GetSubprojectByIdFunction', {
+      functionName: `rtm-${environment}-get-subproject-by-id`,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'index.getSubprojectById',
+      code: lambda.Code.fromAsset('../apps/api/dist'),
+      timeout: cdk.Duration.seconds(timeout),
+      memorySize: memory,
+      role: infrastructureStack.lambdaRole,
+      vpc: infrastructureStack.vpc,
+      vpcSubnets: {
+        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
+      logGroup: getSubprojectByIdLogGroup,
+      environment: {
+        ...this.getBaseEnvironmentVariables(environment),
+        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
+        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
+        DB_NAME: 'rtm_database',
+      },
+      description: 'Get single subproject by ID',
+      tracing: lambda.Tracing.ACTIVE,
+    });
+
+    // Check Project References function
+    const checkProjectReferencesLogGroup = new logs.LogGroup(this, 'CheckProjectReferencesFunctionLogGroup', {
+      logGroupName: `/aws/lambda/rtm-${environment}-check-project-references`,
+      retention:
+        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
+      removalPolicy:
+        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+    });
+
+    this.checkProjectReferencesFunction = new lambda.Function(this, 'CheckProjectReferencesFunction', {
+      functionName: `rtm-${environment}-check-project-references`,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'index.checkProjectReferences',
+      code: lambda.Code.fromAsset('../apps/api/dist'),
+      timeout: cdk.Duration.seconds(timeout),
+      memorySize: memory,
+      role: infrastructureStack.lambdaRole,
+      vpc: infrastructureStack.vpc,
+      vpcSubnets: {
+        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
+      logGroup: checkProjectReferencesLogGroup,
+      environment: {
+        ...this.getBaseEnvironmentVariables(environment),
+        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
+        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
+        DB_NAME: 'rtm_database',
+      },
+      description: 'Check project references and dependencies',
+      tracing: lambda.Tracing.ACTIVE,
+    });
+
+    // List Users function (Admin)
+    const listUsersLogGroup = new logs.LogGroup(this, 'ListUsersFunctionLogGroup', {
+      logGroupName: `/aws/lambda/rtm-${environment}-list-users`,
+      retention:
+        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
+      removalPolicy:
+        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+    });
+
+    // this.listAdminUsersFunction = new lambda.Function(this, 'ListAdminUsersFunction', {
+    //   functionName: `rtm-${environment}-list-admin-users`,
+    //   runtime: lambda.Runtime.NODEJS_18_X,
+    //   handler: 'index.listAdminUsers',
+    //   code: lambda.Code.fromAsset('../apps/api/dist'),
+    //   timeout: cdk.Duration.seconds(timeout),
+    //   memorySize: memory,
+    //   role: infrastructureStack.lambdaRole,
+    //   vpc: infrastructureStack.vpc,
+    //   vpcSubnets: {
+    //     subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+    //   },
+    //   securityGroups: [infrastructureStack.lambdaSecurityGroup],
+    //   logGroup: listUsersLogGroup,
+    //   environment: {
+    //     ...this.getBaseEnvironmentVariables(environment),
+    //     DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
+    //     DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
+    //     DB_NAME: 'rtm_database',
+    //   },
+    //   description: 'List all users for admin management',
+    //   tracing: lambda.Tracing.ACTIVE,
+    // });
 
     // Search Projects function
     const searchProjectsLogGroup = new logs.LogGroup(this, 'SearchProjectsFunctionLogGroup', {
@@ -645,10 +822,34 @@ export class LambdaStack extends cdk.Stack {
     );
     this.addLambdaAlarms(
       environment,
+      'GetProjectById',
+      this.getProjectByIdFunction,
+      infrastructureStack
+    );
+    this.addLambdaAlarms(
+      environment,
       'GetSubprojectsForProject',
       this.getSubprojectsForProjectFunction,
       infrastructureStack
     );
+    this.addLambdaAlarms(
+      environment,
+      'GetSubprojectById',
+      this.getSubprojectByIdFunction,
+      infrastructureStack
+    );
+    this.addLambdaAlarms(
+      environment,
+      'CheckProjectReferences',
+      this.checkProjectReferencesFunction,
+      infrastructureStack
+    );
+    // this.addLambdaAlarms(
+    //   environment,
+    //   'ListAdminUsers',
+    //   this.listAdminUsersFunction,
+    //   infrastructureStack
+    // );
     this.addLambdaAlarms(
       environment,
       'SearchProjects',
@@ -1310,6 +1511,11 @@ export class LambdaStack extends cdk.Stack {
       exportName: `rtm-${environment}-update-employee-address-function-arn`,
     });
 
+    new cdk.CfnOutput(this, 'GetManagersFunctionArnExport', {
+      value: this.getManagersFunction.functionArn,
+      exportName: `rtm-${environment}-get-managers-function-arn`,
+    });
+
     // Export project management function ARNs
     new cdk.CfnOutput(this, 'CreateProjectFunctionArnExport', {
       value: this.createProjectFunction.functionArn,
@@ -1326,10 +1532,30 @@ export class LambdaStack extends cdk.Stack {
       exportName: `rtm-${environment}-get-all-projects-function-arn`,
     });
 
+    new cdk.CfnOutput(this, 'GetProjectByIdFunctionArnExport', {
+      value: this.getProjectByIdFunction.functionArn,
+      exportName: `rtm-${environment}-get-project-by-id-function-arn`,
+    });
+
     new cdk.CfnOutput(this, 'GetSubprojectsForProjectFunctionArnExport', {
       value: this.getSubprojectsForProjectFunction.functionArn,
       exportName: `rtm-${environment}-get-subprojects-for-project-function-arn`,
     });
+
+    new cdk.CfnOutput(this, 'GetSubprojectByIdFunctionArnExport', {
+      value: this.getSubprojectByIdFunction.functionArn,
+      exportName: `rtm-${environment}-get-subproject-by-id-function-arn`,
+    });
+
+    new cdk.CfnOutput(this, 'CheckProjectReferencesFunctionArnExport', {
+      value: this.checkProjectReferencesFunction.functionArn,
+      exportName: `rtm-${environment}-check-project-references-function-arn`,
+    });
+
+    // new cdk.CfnOutput(this, 'ListAdminUsersFunctionArnExport', {
+    //   value: this.listAdminUsersFunction.functionArn,
+    //   exportName: `rtm-${environment}-list-admin-users-function-arn`,
+    // });
 
     new cdk.CfnOutput(this, 'SearchProjectsFunctionArnExport', {
       value: this.searchProjectsFunction.functionArn,

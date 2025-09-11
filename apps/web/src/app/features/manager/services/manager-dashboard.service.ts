@@ -58,7 +58,7 @@ export class ManagerDashboardService {
     }
 
     return this.http
-      .get<ManagerDashboard>(`${this.baseUrl}/api/manager/dashboard`, { params })
+      .get<ManagerDashboard>(`${this.baseUrl}/manager/dashboard`, { params })
       .pipe(
         map(dashboard => {
           // Transform date strings back to Date objects
@@ -74,7 +74,7 @@ export class ManagerDashboardService {
 
   getEmployeeContext(employeeId: string): Observable<EmployeeContext> {
     return this.http.get<EmployeeContext>(
-      `${this.baseUrl}/api/manager/employee-context/${employeeId}`
+      `${this.baseUrl}/manager/employee-context/${employeeId}`
     );
   }
 
@@ -110,7 +110,7 @@ export class ManagerDashboardService {
 
   approveRequest(requestId: string): Observable<{ id: string; status: string; message: string }> {
     return this.http.put<{ id: string; status: string; message: string }>(
-      `${this.baseUrl}/api/manager/requests/${requestId}/approve`,
+      `${this.baseUrl}/manager/requests/${requestId}/approve`,
       {}
     );
   }
@@ -120,7 +120,7 @@ export class ManagerDashboardService {
     reason: string
   ): Observable<{ id: string; status: string; message: string }> {
     return this.http.put<{ id: string; status: string; message: string }>(
-      `${this.baseUrl}/api/manager/requests/${requestId}/reject`,
+      `${this.baseUrl}/manager/requests/${requestId}/reject`,
       { reason }
     );
   }

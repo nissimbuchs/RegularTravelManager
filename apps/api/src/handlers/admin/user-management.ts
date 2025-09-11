@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { logger } from '../../middleware/logger';
-import { DatabaseConnection } from '../../database/connection';
-import { withCors } from '../../middleware/cors';
+import { db } from '../../database/connection';
+import { corsMiddleware } from '../../middleware/cors';
 
 interface AdminContext {
   sub: string;
@@ -63,9 +63,6 @@ export const listUsersHandler = async (
   try {
     validateAdminAccess(event);
 
-    const db = new DatabaseConnection();
-    await db.connect();
-
     const query = `
       SELECT 
         e.id,
@@ -113,14 +110,12 @@ export const listUsersHandler = async (
       updatedAt: row.updated_at.toISOString(),
     }));
 
-    await db.disconnect();
-
     logger.info('Admin list users completed', {
       requestId: context.awsRequestId,
       userCount: employees.length,
     });
 
-    return withCors({
+    return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
@@ -131,7 +126,7 @@ export const listUsersHandler = async (
         timestamp: new Date().toISOString(),
         requestId: context.awsRequestId,
       }),
-    });
+    };
   } catch (error) {
     logger.error('Admin list users error', {
       error: error.message,
@@ -143,7 +138,7 @@ export const listUsersHandler = async (
     const errorMessage =
       error instanceof AdminAccessError ? error.message : 'Internal server error';
 
-    return withCors({
+    return {
       statusCode,
       body: JSON.stringify({
         success: false,
@@ -153,8 +148,7 @@ export const listUsersHandler = async (
           timestamp: new Date().toISOString(),
           requestId: context.awsRequestId,
         },
-      }),
-    });
+      });
   }
 };
 
@@ -176,7 +170,7 @@ export const updateUserStatusHandler = async (
 
     const userId = event.pathParameters?.userId;
     if (!userId) {
-      return withCors({
+      return {
         statusCode: 400,
         body: JSON.stringify({
           success: false,
@@ -194,7 +188,7 @@ export const updateUserStatusHandler = async (
     try {
       requestBody = JSON.parse(event.body || '{}');
     } catch {
-      return withCors({
+      return {
         statusCode: 400,
         body: JSON.stringify({
           success: false,
@@ -210,7 +204,7 @@ export const updateUserStatusHandler = async (
 
     const { isActive } = requestBody;
     if (typeof isActive !== 'boolean') {
-      return withCors({
+      return {
         statusCode: 400,
         body: JSON.stringify({
           success: false,
@@ -224,8 +218,6 @@ export const updateUserStatusHandler = async (
       });
     }
 
-    const db = new DatabaseConnection();
-    await db.connect();
 
     // Check if user exists
     const userCheck = await db.query(
@@ -234,8 +226,7 @@ export const updateUserStatusHandler = async (
     );
 
     if (userCheck.rows.length === 0) {
-      await db.disconnect();
-      return withCors({
+      return {
         statusCode: 404,
         body: JSON.stringify({
           success: false,
@@ -275,7 +266,7 @@ export const updateUserStatusHandler = async (
 
     await db.disconnect();
 
-    return withCors({
+    return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
@@ -288,8 +279,7 @@ export const updateUserStatusHandler = async (
         },
         timestamp: new Date().toISOString(),
         requestId: context.awsRequestId,
-      }),
-    });
+      });
   } catch (error) {
     logger.error('Admin update user status error', {
       error: error.message,
@@ -301,7 +291,7 @@ export const updateUserStatusHandler = async (
     const errorMessage =
       error instanceof AdminAccessError ? error.message : 'Internal server error';
 
-    return withCors({
+    return {
       statusCode,
       body: JSON.stringify({
         success: false,
@@ -311,8 +301,7 @@ export const updateUserStatusHandler = async (
           timestamp: new Date().toISOString(),
           requestId: context.awsRequestId,
         },
-      }),
-    });
+      });
   }
 };
 
@@ -334,7 +323,7 @@ export const updateUserManagerHandler = async (
 
     const userId = event.pathParameters?.userId;
     if (!userId) {
-      return withCors({
+      return {
         statusCode: 400,
         body: JSON.stringify({
           success: false,
@@ -352,7 +341,7 @@ export const updateUserManagerHandler = async (
     try {
       requestBody = JSON.parse(event.body || '{}');
     } catch {
-      return withCors({
+      return {
         statusCode: 400,
         body: JSON.stringify({
           success: false,
@@ -368,8 +357,6 @@ export const updateUserManagerHandler = async (
 
     const { managerId } = requestBody;
 
-    const db = new DatabaseConnection();
-    await db.connect();
 
     // Validate user exists
     const userCheck = await db.query(
@@ -378,8 +365,7 @@ export const updateUserManagerHandler = async (
     );
 
     if (userCheck.rows.length === 0) {
-      await db.disconnect();
-      return withCors({
+      return {
         statusCode: 404,
         body: JSON.stringify({
           success: false,
@@ -401,8 +387,7 @@ export const updateUserManagerHandler = async (
       );
 
       if (managerCheck.rows.length === 0) {
-        await db.disconnect();
-        return withCors({
+          return {
           statusCode: 400,
           body: JSON.stringify({
             success: false,
@@ -418,8 +403,7 @@ export const updateUserManagerHandler = async (
 
       // Prevent circular reference
       if (managerId === userId) {
-        await db.disconnect();
-        return withCors({
+          return {
           statusCode: 400,
           body: JSON.stringify({
             success: false,
@@ -473,7 +457,7 @@ export const updateUserManagerHandler = async (
 
     await db.disconnect();
 
-    return withCors({
+    return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
@@ -487,8 +471,7 @@ export const updateUserManagerHandler = async (
         },
         timestamp: new Date().toISOString(),
         requestId: context.awsRequestId,
-      }),
-    });
+      });
   } catch (error) {
     logger.error('Admin update user manager error', {
       error: error.message,
@@ -500,7 +483,7 @@ export const updateUserManagerHandler = async (
     const errorMessage =
       error instanceof AdminAccessError ? error.message : 'Internal server error';
 
-    return withCors({
+    return {
       statusCode,
       body: JSON.stringify({
         success: false,
@@ -510,7 +493,6 @@ export const updateUserManagerHandler = async (
           timestamp: new Date().toISOString(),
           requestId: context.awsRequestId,
         },
-      }),
-    });
+      });
   }
 };
