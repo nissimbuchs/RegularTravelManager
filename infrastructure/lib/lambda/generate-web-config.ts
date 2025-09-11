@@ -92,7 +92,7 @@ async function generateAndUploadConfig(
         userPoolId: userPoolId,
         userPoolClientId: clientId,
         region: region,
-        useMockAuth: false // environment === 'dev', // Dont enable mock auth for dev environment
+        useMockAuth: environment === 'dev', // Enable mock auth for dev environment only
       },
       environment: environment,
       // Store the original API URL for reference/debugging

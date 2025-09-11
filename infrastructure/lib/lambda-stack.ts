@@ -191,12 +191,20 @@ export class LambdaStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(timeout),
       memorySize: memory,
       role: infrastructureStack.lambdaRole,
+      vpc: infrastructureStack.vpc,
+      vpcSubnets: {
+        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
       logGroup: authLogGroup,
       environment: {
         ...this.getBaseEnvironmentVariables(environment),
+        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
+        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
+        DB_NAME: 'rtm_database',
         COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
         COGNITO_CLIENT_ID: infrastructureStack.userPoolClient.userPoolClientId,
-        BYPASS_AUTH: 'false', // Use real Cognito authentication for all environments
+        BYPASS_AUTH: environment === 'dev' ? 'true' : 'false', // Enable mock auth for dev environment
         API_VERSION: '1.0.0',
       },
       description: 'JWT token authorizer for RTM API',
@@ -1422,7 +1430,7 @@ export class LambdaStack extends cdk.Stack {
         ...this.getBaseEnvironmentVariables(environment),
         COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
         COGNITO_CLIENT_ID: infrastructureStack.userPoolClient.userPoolClientId,
-        BYPASS_AUTH: 'false', // Use real Cognito authentication for all environments
+        BYPASS_AUTH: environment === 'dev' ? 'true' : 'false', // Enable mock auth for dev environment
         API_VERSION: '1.0.0',
       },
       description: 'Authentication utility functions',

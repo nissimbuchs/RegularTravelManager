@@ -79,12 +79,74 @@ function getVerifier() {
 }
 
 // Create mock payload from token for bypass mode
-function createMockPayload(token: string): MockPayload {
+async function createMockPayload(token: string): Promise<MockPayload> {
   // Extract mock user email from token like "mock-jwt-token-employee1@company.ch"
   let email = 'employee1@company.ch'; // Default fallback
 
   if (token.startsWith('mock-jwt-token-')) {
     email = token.replace('mock-jwt-token-', '');
+  }
+
+  // Look up the actual cognito_user_id from the database by email
+  let cognitoUserId = email; // Fallback to email if lookup fails
+  
+  try {
+    // Use the existing database connection system
+    const { db, getDatabaseConfig } = await import('../../database/connection');
+    
+    // Always ensure database is configured (safe to call multiple times)
+    const config = await getDatabaseConfig();
+    db.configure(config);
+    
+    // Query by employee_id pattern to find matching mock users
+    // For mock users like manager1@company.ch, look for MGR-0001 pattern
+    let employeeIdPattern = '';
+    if (email.includes('admin1')) {
+      employeeIdPattern = 'ADM-0001';
+    } else if (email.includes('admin2')) {
+      employeeIdPattern = 'ADM-0002';
+    } else if (email.includes('manager1')) {
+      employeeIdPattern = 'MGR-0001';
+    } else if (email.includes('manager2')) {
+      employeeIdPattern = 'MGR-0002';
+    } else if (email.includes('employee1')) {
+      employeeIdPattern = 'EMP-0001';
+    } else if (email.includes('employee2')) {
+      employeeIdPattern = 'EMP-0002';
+    } else if (email.includes('employee3')) {
+      employeeIdPattern = 'EMP-0003';
+    } else if (email.includes('employee4')) {
+      employeeIdPattern = 'EMP-0004';
+    } else if (email.includes('employee5')) {
+      employeeIdPattern = 'EMP-0005';
+    } else if (email.includes('employee6')) {
+      employeeIdPattern = 'EMP-0006';
+    }
+
+    const result = await db.query(
+      'SELECT cognito_user_id, first_name, last_name, employee_id FROM employees WHERE employee_id = $1 LIMIT 1',
+      [employeeIdPattern]
+    );
+    
+    if (result.rows.length > 0) {
+      cognitoUserId = result.rows[0].cognito_user_id;
+      logger.info('Mock user lookup successful', {
+        email,
+        cognitoUserId: cognitoUserId ? `${cognitoUserId.substring(0, 8)}...` : 'null',
+        found: true,
+      });
+    } else {
+      logger.warn('Mock user not found in database', {
+        email,
+        fallbackToEmail: true,
+      });
+    }
+  } catch (error) {
+    logger.error('Database lookup failed for mock user', {
+      email,
+      error: error instanceof Error ? error.message : String(error),
+      fallbackToEmail: true,
+    });
   }
 
   // Determine role based on email pattern
@@ -102,7 +164,7 @@ function createMockPayload(token: string): MockPayload {
   }
 
   return {
-    email,
+    email: cognitoUserId, // Use the actual cognito_user_id from database
     isManager,
     isAdmin,
     groups,
@@ -184,7 +246,7 @@ export const authorizerHandler = async (
         requestId: context.awsRequestId,
       });
 
-      const mockPayload = createMockPayload(token);
+      const mockPayload = await createMockPayload(token);
 
       // Generate IAM policy for mock user
       const policy = generatePolicy(mockPayload.email, 'Allow', event.methodArn);

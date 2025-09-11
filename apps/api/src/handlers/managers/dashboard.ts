@@ -141,8 +141,9 @@ export const getManagerDashboard = async (
   context: Context
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // Extract user info from Lambda authorizer
-    const managerId = event.requestContext.authorizer?.claims?.sub;
+    // Extract user info from Lambda authorizer using the correct method
+    const userContext = getUserContextFromEvent(event);
+    const managerId = userContext.sub;
     if (!managerId) {
       return {
         statusCode: 401,
@@ -363,8 +364,9 @@ export const getEmployeeContext = async (
   context: Context
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // Extract user info from Lambda authorizer
-    const managerId = event.requestContext.authorizer?.claims?.sub;
+    // Extract user info from Lambda authorizer using the correct method
+    const userContext = getUserContextFromEvent(event);
+    const managerId = userContext.sub;
     if (!managerId) {
       return {
         statusCode: 401,

@@ -232,6 +232,10 @@ exports.handler = async event => {
 
   try {
     console.log('Starting database schema creation and sample data loading process...');
+    console.log('Event:', JSON.stringify(event, null, 2));
+
+    // Check if we should clear existing data
+    const clearData = event.clearData || event.force || false;
 
     // Get database credentials
     const secret = await secretsManager
@@ -254,6 +258,23 @@ exports.handler = async event => {
 
     console.log('Connecting to database...');
     await client.connect();
+
+    // Clear existing data if requested
+    if (clearData) {
+      console.log('Clearing existing sample data...');
+      try {
+        // Clear data in reverse order of dependencies
+        await client.query('TRUNCATE TABLE request_status_history CASCADE;');
+        await client.query('TRUNCATE TABLE employee_address_history CASCADE;');
+        await client.query('TRUNCATE TABLE travel_requests CASCADE;');
+        await client.query('TRUNCATE TABLE subprojects CASCADE;');
+        await client.query('TRUNCATE TABLE projects CASCADE;');
+        await client.query('DELETE FROM employees WHERE employee_id LIKE \'EMP-%\' OR employee_id LIKE \'ADM-%\' OR employee_id LIKE \'MGR-%\';');
+        console.log('Existing sample data cleared successfully');
+      } catch (clearError) {
+        console.log('Warning: Error clearing data (may not exist yet):', clearError.message);
+      }
+    }
 
     // Run database migrations to ensure schema exists
     console.log('Running database migrations...');
@@ -285,9 +306,12 @@ exports.handler = async event => {
     }
 
     // Replace the cognito_user_id values in the sample data
+    // Use more specific replacement to avoid corrupting email fields
     for (const [email, cognitoId] of Object.entries(cognitoIdMappings)) {
-      // Replace the cognito_user_id values (they appear as email in the original)
-      sampleDataSQL = sampleDataSQL.replace(new RegExp(`'${email}'`, 'g'), `'${cognitoId}'`);
+      // Only replace cognito_user_id field values, not email field values
+      // Look for the pattern: cognito_user_id followed by email value
+      const cognitoIdPattern = new RegExp(`(cognito_user_id,\\s*employee_id,\\s*email[^)]*VALUES\\s*\\([^,]+,\\s*)'${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`, 'g');
+      sampleDataSQL = sampleDataSQL.replace(cognitoIdPattern, `$1'${cognitoId}'`);
     }
 
     console.log('Loading sample data...');
