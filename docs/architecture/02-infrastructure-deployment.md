@@ -9,12 +9,12 @@
 
 ## Environment Architecture
 
-| Environment | Purpose | Infrastructure | Development Mode |
-|-------------|---------|----------------|-----------------|
-| **Development** | Local development | LocalStack + Docker | Mock authentication, zero AWS cost |
-| **AWS Dev** | Testing | Real AWS services | Production parity for integration testing |
-| **Staging** | Pre-production | Full AWS stack | Production configuration validation |
-| **Production** | Live system | Full AWS stack | Enterprise security and compliance |
+| Environment | Frontend | Backend | Database | AWS Services | Purpose |
+|-------------|----------|---------|----------|--------------|---------|
+| **Development** | localhost:4200 | localhost:3000 | PostgreSQL:5432 | LocalStack:4566 | Local development with AWS parity |
+| **AWS Dev** | https://dz57qvo83kxos.cloudfront.net | https://1kkd1bbkmh.execute-api.eu-central-1.amazonaws.com/dev/ | rtm-dev-infrastructure-databaseb269d8bb-ynfofwwlfkkm.c18k2mga4rnh.eu-central-1.rds.amazonaws.com | AWS eu-central-1 | Live AWS deployment for testing |
+| **Staging** ✅ | https://rtm-staging.buchs.be | https://api-staging.buchs.be | RDS Staging | AWS eu-central-1 | Pre-production testing with custom domains |
+| **Production** | company.com | api.company.com | RDS Production | AWS Production | Live environment |
 
 **Key Architectural Principle:** Same codebase deploys across all environments with environment-specific configuration injection.
 
@@ -91,3 +91,45 @@ This 4-step integration process is **non-negotiable** for system stability. Code
 - **Environment Parity:** LocalStack provides 95% AWS production behavior for development
 - **Configuration Security:** Dynamic generation prevents hardcoded credentials
 - **Integration Reliability:** Systematic 4-step process prevents common infrastructure issues
+
+## SSL Certificate Management and Cross-Region Deployment
+
+**AWS CloudFront Certificate Requirements:**
+CloudFront distributions require SSL certificates to be deployed in the `us-east-1` region, regardless of where your other resources are located. This is a hard AWS requirement that cannot be circumvented.
+
+**Certificate Architecture:**
+```typescript
+// ❌ Incorrect: Certificate in eu-central-1 (fails with CloudFront)
+this.certificate = new acm.Certificate(this, 'WebCertificate', {
+  domainName: domainName,
+  validation: acm.CertificateValidation.fromDns(this.hostedZone),
+  // No region specified = uses stack region (eu-central-1)
+});
+
+// ✅ Correct: Cross-region certificate for CloudFront
+this.certificate = new acm.DnsValidatedCertificate(this, 'WebCertificate', {
+  domainName: domainName,
+  hostedZone: this.hostedZone,
+  region: 'us-east-1', // Required for CloudFront
+});
+```
+
+**Deployment Process:**
+1. **Route 53 Hosted Zone**: Created in primary region (eu-central-1)
+2. **SSL Certificate**: Created in us-east-1 with DNS validation
+3. **DNS Validation**: CNAME records added to external DNS provider (Hostpoint)
+4. **CloudFront Distribution**: Uses cross-region certificate
+5. **Route 53 A Record**: Points custom domain to CloudFront
+
+**Staging Environment Setup Completed ✅:**
+- **Custom Domains**: rtm-staging.buchs.be, api-staging.buchs.be
+- **SSL Certificates**: Valid TLS certificates in us-east-1
+- **DNS Validation**: CNAME records configured via Hostpoint
+- **CloudFront**: Distribution with custom domain and SSL
+- **Route 53**: A record pointing to CloudFront distribution
+
+**Key Lessons:**
+- Always use `DnsValidatedCertificate` for CloudFront deployments
+- Certificate region must be `us-east-1` for CloudFront compatibility
+- DNS validation requires external DNS provider coordination
+- Cross-region certificate deployment works seamlessly with proper CDK constructs
