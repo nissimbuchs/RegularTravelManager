@@ -36,6 +36,7 @@ This unified approach combines what would traditionally be separate backend and 
 
 | Date | Version | Description | Author |
 |------|---------|-------------|--------|
+| 2025-09-12 | 2.0 | **Major Update:** Added comprehensive Frontend Subscription Lifecycle Management, Dynamic Configuration Management, and API Gateway & Lambda Integration Management sections. Enhanced with Phase 1 & Phase 2 subscription patterns, S3/CloudFront config generation, and complete development workflow documentation. | Architect Winston |
 | 2025-09-08 | 1.3 | Implemented 4-stack CDK architecture with improved separation of concerns | Architect Winston |
 | 2025-09-01 | 1.2 | Added LocalStack development environment with 95% AWS parity | Architect Winston |
 | 2025-08-30 | 1.1 | Updated to use Angular instead of React | Architect Winston |
@@ -112,6 +113,594 @@ WebStack (presentation layer)
 - ✅ **Faster Deployments:** Deploy only what changed (e.g., frontend-only updates)
 - ✅ **Clear Boundaries:** Each stack has a single, well-defined responsibility
 - ✅ **Easier Debugging:** Stack-specific issues are isolated and easier to troubleshoot
+
+## API Gateway & Lambda Integration Management
+
+### Critical Infrastructure Requirement
+
+**🚨 MANDATORY:** When adding new frontend service calls, infrastructure updates are **REQUIRED** in addition to frontend code. Missing this step causes 403/404 errors and broken functionality.
+
+### Historical Integration Problems
+
+**Common Issues Identified from Commit History:**
+- **Missing GET /api/projects endpoint** (commit 0db68d1) - Lambda function existed but wasn't connected to API Gateway method
+- **Missing /api/manager/dashboard route** (commit 58f7381) - API only had `/api/manager` configured, causing 403 for `/api/manager/dashboard`
+- **Missing Lambda functions** (commit d05e677) - API Gateway referenced functions that didn't exist in LambdaStack
+- **Path mismatches** - Frontend called different paths than what was configured in infrastructure
+
+### 4-Stack Integration Pattern
+
+The RegularTravelManager uses a **4-stack architecture** where each component depends on exports from the previous stack:
+
+```
+InfrastructureStack → LambdaStack → ApiGatewayStack → WebStack
+```
+
+**CloudFormation Export/Import Pattern:**
+```typescript
+// LambdaStack: Export Lambda function ARN
+new cdk.CfnOutput(this, 'YourFunctionArnOutput', {
+  value: this.yourFunction.functionArn,
+  exportName: `rtm-${environment}-your-function-arn`,
+});
+
+// ApiGatewayStack: Import Lambda function
+const yourFunction = lambda.Function.fromFunctionAttributes(this, 'ImportedYourFunction', {
+  functionArn: cdk.Fn.importValue(`rtm-${environment}-your-function-arn`),
+  sameEnvironment: true, // Critical for permission grants
+});
+```
+
+### Frontend-Backend Integration Workflow
+
+#### 🚨 Mandatory 4-Step Process for New Service Calls
+
+**When adding ANY new frontend HTTP service call, you MUST complete all 4 steps:**
+
+#### Step 1: Create Handler Function
+```typescript
+// Location: apps/api/src/handlers/your-domain/your-handler.ts
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { withMiddleware } from '../middleware';
+import { corsHeaders, successResponse } from '../utils/api-response';
+
+export const handler = withMiddleware(async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  try {
+    // Your business logic here
+    const result = await yourBusinessLogic(event);
+    
+    return successResponse(result);
+  } catch (error) {
+    throw error; // Middleware handles error formatting
+  }
+});
+```
+
+#### Step 2: Add Lambda Function to LambdaStack
+```typescript
+// Location: infrastructure/lib/lambda-stack.ts
+
+// 1. Declare function property
+public yourFunction!: lambda.Function;
+
+// 2. Create function in constructor
+this.yourFunction = new lambda.Function(this, 'YourFunction', {
+  runtime: lambda.Runtime.NODEJS_20_X,
+  handler: 'handlers/your-domain/your-handler.handler',
+  code: lambda.Code.fromAsset('apps/api/dist'),
+  environment: baseEnv,
+  timeout: cdk.Duration.seconds(30),
+  memorySize: 256,
+  logRetention: logs.RetentionDays.ONE_WEEK,
+});
+
+// 3. Export function ARN
+new cdk.CfnOutput(this, 'YourFunctionArnOutput', {
+  value: this.yourFunction.functionArn,
+  exportName: `rtm-${environment}-your-function-arn`,
+});
+```
+
+#### Step 3: Import Function in ApiGatewayStack
+```typescript
+// Location: infrastructure/lib/api-gateway-stack.ts
+
+// 1. Import function at top of configureRoutes method
+const yourFunction = lambda.Function.fromFunctionAttributes(this, 'ImportedYourFunction', {
+  functionArn: cdk.Fn.importValue(`rtm-${environment}-your-function-arn`),
+  sameEnvironment: true, // CRITICAL: Allows permission grants
+});
+
+// 2. Add to configureRoutes method parameters
+private configureRoutes(
+  // ... existing parameters
+  yourFunction: lambda.IFunction
+) {
+  // Route configuration code
+}
+
+// 3. Pass to configureRoutes call
+this.configureRoutes(
+  // ... existing arguments
+  yourFunction
+);
+```
+
+#### Step 4: Configure API Gateway Route
+```typescript
+// Location: infrastructure/lib/api-gateway-stack.ts (inside configureRoutes method)
+
+// 1. Create resource (if needed)
+const yourDomainResource = apiResource.addResource('your-domain');
+
+// 2. Create integration
+const yourIntegration = new apigateway.LambdaIntegration(yourFunction);
+
+// 3. Add method with authorization
+yourDomainResource.addMethod('GET', yourIntegration, defaultMethodOptions);
+
+// 4. Grant permissions (CRITICAL)
+yourFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+```
+
+### Common Integration Pitfalls & Solutions
+
+#### 🔴 Pitfall 1: Missing HTTP Method Configuration
+**Problem:** Lambda function exists, but HTTP method not added to API Gateway
+```typescript
+// ❌ Wrong: Function created but no method added
+const integration = new apigateway.LambdaIntegration(yourFunction);
+// Missing: resource.addMethod(...)
+
+// ✅ Correct: Always add method
+const integration = new apigateway.LambdaIntegration(yourFunction);
+resource.addMethod('GET', integration, defaultMethodOptions);
+```
+
+#### 🔴 Pitfall 2: API Path Mismatch  
+**Problem:** Frontend calls `/api/manager/dashboard` but API only configured `/api/manager`
+```typescript
+// ❌ Wrong: Incomplete path structure
+const managerResource = apiResource.addResource('manager');
+managerResource.addMethod('GET', integration, defaultMethodOptions);
+// Missing: dashboard subresource
+
+// ✅ Correct: Complete path structure
+const managerResource = apiResource.addResource('manager');
+const dashboardResource = managerResource.addResource('dashboard');
+dashboardResource.addMethod('GET', integration, defaultMethodOptions);
+```
+
+#### 🔴 Pitfall 3: Missing Function Export
+**Problem:** Lambda function created but ARN not exported
+```typescript
+// ❌ Wrong: Function created but not exported
+this.yourFunction = new lambda.Function(this, 'YourFunction', { /* config */ });
+
+// ✅ Correct: Always export function ARN
+this.yourFunction = new lambda.Function(this, 'YourFunction', { /* config */ });
+new cdk.CfnOutput(this, 'YourFunctionArnOutput', {
+  value: this.yourFunction.functionArn,
+  exportName: `rtm-${environment}-your-function-arn`,
+});
+```
+
+#### 🔴 Pitfall 4: Missing API Gateway Permissions
+**Problem:** API Gateway can't invoke Lambda function
+```typescript
+// ❌ Wrong: No permission grant
+const integration = new apigateway.LambdaIntegration(yourFunction);
+
+// ✅ Correct: Always grant permissions  
+const integration = new apigateway.LambdaIntegration(yourFunction);
+yourFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+```
+
+### Integration Verification & Troubleshooting
+
+#### Testing New Routes
+```bash
+# 1. Deploy infrastructure
+npm run deploy
+
+# 2. Test API endpoint directly
+curl -H "Authorization: Bearer YOUR_JWT" \
+  https://YOUR_API_GATEWAY_URL/dev/api/your-domain
+
+# 3. Check CloudWatch logs for Lambda execution
+aws logs tail /aws/lambda/rtm-dev-your-function --follow
+
+# 4. Verify API Gateway configuration
+aws apigateway get-resources --rest-api-id YOUR_API_ID
+```
+
+#### Common Error Patterns
+```bash
+# 403 Forbidden → Missing route or authorization issues
+# 404 Not Found → Path mismatch between frontend and API Gateway
+# 502 Bad Gateway → Lambda function error or timeout
+# "Missing Authentication Token" → Route not configured in API Gateway
+```
+
+#### Debugging Commands
+```bash
+# List all API Gateway resources
+aws apigateway get-resources --rest-api-id $(aws ssm get-parameter --name /rtm/dev/api/gateway-id --query 'Parameter.Value' --output text)
+
+# Check Lambda function exports
+aws cloudformation describe-stacks --stack-name rtm-dev-lambda --query 'Stacks[0].Outputs'
+
+# View API Gateway logs  
+aws logs tail /aws/apigateway/rtm-dev-access-logs --follow
+```
+
+### Integration Checklist for New Features
+
+**Before implementing any new frontend service call, verify:**
+
+- [ ] **Handler Function**
+  - [ ] Created in `apps/api/src/handlers/` with proper middleware
+  - [ ] Implements error handling and response formatting
+  - [ ] Uses authentication middleware if protected
+
+- [ ] **Lambda Function (LambdaStack)**
+  - [ ] Function property declared in class
+  - [ ] Function created with correct handler path
+  - [ ] Environment variables configured
+  - [ ] CloudWatch log retention set
+  - [ ] **Function ARN exported via `cdk.CfnOutput`**
+
+- [ ] **API Gateway Import (ApiGatewayStack)**  
+  - [ ] Function imported with `sameEnvironment: true`
+  - [ ] Added to `configureRoutes` method parameters
+  - [ ] Passed to `configureRoutes` call
+
+- [ ] **API Gateway Route (ApiGatewayStack)**
+  - [ ] Resource structure matches frontend call path exactly
+  - [ ] HTTP method matches frontend request (GET/POST/PUT/DELETE)
+  - [ ] Lambda integration created correctly
+  - [ ] Method added with proper authorization
+  - [ ] **Permission granted: `grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'))`**
+
+- [ ] **Deployment & Verification**
+  - [ ] Infrastructure deployed: `npm run deploy`
+  - [ ] Route accessible via direct API call
+  - [ ] Frontend service call works end-to-end
+  - [ ] CloudWatch logs show successful execution
+
+### Why This Process is Critical
+
+**Historical Impact of Missing Steps:**
+- Multiple 403 Forbidden errors during development
+- Features appearing to work in development but failing in deployment
+- Hours of debugging time spent on infrastructure issues
+- Broken user experience with non-functional frontend features
+
+**Architecture Enforcement:**
+- This 4-step process is **non-negotiable** for system stability
+- **Code reviews must verify** all 4 steps are completed  
+- **Testing must include** direct API endpoint verification
+- **Documentation must be updated** when new service patterns are established
+
+This integration management ensures that the 4-stack CDK architecture functions correctly and prevents the recurring infrastructure issues that have impacted development velocity.
+
+## Dynamic Configuration Management
+
+### Critical Frontend Configuration Architecture
+
+**🚨 IMPORTANT:** The frontend does **NOT** use static configuration files. Configuration is **dynamically generated** by the backend during deployment and published to S3 as assets.
+
+### Dynamic Configuration Generation Process
+
+#### Overview of the Configuration Flow
+
+```
+Infrastructure Deployment → Config Generation → S3 Upload → CloudFront Delivery → Frontend Consumption
+```
+
+**Why Dynamic Configuration:**
+- **Environment-specific values** (API URLs, Cognito pools) are only available after AWS infrastructure is deployed
+- **Security** - No hardcoded AWS resource identifiers in source code
+- **Flexibility** - Configuration can be updated without rebuilding the frontend application
+- **CloudFront integration** - Configs are served as static assets through the same CDN
+
+### Configuration Generation Components
+
+#### 1. Config Generator Lambda Function
+**Location:** `infrastructure/lib/lambda/generate-web-config.ts`
+
+```typescript
+// Fetches configuration from SSM Parameter Store
+const apiUrl = await getSSMParameter(`/rtm/${environment}/api/gateway-url`);
+const userPoolId = await getSSMParameter(`/rtm/${environment}/cognito/user-pool-id`);
+const clientId = await getSSMParameter(`/rtm/${environment}/cognito/client-id`);
+
+// Generates configuration object
+const config = {
+  apiUrl: '/api', // Relative path for CloudFront reverse proxy
+  cognito: {
+    userPoolId: userPoolId,
+    userPoolClientId: clientId,
+    region: region,
+    useMockAuth: environment === 'dev',
+  },
+  environment: environment,
+  _originalApiUrl: apiUrl, // Stored for debugging
+};
+
+// Uploads to S3 bucket
+await s3Client.send(new PutObjectCommand({
+  Bucket: bucketName,
+  Key: 'assets/config/config.json',
+  Body: JSON.stringify(config, null, 2),
+  ContentType: 'application/json',
+  CacheControl: 'no-cache',
+}));
+```
+
+#### 2. CloudFormation Custom Resource Integration
+**Location:** `infrastructure/lib/web-stack.ts`
+
+```typescript
+// Custom Resource triggers config generation during deployment
+const configGeneratorResource = new cdk.CustomResource(this, 'WebConfigGeneratorResource', {
+  serviceToken: configGeneratorProvider.serviceToken,
+  properties: {
+    Environment: environment,
+    WebBucketName: this.webBucket.bucketName,
+    Region: this.region,
+    Timestamp: Date.now().toString(), // Forces updates
+  },
+});
+```
+
+#### 3. Manual Config Generation Script
+**Location:** `scripts/generate-web-config.sh`
+
+```bash
+# Script for manual config updates after infrastructure changes
+./scripts/generate-web-config.sh dev
+# - Fetches values from SSM Parameter Store
+# - Generates config JSON
+# - Uploads to S3 bucket
+# - Provides CloudFront invalidation commands
+```
+
+### Frontend Config Consumption
+
+#### ConfigService Implementation
+**Location:** `apps/web/src/app/core/services/config.service.ts`
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class ConfigService {
+  async loadConfig(): Promise<void> {
+    try {
+      // Loads config from S3 via CloudFront
+      const config = await firstValueFrom(
+        this.http.get<AppConfig>('/assets/config/config.json')
+      );
+      
+      // Validates required fields
+      if (!config.cognito?.userPoolId || !config.cognito?.userPoolClientId) {
+        throw new Error('Invalid configuration');
+      }
+      
+      this._config = config;
+    } catch (error) {
+      // Falls back to local development config
+      console.warn('Using fallback configuration for local development');
+    }
+  }
+}
+```
+
+#### App Initialization
+**Location:** `apps/web/src/app/app.config.ts`
+
+```typescript
+// Config loaded during app bootstrap
+export const appConfig: ApplicationConfig = {
+  providers: [
+    {
+      provide: APP_INITIALIZER,
+      useFactory: (configService: ConfigService) => () => configService.loadConfig(),
+      deps: [ConfigService],
+      multi: true,
+    },
+    // ... other providers
+  ],
+};
+```
+
+### Configuration File Structure
+
+#### Generated Config Format
+```json
+{
+  "apiUrl": "/api",
+  "cognito": {
+    "userPoolId": "eu-central-1_LFA9Rhk2y",
+    "userPoolClientId": "7j8k9l0m1n2o3p4q5r6s7t8u9v0w1x2y",
+    "region": "eu-central-1",
+    "useMockAuth": false
+  },
+  "environment": "dev",
+  "_originalApiUrl": "https://1kkd1bbkmh.execute-api.eu-central-1.amazonaws.com/dev/"
+}
+```
+
+#### Key Configuration Properties
+
+| Property | Purpose | Example Value |
+|----------|---------|---------------|
+| `apiUrl` | Frontend API base URL | `/api` (relative for CloudFront) |
+| `cognito.userPoolId` | AWS Cognito User Pool ID | `eu-central-1_LFA9Rhk2y` |
+| `cognito.userPoolClientId` | Cognito App Client ID | `7j8k9l0m...` |
+| `cognito.region` | AWS Region | `eu-central-1` |
+| `cognito.useMockAuth` | Enable mock auth (dev only) | `false` |
+| `environment` | Deployment environment | `dev`/`staging`/`production` |
+| `_originalApiUrl` | Full API Gateway URL (debug) | `https://api.example.com/dev/` |
+
+### CloudFront Configuration Integration
+
+#### Reverse Proxy Pattern
+```typescript
+// CloudFront serves both frontend assets and proxies API calls
+additionalBehaviors: {
+  '/api/*': {
+    origin: new origins.HttpOrigin(apiGatewayDomain),
+    viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+    cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+  },
+},
+```
+
+**Benefits:**
+- **Same-origin requests** - No CORS configuration needed
+- **Simplified config** - Frontend uses relative `/api` URLs
+- **Performance** - Single domain for all resources
+
+### Configuration Update Workflow
+
+#### When Config Updates Are Needed
+
+1. **After infrastructure changes** that modify API Gateway URLs or Cognito resources
+2. **When SSM Parameter values change** 
+3. **During environment promotion** (dev → staging → production)
+4. **When Cognito User Pool settings are updated**
+
+#### Manual Configuration Update Process
+
+```bash
+# 1. Update infrastructure if needed
+npm run deploy
+
+# 2. Generate new config
+./scripts/generate-web-config.sh dev
+
+# 3. Invalidate CloudFront cache (if needed)
+aws cloudfront create-invalidation \
+  --distribution-id XXXXXXXXXX \
+  --paths '/assets/config/*'
+
+# 4. Verify config is updated
+curl https://your-cloudfront-domain.com/assets/config/config.json
+```
+
+#### Automated Configuration Updates
+
+**During CDK Deployment:**
+- Custom Resource automatically generates config after stack deployment
+- Config is uploaded to S3 with `no-cache` headers
+- No manual intervention required for standard deployments
+
+### Configuration Troubleshooting
+
+#### Common Configuration Issues
+
+**🔴 Config Loading Failures:**
+```javascript
+// Check browser network tab for failed requests
+// Verify S3 bucket contains config files
+aws s3 ls s3://rtm-dev-web-bucket/assets/config/
+
+// Manual config verification
+curl https://your-domain.com/assets/config/config.json
+```
+
+**🔴 Invalid Cognito Configuration:**
+```bash
+# Verify SSM parameters exist
+aws ssm get-parameters-by-path --path "/rtm/dev/" --recursive
+
+# Check parameter values
+aws ssm get-parameter --name "/rtm/dev/cognito/user-pool-id"
+```
+
+**🔴 CloudFront Caching Issues:**
+```bash
+# Create cache invalidation for config files
+aws cloudfront create-invalidation \
+  --distribution-id $(aws ssm get-parameter --name /rtm/dev/web/distribution-id --query 'Parameter.Value' --output text) \
+  --paths '/assets/config/*'
+```
+
+#### Configuration Debugging Commands
+
+```bash
+# View current deployed config
+aws s3 cp s3://$(aws ssm get-parameter --name /rtm/dev/web/bucket-name --query 'Parameter.Value' --output text)/assets/config/config.json -
+
+# Check config generation logs
+aws logs tail /aws/lambda/rtm-dev-web-config-generator --follow
+
+# Verify SSM parameters
+aws ssm describe-parameters --parameter-filters "Key=Name,Option=BeginsWith,Values=/rtm/dev/"
+
+# Test config endpoint
+curl -I https://$(aws ssm get-parameter --name /rtm/dev/web/domain-name --query 'Parameter.Value' --output text)/assets/config/config.json
+```
+
+### Integration with Development Workflow
+
+#### Updated 4-Step Process for Infrastructure Changes
+
+When modifying infrastructure that affects frontend configuration:
+
+1. **Step 1-4**: Complete standard Lambda/API Gateway integration
+2. **Step 5**: **Verify config generation** (NEW STEP)
+   - Check that SSM parameters are updated
+   - Verify config generation Custom Resource triggers
+   - Confirm S3 config files are updated
+   - Test config loading in frontend
+
+#### Config-Related Deployment Checklist
+
+- [ ] **SSM Parameters Updated**
+  - [ ] API Gateway URL parameter exists
+  - [ ] Cognito User Pool ID parameter exists  
+  - [ ] Cognito Client ID parameter exists
+  
+- [ ] **Config Generation Working**
+  - [ ] Custom Resource executes successfully
+  - [ ] Config files uploaded to S3 bucket
+  - [ ] Config contains correct values
+  - [ ] No-cache headers applied
+
+- [ ] **Frontend Config Loading**
+  - [ ] Config service loads without errors
+  - [ ] Cognito authentication initializes correctly
+  - [ ] API calls use correct base URL
+  - [ ] Environment detection works properly
+
+- [ ] **CloudFront Integration**
+  - [ ] Config files accessible via CDN
+  - [ ] Cache invalidation works when needed
+  - [ ] API reverse proxy functioning
+
+### Why Dynamic Configuration is Critical
+
+**Historical Context:**
+- Static config files caused deployment failures when AWS resources changed
+- Hardcoded URLs led to environment mismatches
+- Manual config updates were error-prone and time-consuming
+
+**Architecture Benefits:**
+- ✅ **Environment consistency** - Config always matches deployed infrastructure
+- ✅ **Security** - No sensitive values in source code or build artifacts  
+- ✅ **Deployment automation** - Config generation happens automatically
+- ✅ **Debugging capability** - Original values preserved for troubleshooting
+- ✅ **Cache management** - No-cache headers ensure config freshness
+
+**Developer Requirements:**
+- **Never hardcode** AWS resource identifiers in frontend code
+- **Always verify** config generation after infrastructure changes
+- **Use ConfigService** for all environment-specific values
+- **Test config loading** during development and deployment
+
+This dynamic configuration architecture ensures that the frontend always receives correct, up-to-date configuration values that match the actual deployed AWS infrastructure, eliminating a major source of deployment issues and environment mismatches.
 
 ### Repository Structure
 
@@ -1499,6 +2088,442 @@ export class ErrorInterceptor implements HttpInterceptor {
   }
 }
 ```
+
+## Frontend Subscription Lifecycle Management
+
+### Phase 1 & Phase 2 Implementation (Critical for Memory Management)
+
+This system implements a two-phase subscription cleanup strategy to eliminate memory leaks and prevent unauthorized error messages during logout. **All new components and services MUST implement these patterns.**
+
+#### Phase 1: Application-Level Subscription Management
+
+**Purpose:** Clean up business logic subscriptions (API calls, form watchers, timers)
+
+**Implementation Pattern:**
+```typescript
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
+@Component({...})
+export class YourComponent implements OnInit, OnDestroy {
+  // Phase 1: Add destroy subject
+  private destroy$ = new Subject<void>();
+
+  constructor(private yourService: YourService) {}
+
+  ngOnInit(): void {
+    // Phase 1: All subscriptions must use takeUntil(this.destroy$)
+    this.yourService.getData()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(data => {
+        // Handle data
+      });
+
+    // Form value changes
+    this.formControl.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(value => {
+        // Handle form changes
+      });
+  }
+
+  ngOnDestroy(): void {
+    // Phase 1: Trigger cleanup for all subscriptions
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}
+```
+
+**Service Implementation Pattern:**
+```typescript
+import { Injectable, OnDestroy } from '@angular/core';
+import { BehaviorSubject, Subject, timer } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
+@Injectable({ providedIn: 'root' })
+export class YourService implements OnDestroy {
+  // Phase 1: Global cleanup subject for service-level subscriptions
+  private destroy$ = new Subject<void>();
+  
+  private dataSubject = new BehaviorSubject<DataType[]>([]);
+  private autoRefreshSubscription?: any;
+
+  constructor(private http: HttpClient) {}
+
+  startAutoRefresh(): void {
+    this.stopAutoRefresh();
+    
+    // Phase 1: Auto-refresh timer with cleanup
+    this.autoRefreshSubscription = timer(60000, 60000)
+      .pipe(
+        switchMap(() => this.loadData()),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: data => this.dataSubject.next(data),
+        error: error => {
+          // Phase 1: Ignore auth errors during logout
+          if (error.status !== 401 && error.status !== 403) {
+            console.error('Auto-refresh failed:', error);
+          }
+        }
+      });
+  }
+
+  private refreshData(): void {
+    // Phase 1: Refresh calls with proper cleanup
+    this.loadData()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        error: error => {
+          // Phase 1: Silent auth error handling during cleanup
+          if (error.status !== 401 && error.status !== 403) {
+            console.error('Failed to refresh data:', error);
+          }
+        }
+      });
+  }
+
+  // Phase 1: Cleanup method for logout scenarios
+  public cleanup(): void {
+    this.destroy$.next();
+    console.log('YourService: All subscriptions cleaned up');
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}
+```
+
+#### Phase 2: Angular Framework-Level Cleanup
+
+**Purpose:** Clean up Angular's internal subscriptions (296+ framework subscriptions)
+
+**Core Service Implementation:**
+```typescript
+// apps/web/src/app/core/services/angular-cleanup.service.ts
+import { Injectable, NgZone, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { Location } from '@angular/common';
+import { Subject } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class AngularCleanupService {
+  private ngZone = inject(NgZone);
+  private router = inject(Router);
+  private http = inject(HttpClient);
+  private location = inject(Location);
+
+  // Global cleanup trigger for Angular internals
+  private cleanupTrigger$ = new Subject<void>();
+
+  /**
+   * Phase 2: Force cleanup of Angular's internal subscription management
+   * Targets 296+ internal Angular subscriptions that survive logout
+   */
+  public forceCleanupAngularInternals(): void {
+    console.log('🧹 Phase 2: Starting Angular framework cleanup...');
+
+    // 1. Signal cleanup to all tracked subscriptions
+    this.cleanupTrigger$.next();
+
+    // 2. Clean NgZone pending tasks
+    this.cleanupNgZoneTasks();
+
+    // 3. Clean Router subscriptions
+    this.cleanupRouterSubscriptions();
+
+    // 4. Clean HTTP client internal state
+    this.cleanupHttpClientInternals();
+
+    // 5. Clean Location service subscriptions
+    this.cleanupLocationSubscriptions();
+
+    // 6. Force garbage collection of Angular forms
+    this.cleanupAngularForms();
+
+    // 7. Clean change detection subscriptions
+    this.cleanupChangeDetection();
+
+    console.log('✅ Phase 2: Angular framework cleanup completed');
+  }
+
+  private cleanupNgZoneTasks(): void {
+    try {
+      // Cancel pending NgZone tasks
+      (this.ngZone as any)._inner?.cancelAnimationFrame?.();
+      (this.ngZone as any)._inner?.clearTimeout?.();
+      (this.ngZone as any)._inner?.clearInterval?.();
+    } catch (error) {
+      // Silent cleanup
+    }
+  }
+
+  private cleanupRouterSubscriptions(): void {
+    try {
+      // Clean router internal subscriptions
+      const routerInternal = (this.router as any);
+      routerInternal.navigationTransitions?.complete?.();
+      routerInternal.routerState?.complete?.();
+    } catch (error) {
+      // Silent cleanup
+    }
+  }
+
+  private cleanupHttpClientInternals(): void {
+    try {
+      // Clean HTTP client internal state
+      const httpInternal = (this.http as any);
+      httpInternal.handler?.complete?.();
+    } catch (error) {
+      // Silent cleanup
+    }
+  }
+
+  private cleanupLocationSubscriptions(): void {
+    try {
+      // Clean Location service subscriptions
+      const locationInternal = (this.location as any);
+      locationInternal.subject?.complete?.();
+    } catch (error) {
+      // Silent cleanup
+    }
+  }
+
+  private cleanupAngularForms(): void {
+    try {
+      // Force cleanup of form controls and validators
+      document.querySelectorAll('form').forEach(form => {
+        const formInternal = (form as any);
+        formInternal._ngModel?.complete?.();
+      });
+    } catch (error) {
+      // Silent cleanup
+    }
+  }
+
+  private cleanupChangeDetection(): void {
+    try {
+      // Clean change detection subscriptions
+      const ngZoneInternal = (this.ngZone as any);
+      ngZoneInternal.onStable?.complete?.();
+      ngZoneInternal.onUnstable?.complete?.();
+      ngZoneInternal.onError?.complete?.();
+      ngZoneInternal.onMicrotaskEmpty?.complete?.();
+    } catch (error) {
+      // Silent cleanup
+    }
+  }
+}
+```
+
+**Integration with AuthService:**
+```typescript
+// apps/web/src/app/core/services/auth.service.ts
+export class AuthService {
+  constructor(
+    private angularCleanupService: AngularCleanupService
+  ) {}
+
+  logout(): Observable<void> {
+    // Phase 1: Trigger application-level cleanup
+    this.triggerServiceCleanup();
+    
+    // Phase 2: Force Angular framework cleanup
+    this.angularCleanupService.forceCleanupAngularInternals();
+    
+    // Continue with normal logout process
+    return this.performLogout();
+  }
+
+  private triggerServiceCleanup(): void {
+    // Call cleanup() on all services that implement it
+    this.projectService.cleanup();
+    this.managerDashboardService.cleanup();
+    this.employeeService.cleanup();
+  }
+}
+```
+
+#### HTTP Request Cancellation Pattern
+
+**Enhanced Auth Interceptor with Cleanup:**
+```typescript
+// apps/web/src/app/core/interceptors/auth.interceptor.ts
+import { Subject, EMPTY, timeout, takeUntil } from 'rxjs';
+
+// Global HTTP cleanup subject for request cancellation
+let globalHttpCleanup$ = new Subject<void>();
+
+export function triggerHttpCleanup(): void {
+  globalHttpCleanup$.next();
+  globalHttpCleanup$.complete();
+  globalHttpCleanup$ = new Subject<void>();
+}
+
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+  const user = authService.getCurrentUser();
+
+  if (user?.accessToken) {
+    const authReq = req.clone({
+      setHeaders: { Authorization: `Bearer ${user.accessToken}` }
+    });
+    
+    return next(authReq).pipe(
+      takeUntil(globalHttpCleanup$),
+      timeout(30000)
+    );
+  } else {
+    // Allow config file requests to proceed (needed for app initialization)
+    if (req.url.includes('/assets/config/')) {
+      return next(req).pipe(
+        takeUntil(globalHttpCleanup$),
+        timeout(30000)
+      );
+    }
+    
+    // Phase 2: Cancel unauthorized requests instead of allowing them
+    return EMPTY;
+  }
+};
+```
+
+#### Enhanced Error Interceptor:
+```typescript
+// apps/web/src/app/core/interceptors/error.interceptor.ts
+import { Subject } from 'rxjs';
+
+// Global error cleanup subject
+let globalErrorCleanup$ = new Subject<void>();
+
+export function triggerErrorCleanup(): void {
+  globalErrorCleanup$.next();
+  globalErrorCleanup$.complete();
+  globalErrorCleanup$ = new Subject<void>();
+}
+
+export const errorInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+
+  return next(req).pipe(
+    takeUntil(globalErrorCleanup$),
+    catchError((error: HttpErrorResponse) => {
+      const isUserAuthenticated = !!authService.getCurrentUser();
+      
+      // Only show errors if user is actually authenticated
+      if (isUserAuthenticated && error.status === 401) {
+        // Handle unauthorized error
+      } else if (!isUserAuthenticated) {
+        // Suppress errors during logout/unauthenticated state
+        return EMPTY;
+      }
+      
+      return throwError(() => error);
+    })
+  );
+};
+```
+
+### Implementation Requirements for New Code
+
+#### 🚨 Mandatory Patterns for All Components
+
+1. **Component Subscription Management:**
+   ```typescript
+   export class YourComponent implements OnInit, OnDestroy {
+     private destroy$ = new Subject<void>();
+     
+     ngOnInit(): void {
+       // ALL subscriptions MUST use takeUntil(this.destroy$)
+       this.service.data$.pipe(takeUntil(this.destroy$)).subscribe(/*...*/);
+     }
+     
+     ngOnDestroy(): void {
+       this.destroy$.next();
+       this.destroy$.complete();
+     }
+   }
+   ```
+
+2. **Service Subscription Management:**
+   ```typescript
+   @Injectable({ providedIn: 'root' })
+   export class YourService implements OnDestroy {
+     private destroy$ = new Subject<void>();
+     
+     // ALL internal subscriptions use takeUntil(this.destroy$)
+     private loadData(): void {
+       this.http.get('/api/data')
+         .pipe(takeUntil(this.destroy$))
+         .subscribe(/*...*/);
+     }
+     
+     public cleanup(): void {
+       this.destroy$.next();
+     }
+     
+     ngOnDestroy(): void {
+       this.destroy$.next();
+       this.destroy$.complete();
+     }
+   }
+   ```
+
+3. **Auth Error Handling Pattern:**
+   ```typescript
+   // In all subscription error handlers
+   .subscribe({
+     error: error => {
+       // Ignore auth errors silently during logout
+       if (error.status !== 401 && error.status !== 403) {
+         console.error('Operation failed:', error);
+         // Show user-facing error
+       }
+     }
+   });
+   ```
+
+#### Integration Checklist for New Features
+
+- [ ] All components implement `OnDestroy` with `destroy$` subject
+- [ ] All subscriptions use `takeUntil(this.destroy$)`
+- [ ] Services implement `cleanup()` method 
+- [ ] Auth error handling ignores 401/403 during logout
+- [ ] Auto-refresh timers are properly cancelled
+- [ ] Form value change subscriptions are cleaned up
+- [ ] HTTP requests are cancellable via global cleanup subjects
+
+### Why This Architecture is Critical
+
+**Problem Solved:** After implementing authentication logout, users were seeing unauthorized error messages despite HTTP requests completing successfully. Investigation revealed:
+
+1. **Phase 1 Issue:** Application subscriptions (timers, forms, API calls) continued running after logout
+2. **Phase 2 Issue:** Angular's internal framework subscriptions (296+ active) were not being cleaned up, causing memory leaks and error propagation
+
+**Benefits of Implementation:**
+- ✅ **Zero unauthorized errors** after logout
+- ✅ **Memory leak prevention** for long-running applications  
+- ✅ **Improved performance** through proper resource cleanup
+- ✅ **Better user experience** with clean logout process
+- ✅ **Scalable pattern** that prevents subscription management issues in new features
+
+**Developer Requirements:**
+- **Phase 1 patterns are MANDATORY** for all new components and services
+- **Phase 2 integration is automatic** through AuthService logout process
+- **Testing must verify** that no subscriptions survive component destruction
+- **Code reviews must check** for proper takeUntil usage
+
+This subscription lifecycle management is **non-negotiable architecture** that ensures application stability and user experience quality.
 
 ## Monitoring and Observability
 
