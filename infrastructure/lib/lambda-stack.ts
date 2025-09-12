@@ -54,6 +54,92 @@ export class LambdaStack extends cdk.Stack {
     };
   }
 
+  private getDatabaseEnvironmentVariables(
+    infrastructureStack: InfrastructureStack
+  ): Record<string, string> {
+    return {
+      DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
+      DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
+      DB_NAME: 'rtm_database',
+    };
+  }
+
+  private getCompleteEnvironmentVariables(
+    environment: string,
+    infrastructureStack: InfrastructureStack
+  ): Record<string, string> {
+    return {
+      ...this.getBaseEnvironmentVariables(environment),
+      ...this.getDatabaseEnvironmentVariables(infrastructureStack),
+    };
+  }
+
+  /**
+   * Create standardized log group for Lambda functions
+   */
+  private createLogGroup(functionName: string, environment: string): logs.LogGroup {
+    return new logs.LogGroup(this, `${functionName}LogGroup`, {
+      logGroupName: `/aws/lambda/rtm-${environment}-${functionName.toLowerCase().replace(/([A-Z])/g, '-$1').replace(/^-/, '')}`,
+      retention: environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
+      removalPolicy: environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+    });
+  }
+
+  /**
+   * Create standardized Lambda function with common configuration including alarms
+   */
+  private createLambdaFunction(
+    id: string,
+    functionName: string,
+    handler: string,
+    environment: string,
+    infrastructureStack: InfrastructureStack,
+    timeout: number,
+    memory: number,
+    additionalEnvironment: Record<string, string> = {},
+    description?: string,
+    needsVpc: boolean = true,
+    enableAlarms: boolean = true
+  ): lambda.Function {
+    const logGroup = this.createLogGroup(functionName, environment);
+
+    const baseConfig: lambda.FunctionProps = {
+      functionName: `rtm-${environment}-${functionName.toLowerCase().replace(/([A-Z])/g, '-$1').replace(/^-/, '')}`,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler,
+      code: lambda.Code.fromAsset('../apps/api/dist'),
+      timeout: cdk.Duration.seconds(timeout),
+      memorySize: memory,
+      role: infrastructureStack.lambdaRole,
+      logGroup,
+      environment: {
+        ...this.getCompleteEnvironmentVariables(environment, infrastructureStack),
+        ...additionalEnvironment,
+      },
+      description: description || `${functionName} Lambda function`,
+      tracing: lambda.Tracing.ACTIVE,
+    };
+
+    // Add VPC configuration if needed (most functions need it for database access)
+    const functionConfig: lambda.FunctionProps = needsVpc ? {
+      ...baseConfig,
+      vpc: infrastructureStack.vpc,
+      vpcSubnets: {
+        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [infrastructureStack.lambdaSecurityGroup],
+    } : baseConfig;
+
+    const lambdaFunction = new lambda.Function(this, id, functionConfig);
+
+    // Automatically add CloudWatch alarms unless disabled
+    if (enableAlarms) {
+      this.addLambdaAlarms(environment, functionName, lambdaFunction, infrastructureStack);
+    }
+
+    return lambdaFunction;
+  }
+
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
 
@@ -123,39 +209,17 @@ export class LambdaStack extends cdk.Stack {
     timeout: number,
     memory: number
   ) {
-    // Create CloudWatch Log Group for health function
-    const healthLogGroup = new logs.LogGroup(this, 'HealthFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-health`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.healthFunction = new lambda.Function(this, 'HealthFunction', {
-      functionName: `rtm-${environment}-health`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.health',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: healthLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-        API_VERSION: '1.0.0',
-      },
-      description: 'Health check endpoint for RTM API',
-      tracing: lambda.Tracing.ACTIVE,
-    });
+    this.healthFunction = this.createLambdaFunction(
+      'HealthFunction',
+      'Health',
+      'index.health',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      { API_VERSION: '1.0.0' },
+      'Health check endpoint for RTM API'
+    );
 
     // Store Lambda function ARN for monitoring
     new ssm.StringParameter(this, 'HealthFunctionArn', {
@@ -163,8 +227,7 @@ export class LambdaStack extends cdk.Stack {
       stringValue: this.healthFunction.functionArn,
     });
 
-    // Add CloudWatch alarms for health function
-    this.addLambdaAlarms(environment, 'Health', this.healthFunction, infrastructureStack);
+    // Alarms are automatically added by createLambdaFunction
   }
 
   private createAuthFunctions(
@@ -174,68 +237,37 @@ export class LambdaStack extends cdk.Stack {
     memory: number
   ) {
     // Lambda Authorizer function
-    const authLogGroup = new logs.LogGroup(this, 'AuthorizerFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-authorizer`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.authorizerFunction = new lambda.Function(this, 'AuthorizerFunction', {
-      // auth-authorizer
-      functionName: `rtm-${environment}-authorizer`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.authorizer',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: authLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
+    this.authorizerFunction = this.createLambdaFunction(
+      'AuthorizerFunction',
+      'Authorizer',
+      'index.authorizer',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {
         COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
         COGNITO_CLIENT_ID: infrastructureStack.userPoolClient.userPoolClientId,
         BYPASS_AUTH: environment === 'dev' ? 'true' : 'false', // Enable mock auth for dev environment
         API_VERSION: '1.0.0',
       },
-      description: 'JWT token authorizer for RTM API',
-      tracing: lambda.Tracing.ACTIVE,
-    });
+      'JWT token authorizer for RTM API'
+    );
 
     // Test users setup function (development only)
     if (environment !== 'production') {
-      const setupUsersLogGroup = new logs.LogGroup(this, 'SetupTestUsersFunctionLogGroup', {
-        logGroupName: `/aws/lambda/rtm-${environment}-setup-test-users`,
-        retention: logs.RetentionDays.ONE_WEEK,
-        removalPolicy: cdk.RemovalPolicy.DESTROY,
-      });
-
-      this.setupTestUsersFunction = new lambda.Function(this, 'SetupTestUsersFunction', {
-        // auth-setup-test-users
-        functionName: `rtm-${environment}-setup-test-users`,
-        runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.setupTestUsers',
-        code: lambda.Code.fromAsset('../apps/api/dist'),
-        timeout: cdk.Duration.seconds(60), // Longer timeout for user creation
-        memorySize: memory,
-        role: infrastructureStack.lambdaRole,
-        logGroup: setupUsersLogGroup,
-        environment: {
-          ...this.getBaseEnvironmentVariables(environment),
-          COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
-        },
-        description: 'Create test users in Cognito for development',
-        tracing: lambda.Tracing.ACTIVE,
-      });
+      this.setupTestUsersFunction = this.createLambdaFunction(
+        'SetupTestUsersFunction',
+        'SetupTestUsers',
+        'index.setupTestUsers',
+        environment,
+        infrastructureStack,
+        60, // Longer timeout for user creation
+        memory,
+        { COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId },
+        'Create test users in Cognito for development',
+        false // No VPC needed for Cognito operations
+      );
 
       // Sample data loading function (development only)
       const loadSampleDataLogGroup = new logs.LogGroup(this, 'LoadSampleDataFunctionLogGroup', {
@@ -333,126 +365,45 @@ export class LambdaStack extends cdk.Stack {
     memory: number
   ) {
     // Get Employee Profile function
-    const profileLogGroup = new logs.LogGroup(this, 'GetEmployeeProfileFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-get-employee-profile`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.getEmployeeProfileFunction = new lambda.Function(this, 'GetEmployeeProfileFunction', {
-      // employees-profile
-      functionName: `rtm-${environment}-get-employee-profile`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.getEmployeeProfile',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: profileLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      description: 'Get employee profile information',
-      tracing: lambda.Tracing.ACTIVE,
-    });
+    this.getEmployeeProfileFunction = this.createLambdaFunction(
+      'GetEmployeeProfileFunction',
+      'GetEmployeeProfile',
+      'index.getEmployeeProfile',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Get employee profile information'
+    );
 
     // Update Employee Address function
-    const updateAddressLogGroup = new logs.LogGroup(this, 'UpdateEmployeeAddressFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-update-employee-address`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.updateEmployeeAddressFunction = new lambda.Function(
-      this,
+    this.updateEmployeeAddressFunction = this.createLambdaFunction(
       'UpdateEmployeeAddressFunction',
-      {
-        functionName: `rtm-${environment}-update-employee-address`,
-        runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.updateEmployeeAddress',
-        code: lambda.Code.fromAsset('../apps/api/dist'),
-        timeout: cdk.Duration.seconds(timeout),
-        memorySize: memory,
-        role: infrastructureStack.lambdaRole,
-        vpc: infrastructureStack.vpc,
-        vpcSubnets: {
-          subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-        },
-        securityGroups: [infrastructureStack.lambdaSecurityGroup],
-        logGroup: updateAddressLogGroup,
-        environment: {
-          NODE_ENV: 'production',
-          RTM_ENVIRONMENT: environment,
-          DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-          DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-          DB_NAME: 'rtm_database',
-          LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
-        },
-        description: 'Update employee home address',
-        tracing: lambda.Tracing.ACTIVE,
-      }
+      'UpdateEmployeeAddress',
+      'index.updateEmployeeAddress',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Update employee home address'
     );
 
     // Get Managers function
-    const getManagersLogGroup = new logs.LogGroup(this, 'GetManagersFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-get-managers`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.getManagersFunction = new lambda.Function(this, 'GetManagersFunction', {
-      functionName: `rtm-${environment}-get-managers`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.getManagers',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: getManagersLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-        LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
-      },
-      description: 'Get list of managers for dropdown selection',
-      tracing: lambda.Tracing.ACTIVE,
-    });
-
-    // Add Lambda alarms for employee functions
-    this.addLambdaAlarms(
+    this.getManagersFunction = this.createLambdaFunction(
+      'GetManagersFunction',
+      'GetManagers',
+      'index.getManagers',
       environment,
-      'GetEmployeeProfile',
-      this.getEmployeeProfileFunction,
-      infrastructureStack
+      infrastructureStack,
+      timeout,
+      memory,
+      { LOG_LEVEL: environment === 'production' ? 'info' : 'debug' },
+      'Get list of managers for dropdown selection'
     );
-    this.addLambdaAlarms(
-      environment,
-      'UpdateEmployeeAddress',
-      this.updateEmployeeAddressFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(environment, 'GetManagers', this.getManagersFunction, infrastructureStack);
+
+    // Alarms are automatically added by createLambdaFunction
   }
 
   private createProjectFunctions(
@@ -462,414 +413,123 @@ export class LambdaStack extends cdk.Stack {
     memory: number
   ) {
     // Create Project function
-    const createProjectLogGroup = new logs.LogGroup(this, 'CreateProjectFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-create-project`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.createProjectFunction = new lambda.Function(this, 'CreateProjectFunction', {
-      functionName: `rtm-${environment}-create-project`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.createProject',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: createProjectLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      description: 'Create new project (manager only)',
-      tracing: lambda.Tracing.ACTIVE,
-    });
-
-    // Create Subproject function
-    const createSubprojectLogGroup = new logs.LogGroup(this, 'CreateSubprojectFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-create-subproject`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.createSubprojectFunction = new lambda.Function(this, 'CreateSubprojectFunction', {
-      functionName: `rtm-${environment}-create-subproject`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.createSubproject',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: createSubprojectLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-        PLACE_INDEX_NAME: infrastructureStack.placeIndex.indexName,
-      },
-      description: 'Create new subproject with geocoding (manager only)',
-      tracing: lambda.Tracing.ACTIVE,
-    });
-
-    // Get Active Projects function
-    const getActiveProjectsLogGroup = new logs.LogGroup(this, 'GetActiveProjectsFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-get-active-projects`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.getActiveProjectsFunction = new lambda.Function(this, 'GetActiveProjectsFunction', {
-      functionName: `rtm-${environment}-get-active-projects`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.getActiveProjects',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: getActiveProjectsLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      description: 'Get all active projects for employee selection',
-      tracing: lambda.Tracing.ACTIVE,
-    });
-
-    // Get All Projects function (admin only)
-    const getAllProjectsLogGroup = new logs.LogGroup(this, 'GetAllProjectsFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-get-all-projects`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.getAllProjectsFunction = new lambda.Function(this, 'GetAllProjectsFunction', {
-      functionName: `rtm-${environment}-get-all-projects`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.getAllProjects',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: getAllProjectsLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      description: 'Get all projects (active and inactive) for admin use',
-      tracing: lambda.Tracing.ACTIVE,
-    });
-
-    // Get Project by ID function
-    const getProjectByIdLogGroup = new logs.LogGroup(this, 'GetProjectByIdFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-get-project-by-id`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.getProjectByIdFunction = new lambda.Function(this, 'GetProjectByIdFunction', {
-      functionName: `rtm-${environment}-get-project-by-id`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.getProjectById',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: getProjectByIdLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      description: 'Get single project by ID',
-      tracing: lambda.Tracing.ACTIVE,
-    });
-
-    // Get Subprojects for Project function
-    const getSubprojectsLogGroup = new logs.LogGroup(
-      this,
-      'GetSubprojectsForProjectFunctionLogGroup',
-      {
-        logGroupName: `/aws/lambda/rtm-${environment}-get-subprojects-for-project`,
-        retention:
-          environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy:
-          environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }
+    this.createProjectFunction = this.createLambdaFunction(
+      'CreateProjectFunction',
+      'CreateProject',
+      'index.createProject',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Create new project (manager only)'
     );
 
-    this.getSubprojectsForProjectFunction = new lambda.Function(
-      this,
+    // Create Subproject function
+    this.createSubprojectFunction = this.createLambdaFunction(
+      'CreateSubprojectFunction',
+      'CreateSubproject',
+      'index.createSubproject',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      { PLACE_INDEX_NAME: infrastructureStack.placeIndex.indexName },
+      'Create new subproject with geocoding (manager only)'
+    );
+
+    // Get Active Projects function
+    this.getActiveProjectsFunction = this.createLambdaFunction(
+      'GetActiveProjectsFunction',
+      'GetActiveProjects',
+      'index.getActiveProjects',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Get all active projects for employee selection'
+    );
+
+    // Get All Projects function (admin only)
+    this.getAllProjectsFunction = this.createLambdaFunction(
+      'GetAllProjectsFunction',
+      'GetAllProjects',
+      'index.getAllProjects',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Get all projects (active and inactive) for admin use'
+    );
+
+    // Get Project by ID function
+    this.getProjectByIdFunction = this.createLambdaFunction(
+      'GetProjectByIdFunction',
+      'GetProjectById',
+      'index.getProjectById',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Get single project by ID'
+    );
+
+    // Get Subprojects for Project function
+    this.getSubprojectsForProjectFunction = this.createLambdaFunction(
       'GetSubprojectsForProjectFunction',
-      {
-        functionName: `rtm-${environment}-get-subprojects-for-project`,
-        runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.getSubprojectsForProject',
-        code: lambda.Code.fromAsset('../apps/api/dist'),
-        timeout: cdk.Duration.seconds(timeout),
-        memorySize: memory,
-        role: infrastructureStack.lambdaRole,
-        vpc: infrastructureStack.vpc,
-        vpcSubnets: {
-          subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-        },
-        securityGroups: [infrastructureStack.lambdaSecurityGroup],
-        logGroup: getSubprojectsLogGroup,
-        environment: {
-          NODE_ENV: environment,
-          DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-          DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-          DB_NAME: 'rtm_database',
-          LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
-        },
-        description: 'Get subprojects for a specific project',
-        tracing: lambda.Tracing.ACTIVE,
-      }
+      'GetSubprojectsForProject',
+      'index.getSubprojectsForProject',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Get subprojects for a specific project'
     );
 
     // Get Subproject by ID function
-    const getSubprojectByIdLogGroup = new logs.LogGroup(this, 'GetSubprojectByIdFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-get-subproject-by-id`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.getSubprojectByIdFunction = new lambda.Function(this, 'GetSubprojectByIdFunction', {
-      functionName: `rtm-${environment}-get-subproject-by-id`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.getSubprojectById',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: getSubprojectByIdLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      description: 'Get single subproject by ID',
-      tracing: lambda.Tracing.ACTIVE,
-    });
+    this.getSubprojectByIdFunction = this.createLambdaFunction(
+      'GetSubprojectByIdFunction',
+      'GetSubprojectById',
+      'index.getSubprojectById',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Get single subproject by ID'
+    );
 
     // Check Project References function
-    const checkProjectReferencesLogGroup = new logs.LogGroup(
-      this,
-      'CheckProjectReferencesFunctionLogGroup',
-      {
-        logGroupName: `/aws/lambda/rtm-${environment}-check-project-references`,
-        retention:
-          environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy:
-          environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }
-    );
-
-    this.checkProjectReferencesFunction = new lambda.Function(
-      this,
+    this.checkProjectReferencesFunction = this.createLambdaFunction(
       'CheckProjectReferencesFunction',
-      {
-        functionName: `rtm-${environment}-check-project-references`,
-        runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.checkProjectReferences',
-        code: lambda.Code.fromAsset('../apps/api/dist'),
-        timeout: cdk.Duration.seconds(timeout),
-        memorySize: memory,
-        role: infrastructureStack.lambdaRole,
-        vpc: infrastructureStack.vpc,
-        vpcSubnets: {
-          subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-        },
-        securityGroups: [infrastructureStack.lambdaSecurityGroup],
-        logGroup: checkProjectReferencesLogGroup,
-        environment: {
-          ...this.getBaseEnvironmentVariables(environment),
-          DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-          DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-          DB_NAME: 'rtm_database',
-        },
-        description: 'Check project references and dependencies',
-        tracing: lambda.Tracing.ACTIVE,
-      }
+      'CheckProjectReferences',
+      'index.checkProjectReferences',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Check project references and dependencies'
     );
-
-    // List Users function (Admin)
-    const listUsersLogGroup = new logs.LogGroup(this, 'ListUsersFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-list-users`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    // this.listAdminUsersFunction = new lambda.Function(this, 'ListAdminUsersFunction', {
-    //   functionName: `rtm-${environment}-list-admin-users`,
-    //   runtime: lambda.Runtime.NODEJS_18_X,
-    //   handler: 'index.listAdminUsers',
-    //   code: lambda.Code.fromAsset('../apps/api/dist'),
-    //   timeout: cdk.Duration.seconds(timeout),
-    //   memorySize: memory,
-    //   role: infrastructureStack.lambdaRole,
-    //   vpc: infrastructureStack.vpc,
-    //   vpcSubnets: {
-    //     subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-    //   },
-    //   securityGroups: [infrastructureStack.lambdaSecurityGroup],
-    //   logGroup: listUsersLogGroup,
-    //   environment: {
-    //     ...this.getBaseEnvironmentVariables(environment),
-    //     DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-    //     DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-    //     DB_NAME: 'rtm_database',
-    //   },
-    //   description: 'List all users for admin management',
-    //   tracing: lambda.Tracing.ACTIVE,
-    // });
 
     // Search Projects function
-    const searchProjectsLogGroup = new logs.LogGroup(this, 'SearchProjectsFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-search-projects`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.searchProjectsFunction = new lambda.Function(this, 'SearchProjectsFunction', {
-      functionName: `rtm-${environment}-search-projects`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.searchProjects',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: searchProjectsLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      description: 'Search projects by name or description',
-      tracing: lambda.Tracing.ACTIVE,
-    });
-
-    // Add Lambda alarms for project functions
-    this.addLambdaAlarms(
-      environment,
-      'CreateProject',
-      this.createProjectFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(
-      environment,
-      'CreateSubproject',
-      this.createSubprojectFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(
-      environment,
-      'GetActiveProjects',
-      this.getActiveProjectsFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(
-      environment,
-      'GetAllProjects',
-      this.getAllProjectsFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(
-      environment,
-      'GetProjectById',
-      this.getProjectByIdFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(
-      environment,
-      'GetSubprojectsForProject',
-      this.getSubprojectsForProjectFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(
-      environment,
-      'GetSubprojectById',
-      this.getSubprojectByIdFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(
-      environment,
-      'CheckProjectReferences',
-      this.checkProjectReferencesFunction,
-      infrastructureStack
-    );
-    // this.addLambdaAlarms(
-    //   environment,
-    //   'ListAdminUsers',
-    //   this.listAdminUsersFunction,
-    //   infrastructureStack
-    // );
-    this.addLambdaAlarms(
-      environment,
+    this.searchProjectsFunction = this.createLambdaFunction(
+      'SearchProjectsFunction',
       'SearchProjects',
-      this.searchProjectsFunction,
-      infrastructureStack
+      'index.searchProjects',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Search projects by name or description'
     );
+
+    // Alarms are automatically added by createLambdaFunction
   }
 
   private createCalculationFunctions(
@@ -879,265 +539,84 @@ export class LambdaStack extends cdk.Stack {
     memory: number
   ) {
     // Calculate Distance function
-    const calculateDistanceLogGroup = new logs.LogGroup(this, 'CalculateDistanceFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-calculate-distance`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.calculateDistanceFunction = new lambda.Function(this, 'CalculateDistanceFunction', {
-      functionName: `rtm-${environment}-calculate-distance`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.calculateDistance',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: calculateDistanceLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      description: 'Calculate distance between geographic points using PostGIS',
-      tracing: lambda.Tracing.ACTIVE,
-    });
+    this.calculateDistanceFunction = this.createLambdaFunction(
+      'CalculateDistanceFunction',
+      'CalculateDistance',
+      'index.calculateDistance',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Calculate distance between geographic points using PostGIS'
+    );
 
     // Calculate Allowance function
-    const calculateAllowanceLogGroup = new logs.LogGroup(
-      this,
-      'CalculateAllowanceFunctionLogGroup',
-      {
-        logGroupName: `/aws/lambda/rtm-${environment}-calculate-allowance`,
-        retention:
-          environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy:
-          environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }
+    this.calculateAllowanceFunction = this.createLambdaFunction(
+      'CalculateAllowanceFunction',
+      'CalculateAllowance',
+      'index.calculateAllowance',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Calculate travel allowance from distance and rates'
     );
-
-    this.calculateAllowanceFunction = new lambda.Function(this, 'CalculateAllowanceFunction', {
-      functionName: `rtm-${environment}-calculate-allowance`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.calculateAllowance',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: calculateAllowanceLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      description: 'Calculate travel allowance from distance and rates',
-      tracing: lambda.Tracing.ACTIVE,
-    });
 
     // Calculate Travel Cost function (main calculation engine)
-    const calculateTravelCostLogGroup = new logs.LogGroup(
-      this,
-      'CalculateTravelCostFunctionLogGroup',
-      {
-        logGroupName: `/aws/lambda/rtm-${environment}-calculate-travel-cost`,
-        retention:
-          environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy:
-          environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }
+    this.calculateTravelCostFunction = this.createLambdaFunction(
+      'CalculateTravelCostFunction',
+      'CalculateTravelCost',
+      'index.calculateTravelCost',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Calculate complete travel cost with audit trail'
     );
-
-    this.calculateTravelCostFunction = new lambda.Function(this, 'CalculateTravelCostFunction', {
-      functionName: `rtm-${environment}-calculate-travel-cost`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.calculateTravelCost',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: calculateTravelCostLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      description: 'Calculate complete travel cost with audit trail',
-      tracing: lambda.Tracing.ACTIVE,
-    });
 
     // Get Calculation Audit function
-    const getCalculationAuditLogGroup = new logs.LogGroup(
-      this,
-      'GetCalculationAuditFunctionLogGroup',
-      {
-        logGroupName: `/aws/lambda/rtm-${environment}-get-calculation-audit`,
-        retention:
-          environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy:
-          environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }
+    this.getCalculationAuditFunction = this.createLambdaFunction(
+      'GetCalculationAuditFunction',
+      'GetCalculationAudit',
+      'index.getCalculationAudit',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Retrieve calculation audit records for compliance'
     );
-
-    this.getCalculationAuditFunction = new lambda.Function(this, 'GetCalculationAuditFunction', {
-      functionName: `rtm-${environment}-get-calculation-audit`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.getCalculationAudit',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: getCalculationAuditLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      description: 'Retrieve calculation audit records for compliance',
-      tracing: lambda.Tracing.ACTIVE,
-    });
 
     // Invalidate Calculation Cache function
-    const invalidateCalculationCacheLogGroup = new logs.LogGroup(
-      this,
-      'InvalidateCalculationCacheFunctionLogGroup',
-      {
-        logGroupName: `/aws/lambda/rtm-${environment}-invalidate-calculation-cache`,
-        retention:
-          environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy:
-          environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }
-    );
-
-    this.invalidateCalculationCacheFunction = new lambda.Function(
-      this,
+    this.invalidateCalculationCacheFunction = this.createLambdaFunction(
       'InvalidateCalculationCacheFunction',
-      {
-        functionName: `rtm-${environment}-invalidate-calculation-cache`,
-        runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.invalidateCalculationCache',
-        code: lambda.Code.fromAsset('../apps/api/dist'),
-        timeout: cdk.Duration.seconds(timeout),
-        memorySize: memory,
-        role: infrastructureStack.lambdaRole,
-        vpc: infrastructureStack.vpc,
-        vpcSubnets: {
-          subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-        },
-        securityGroups: [infrastructureStack.lambdaSecurityGroup],
-        logGroup: invalidateCalculationCacheLogGroup,
-        environment: {
-          NODE_ENV: environment,
-          DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-          DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-          DB_NAME: 'rtm_database',
-          LOG_LEVEL: environment === 'production' ? 'info' : 'debug',
-        },
-        description: 'Invalidate calculation cache when data changes',
-        tracing: lambda.Tracing.ACTIVE,
-      }
+      'InvalidateCalculationCache',
+      'index.invalidateCalculationCache',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Invalidate calculation cache when data changes'
     );
 
     // Cleanup Expired Cache function (maintenance)
-    const cleanupExpiredCacheLogGroup = new logs.LogGroup(
-      this,
-      'CleanupExpiredCacheFunctionLogGroup',
-      {
-        logGroupName: `/aws/lambda/rtm-${environment}-cleanup-expired-cache`,
-        retention:
-          environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy:
-          environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }
-    );
-
-    this.cleanupExpiredCacheFunction = new lambda.Function(this, 'CleanupExpiredCacheFunction', {
-      functionName: `rtm-${environment}-cleanup-expired-cache`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.cleanupExpiredCache',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: cleanupExpiredCacheLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      description: 'Cleanup expired calculation cache entries',
-      tracing: lambda.Tracing.ACTIVE,
-    });
-
-    // Add Lambda alarms for calculation functions
-    this.addLambdaAlarms(
-      environment,
-      'CalculateDistance',
-      this.calculateDistanceFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(
-      environment,
-      'CalculateAllowance',
-      this.calculateAllowanceFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(
-      environment,
-      'CalculateTravelCost',
-      this.calculateTravelCostFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(
-      environment,
-      'GetCalculationAudit',
-      this.getCalculationAuditFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(
-      environment,
-      'InvalidateCalculationCache',
-      this.invalidateCalculationCacheFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(
-      environment,
+    this.cleanupExpiredCacheFunction = this.createLambdaFunction(
+      'CleanupExpiredCacheFunction',
       'CleanupExpiredCache',
-      this.cleanupExpiredCacheFunction,
-      infrastructureStack
+      'index.cleanupExpiredCache',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {},
+      'Cleanup expired calculation cache entries'
     );
+
+    // Alarms are automatically added by createLambdaFunction
   }
 
   private createAdminFunctions(
@@ -1147,101 +626,39 @@ export class LambdaStack extends cdk.Stack {
     memory: number
   ) {
     // Admin Project Management function
-    const adminProjectManagementLogGroup = new logs.LogGroup(
-      this,
-      'AdminProjectManagementFunctionLogGroup',
-      {
-        logGroupName: `/aws/lambda/rtm-${environment}-admin-project-management`,
-        retention:
-          environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy:
-          environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }
-    );
-
-    this.adminProjectManagementFunction = new lambda.Function(
-      this,
+    this.adminProjectManagementFunction = this.createLambdaFunction(
       'AdminProjectManagementFunction',
+      'AdminProjectManagement',
+      'index.adminProjectManagement',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
       {
-        functionName: `rtm-${environment}-admin-project-management`,
-        runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.adminProjectManagement',
-        code: lambda.Code.fromAsset('../apps/api/dist'),
-        timeout: cdk.Duration.seconds(timeout),
-        memorySize: memory,
-        role: infrastructureStack.lambdaRole,
-        vpc: infrastructureStack.vpc,
-        vpcSubnets: {
-          subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-        },
-        securityGroups: [infrastructureStack.lambdaSecurityGroup],
-        logGroup: adminProjectManagementLogGroup,
-        environment: {
-          ...this.getBaseEnvironmentVariables(environment),
-          DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-          DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-          DB_NAME: 'rtm_database',
-          COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
-          API_VERSION: '1.0.0',
-        },
-        description: 'Admin project management (create, update, delete projects)',
-        tracing: lambda.Tracing.ACTIVE,
-      }
+        COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
+        API_VERSION: '1.0.0',
+      },
+      'Admin project management (create, update, delete projects)'
     );
 
     // Admin User Management function
-    const adminUserManagementLogGroup = new logs.LogGroup(
-      this,
-      'AdminUserManagementFunctionLogGroup',
+    this.adminUserManagementFunction = this.createLambdaFunction(
+      'AdminUserManagementFunction',
+      'AdminUserManagement',
+      'index.adminUserManagement',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
       {
-        logGroupName: `/aws/lambda/rtm-${environment}-admin-user-management`,
-        retention:
-          environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy:
-          environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }
-    );
-
-    this.adminUserManagementFunction = new lambda.Function(this, 'AdminUserManagementFunction', {
-      functionName: `rtm-${environment}-admin-user-management`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.adminUserManagement',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: adminUserManagementLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
         COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
         COGNITO_CLIENT_ID: infrastructureStack.userPoolClient.userPoolClientId,
         API_VERSION: '1.0.0',
       },
-      description: 'Admin user management (create, update, delete users)',
-      tracing: lambda.Tracing.ACTIVE,
-    });
+      'Admin user management (create, update, delete users)'
+    );
 
-    // Add alarms for admin functions
-    this.addLambdaAlarms(
-      environment,
-      'AdminProjectManagement',
-      this.adminProjectManagementFunction,
-      infrastructureStack
-    );
-    this.addLambdaAlarms(
-      environment,
-      'AdminUserManagement',
-      this.adminUserManagementFunction,
-      infrastructureStack
-    );
+    // Alarms are automatically added by createLambdaFunction
   }
 
   private createManagerFunctions(
@@ -1251,47 +668,22 @@ export class LambdaStack extends cdk.Stack {
     memory: number
   ) {
     // Managers Dashboard function
-    const managersDashboardLogGroup = new logs.LogGroup(this, 'ManagersDashboardFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-managers-dashboard`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.managersDashboardFunction = new lambda.Function(this, 'ManagersDashboardFunction', {
-      functionName: `rtm-${environment}-managers-dashboard`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.managersDashboard',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: managersDashboardLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
+    this.managersDashboardFunction = this.createLambdaFunction(
+      'ManagersDashboardFunction',
+      'ManagersDashboard',
+      'index.managersDashboard',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {
         COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
         API_VERSION: '1.0.0',
       },
-      description: 'Manager dashboard with approval statistics and pending requests',
-      tracing: lambda.Tracing.ACTIVE,
-    });
-
-    // Add alarms for manager functions
-    this.addLambdaAlarms(
-      environment,
-      'ManagersDashboard',
-      this.managersDashboardFunction,
-      infrastructureStack
+      'Manager dashboard with approval statistics and pending requests'
     );
+
+    // Alarms are automatically added by createLambdaFunction
   }
 
   private createAdditionalEmployeeFunctions(
@@ -1301,56 +693,23 @@ export class LambdaStack extends cdk.Stack {
     memory: number
   ) {
     // Employee Travel Requests function
-    const employeesTravelRequestsLogGroup = new logs.LogGroup(
-      this,
-      'EmployeesTravelRequestsFunctionLogGroup',
-      {
-        logGroupName: `/aws/lambda/rtm-${environment}-employees-travel-requests`,
-        retention:
-          environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy:
-          environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }
-    );
-
-    this.employeesTravelRequestsFunction = new lambda.Function(
-      this,
+    this.employeesTravelRequestsFunction = this.createLambdaFunction(
       'EmployeesTravelRequestsFunction',
+      'EmployeesTravelRequests',
+      'index.employeesTravelRequests',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
       {
-        functionName: `rtm-${environment}-employees-travel-requests`,
-        runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.employeesTravelRequests',
-        code: lambda.Code.fromAsset('../apps/api/dist'),
-        timeout: cdk.Duration.seconds(timeout),
-        memorySize: memory,
-        role: infrastructureStack.lambdaRole,
-        vpc: infrastructureStack.vpc,
-        vpcSubnets: {
-          subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-        },
-        securityGroups: [infrastructureStack.lambdaSecurityGroup],
-        logGroup: employeesTravelRequestsLogGroup,
-        environment: {
-          ...this.getBaseEnvironmentVariables(environment),
-          DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-          DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-          DB_NAME: 'rtm_database',
-          COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
-          PLACE_INDEX_NAME: infrastructureStack.placeIndex.indexName,
-          API_VERSION: '1.0.0',
-        },
-        description: 'Employee travel request management (create, update, submit)',
-        tracing: lambda.Tracing.ACTIVE,
-      }
+        COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
+        PLACE_INDEX_NAME: infrastructureStack.placeIndex.indexName,
+        API_VERSION: '1.0.0',
+      },
+      'Employee travel request management (create, update, submit)'
     );
 
-    // Add alarms for additional employee functions
-    this.addLambdaAlarms(
-      environment,
-      'EmployeesTravelRequests',
-      this.employeesTravelRequestsFunction,
-      infrastructureStack
-    );
+    // Alarms are automatically added by createLambdaFunction
   }
 
   private createAdditionalProjectFunctions(
@@ -1360,52 +719,23 @@ export class LambdaStack extends cdk.Stack {
     memory: number
   ) {
     // Projects Management function
-    const projectsManagementLogGroup = new logs.LogGroup(
-      this,
-      'ProjectsManagementFunctionLogGroup',
+    this.projectsManagementFunction = this.createLambdaFunction(
+      'ProjectsManagementFunction',
+      'ProjectsManagement',
+      'index.projectsManagement',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
       {
-        logGroupName: `/aws/lambda/rtm-${environment}-projects-management`,
-        retention:
-          environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy:
-          environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }
-    );
-
-    this.projectsManagementFunction = new lambda.Function(this, 'ProjectsManagementFunction', {
-      functionName: `rtm-${environment}-projects-management`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.projectsManagement',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: projectsManagementLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
         COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
         PLACE_INDEX_NAME: infrastructureStack.placeIndex.indexName,
         API_VERSION: '1.0.0',
       },
-      description: 'Project management operations for all user roles',
-      tracing: lambda.Tracing.ACTIVE,
-    });
-
-    // Add alarms for additional project functions
-    this.addLambdaAlarms(
-      environment,
-      'ProjectsManagement',
-      this.projectsManagementFunction,
-      infrastructureStack
+      'Project management operations for all user roles'
     );
+
+    // Alarms are automatically added by createLambdaFunction
   }
 
   private createUtilityFunctions(
@@ -1415,225 +745,105 @@ export class LambdaStack extends cdk.Stack {
     memory: number
   ) {
     // Auth Utils function (auth-auth-utils)
-    const authUtilsLogGroup = new logs.LogGroup(this, 'AuthUtilsFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-auth-utils`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    this.authUtilsFunction = new lambda.Function(this, 'AuthUtilsFunction', {
-      // auth-auth-utils
-      functionName: `rtm-${environment}-auth-utils`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.authUtils',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      logGroup: authUtilsLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
+    this.authUtilsFunction = this.createLambdaFunction(
+      'AuthUtilsFunction',
+      'AuthUtils',
+      'index.authUtils',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {
         COGNITO_USER_POOL_ID: infrastructureStack.userPool.userPoolId,
         COGNITO_CLIENT_ID: infrastructureStack.userPoolClient.userPoolClientId,
         BYPASS_AUTH: environment === 'dev' ? 'true' : 'false', // Enable mock auth for dev environment
         API_VERSION: '1.0.0',
       },
-      description: 'Authentication utility functions',
-      tracing: lambda.Tracing.ACTIVE,
-    });
-
-    // Calculations Engine function
-    const calculationsEngineLogGroup = new logs.LogGroup(
-      this,
-      'CalculationsEngineFunctionLogGroup',
-      {
-        logGroupName: `/aws/lambda/rtm-${environment}-calculations-engine`,
-        retention:
-          environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-        removalPolicy:
-          environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      }
+      'Authentication utility functions',
+      false // No VPC needed for auth utils
     );
 
-    this.calculationsEngineFunction = new lambda.Function(this, 'CalculationsEngineFunction', {
-      functionName: `rtm-${environment}-calculations-engine`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.calculationsEngine',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: calculationsEngineLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
+    // Calculations Engine function
+    this.calculationsEngineFunction = this.createLambdaFunction(
+      'CalculationsEngineFunction',
+      'CalculationsEngine',
+      'index.calculationsEngine',
+      environment,
+      infrastructureStack,
+      timeout,
+      memory,
+      {
         PLACE_INDEX_NAME: infrastructureStack.placeIndex.indexName,
         API_VERSION: '1.0.0',
       },
-      description: 'Main calculations engine for travel cost computations',
-      tracing: lambda.Tracing.ACTIVE,
-    });
-
-    // Add alarms for utility functions
-    this.addLambdaAlarms(environment, 'AuthUtils', this.authUtilsFunction, infrastructureStack);
-    this.addLambdaAlarms(
-      environment,
-      'CalculationsEngine',
-      this.calculationsEngineFunction,
-      infrastructureStack
+      'Main calculations engine for travel cost computations'
     );
+
+    // Alarms are automatically added by createLambdaFunction
   }
 
-  private connectToAPIGateway(environment: string, infrastructureStack: InfrastructureStack) {
+  private connectToAPIGateway(_environment: string, _infrastructureStack: InfrastructureStack) {
     // API Gateway routes are managed in the separate ApiGatewayStack
     // This method is kept for compatibility but no longer creates routes
   }
 
+  /**
+   * Centralized method to export Lambda function ARNs
+   */
+  private exportLambdaArn(
+    exportId: string, 
+    functionArn: string, 
+    exportName: string
+  ): void {
+    new cdk.CfnOutput(this, exportId, {
+      value: functionArn,
+      exportName: exportName,
+    });
+  }
+
   private exportLambdaArns(environment: string) {
-    // Export Lambda function ARNs for API Gateway stack to import
-    new cdk.CfnOutput(this, 'HealthFunctionArnExport', {
-      value: this.healthFunction.functionArn,
-      exportName: `rtm-${environment}-health-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'AuthorizerFunctionArnExport', {
-      value: this.authorizerFunction.functionArn,
-      exportName: `rtm-${environment}-authorizer-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'GetActiveProjectsFunctionArnExport', {
-      value: this.getActiveProjectsFunction.functionArn,
-      exportName: `rtm-${environment}-get-active-projects-function-arn`,
-    });
-
+    // Export Lambda function ARNs for API Gateway stack to import using centralized method
+    this.exportLambdaArn('HealthFunctionArnExport', this.healthFunction.functionArn, `rtm-${environment}-health-function-arn`);
+    this.exportLambdaArn('AuthorizerFunctionArnExport', this.authorizerFunction.functionArn, `rtm-${environment}-authorizer-function-arn`);
+    this.exportLambdaArn('GetActiveProjectsFunctionArnExport', this.getActiveProjectsFunction.functionArn, `rtm-${environment}-get-active-projects-function-arn`);
+    
     // Export employee function ARNs
-    new cdk.CfnOutput(this, 'GetEmployeeProfileFunctionArnExport', {
-      value: this.getEmployeeProfileFunction.functionArn,
-      exportName: `rtm-${environment}-get-employee-profile-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'UpdateEmployeeAddressFunctionArnExport', {
-      value: this.updateEmployeeAddressFunction.functionArn,
-      exportName: `rtm-${environment}-update-employee-address-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'GetManagersFunctionArnExport', {
-      value: this.getManagersFunction.functionArn,
-      exportName: `rtm-${environment}-get-managers-function-arn`,
-    });
+    this.exportLambdaArn('GetEmployeeProfileFunctionArnExport', this.getEmployeeProfileFunction.functionArn, `rtm-${environment}-get-employee-profile-function-arn`);
+    this.exportLambdaArn('UpdateEmployeeAddressFunctionArnExport', this.updateEmployeeAddressFunction.functionArn, `rtm-${environment}-update-employee-address-function-arn`);
+    this.exportLambdaArn('GetManagersFunctionArnExport', this.getManagersFunction.functionArn, `rtm-${environment}-get-managers-function-arn`);
 
     // Export project management function ARNs
-    new cdk.CfnOutput(this, 'CreateProjectFunctionArnExport', {
-      value: this.createProjectFunction.functionArn,
-      exportName: `rtm-${environment}-create-project-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'CreateSubprojectFunctionArnExport', {
-      value: this.createSubprojectFunction.functionArn,
-      exportName: `rtm-${environment}-create-subproject-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'GetAllProjectsFunctionArnExport', {
-      value: this.getAllProjectsFunction.functionArn,
-      exportName: `rtm-${environment}-get-all-projects-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'GetProjectByIdFunctionArnExport', {
-      value: this.getProjectByIdFunction.functionArn,
-      exportName: `rtm-${environment}-get-project-by-id-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'GetSubprojectsForProjectFunctionArnExport', {
-      value: this.getSubprojectsForProjectFunction.functionArn,
-      exportName: `rtm-${environment}-get-subprojects-for-project-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'GetSubprojectByIdFunctionArnExport', {
-      value: this.getSubprojectByIdFunction.functionArn,
-      exportName: `rtm-${environment}-get-subproject-by-id-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'CheckProjectReferencesFunctionArnExport', {
-      value: this.checkProjectReferencesFunction.functionArn,
-      exportName: `rtm-${environment}-check-project-references-function-arn`,
-    });
+    this.exportLambdaArn('CreateProjectFunctionArnExport', this.createProjectFunction.functionArn, `rtm-${environment}-create-project-function-arn`);
+    this.exportLambdaArn('CreateSubprojectFunctionArnExport', this.createSubprojectFunction.functionArn, `rtm-${environment}-create-subproject-function-arn`);
+    this.exportLambdaArn('GetAllProjectsFunctionArnExport', this.getAllProjectsFunction.functionArn, `rtm-${environment}-get-all-projects-function-arn`);
+    this.exportLambdaArn('GetProjectByIdFunctionArnExport', this.getProjectByIdFunction.functionArn, `rtm-${environment}-get-project-by-id-function-arn`);
+    this.exportLambdaArn('GetSubprojectsForProjectFunctionArnExport', this.getSubprojectsForProjectFunction.functionArn, `rtm-${environment}-get-subprojects-for-project-function-arn`);
+    this.exportLambdaArn('GetSubprojectByIdFunctionArnExport', this.getSubprojectByIdFunction.functionArn, `rtm-${environment}-get-subproject-by-id-function-arn`);
+    this.exportLambdaArn('CheckProjectReferencesFunctionArnExport', this.checkProjectReferencesFunction.functionArn, `rtm-${environment}-check-project-references-function-arn`);
 
     // new cdk.CfnOutput(this, 'ListAdminUsersFunctionArnExport', {
     //   value: this.listAdminUsersFunction.functionArn,
     //   exportName: `rtm-${environment}-list-admin-users-function-arn`,
     // });
 
-    new cdk.CfnOutput(this, 'SearchProjectsFunctionArnExport', {
-      value: this.searchProjectsFunction.functionArn,
-      exportName: `rtm-${environment}-search-projects-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'ProjectsManagementFunctionArnExport', {
-      value: this.projectsManagementFunction.functionArn,
-      exportName: `rtm-${environment}-projects-management-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'AdminProjectManagementFunctionArnExport', {
-      value: this.adminProjectManagementFunction.functionArn,
-      exportName: `rtm-${environment}-admin-project-management-function-arn`,
-    });
+    this.exportLambdaArn('SearchProjectsFunctionArnExport', this.searchProjectsFunction.functionArn, `rtm-${environment}-search-projects-function-arn`);
+    this.exportLambdaArn('ProjectsManagementFunctionArnExport', this.projectsManagementFunction.functionArn, `rtm-${environment}-projects-management-function-arn`);
+    this.exportLambdaArn('AdminProjectManagementFunctionArnExport', this.adminProjectManagementFunction.functionArn, `rtm-${environment}-admin-project-management-function-arn`);
 
     // Export calculation engine function ARNs
-    new cdk.CfnOutput(this, 'CalculateDistanceFunctionArnExport', {
-      value: this.calculateDistanceFunction.functionArn,
-      exportName: `rtm-${environment}-calculate-distance-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'CalculateAllowanceFunctionArnExport', {
-      value: this.calculateAllowanceFunction.functionArn,
-      exportName: `rtm-${environment}-calculate-allowance-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'CalculateTravelCostFunctionArnExport', {
-      value: this.calculateTravelCostFunction.functionArn,
-      exportName: `rtm-${environment}-calculate-travel-cost-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'GetCalculationAuditFunctionArnExport', {
-      value: this.getCalculationAuditFunction.functionArn,
-      exportName: `rtm-${environment}-get-calculation-audit-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'InvalidateCalculationCacheFunctionArnExport', {
-      value: this.invalidateCalculationCacheFunction.functionArn,
-      exportName: `rtm-${environment}-invalidate-calculation-cache-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'CleanupExpiredCacheFunctionArnExport', {
-      value: this.cleanupExpiredCacheFunction.functionArn,
-      exportName: `rtm-${environment}-cleanup-expired-cache-function-arn`,
-    });
+    this.exportLambdaArn('CalculateDistanceFunctionArnExport', this.calculateDistanceFunction.functionArn, `rtm-${environment}-calculate-distance-function-arn`);
+    this.exportLambdaArn('CalculateAllowanceFunctionArnExport', this.calculateAllowanceFunction.functionArn, `rtm-${environment}-calculate-allowance-function-arn`);
+    this.exportLambdaArn('CalculateTravelCostFunctionArnExport', this.calculateTravelCostFunction.functionArn, `rtm-${environment}-calculate-travel-cost-function-arn`);
+    this.exportLambdaArn('GetCalculationAuditFunctionArnExport', this.getCalculationAuditFunction.functionArn, `rtm-${environment}-get-calculation-audit-function-arn`);
+    this.exportLambdaArn('InvalidateCalculationCacheFunctionArnExport', this.invalidateCalculationCacheFunction.functionArn, `rtm-${environment}-invalidate-calculation-cache-function-arn`);
+    this.exportLambdaArn('CleanupExpiredCacheFunctionArnExport', this.cleanupExpiredCacheFunction.functionArn, `rtm-${environment}-cleanup-expired-cache-function-arn`);
 
     // Export travel request function ARNs
-    new cdk.CfnOutput(this, 'EmployeesTravelRequestsFunctionArnExport', {
-      value: this.employeesTravelRequestsFunction.functionArn,
-      exportName: `rtm-${environment}-employees-travel-requests-function-arn`,
-    });
-
-    new cdk.CfnOutput(this, 'AdminUserManagementFunctionArnExport', {
-      value: this.adminUserManagementFunction.functionArn,
-      exportName: `rtm-${environment}-admin-user-management-function-arn`,
-    });
-
+    this.exportLambdaArn('EmployeesTravelRequestsFunctionArnExport', this.employeesTravelRequestsFunction.functionArn, `rtm-${environment}-employees-travel-requests-function-arn`);
+    this.exportLambdaArn('AdminUserManagementFunctionArnExport', this.adminUserManagementFunction.functionArn, `rtm-${environment}-admin-user-management-function-arn`);
+    
     // Export manager dashboard function ARN
-    new cdk.CfnOutput(this, 'ManagersDashboardFunctionArnExport', {
-      value: this.managersDashboardFunction.functionArn,
-      exportName: `rtm-${environment}-managers-dashboard-function-arn`,
-    });
+    this.exportLambdaArn('ManagersDashboardFunctionArnExport', this.managersDashboardFunction.functionArn, `rtm-${environment}-managers-dashboard-function-arn`);
   }
 
   private addLambdaAlarms(
