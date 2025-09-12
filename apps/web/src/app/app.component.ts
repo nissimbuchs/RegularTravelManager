@@ -26,7 +26,7 @@ export class AppComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     console.log('🚀 App Component initializing...');
-    
+
     // Wait for configuration to be loaded by APP_INITIALIZER
     console.log('⏳ Waiting for config to be loaded...');
     await this.configService.waitForConfig();
@@ -46,12 +46,12 @@ export class AppComponent implements OnInit {
       testLogin: (email: string, password: string) => {
         console.log('🧪 Debug: Testing login with', email, '[password masked]');
         return this.authService.login({ email, password }).subscribe({
-          next: (result) => {
+          next: result => {
             console.log('🧪 Debug: Login successful', result);
           },
-          error: (error) => {
+          error: error => {
             console.error('🧪 Debug: Login failed', error);
-          }
+          },
         });
       },
       getConfig: () => {
@@ -61,7 +61,7 @@ export class AppComponent implements OnInit {
       },
       getCurrentUser: () => {
         let user: any = null;
-        this.authService.currentUser$.subscribe(u => user = u).unsubscribe();
+        this.authService.currentUser$.subscribe(u => (user = u)).unsubscribe();
         console.log('🧪 Debug: Current user', user);
         return user;
       },
@@ -73,12 +73,12 @@ export class AppComponent implements OnInit {
       },
       testAdmin1: () => {
         return window.debugAuth.testLogin('admin1@company.ch', 'AdminPass123!Test');
-      }
+      },
     };
 
     console.log('🛠️ Available debug commands:');
     console.log('  window.debugAuth.testEmployee1() - Test employee1@company.ch');
-    console.log('  window.debugAuth.testManager1() - Test manager1@company.ch');  
+    console.log('  window.debugAuth.testManager1() - Test manager1@company.ch');
     console.log('  window.debugAuth.testAdmin1() - Test admin1@company.ch');
     console.log('  window.debugAuth.testLogin(email, password) - Test custom credentials');
     console.log('  window.debugAuth.getConfig() - Show current configuration');

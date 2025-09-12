@@ -443,12 +443,15 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
       data: { title: 'Create New Project', project: null },
     });
 
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(result => {
-      if (result) {
-        this.loadProjects();
-        this.snackBar.open('Project created successfully', 'Close', { duration: 3000 });
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(result => {
+        if (result) {
+          this.loadProjects();
+          this.snackBar.open('Project created successfully', 'Close', { duration: 3000 });
+        }
+      });
   }
 
   editProject(project: Project): void {
@@ -457,12 +460,15 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
       data: { title: 'Edit Project', project },
     });
 
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(result => {
-      if (result) {
-        this.loadProjects();
-        this.snackBar.open('Project updated successfully', 'Close', { duration: 3000 });
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(result => {
+        if (result) {
+          this.loadProjects();
+          this.snackBar.open('Project updated successfully', 'Close', { duration: 3000 });
+        }
+      });
   }
 
   toggleProjectStatus(project: Project): void {
@@ -476,23 +482,26 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
       },
     });
 
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(confirmed => {
-      if (confirmed) {
-        this.projectService
-          .toggleProjectStatus(project.id)
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
-            next: () => {
-              this.loadProjects();
-              this.snackBar.open(`Project ${action}d successfully`, 'Close', { duration: 3000 });
-            },
-            error: error => {
-              console.error('Failed to toggle project status:', error);
-              this.snackBar.open(`Failed to ${action} project`, 'Close', { duration: 3000 });
-            },
-          });
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.projectService
+            .toggleProjectStatus(project.id)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: () => {
+                this.loadProjects();
+                this.snackBar.open(`Project ${action}d successfully`, 'Close', { duration: 3000 });
+              },
+              error: error => {
+                console.error('Failed to toggle project status:', error);
+                this.snackBar.open(`Failed to ${action} project`, 'Close', { duration: 3000 });
+              },
+            });
+        }
+      });
   }
 
   deleteProject(project: Project): void {
@@ -520,23 +529,28 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
             },
           });
 
-          dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe(confirmed => {
-            if (confirmed) {
-              this.projectService
-                .deleteProject(project.id)
-                .pipe(takeUntil(this.destroy$))
-                .subscribe({
-                  next: () => {
-                    this.loadProjects();
-                    this.snackBar.open('Project deleted successfully', 'Close', { duration: 3000 });
-                  },
-                  error: error => {
-                    console.error('Failed to delete project:', error);
-                    this.snackBar.open('Failed to delete project', 'Close', { duration: 3000 });
-                  },
-                });
-            }
-          });
+          dialogRef
+            .afterClosed()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(confirmed => {
+              if (confirmed) {
+                this.projectService
+                  .deleteProject(project.id)
+                  .pipe(takeUntil(this.destroy$))
+                  .subscribe({
+                    next: () => {
+                      this.loadProjects();
+                      this.snackBar.open('Project deleted successfully', 'Close', {
+                        duration: 3000,
+                      });
+                    },
+                    error: error => {
+                      console.error('Failed to delete project:', error);
+                      this.snackBar.open('Failed to delete project', 'Close', { duration: 3000 });
+                    },
+                  });
+              }
+            });
         },
         error: error => {
           console.error('Failed to check project references:', error);

@@ -104,61 +104,71 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
 
   private loadProjects(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.travelRequestService.getActiveProjects().subscribe({
-        next: projects => {
-          this.projects = projects;
-          resolve();
-        },
-        error: error => {
-          console.error('Failed to load projects:', error);
-          this.snackBar
-            .open(
-              'Unable to load project list. Please refresh the page or contact support.',
-              'Retry',
-              { duration: 8000, horizontalPosition: 'center', verticalPosition: 'top' }
-            )
-            .onAction()
-            .subscribe(() => {
-              this.loadProjects();
-            });
-          reject(error);
-        },
-      });
+      this.travelRequestService
+        .getActiveProjects()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: projects => {
+            this.projects = projects;
+            resolve();
+          },
+          error: error => {
+            console.error('Failed to load projects:', error);
+            this.snackBar
+              .open(
+                'Unable to load project list. Please refresh the page or contact support.',
+                'Retry',
+                { duration: 8000, horizontalPosition: 'center', verticalPosition: 'top' }
+              )
+              .onAction()
+              .pipe(takeUntil(this.destroy$))
+              .subscribe(() => {
+                this.loadProjects();
+              });
+            reject(error);
+          },
+        });
     });
   }
 
   private loadManagers(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.employeeService.getManagers().subscribe({
-        next: managers => {
-          this.managers = managers;
-          resolve();
-        },
-        error: error => {
-          console.error('Failed to load managers:', error);
-          this.snackBar.open(
-            'Unable to load managers list. Please refresh the page or contact support.',
-            'Close',
-            { duration: 8000, horizontalPosition: 'center', verticalPosition: 'top' }
-          );
-          reject(error);
-        },
-      });
+      this.employeeService
+        .getManagers()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: managers => {
+            this.managers = managers;
+            resolve();
+          },
+          error: error => {
+            console.error('Failed to load managers:', error);
+            this.snackBar.open(
+              'Unable to load managers list. Please refresh the page or contact support.',
+              'Close',
+              { duration: 8000, horizontalPosition: 'center', verticalPosition: 'top' }
+            );
+            reject(error);
+          },
+        });
     });
   }
 
   private setupFormSubscriptions(): void {
     // Load subprojects when project changes
-    this.requestForm.get('projectId')?.valueChanges.subscribe(projectId => {
-      // Clear subprojects and reset subproject selection
-      this.subprojects = [];
-      this.calculationPreview = null;
-      this.requestForm.get('subProjectId')?.setValue('', { emitEvent: false });
+    this.requestForm
+      .get('projectId')
+      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(projectId => {
+        // Clear subprojects and reset subproject selection
+        this.subprojects = [];
+        this.calculationPreview = null;
+        this.requestForm.get('subProjectId')?.setValue('', { emitEvent: false });
 
-      if (projectId) {
-        this.loadSubprojects(projectId);
-      }
-    });
+        if (projectId) {
+          this.loadSubprojects(projectId);
+        }
+      });
 
     // Trigger calculation when form changes
     this.requestForm.valueChanges
@@ -187,19 +197,22 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
   }
 
   private loadSubprojects(projectId: string): void {
-    this.travelRequestService.getActiveSubprojects(projectId).subscribe({
-      next: subprojects => {
-        this.subprojects = subprojects;
-      },
-      error: error => {
-        console.error('Failed to load subprojects:', error);
-        this.snackBar.open(
-          'Could not load locations for the selected project. Please try selecting another project.',
-          'Close',
-          { duration: 6000, horizontalPosition: 'center', verticalPosition: 'top' }
-        );
-      },
-    });
+    this.travelRequestService
+      .getActiveSubprojects(projectId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: subprojects => {
+          this.subprojects = subprojects;
+        },
+        error: error => {
+          console.error('Failed to load subprojects:', error);
+          this.snackBar.open(
+            'Could not load locations for the selected project. Please try selecting another project.',
+            'Close',
+            { duration: 6000, horizontalPosition: 'center', verticalPosition: 'top' }
+          );
+        },
+      });
   }
 
   private calculatePreview(): Observable<CalculationPreview | null> {
@@ -273,9 +286,12 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
             });
 
             if (actionText === 'Retry') {
-              snackBarRef.onAction().subscribe(() => {
-                this.onSubmit();
-              });
+              snackBarRef
+                .onAction()
+                .pipe(takeUntil(this.destroy$))
+                .subscribe(() => {
+                  this.onSubmit();
+                });
             }
           },
         });

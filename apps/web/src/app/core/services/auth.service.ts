@@ -4,6 +4,9 @@ import { map, catchError, tap, switchMap } from 'rxjs/operators';
 import { signIn, signOut, getCurrentUser, fetchAuthSession, AuthUser } from '@aws-amplify/auth';
 import { ConfigService } from './config.service';
 import { MatDialog } from '@angular/material/dialog';
+import { AngularCleanupService } from './angular-cleanup.service';
+import { triggerHttpCleanup } from '../interceptors/auth.interceptor';
+import { triggerErrorCleanup } from '../interceptors/error.interceptor';
 
 export interface User {
   id: string;
@@ -37,7 +40,8 @@ export class AuthService {
   public isAuthenticated$ = this.currentUser$.pipe(map(user => !!user));
   private dialog = inject(MatDialog);
   private configService = inject(ConfigService);
-  
+  private angularCleanupService = inject(AngularCleanupService);
+
   // Token caching with 5-minute buffer before expiration
   private tokenCache: TokenCache | null = null;
   private readonly TOKEN_EXPIRY_BUFFER_MS = 5 * 60 * 1000; // 5 minutes
@@ -50,13 +54,13 @@ export class AuthService {
   private cacheToken(token: string, expiresAt?: number): void {
     // Default to 1 hour expiration if not provided (from Cognito config)
     const defaultExpirationMs = 60 * 60 * 1000; // 1 hour
-    const expirationTime = expiresAt || (Date.now() + defaultExpirationMs);
-    
+    const expirationTime = expiresAt || Date.now() + defaultExpirationMs;
+
     this.tokenCache = {
       token,
       expiresAt: expirationTime,
     };
-    
+
     console.log('🔐 Token cached until:', new Date(expirationTime).toISOString());
   }
 
@@ -74,7 +78,11 @@ export class AuthService {
       return null;
     }
 
-    console.log('🔐 Using cached token (expires in', Math.floor((this.tokenCache.expiresAt - now) / 1000), 'seconds)');
+    console.log(
+      '🔐 Using cached token (expires in',
+      Math.floor((this.tokenCache.expiresAt - now) / 1000),
+      'seconds)'
+    );
     return this.tokenCache.token;
   }
 
@@ -93,11 +101,11 @@ export class AuthService {
     // Check if we should use mock authentication
     if (this.configService.cognitoConfig.useMockAuth) {
       console.log('🧪 Using mock authentication mode');
-      
+
       // Clear any existing authentication state when switching to mock mode
       this.clearTokenCache();
       this.currentUserSubject.next(null);
-      
+
       // Also clear any AWS Amplify cached sessions
       try {
         await signOut();
@@ -136,16 +144,20 @@ export class AuthService {
 
     // Handle real Cognito authentication - sign out first if already authenticated
     return from(
-      signOut().then(() => signIn({
-        username: credentials.email,
-        password: credentials.password,
-      })).catch(async () => {
-        // If signOut fails (e.g., no user signed in), proceed with signIn
-        return signIn({
-          username: credentials.email,
-          password: credentials.password,
-        });
-      })
+      signOut()
+        .then(() =>
+          signIn({
+            username: credentials.email,
+            password: credentials.password,
+          })
+        )
+        .catch(async () => {
+          // If signOut fails (e.g., no user signed in), proceed with signIn
+          return signIn({
+            username: credentials.email,
+            password: credentials.password,
+          });
+        })
     ).pipe(
       switchMap(async () => {
         // After successful sign in, get the user data
@@ -160,7 +172,7 @@ export class AuthService {
         this.currentUserSubject.next(userData);
 
         const token = session.tokens.accessToken.toString();
-        
+
         // Cache the token after successful login
         let expiresAt: number | undefined;
         try {
@@ -171,7 +183,7 @@ export class AuthService {
         } catch (e) {
           console.warn('Could not parse token expiration during login, using default');
         }
-        
+
         this.cacheToken(token, expiresAt);
         console.log('✅ Login successful, token cached');
 
@@ -290,8 +302,18 @@ export class AuthService {
   }
 
   logout(): Observable<void> {
+    // Trigger HTTP and error cleanup
+    triggerHttpCleanup();
+    triggerErrorCleanup();
+
+    // Force cleanup Angular internal subscriptions
+    this.angularCleanupService.forceCleanupAngularInternals();
+    
     // Close all open dialogs before logout to prevent persistence issues
     this.dialog.closeAll();
+
+    // Execute service cleanups to stop background operations
+    this.executeServiceCleanups();
 
     if (this.configService.cognitoConfig.useMockAuth) {
       // Mock logout
@@ -345,9 +367,9 @@ export class AuthService {
         if (!session.tokens?.accessToken) {
           throw new Error('No access token available');
         }
-        
+
         const token = session.tokens.accessToken.toString();
-        
+
         // Extract expiration from JWT token and cache it
         let expiresAt: number | undefined;
         try {
@@ -358,7 +380,7 @@ export class AuthService {
         } catch (e) {
           console.warn('Could not parse token expiration, using default');
         }
-        
+
         this.cacheToken(token, expiresAt);
         return token;
       }),
@@ -389,9 +411,9 @@ export class AuthService {
         if (!session.tokens?.accessToken) {
           throw new Error('No access token available');
         }
-        
+
         const token = session.tokens.accessToken.toString();
-        
+
         // Extract expiration from JWT token and cache it
         let expiresAt: number | undefined;
         try {
@@ -402,7 +424,7 @@ export class AuthService {
         } catch (e) {
           console.warn('Could not parse token expiration during refresh, using default');
         }
-        
+
         this.cacheToken(token, expiresAt);
         console.log('🔄 Token refreshed and cached successfully');
         return token;
@@ -451,16 +473,57 @@ export class AuthService {
   }
 
   /**
+   * Execute service cleanups to stop background operations
+   * Called during logout to prevent subscription persistence
+   */
+  private executeServiceCleanups(): void {
+    console.log('🧹 Executing service cleanup operations...');
+
+    try {
+      // Dynamically import and cleanup ProjectService
+      import('./project.service')
+        .then(({ ProjectService }) => {
+          const projectService = inject(ProjectService);
+          projectService.cleanup();
+        })
+        .catch(() => {
+          // Service may not be instantiated, which is fine
+        });
+    } catch (error) {
+      console.warn('ProjectService cleanup failed:', error);
+    }
+
+    try {
+      // Dynamically import and cleanup ManagerDashboardService
+      import('../../features/manager/services/manager-dashboard.service')
+        .then(({ ManagerDashboardService }) => {
+          const managerService = inject(ManagerDashboardService);
+          managerService.cleanup();
+        })
+        .catch(() => {
+          // Service may not be instantiated, which is fine
+        });
+    } catch (error) {
+      console.warn('ManagerDashboardService cleanup failed:', error);
+    }
+
+    console.log('✅ Service cleanup operations completed');
+  }
+
+  /**
    * Force clear all authentication cache and state
    * Useful for debugging or when switching between auth modes
    */
   async forceCleanAuthState(): Promise<void> {
     console.log('🔄 Force clearing all authentication state...');
-    
+
+    // Execute service cleanups first
+    this.executeServiceCleanups();
+
     // Clear in-memory cache
     this.clearTokenCache();
     this.currentUserSubject.next(null);
-    
+
     // Clear AWS Amplify sessions
     try {
       await signOut();
@@ -468,7 +531,7 @@ export class AuthService {
     } catch (error) {
       console.log('ℹ️ No Cognito session to clear');
     }
-    
+
     // Clear browser storage (localStorage, sessionStorage)
     try {
       localStorage.clear();
@@ -477,7 +540,7 @@ export class AuthService {
     } catch (error) {
       console.log('⚠️ Could not clear browser storage');
     }
-    
+
     console.log('✅ Authentication state cleared - please refresh the page');
   }
 }

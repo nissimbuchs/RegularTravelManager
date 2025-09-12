@@ -79,7 +79,6 @@ export class InfrastructureStack extends cdk.Stack {
     // CloudWatch monitoring and alerting
     this.setupMonitoring(environment);
 
-
     // Environment-specific parameters
     this.setupEnvironmentParameters(environment);
 
@@ -202,8 +201,8 @@ export class InfrastructureStack extends cdk.Stack {
     this.userPoolClient = this.userPool.addClient('WebClient', {
       userPoolClientName: `rtm-${environment}-web-client`,
       authFlows: {
-        userPassword: true,    // ALLOW_USER_PASSWORD_AUTH
-        userSrp: true,         // ALLOW_USER_SRP_AUTH
+        userPassword: true, // ALLOW_USER_PASSWORD_AUTH
+        userSrp: true, // ALLOW_USER_SRP_AUTH
         // Refresh tokens are enabled by default when other auth flows are enabled
       },
       generateSecret: false,
@@ -677,7 +676,6 @@ export class InfrastructureStack extends cdk.Stack {
 
     dashboard.addWidgets(...rdsWidgets);
   }
-
 
   private setupResourceTags(environment: string) {
     const tags = {

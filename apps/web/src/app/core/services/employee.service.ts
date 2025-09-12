@@ -29,20 +29,25 @@ export class EmployeeService {
   // Get employee profile by ID (expects cognitoUserId, which is a UUID)
   getEmployeeProfile(cognitoUserId: string): Observable<EmployeeDto> {
     const url = `${this.baseUrl}/${cognitoUserId}`;
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cognitoUserId);
-    
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      cognitoUserId
+    );
+
     console.log('🔍 EmployeeService.getEmployeeProfile() called with:', {
       cognitoUserId,
       url,
       isEmail: cognitoUserId.includes('@'),
       isUuid: isUuid,
-      stackTrace: new Error().stack?.split('\n').slice(1, 4).join('\n')
+      stackTrace: new Error().stack?.split('\n').slice(1, 4).join('\n'),
     });
-    
+
     if (!isUuid) {
-      console.warn('⚠️  WARNING: getEmployeeProfile() called with non-UUID ID. Expected cognitoUserId (UUID), got:', cognitoUserId);
+      console.warn(
+        '⚠️  WARNING: getEmployeeProfile() called with non-UUID ID. Expected cognitoUserId (UUID), got:',
+        cognitoUserId
+      );
     }
-    
+
     return this.http.get<EmployeeDto>(url);
   }
 
@@ -54,13 +59,16 @@ export class EmployeeService {
     console.log('🔍 EmployeeService.updateEmployeeAddress() called with:', {
       cognitoUserId,
       isEmail: cognitoUserId.includes('@'),
-      addressData
+      addressData,
     });
-    
+
     if (!cognitoUserId.includes('@')) {
-      console.warn('⚠️  WARNING: updateEmployeeAddress() called with non-email ID. Expected cognitoUserId (email), got:', cognitoUserId);
+      console.warn(
+        '⚠️  WARNING: updateEmployeeAddress() called with non-email ID. Expected cognitoUserId (email), got:',
+        cognitoUserId
+      );
     }
-    
+
     return this.http.put<EmployeeDto>(`${this.baseUrl}/${cognitoUserId}/address`, addressData);
   }
 

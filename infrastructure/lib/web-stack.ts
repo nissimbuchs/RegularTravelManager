@@ -119,12 +119,12 @@ function handler(event) {
 
     // Deploy web application to S3 with environment-specific source map handling
     const excludePatterns = ['assets/config/config.json', 'assets/config/config.*.json'];
-    
+
     // Exclude source maps from staging and production for security
     if (environment !== 'dev') {
       excludePatterns.push('*.map');
     }
-    
+
     new s3deploy.BucketDeployment(this, 'WebDeployment', {
       sources: [s3deploy.Source.asset(path.join(__dirname, '../../apps/web/dist/web/browser'))],
       destinationBucket: this.webBucket,
@@ -248,11 +248,7 @@ function handler(event) {
 
   private setupCloudFrontMonitoring(environment: string, alertsTopicArn: string) {
     // Import SNS topic for alerts
-    const alertsTopic = cdk.aws_sns.Topic.fromTopicArn(
-      this,
-      'ImportedAlertsTopic',
-      alertsTopicArn
-    );
+    const alertsTopic = cdk.aws_sns.Topic.fromTopicArn(this, 'ImportedAlertsTopic', alertsTopicArn);
 
     // CloudFront 4xx errors alarm
     const cloudFrontErrorsAlarm = new cloudwatch.Alarm(this, 'CloudFrontErrorsAlarm', {

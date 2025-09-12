@@ -1,7 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, OnDestroy } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { Observable, BehaviorSubject, EMPTY, Subject } from 'rxjs';
+import { map, tap, takeUntil, catchError } from 'rxjs/operators';
 import { ConfigService } from './config.service';
 import {
   Project,
@@ -17,10 +17,13 @@ import {
 @Injectable({
   providedIn: 'root',
 })
-export class ProjectService {
+export class ProjectService implements OnDestroy {
   private configService = inject(ConfigService);
   private projectsSubject = new BehaviorSubject<Project[]>([]);
   public projects$ = this.projectsSubject.asObservable();
+
+  // Global cleanup subject for service-level subscription management
+  private destroy$ = new Subject<void>();
 
   constructor(private http: HttpClient) {}
 
@@ -150,14 +153,16 @@ export class ProjectService {
   }
 
   private refreshProjects(): void {
-    this.getProjects().subscribe({
-      error: (error) => {
-        // Ignore auth errors silently during logout
-  if (error.status !== 401 && error.status !== 403) {
-          console.error('Failed to refresh projects:', error);
-        }
-      }
-    });
+    this.getProjects()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        error: error => {
+          // Ignore auth errors silently during logout
+          if (error.status !== 401 && error.status !== 403) {
+            console.error('Failed to refresh projects:', error);
+          }
+        },
+      });
   }
 
   // Validation helpers
@@ -178,5 +183,18 @@ export class ProjectService {
     const cleaned = value.replace(/[^\d.,]/g, '').replace(',', '.');
     const parsed = parseFloat(cleaned);
     return isNaN(parsed) ? null : parsed;
+  }
+
+  /**
+   * Cleanup method to be called during logout to cancel all pending subscriptions
+   */
+  public cleanup(): void {
+    this.destroy$.next();
+    console.log('ProjectService: All background subscriptions cancelled');
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

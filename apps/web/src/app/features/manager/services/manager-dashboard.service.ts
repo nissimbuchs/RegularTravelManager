@@ -57,25 +57,21 @@ export class ManagerDashboardService {
       params = params.set('urgencyLevels', filters.urgencyLevels.join(','));
     }
 
-    return this.http
-      .get<ManagerDashboard>(`${this.baseUrl}/manager/dashboard`, { params })
-      .pipe(
-        map(dashboard => {
-          // Transform date strings back to Date objects
-          dashboard.pendingRequests = dashboard.pendingRequests.map(request => ({
-            ...request,
-            submittedDate: new Date(request.submittedDate),
-          }));
-          return dashboard;
-        }),
-        tap(dashboard => this.dashboardSubject.next(dashboard))
-      );
+    return this.http.get<ManagerDashboard>(`${this.baseUrl}/manager/dashboard`, { params }).pipe(
+      map(dashboard => {
+        // Transform date strings back to Date objects
+        dashboard.pendingRequests = dashboard.pendingRequests.map(request => ({
+          ...request,
+          submittedDate: new Date(request.submittedDate),
+        }));
+        return dashboard;
+      }),
+      tap(dashboard => this.dashboardSubject.next(dashboard))
+    );
   }
 
   getEmployeeContext(employeeId: string): Observable<EmployeeContext> {
-    return this.http.get<EmployeeContext>(
-      `${this.baseUrl}/manager/employee-context/${employeeId}`
-    );
+    return this.http.get<EmployeeContext>(`${this.baseUrl}/manager/employee-context/${employeeId}`);
   }
 
   startAutoRefresh(
@@ -96,7 +92,14 @@ export class ManagerDashboardService {
           }
         },
         error: error => {
-          console.error('Auto-refresh failed:', error);
+          // Ignore auth errors silently during logout
+          if (error.status !== 401 && error.status !== 403) {
+            console.error('Auto-refresh failed:', error);
+          } else {
+            // Auth error occurred - stop auto-refresh to prevent further errors
+            console.log('ManagerDashboardService: Auth error detected, stopping auto-refresh');
+            this.stopAutoRefresh();
+          }
         },
       });
   }
@@ -128,6 +131,15 @@ export class ManagerDashboardService {
   private notifyNewRequests(count: number): void {
     // This could integrate with a notification service
     console.log(`${count} new travel request${count > 1 ? 's' : ''} received`);
+  }
+
+  /**
+   * Cleanup method to be called during logout to stop auto-refresh and clear state
+   */
+  public cleanup(): void {
+    this.stopAutoRefresh();
+    this.dashboardSubject.next(null);
+    console.log('ManagerDashboardService: Auto-refresh stopped and state cleared');
   }
 
   ngOnDestroy(): void {

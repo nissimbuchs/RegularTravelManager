@@ -452,12 +452,7 @@ export class LambdaStack extends cdk.Stack {
       this.updateEmployeeAddressFunction,
       infrastructureStack
     );
-    this.addLambdaAlarms(
-      environment,
-      'GetManagers',
-      this.getManagersFunction,
-      infrastructureStack
-    );
+    this.addLambdaAlarms(environment, 'GetManagers', this.getManagersFunction, infrastructureStack);
   }
 
   private createProjectFunctions(
@@ -708,37 +703,45 @@ export class LambdaStack extends cdk.Stack {
     });
 
     // Check Project References function
-    const checkProjectReferencesLogGroup = new logs.LogGroup(this, 'CheckProjectReferencesFunctionLogGroup', {
-      logGroupName: `/aws/lambda/rtm-${environment}-check-project-references`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
+    const checkProjectReferencesLogGroup = new logs.LogGroup(
+      this,
+      'CheckProjectReferencesFunctionLogGroup',
+      {
+        logGroupName: `/aws/lambda/rtm-${environment}-check-project-references`,
+        retention:
+          environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
+        removalPolicy:
+          environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      }
+    );
 
-    this.checkProjectReferencesFunction = new lambda.Function(this, 'CheckProjectReferencesFunction', {
-      functionName: `rtm-${environment}-check-project-references`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.checkProjectReferences',
-      code: lambda.Code.fromAsset('../apps/api/dist'),
-      timeout: cdk.Duration.seconds(timeout),
-      memorySize: memory,
-      role: infrastructureStack.lambdaRole,
-      vpc: infrastructureStack.vpc,
-      vpcSubnets: {
-        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [infrastructureStack.lambdaSecurityGroup],
-      logGroup: checkProjectReferencesLogGroup,
-      environment: {
-        ...this.getBaseEnvironmentVariables(environment),
-        DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
-        DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      description: 'Check project references and dependencies',
-      tracing: lambda.Tracing.ACTIVE,
-    });
+    this.checkProjectReferencesFunction = new lambda.Function(
+      this,
+      'CheckProjectReferencesFunction',
+      {
+        functionName: `rtm-${environment}-check-project-references`,
+        runtime: lambda.Runtime.NODEJS_18_X,
+        handler: 'index.checkProjectReferences',
+        code: lambda.Code.fromAsset('../apps/api/dist'),
+        timeout: cdk.Duration.seconds(timeout),
+        memorySize: memory,
+        role: infrastructureStack.lambdaRole,
+        vpc: infrastructureStack.vpc,
+        vpcSubnets: {
+          subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+        },
+        securityGroups: [infrastructureStack.lambdaSecurityGroup],
+        logGroup: checkProjectReferencesLogGroup,
+        environment: {
+          ...this.getBaseEnvironmentVariables(environment),
+          DB_HOST: infrastructureStack.database.instanceEndpoint.hostname,
+          DB_PORT: infrastructureStack.database.instanceEndpoint.port.toString(),
+          DB_NAME: 'rtm_database',
+        },
+        description: 'Check project references and dependencies',
+        tracing: lambda.Tracing.ACTIVE,
+      }
+    );
 
     // List Users function (Admin)
     const listUsersLogGroup = new logs.LogGroup(this, 'ListUsersFunctionLogGroup', {

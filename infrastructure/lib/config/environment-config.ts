@@ -64,4 +64,3 @@ export function getEnvironmentConfig(environment: string): EnvironmentConfig {
 
   return config;
 }
-

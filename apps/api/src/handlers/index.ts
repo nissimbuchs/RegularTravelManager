@@ -205,16 +205,16 @@ import {
 export const projectsManagement = errorHandler(
   corsMiddleware(async (event, context) => {
     await ensureDatabaseInitialized();
-    
+
     const method = event.httpMethod;
     const path = event.path;
-    
+
     console.log('🔄 ProjectsManagement router:', {
       method,
       path,
       requestId: context.awsRequestId,
     });
-    
+
     // Route based on HTTP method and path
     if (method === 'PUT' && path.includes('/projects/')) {
       console.log('🔄 Routing to updateProjectHandler');
@@ -241,9 +241,9 @@ export const projectsManagement = errorHandler(
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           error: 'Method Not Allowed',
-          message: `${method} ${path} is not supported by this handler`
+          message: `${method} ${path} is not supported by this handler`,
         }),
       };
     }
@@ -342,21 +342,24 @@ export const rejectRequest = errorHandler(
 export const managersDashboard = errorHandler(
   corsMiddleware(async (event, context) => {
     await ensureDatabaseInitialized();
-    
+
     const method = event.httpMethod;
     const path = event.path;
-    
+
     console.log('🔄 ManagersDashboard router:', {
       method,
       path,
       requestId: context.awsRequestId,
     });
-    
+
     // Route based on HTTP method and path
     if (method === 'GET' && path.includes('/manager/dashboard')) {
       console.log('🔄 Routing to getManagerDashboardHandler');
       return getManagerDashboardHandler(event, context);
-    } else if (method === 'GET' && (path.includes('/employee-context/') || path.includes('/context'))) {
+    } else if (
+      method === 'GET' &&
+      (path.includes('/employee-context/') || path.includes('/context'))
+    ) {
       console.log('🔄 Routing to getEmployeeContextHandler');
       return getEmployeeContextHandler(event, context);
     } else if (method === 'PUT' && path.includes('/approve')) {
@@ -373,9 +376,9 @@ export const managersDashboard = errorHandler(
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           error: 'Method Not Allowed',
-          message: `${method} ${path} is not supported by this handler`
+          message: `${method} ${path} is not supported by this handler`,
         }),
       };
     }

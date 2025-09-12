@@ -246,7 +246,8 @@ exports.handler = async event => {
 
     // Detect environment - use mock IDs for dev/local environments
     const environment = process.env.RTM_ENVIRONMENT || process.env.ENVIRONMENT || 'dev';
-    const useMockIds = environment === 'dev' || environment === 'development' || environment === 'local';
+    const useMockIds =
+      environment === 'dev' || environment === 'development' || environment === 'local';
     console.log(`Environment: ${environment}, Using mock IDs: ${useMockIds}`);
 
     // Check if we should clear existing data
@@ -284,7 +285,9 @@ exports.handler = async event => {
         await client.query('TRUNCATE TABLE travel_requests CASCADE;');
         await client.query('TRUNCATE TABLE subprojects CASCADE;');
         await client.query('TRUNCATE TABLE projects CASCADE;');
-        await client.query('DELETE FROM employees WHERE employee_id LIKE \'EMP-%\' OR employee_id LIKE \'ADM-%\' OR employee_id LIKE \'MGR-%\';');
+        await client.query(
+          "DELETE FROM employees WHERE employee_id LIKE 'EMP-%' OR employee_id LIKE 'ADM-%' OR employee_id LIKE 'MGR-%';"
+        );
         console.log('Existing sample data cleared successfully');
       } catch (clearError) {
         console.log('Warning: Error clearing data (may not exist yet):', clearError.message);
@@ -302,7 +305,9 @@ exports.handler = async event => {
     const sampleDataSQL = fs.readFileSync(sampleDataPath, 'utf8');
 
     if (useMockIds) {
-      console.log('Using mock authentication for dev environment - sample data already contains mock UUIDs');
+      console.log(
+        'Using mock authentication for dev environment - sample data already contains mock UUIDs'
+      );
       // Sample data already contains the correct mock UUIDs, no replacement needed
       for (const userInfo of sampleUsers) {
         console.log(`Mock user: ${userInfo.email} → ${userInfo.mockId} (pre-configured in SQL)`);

@@ -67,7 +67,7 @@ export class ConfigService {
         message: error?.message,
         status: error?.status,
         statusText: error?.statusText,
-        url: error?.url
+        url: error?.url,
       });
 
       // Fallback to default local development config

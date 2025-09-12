@@ -16,7 +16,7 @@ export interface AmplifyConfig {
 
 export function configureAmplify(configService: ConfigService): void {
   console.log('🔧 Configuring Amplify...');
-  
+
   // Skip configuration in test environment
   if (typeof window === 'undefined') {
     console.log('🚫 Skipping Amplify configuration - not in browser environment');
@@ -28,7 +28,7 @@ export function configureAmplify(configService: ConfigService): void {
     userPoolId: cognitoConfig.userPoolId,
     userPoolClientId: cognitoConfig.userPoolClientId,
     region: cognitoConfig.region,
-    useMockAuth: cognitoConfig.useMockAuth
+    useMockAuth: cognitoConfig.useMockAuth,
   });
 
   // Skip Amplify configuration if using mock authentication
@@ -68,7 +68,7 @@ export function configureAmplify(configService: ConfigService): void {
   try {
     Amplify.configure(config);
     console.log('✅ Amplify configured successfully for real Cognito authentication');
-    
+
     // Log current Amplify configuration for debugging
     console.log('🔍 Verifying Amplify configuration...');
     // Note: Amplify doesn't provide a direct way to get current config, but we can verify it was set

@@ -128,7 +128,9 @@ export class ApiGatewayStack extends cdk.Stack {
       this,
       'ImportedGetSubprojectsForProjectFunction',
       {
-        functionArn: cdk.Fn.importValue(`rtm-${environment}-get-subprojects-for-project-function-arn`),
+        functionArn: cdk.Fn.importValue(
+          `rtm-${environment}-get-subprojects-for-project-function-arn`
+        ),
         sameEnvironment: true,
       }
     );
@@ -150,7 +152,6 @@ export class ApiGatewayStack extends cdk.Stack {
         sameEnvironment: true,
       }
     );
-
 
     const searchProjectsFunction = lambda.Function.fromFunctionAttributes(
       this,
@@ -220,7 +221,9 @@ export class ApiGatewayStack extends cdk.Stack {
       this,
       'ImportedInvalidateCalculationCacheFunction',
       {
-        functionArn: cdk.Fn.importValue(`rtm-${environment}-invalidate-calculation-cache-function-arn`),
+        functionArn: cdk.Fn.importValue(
+          `rtm-${environment}-invalidate-calculation-cache-function-arn`
+        ),
         sameEnvironment: true,
       }
     );
@@ -239,7 +242,9 @@ export class ApiGatewayStack extends cdk.Stack {
       this,
       'ImportedEmployeesTravelRequestsFunction',
       {
-        functionArn: cdk.Fn.importValue(`rtm-${environment}-employees-travel-requests-function-arn`),
+        functionArn: cdk.Fn.importValue(
+          `rtm-${environment}-employees-travel-requests-function-arn`
+        ),
         sameEnvironment: true,
       }
     );
@@ -300,8 +305,8 @@ export class ApiGatewayStack extends cdk.Stack {
         integration: '$context.integration.error',
         responseLength: '$context.responseLength',
         ip: '$context.identity.sourceIp',
-        userAgent: '$context.identity.userAgent'
-      })
+        userAgent: '$context.identity.userAgent',
+      }),
     };
 
     // Configure API routes with imported Lambda functions
@@ -442,29 +447,41 @@ export class ApiGatewayStack extends cdk.Stack {
     // GET /projects - List all projects (for admin), use existing projects resource
     const getAllProjectsIntegration = new apigateway.LambdaIntegration(getAllProjectsFunction);
     projectsResource.addMethod('GET', getAllProjectsIntegration, defaultMethodOptions); // List all projects (for managers)
-    projectsResource.addMethod('POST', new apigateway.LambdaIntegration(createProjectFunction), defaultMethodOptions); // Create project
+    projectsResource.addMethod(
+      'POST',
+      new apigateway.LambdaIntegration(createProjectFunction),
+      defaultMethodOptions
+    ); // Create project
 
     // Project by ID endpoints
     const projectByIdResource = projectsResource.addResource('{id}');
-    const projectManagementIntegration = new apigateway.LambdaIntegration(projectsManagementFunction);
-    
+    const projectManagementIntegration = new apigateway.LambdaIntegration(
+      projectsManagementFunction
+    );
+
     // GET /projects/{id} - Get single project by ID
     const getProjectByIdIntegration = new apigateway.LambdaIntegration(getProjectByIdFunction);
     projectByIdResource.addMethod('GET', getProjectByIdIntegration, defaultMethodOptions);
-    
+
     // PUT /projects/{id} - Update project
     projectByIdResource.addMethod('PUT', projectManagementIntegration, defaultMethodOptions);
-    
+
     // DELETE /projects/{id} - Delete project
     projectByIdResource.addMethod('DELETE', projectManagementIntegration, defaultMethodOptions);
 
     // PATCH /projects/{id}/toggle-status - Toggle project status
     const projectToggleStatusResource = projectByIdResource.addResource('toggle-status');
-    projectToggleStatusResource.addMethod('PATCH', projectManagementIntegration, defaultMethodOptions);
+    projectToggleStatusResource.addMethod(
+      'PATCH',
+      projectManagementIntegration,
+      defaultMethodOptions
+    );
 
     // GET /projects/{id}/subprojects - Get subprojects for project
     const subprojectsResource = projectByIdResource.addResource('subprojects');
-    const getSubprojectsIntegration = new apigateway.LambdaIntegration(getSubprojectsForProjectFunction);
+    const getSubprojectsIntegration = new apigateway.LambdaIntegration(
+      getSubprojectsForProjectFunction
+    );
     subprojectsResource.addMethod('GET', getSubprojectsIntegration, defaultMethodOptions);
 
     // POST /projects/{id}/subprojects - Create subproject (proxy to flat endpoint)
@@ -473,49 +490,80 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // Nested subproject by ID routes: /projects/{id}/subprojects/{subprojectId}
     const nestedSubprojectByIdResource = subprojectsResource.addResource('{subprojectId}');
-    const getSubprojectByIdNestedIntegration = new apigateway.LambdaIntegration(getSubprojectByIdFunction);
-    
+    const getSubprojectByIdNestedIntegration = new apigateway.LambdaIntegration(
+      getSubprojectByIdFunction
+    );
+
     // GET /projects/{id}/subprojects/{subprojectId} - Get single subproject
-    nestedSubprojectByIdResource.addMethod('GET', getSubprojectByIdNestedIntegration, defaultMethodOptions);
-    
+    nestedSubprojectByIdResource.addMethod(
+      'GET',
+      getSubprojectByIdNestedIntegration,
+      defaultMethodOptions
+    );
+
     // PUT /projects/{id}/subprojects/{subprojectId} - Update subproject
-    nestedSubprojectByIdResource.addMethod('PUT', projectManagementIntegration, defaultMethodOptions);
-    
+    nestedSubprojectByIdResource.addMethod(
+      'PUT',
+      projectManagementIntegration,
+      defaultMethodOptions
+    );
+
     // DELETE /projects/{id}/subprojects/{subprojectId} - Delete subproject
-    nestedSubprojectByIdResource.addMethod('DELETE', projectManagementIntegration, defaultMethodOptions);
+    nestedSubprojectByIdResource.addMethod(
+      'DELETE',
+      projectManagementIntegration,
+      defaultMethodOptions
+    );
 
     // PATCH /projects/{id}/subprojects/{subprojectId}/toggle-status - Toggle subproject status
-    const subprojectToggleStatusResource = nestedSubprojectByIdResource.addResource('toggle-status');
-    subprojectToggleStatusResource.addMethod('PATCH', projectManagementIntegration, defaultMethodOptions);
+    const subprojectToggleStatusResource =
+      nestedSubprojectByIdResource.addResource('toggle-status');
+    subprojectToggleStatusResource.addMethod(
+      'PATCH',
+      projectManagementIntegration,
+      defaultMethodOptions
+    );
 
     // GET /projects/{id}/references - Check project references
     const referencesResource = projectByIdResource.addResource('references');
-    const checkProjectReferencesIntegration = new apigateway.LambdaIntegration(checkProjectReferencesFunction);
+    const checkProjectReferencesIntegration = new apigateway.LambdaIntegration(
+      checkProjectReferencesFunction
+    );
     referencesResource.addMethod('GET', checkProjectReferencesIntegration, defaultMethodOptions);
 
     // Subproject management endpoints
     const subprojectsRootResource = apiResource.addResource('subprojects');
-    
+
     // POST /subprojects - Create new subproject
-    const createSubprojectRootIntegration = new apigateway.LambdaIntegration(createSubprojectFunction);
-    subprojectsRootResource.addMethod('POST', createSubprojectRootIntegration, defaultMethodOptions);
+    const createSubprojectRootIntegration = new apigateway.LambdaIntegration(
+      createSubprojectFunction
+    );
+    subprojectsRootResource.addMethod(
+      'POST',
+      createSubprojectRootIntegration,
+      defaultMethodOptions
+    );
 
     // GET /subprojects/{id} - Get single subproject by ID
     // PUT /subprojects/{id} - Update subproject
     // DELETE /subprojects/{id} - Delete subproject
     const subprojectByIdResource = subprojectsRootResource.addResource('{id}');
-    const getSubprojectByIdRootIntegration = new apigateway.LambdaIntegration(getSubprojectByIdFunction);
+    const getSubprojectByIdRootIntegration = new apigateway.LambdaIntegration(
+      getSubprojectByIdFunction
+    );
     subprojectByIdResource.addMethod('GET', getSubprojectByIdRootIntegration, defaultMethodOptions);
     subprojectByIdResource.addMethod('PUT', projectManagementIntegration, defaultMethodOptions);
     subprojectByIdResource.addMethod('DELETE', projectManagementIntegration, defaultMethodOptions);
 
     // Admin management endpoints
     const adminResource = apiResource.addResource('admin');
-    
+
     // Admin project management
     const adminProjectsResource = adminResource.addResource('projects');
-    const adminProjectManagementIntegration = new apigateway.LambdaIntegration(adminProjectManagementFunction);
-    
+    const adminProjectManagementIntegration = new apigateway.LambdaIntegration(
+      adminProjectManagementFunction
+    );
+
     // GET /admin/projects - Admin list all projects with filtering
     adminProjectsResource.addMethod('GET', adminProjectManagementIntegration, defaultMethodOptions);
 
@@ -535,7 +583,9 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // GET /projects/geocode - Geocode compatibility route (after parameterized routes for correct precedence)
     const projectsGeocodeResource = projectsResource.addResource('geocode');
-    const geocodingCompatIntegration = new apigateway.LambdaIntegration(updateEmployeeAddressFunction);
+    const geocodingCompatIntegration = new apigateway.LambdaIntegration(
+      updateEmployeeAddressFunction
+    );
     projectsGeocodeResource.addMethod('GET', geocodingCompatIntegration, defaultMethodOptions);
 
     // Grant API Gateway permission to invoke project management functions
@@ -543,48 +593,70 @@ export class ApiGatewayStack extends cdk.Stack {
     createSubprojectFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
     getAllProjectsFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
     getProjectByIdFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
-    getSubprojectsForProjectFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+    getSubprojectsForProjectFunction.grantInvoke(
+      new iam.ServicePrincipal('apigateway.amazonaws.com')
+    );
     getSubprojectByIdFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
-    checkProjectReferencesFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+    checkProjectReferencesFunction.grantInvoke(
+      new iam.ServicePrincipal('apigateway.amazonaws.com')
+    );
     searchProjectsFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
     projectsManagementFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
-    adminProjectManagementFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+    adminProjectManagementFunction.grantInvoke(
+      new iam.ServicePrincipal('apigateway.amazonaws.com')
+    );
 
     // Calculation engine endpoints (protected)
     const calculationsResource = apiResource.addResource('calculations');
-    
+
     // POST /calculations/distance - Calculate distance between coordinates
     const distanceResource = calculationsResource.addResource('distance');
-    const calculateDistanceIntegration = new apigateway.LambdaIntegration(calculateDistanceFunction);
+    const calculateDistanceIntegration = new apigateway.LambdaIntegration(
+      calculateDistanceFunction
+    );
     distanceResource.addMethod('POST', calculateDistanceIntegration, defaultMethodOptions);
 
-    // POST /calculations/allowance - Calculate allowance with cost rates  
+    // POST /calculations/allowance - Calculate allowance with cost rates
     const allowanceResource = calculationsResource.addResource('allowance');
-    const calculateAllowanceIntegration = new apigateway.LambdaIntegration(calculateAllowanceFunction);
+    const calculateAllowanceIntegration = new apigateway.LambdaIntegration(
+      calculateAllowanceFunction
+    );
     allowanceResource.addMethod('POST', calculateAllowanceIntegration, defaultMethodOptions);
 
     // POST /calculations/preview - Real-time calculation preview
     const previewResource = calculationsResource.addResource('preview');
-    const calculateTravelCostIntegration = new apigateway.LambdaIntegration(calculateTravelCostFunction);
+    const calculateTravelCostIntegration = new apigateway.LambdaIntegration(
+      calculateTravelCostFunction
+    );
     previewResource.addMethod('POST', calculateTravelCostIntegration, defaultMethodOptions);
 
     // GET /calculations/audit/{requestId} - Calculation audit trail
     const auditResource = calculationsResource.addResource('audit');
     const auditByIdResource = auditResource.addResource('{requestId}');
-    const getCalculationAuditIntegration = new apigateway.LambdaIntegration(getCalculationAuditFunction);
+    const getCalculationAuditIntegration = new apigateway.LambdaIntegration(
+      getCalculationAuditFunction
+    );
     auditByIdResource.addMethod('GET', getCalculationAuditIntegration, defaultMethodOptions);
 
     // Cache management endpoints
     const cacheResource = calculationsResource.addResource('cache');
-    
+
     // POST /calculations/cache/invalidate - Cache invalidation
     const invalidateResource = cacheResource.addResource('invalidate');
-    const invalidateCalculationCacheIntegration = new apigateway.LambdaIntegration(invalidateCalculationCacheFunction);
-    invalidateResource.addMethod('POST', invalidateCalculationCacheIntegration, defaultMethodOptions);
+    const invalidateCalculationCacheIntegration = new apigateway.LambdaIntegration(
+      invalidateCalculationCacheFunction
+    );
+    invalidateResource.addMethod(
+      'POST',
+      invalidateCalculationCacheIntegration,
+      defaultMethodOptions
+    );
 
     // DELETE /calculations/cache/expired - Cleanup expired cache
     const expiredResource = cacheResource.addResource('expired');
-    const cleanupExpiredCacheIntegration = new apigateway.LambdaIntegration(cleanupExpiredCacheFunction);
+    const cleanupExpiredCacheIntegration = new apigateway.LambdaIntegration(
+      cleanupExpiredCacheFunction
+    );
     expiredResource.addMethod('DELETE', cleanupExpiredCacheIntegration, defaultMethodOptions);
 
     // Grant API Gateway permission to invoke calculation functions
@@ -592,49 +664,80 @@ export class ApiGatewayStack extends cdk.Stack {
     calculateAllowanceFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
     calculateTravelCostFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
     getCalculationAuditFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
-    invalidateCalculationCacheFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+    invalidateCalculationCacheFunction.grantInvoke(
+      new iam.ServicePrincipal('apigateway.amazonaws.com')
+    );
     cleanupExpiredCacheFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
 
     // Travel request endpoints (protected)
     const travelRequestsResource = apiResource.addResource('travel-requests');
-    
+
     // POST /travel-requests - Submit new travel request
-    const employeesTravelRequestsIntegration = new apigateway.LambdaIntegration(employeesTravelRequestsFunction);
-    travelRequestsResource.addMethod('POST', employeesTravelRequestsIntegration, defaultMethodOptions);
+    const employeesTravelRequestsIntegration = new apigateway.LambdaIntegration(
+      employeesTravelRequestsFunction
+    );
+    travelRequestsResource.addMethod(
+      'POST',
+      employeesTravelRequestsIntegration,
+      defaultMethodOptions
+    );
 
     // GET /travel-requests - Get employee's travel requests (handled by same function)
-    travelRequestsResource.addMethod('GET', employeesTravelRequestsIntegration, defaultMethodOptions);
+    travelRequestsResource.addMethod(
+      'GET',
+      employeesTravelRequestsIntegration,
+      defaultMethodOptions
+    );
 
     // POST /travel-requests/preview - Calculate travel request preview
     const travelRequestPreviewResource = travelRequestsResource.addResource('preview');
-    travelRequestPreviewResource.addMethod('POST', employeesTravelRequestsIntegration, defaultMethodOptions);
+    travelRequestPreviewResource.addMethod(
+      'POST',
+      employeesTravelRequestsIntegration,
+      defaultMethodOptions
+    );
 
     // Employee manager endpoints - reuse existing employeesResource
     const managersResource = employeesResource.addResource('managers');
-    
+
     // GET /employees/managers - Get managers for selection
     const getManagersIntegration = new apigateway.LambdaIntegration(getManagersFunction);
     managersResource.addMethod('GET', getManagersIntegration, defaultMethodOptions);
-    
+
     // Also add /managers route for backward compatibility (frontend calls this directly)
     const managersDirectResource = apiResource.addResource('managers');
     managersDirectResource.addMethod('GET', getManagersIntegration, defaultMethodOptions);
 
     // Employee travel requests endpoints - proxy to existing travel-requests endpoints
     const employeeTravelRequestsResource = employeesResource.addResource('travel-requests');
-    
+
     // POST /employees/travel-requests - Submit new travel request (proxy to /travel-requests)
-    employeeTravelRequestsResource.addMethod('POST', employeesTravelRequestsIntegration, defaultMethodOptions);
-    
+    employeeTravelRequestsResource.addMethod(
+      'POST',
+      employeesTravelRequestsIntegration,
+      defaultMethodOptions
+    );
+
     // GET /employees/travel-requests - Get employee's travel requests (proxy to /travel-requests)
-    employeeTravelRequestsResource.addMethod('GET', employeesTravelRequestsIntegration, defaultMethodOptions);
-    
+    employeeTravelRequestsResource.addMethod(
+      'GET',
+      employeesTravelRequestsIntegration,
+      defaultMethodOptions
+    );
+
     // POST /employees/travel-requests/preview - Calculate travel request preview (proxy to /travel-requests/preview)
-    const employeeTravelRequestPreviewResource = employeeTravelRequestsResource.addResource('preview');
-    employeeTravelRequestPreviewResource.addMethod('POST', employeesTravelRequestsIntegration, defaultMethodOptions);
+    const employeeTravelRequestPreviewResource =
+      employeeTravelRequestsResource.addResource('preview');
+    employeeTravelRequestPreviewResource.addMethod(
+      'POST',
+      employeesTravelRequestsIntegration,
+      defaultMethodOptions
+    );
 
     // Grant API Gateway permission to invoke travel request functions
-    employeesTravelRequestsFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+    employeesTravelRequestsFunction.grantInvoke(
+      new iam.ServicePrincipal('apigateway.amazonaws.com')
+    );
     getManagersFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
     adminUserManagementFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
 
@@ -642,33 +745,35 @@ export class ApiGatewayStack extends cdk.Stack {
     const managerResource = apiResource.addResource('manager');
     const managerDashboardResource = managerResource.addResource('dashboard');
     const managerRequestsResource = managerResource.addResource('requests');
-    
+
     // Manager dashboard integration
-    const managersDashboardIntegration = new apigateway.LambdaIntegration(managersDashboardFunction);
-    
+    const managersDashboardIntegration = new apigateway.LambdaIntegration(
+      managersDashboardFunction
+    );
+
     // GET /manager/dashboard - Get manager's dashboard data
     managerDashboardResource.addMethod('GET', managersDashboardIntegration, defaultMethodOptions);
-    
+
     // GET /manager/requests - Get manager's pending requests
     managerRequestsResource.addMethod('GET', managersDashboardIntegration, defaultMethodOptions);
-    
+
     // GET /manager/employee-context/{employeeId} - Get employee context data
     const employeeContextResource = managerResource.addResource('employee-context');
     const employeeContextIdResource = employeeContextResource.addResource('{employeeId}');
     employeeContextIdResource.addMethod('GET', managersDashboardIntegration, defaultMethodOptions);
-    
+
     // Manager request actions with ID parameter
     const managerRequestIdResource = managerRequestsResource.addResource('{id}');
-    
+
     // GET /manager/requests/{id}/context - Get employee context data
     const contextResource = managerRequestIdResource.addResource('context');
     contextResource.addMethod('GET', managersDashboardIntegration, defaultMethodOptions);
-    
+
     // PUT /manager/requests/{id}/approve - Approve individual request
     const approveResource = managerRequestIdResource.addResource('approve');
     approveResource.addMethod('PUT', managersDashboardIntegration, defaultMethodOptions);
-    
-    // PUT /manager/requests/{id}/reject - Reject individual request  
+
+    // PUT /manager/requests/{id}/reject - Reject individual request
     const rejectResource = managerRequestIdResource.addResource('reject');
     rejectResource.addMethod('PUT', managersDashboardIntegration, defaultMethodOptions);
 

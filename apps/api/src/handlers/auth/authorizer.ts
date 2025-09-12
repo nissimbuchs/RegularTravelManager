@@ -1,4 +1,9 @@
-import { APIGatewayRequestAuthorizerEvent, APIGatewayTokenAuthorizerEvent, APIGatewayAuthorizerResult, Context } from 'aws-lambda';
+import {
+  APIGatewayRequestAuthorizerEvent,
+  APIGatewayTokenAuthorizerEvent,
+  APIGatewayAuthorizerResult,
+  Context,
+} from 'aws-lambda';
 import { CognitoJwtVerifier } from 'aws-jwt-verify';
 import { logger } from '../../middleware/logger';
 
@@ -86,7 +91,7 @@ async function createMockPayload(token: string): Promise<MockPayload> {
 
   if (token.startsWith('mock-jwt-token-')) {
     identifier = token.replace('mock-jwt-token-', '');
-    
+
     // Check if identifier is a UUID (mock UUID format) or email
     const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (uuidPattern.test(identifier)) {
@@ -101,18 +106,18 @@ async function createMockPayload(token: string): Promise<MockPayload> {
 
   // Look up the actual user data from the database
   let cognitoUserId = identifier; // Will be updated from database
-  
+
   try {
     // Use the existing database connection system
     const { db, getDatabaseConfig } = await import('../../database/connection');
-    
+
     // Always ensure database is configured (safe to call multiple times)
     const config = await getDatabaseConfig();
     db.configure(config);
-    
+
     let result;
     const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    
+
     if (uuidPattern.test(identifier)) {
       // Query by cognito_user_id (UUID)
       result = await db.query(
@@ -149,7 +154,7 @@ async function createMockPayload(token: string): Promise<MockPayload> {
         [employeeIdPattern]
       );
     }
-    
+
     if (result.rows.length > 0) {
       cognitoUserId = result.rows[0].cognito_user_id;
       // If we looked up by UUID, get the email from the result
@@ -206,15 +211,19 @@ export const authorizerHandler = async (
   context: Context
 ): Promise<APIGatewayAuthorizerResult> => {
   const correlationId = `auth-${context.awsRequestId.substring(0, 8)}`;
-  
+
   logger.info('Authorizer invoked with full event details', {
     methodArn: event.methodArn,
     requestId: context.awsRequestId,
     correlationId,
     eventType: 'authorizationToken' in event ? 'TOKEN' : 'REQUEST',
     bypassAuth: process.env.BYPASS_AUTH,
-    cognitoUserPoolId: process.env.COGNITO_USER_POOL_ID ? `${process.env.COGNITO_USER_POOL_ID.substring(0, 10)}...` : 'undefined',
-    cognitoClientId: process.env.COGNITO_CLIENT_ID ? `${process.env.COGNITO_CLIENT_ID.substring(0, 10)}...` : 'undefined',
+    cognitoUserPoolId: process.env.COGNITO_USER_POOL_ID
+      ? `${process.env.COGNITO_USER_POOL_ID.substring(0, 10)}...`
+      : 'undefined',
+    cognitoClientId: process.env.COGNITO_CLIENT_ID
+      ? `${process.env.COGNITO_CLIENT_ID.substring(0, 10)}...`
+      : 'undefined',
     awsRegion: process.env.AWS_REGION || 'eu-central-1',
     // Log the full event structure for debugging
     eventKeys: Object.keys(event),
@@ -224,7 +233,7 @@ export const authorizerHandler = async (
   try {
     // Extract token from event (supports both TOKEN and REQUEST authorizer formats)
     let token: string;
-    
+
     logger.info('Starting token extraction', {
       correlationId,
       eventType: 'authorizationToken' in event ? 'TOKEN' : 'REQUEST',
@@ -233,7 +242,7 @@ export const authorizerHandler = async (
       headers: 'headers' in event ? JSON.stringify(event.headers) : 'N/A',
       requestContext: 'requestContext' in event ? JSON.stringify(event.requestContext) : 'N/A',
     });
-    
+
     if ('authorizationToken' in event) {
       // TOKEN authorizer - token passed directly
       logger.info('Using TOKEN authorizer path', {
@@ -249,7 +258,7 @@ export const authorizerHandler = async (
         authorizationHeader: event.headers?.Authorization,
         authorizationHeaderLowercase: event.headers?.authorization,
       });
-      
+
       const authHeader = event.headers?.Authorization || event.headers?.authorization;
       if (!authHeader) {
         logger.error('Missing authorization header in REQUEST authorizer', {
@@ -261,7 +270,7 @@ export const authorizerHandler = async (
       }
       token = extractTokenFromHeader(authHeader);
     }
-    
+
     logger.info('Token extracted successfully', {
       correlationId,
       authorizerType: 'authorizationToken' in event ? 'TOKEN' : 'REQUEST',
@@ -313,7 +322,7 @@ export const authorizerHandler = async (
     // Generate IAM policy
     const policy = generatePolicy(payload.sub, 'Allow', event.methodArn);
 
-    // Add user context  
+    // Add user context
     // Note: Access tokens may not have email/cognitoUsername, use sub as fallback
     policy.context = {
       sub: payload.sub,
@@ -338,7 +347,8 @@ export const authorizerHandler = async (
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorName = error instanceof Error ? error.name : 'UnknownError';
-    const errorStack = error instanceof Error ? error.stack?.substring(0, 1000) : 'No stack available';
+    const errorStack =
+      error instanceof Error ? error.stack?.substring(0, 1000) : 'No stack available';
     logger.error('Authorization failed', {
       correlationId: correlationId || 'unknown',
       error: errorMessage,
@@ -402,7 +412,7 @@ function extractTokenFromHeader(authHeader: string): string {
 
 async function verifyToken(token: string): Promise<CognitoPayload> {
   const tokenPrefix = token ? `${token.substring(0, 20)}...` : 'none';
-  
+
   try {
     // Log JWT header information for debugging
     let jwtHeader = null;
@@ -423,11 +433,13 @@ async function verifyToken(token: string): Promise<CognitoPayload> {
     logger.info('Attempting Cognito JWT verification', {
       tokenPrefix,
       tokenLength: token?.length || 0,
-      jwtHeader: jwtHeader ? {
-        alg: jwtHeader.alg,
-        typ: jwtHeader.typ,
-        kid: jwtHeader.kid,
-      } : 'unparseable',
+      jwtHeader: jwtHeader
+        ? {
+            alg: jwtHeader.alg,
+            typ: jwtHeader.typ,
+            kid: jwtHeader.kid,
+          }
+        : 'unparseable',
     });
 
     const payload = (await getVerifier().verify(token)) as CognitoPayload;
@@ -440,7 +452,7 @@ async function verifyToken(token: string): Promise<CognitoPayload> {
       iss: payload.iss,
       aud: payload.aud,
       exp: payload.exp,
-      hasGroups: !!(payload['cognito:groups']?.length),
+      hasGroups: !!payload['cognito:groups']?.length,
       groupCount: payload['cognito:groups']?.length || 0,
     });
 
@@ -466,7 +478,7 @@ async function verifyToken(token: string): Promise<CognitoPayload> {
         tokenPrefix,
         sub: `${payload.sub.substring(0, 8)}...`,
         tokenUse: payload.token_use,
-        hasGroups: !!(payload['cognito:groups']?.length),
+        hasGroups: !!payload['cognito:groups']?.length,
       });
     }
 
@@ -489,8 +501,9 @@ async function verifyToken(token: string): Promise<CognitoPayload> {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorName = error instanceof Error ? error.name : 'UnknownError';
-    const errorStack = error instanceof Error ? error.stack?.substring(0, 500) : 'No stack available';
-    
+    const errorStack =
+      error instanceof Error ? error.stack?.substring(0, 500) : 'No stack available';
+
     logger.error('JWT verification failed with detailed context', {
       tokenPrefix,
       errorName,
@@ -534,7 +547,7 @@ function generatePolicy(
   // Extract the base ARN without the specific resource path
   // e.g., "arn:aws:execute-api:region:account:api-id/stage/METHOD/path/specific-id"
   // becomes "arn:aws:execute-api:region:account:api-id/stage/*/*"
-  
+
   // Split the ARN by colons to get the parts
   const arnParts = resource.split(':');
   if (arnParts.length >= 6) {
@@ -542,20 +555,20 @@ function generatePolicy(
     const resourcePart = arnParts[5];
     if (resourcePart) {
       const resourceSegments = resourcePart.split('/');
-      
+
       if (resourceSegments.length >= 2) {
         // Create wildcard: "api-id/stage/*/*" to allow all methods and paths
         const wildcardResource = `${resourceSegments[0]}/${resourceSegments[1]}/*/*`;
         arnParts[5] = wildcardResource;
-        
+
         const wildcardArn = arnParts.join(':');
-        
+
         logger.info('Generated wildcard policy', {
           originalResource: resource,
           wildcardResource: wildcardArn,
           principalId: principalId.substring(0, 8) + '...',
         });
-        
+
         return {
           principalId,
           policyDocument: {
@@ -572,7 +585,7 @@ function generatePolicy(
       }
     }
   }
-  
+
   // Fallback to the original resource if parsing fails
   return {
     principalId,

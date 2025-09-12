@@ -374,7 +374,7 @@ export const employeesTravelRequests = async (
   context: Context
 ): Promise<APIGatewayProxyResult> => {
   const method = event.httpMethod;
-  
+
   if (method === 'GET') {
     return getTravelRequests(event, context);
   } else if (method === 'POST') {
@@ -385,7 +385,7 @@ export const employeesTravelRequests = async (
       return createTravelRequest(event, context);
     }
   }
-  
+
   return {
     statusCode: 405,
     body: JSON.stringify({ error: `Method ${method} not allowed` }),
