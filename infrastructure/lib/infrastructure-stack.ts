@@ -19,6 +19,12 @@ import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as path from 'path';
 import { getTestUsersForEnvironment } from './config/test-users';
 import { getEnvironmentConfig, EnvironmentConfig } from './config/environment-config';
+import { ParameterManager, ParameterSets } from './infrastructure/parameter-manager';
+import { ExportManager, ExportSets } from './infrastructure/export-manager';
+import { AlarmFactory, AlarmSets } from './infrastructure/alarm-factory';
+import { PolicyBuilder, PolicySets } from './infrastructure/policy-builder';
+import { LogGroupFactory, LogGroupSets } from './infrastructure/log-group-factory';
+import { CustomResourceBuilder, CustomResourceSets } from './infrastructure/custom-resource-builder';
 
 export interface InfrastructureStackProps extends cdk.StackProps {
   environment: 'dev' | 'staging' | 'production';
@@ -35,12 +41,23 @@ export class InfrastructureStack extends cdk.Stack {
   public lambdaSecurityGroup!: ec2.SecurityGroup;
   public alertsTopic!: sns.Topic;
   public hostedZone?: route53.HostedZone;
+  
+  // Helper utilities
+  private parameterManager!: ParameterManager;
+  private exportManager!: ExportManager;
+  private alarmFactory!: AlarmFactory;
+  private policyBuilder!: PolicyBuilder;
+  private logGroupFactory!: LogGroupFactory;
+  private customResourceBuilder!: CustomResourceBuilder;
 
   constructor(scope: Construct, id: string, props: InfrastructureStackProps) {
     super(scope, id, props);
 
     const { environment } = props;
     const config = getEnvironmentConfig(environment);
+    
+    // Initialize helper utilities
+    this.initializeHelpers(environment);
 
     // VPC for RDS and Lambda
     this.vpc = new ec2.Vpc(this, 'RTM-VPC', {
@@ -82,6 +99,12 @@ export class InfrastructureStack extends cdk.Stack {
 
     // CloudWatch monitoring and alerting
     this.setupMonitoring(environment);
+    
+    // Initialize alarm factory after alerts topic is created
+    this.alarmFactory = new AlarmFactory(this, environment, this.alertsTopic);
+    
+    // Create CloudWatch alarms using factory
+    this.setupCloudWatchAlarms(environment);
 
     // Route 53 hosted zone for custom domains
     this.setupHostedZone(environment, config);
@@ -91,6 +114,17 @@ export class InfrastructureStack extends cdk.Stack {
 
     // Resource tagging
     this.setupResourceTags(environment);
+  }
+
+  /**
+   * Initialize helper utilities
+   */
+  private initializeHelpers(environment: string) {
+    this.parameterManager = new ParameterManager(this, environment);
+    this.exportManager = new ExportManager(this, environment);
+    this.policyBuilder = new PolicyBuilder(this.region, this.account, environment);
+    this.logGroupFactory = new LogGroupFactory(this, environment);
+    // CustomResourceBuilder and AlarmFactory will be initialized later when dependencies are ready
   }
 
   private setupDatabase(environment: string) {
@@ -155,16 +189,18 @@ export class InfrastructureStack extends cdk.Stack {
       'Allow Lambda functions to connect to PostgreSQL'
     );
 
-    // Store database connection details
-    new ssm.StringParameter(this, 'DatabaseEndpoint', {
-      parameterName: `/rtm/${environment}/database/endpoint`,
-      stringValue: this.database.instanceEndpoint.hostname,
-    });
+    // Initialize CustomResourceBuilder now that VPC and security groups are ready
+    this.customResourceBuilder = new CustomResourceBuilder(
+      this,
+      environment,
+      this.region,
+      this.account,
+      this.vpc,
+      this.lambdaSecurityGroup
+    );
 
-    new ssm.StringParameter(this, 'DatabasePort', {
-      parameterName: `/rtm/${environment}/database/port`,
-      stringValue: this.database.instanceEndpoint.port.toString(),
-    });
+    // Store database connection details using parameter manager
+    this.parameterManager.createParameters(ParameterSets.database(this.database));
 
     // PostGIS Extension Installation
     this.setupPostGISExtension(environment);
@@ -222,29 +258,9 @@ export class InfrastructureStack extends cdk.Stack {
       // No OAuth configuration needed for direct authentication
     });
 
-    // Store Cognito configuration
-    new ssm.StringParameter(this, 'UserPoolId', {
-      parameterName: `/rtm/${environment}/cognito/user-pool-id`,
-      stringValue: this.userPool.userPoolId,
-    });
-
-    new ssm.StringParameter(this, 'UserPoolClientId', {
-      parameterName: `/rtm/${environment}/cognito/client-id`,
-      stringValue: this.userPoolClient.userPoolClientId,
-    });
-
-    // Export for cross-stack references
-    new cdk.CfnOutput(this, 'UserPoolIdOutput', {
-      value: this.userPool.userPoolId,
-      description: 'Cognito User Pool ID',
-      exportName: `rtm-${environment}-user-pool-id`,
-    });
-
-    new cdk.CfnOutput(this, 'UserPoolClientIdOutput', {
-      value: this.userPoolClient.userPoolClientId,
-      description: 'Cognito User Pool Client ID',
-      exportName: `rtm-${environment}-user-pool-client-id`,
-    });
+    // Store Cognito configuration using helpers
+    this.parameterManager.createParameters(ParameterSets.cognito(this.userPool, this.userPoolClient));
+    this.exportManager.createExports(ExportSets.cognito(this.userPool, this.userPoolClient));
 
     // Create test users for non-production environments
     this.setupTestUsers(environment);
@@ -258,87 +274,27 @@ export class InfrastructureStack extends cdk.Stack {
       return;
     }
 
-    // Create Lambda function for user creation
-    const userCreatorFunction = new lambdaNodejs.NodejsFunction(this, 'UserCreatorFunction', {
-      functionName: `rtm-${environment}-user-creator`,
-      entry: path.join(__dirname, 'lambda/create-cognito-users.ts'),
-      handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_18_X,
-      timeout: cdk.Duration.minutes(5),
-      memorySize: 256,
-      vpc: this.vpc,
-      vpcSubnets: {
-        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [this.lambdaSecurityGroup],
-      environment: {
-        // AWS_REGION is automatically set by Lambda runtime
-      },
-      bundling: {
-        externalModules: ['@aws-sdk/*'],
-        nodeModules: ['node-fetch', 'pg'],
-      },
-    });
-
-    // Grant permissions to manage Cognito users
-    userCreatorFunction.addToRolePolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: [
-          'cognito-idp:AdminCreateUser',
-          'cognito-idp:AdminSetUserPassword',
-          'cognito-idp:AdminAddUserToGroup',
-          'cognito-idp:AdminGetUser',
-          'cognito-idp:ListUsers',
-        ],
-        resources: [this.userPool.userPoolArn],
-      })
+    // Create user creator custom resource using builder
+    const userCreatorConfig = CustomResourceSets.userCreator(
+      path.join(__dirname, 'lambda/create-cognito-users.ts'),
+      this.userPool,
+      this.database,
+      this.userPool.userPoolArn
     );
 
-    // Grant permissions to access database secrets
-    userCreatorFunction.addToRolePolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ['secretsmanager:GetSecretValue'],
-        resources: [
-          `arn:aws:secretsmanager:${this.region}:${this.account}:secret:rtm-${environment}-db-credentials*`,
-        ],
-      })
-    );
+    // Add custom properties
+    userCreatorConfig.properties = {
+      UserPoolId: this.userPool.userPoolId,
+      Users: testUsers,
+      DatabaseUrl: this.database.instanceEndpoint.hostname 
+        ? `postgresql://rtm_admin:[SECRET]@${this.database.instanceEndpoint.hostname}:5432/rtm_database`
+        : '',
+      DatabaseSecretArn: this.database.secret?.secretArn || '',
+      Environment: environment,
+      Timestamp: Date.now().toString(),
+    };
 
-    // VPC permissions are automatically added when Lambda is configured with VPC
-
-    // Create log group for user creator provider
-    const userCreatorLogGroup = new logs.LogGroup(this, 'UserCreatorProviderLogs', {
-      logGroupName: `/aws/lambda/rtm-${environment}-user-creator-provider`,
-      retention: logs.RetentionDays.ONE_WEEK,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
-
-    // Create Custom Resource to trigger user creation
-    const userCreatorProvider = new customResources.Provider(this, 'UserCreatorProvider', {
-      onEventHandler: userCreatorFunction,
-      logGroup: userCreatorLogGroup,
-    });
-
-    const userCreatorResource = new cdk.CustomResource(this, 'UserCreatorResource', {
-      serviceToken: userCreatorProvider.serviceToken,
-      properties: {
-        UserPoolId: this.userPool.userPoolId,
-        Users: testUsers,
-        DatabaseUrl: this.database.instanceEndpoint.hostname 
-          ? `postgresql://rtm_admin:[SECRET]@${this.database.instanceEndpoint.hostname}:5432/rtm_database`
-          : '',
-        DatabaseSecretArn: this.database.secret?.secretArn || '',
-        Environment: environment,
-        // Add a timestamp to force updates when needed
-        Timestamp: Date.now().toString(),
-      },
-    });
-
-    // Ensure Custom Resource runs after all dependencies are ready
-    userCreatorResource.node.addDependency(this.userPool);
-    userCreatorResource.node.addDependency(this.database);
+    this.customResourceBuilder.createCustomResource('userCreator', userCreatorConfig);
 
     console.log(
       `Configured to create ${testUsers.length} test users for ${environment} environment`
@@ -346,66 +302,20 @@ export class InfrastructureStack extends cdk.Stack {
   }
 
   private setupPostGISExtension(environment: string) {
-    // Create Lambda function to install PostGIS extension
-    const postgisInstallerFunction = new lambdaNodejs.NodejsFunction(this, 'PostGISInstallerFunction', {
-      functionName: `rtm-${environment}-postgis-installer`,
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'postgisInstaller',
-      entry: path.join(__dirname, 'lambda/postgis-installer.ts'),
-      timeout: cdk.Duration.minutes(5),
-      vpc: this.vpc,
-      vpcSubnets: {
-        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [this.lambdaSecurityGroup],
-      environment: {
-        RTM_ENVIRONMENT: environment,
-        DB_HOST: this.database.instanceEndpoint.hostname,
-        DB_PORT: this.database.instanceEndpoint.port.toString(),
-        DB_NAME: 'rtm_database',
-      },
-      bundling: {
-        externalModules: ['pg-native'],
-      },
-    });
-
-    // Grant access to database credentials
-    postgisInstallerFunction.addToRolePolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ['secretsmanager:GetSecretValue'],
-        resources: [
-          `arn:aws:secretsmanager:${this.region}:${this.account}:secret:rtm-${environment}-db-credentials*`,
-        ],
-      })
+    // Create PostGIS installer custom resource using builder
+    const postgisConfig = CustomResourceSets.postgisInstaller(
+      path.join(__dirname, 'lambda/postgis-installer.ts'),
+      this.database
     );
 
-    // Create log group for PostGIS installer
-    const postgisInstallerLogGroup = new logs.LogGroup(this, 'PostGISInstallerProviderLogs', {
-      logGroupName: `/aws/lambda/rtm-${environment}-postgis-installer-provider`,
-      retention: logs.RetentionDays.ONE_WEEK,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
+    // Add custom properties for PostGIS installation
+    postgisConfig.properties = {
+      Environment: environment,
+      DatabaseEndpoint: this.database.instanceEndpoint.hostname,
+      Version: '1.0.0', // Change to force re-installation
+    };
 
-    // Create Custom Resource Provider
-    const postgisProvider = new customResources.Provider(this, 'PostGISInstallerProvider', {
-      onEventHandler: postgisInstallerFunction,
-      logGroup: postgisInstallerLogGroup,
-    });
-
-    // Create Custom Resource to install PostGIS
-    const postgisResource = new cdk.CustomResource(this, 'PostGISInstallerResource', {
-      serviceToken: postgisProvider.serviceToken,
-      properties: {
-        Environment: environment,
-        DatabaseEndpoint: this.database.instanceEndpoint.hostname,
-        // Change this value to force re-installation if needed
-        Version: '1.0.0',
-      },
-    });
-
-    // Ensure PostGIS installation happens after database is ready
-    postgisResource.node.addDependency(this.database);
+    this.customResourceBuilder.createCustomResource('postgisInstaller', postgisConfig);
   }
 
   private setupLocationService(environment: string) {
@@ -418,10 +328,8 @@ export class InfrastructureStack extends cdk.Stack {
       description: 'Place index for geocoding Swiss and European addresses',
     });
 
-    new ssm.StringParameter(this, 'PlaceIndexName', {
-      parameterName: `/rtm/${environment}/location/place-index-name`,
-      stringValue: this.placeIndex.indexName,
-    });
+    // Store location service configuration using parameter manager
+    this.parameterManager.createParameters(ParameterSets.location(this.placeIndex));
   }
 
   private setupIAMRoles(environment: string) {
@@ -433,71 +341,17 @@ export class InfrastructureStack extends cdk.Stack {
       ],
     });
 
-    // RDS access policy
-    this.lambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ['rds-db:connect'],
-        resources: [
-          `arn:aws:rds-db:${this.region}:${this.account}:dbuser:${this.database.instanceResourceId}/rtm_admin`,
-        ],
-      })
-    );
-
-    // Secrets Manager access
-    this.lambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ['secretsmanager:GetSecretValue'],
-        resources: [
-          `arn:aws:secretsmanager:${this.region}:${this.account}:secret:rtm-${environment}-db-credentials*`,
-        ],
-      })
-    );
-
-    // Cognito access policy
-    this.lambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: [
-          'cognito-idp:AdminGetUser',
-          'cognito-idp:AdminListGroupsForUser',
-          'cognito-idp:AdminUpdateUserAttributes',
-          'cognito-idp:AdminCreateUser',
-          'cognito-idp:AdminSetUserPassword',
-          'cognito-idp:AdminAddUserToGroup',
-          'cognito-idp:ListUsers',
-        ],
-        resources: [this.userPool.userPoolArn],
-      })
-    );
-
-    // Location Service access policy
-    this.lambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ['geo:SearchPlaceIndexForText', 'geo:SearchPlaceIndexForPosition'],
-        resources: [this.placeIndex.attrArn],
-      })
-    );
-
-    // SES access policy
-    this.lambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ['ses:SendEmail', 'ses:SendRawEmail'],
-        resources: [`arn:aws:ses:${this.region}:${this.account}:identity/*`],
-      })
-    );
-
-    // Parameter Store access
-    this.lambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ['ssm:GetParameter', 'ssm:GetParameters'],
-        resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter/rtm/${environment}/*`],
-      })
-    );
+    // Add policies using policy builder
+    const policies = [
+      PolicySets.rds(this.database.instanceResourceId || ''),
+      PolicySets.secretsManager(),
+      PolicySets.cognito(this.userPool.userPoolArn),
+      PolicySets.location(this.placeIndex.attrArn),
+      PolicySets.ses(),
+      PolicySets.parameterStore(),
+    ];
+    
+    this.policyBuilder.addPoliciesToRole(this.lambdaRole, policies);
   }
 
   private setupSES(environment: string, domainName?: string) {
@@ -507,68 +361,18 @@ export class InfrastructureStack extends cdk.Stack {
         identity: ses.Identity.domain(domainName),
       });
 
-      new ssm.StringParameter(this, 'SESDomain', {
-        parameterName: `/rtm/${environment}/ses/domain`,
-        stringValue: domainName,
-      });
-
-      // Output DNS records for manual setup
-      new cdk.CfnOutput(this, 'SESDomainDKIMRecords', {
-        description: 'DKIM records to add to DNS',
-        value: 'Check AWS Console for DKIM records',
-      });
+      // Create SES exports for DKIM records
+      this.exportManager.createExports(ExportSets.ses(domainName));
     }
 
-    // Email templates can be created here or via Lambda
-    new ssm.StringParameter(this, 'SESFromEmail', {
-      parameterName: `/rtm/${environment}/ses/from-email`,
-      stringValue: domainName ? `noreply@${domainName}` : 'test@example.com',
-    });
+    // Store SES configuration using parameter manager
+    this.parameterManager.createParameters(ParameterSets.ses(domainName));
   }
 
   private setupEnvironmentParameters(environment: string) {
-    // Application configuration
-    new ssm.StringParameter(this, 'Environment', {
-      parameterName: `/rtm/${environment}/config/environment`,
-      stringValue: environment,
-    });
-
-    new ssm.StringParameter(this, 'Region', {
-      parameterName: `/rtm/${environment}/config/region`,
-      stringValue: this.region,
-    });
-
-    // Performance and scaling settings
-    const performanceConfig: Record<string, Record<string, number>> = {
-      dev: {
-        lambdaTimeout: 30,
-        lambdaMemory: 512,
-        lambdaReservedConcurrency: 10,
-        dbConnections: 5,
-      },
-      staging: {
-        lambdaTimeout: 30,
-        lambdaMemory: 1024,
-        lambdaReservedConcurrency: 50,
-        dbConnections: 10,
-      },
-      production: {
-        lambdaTimeout: 30,
-        lambdaMemory: 1024,
-        lambdaReservedConcurrency: 200,
-        dbConnections: 20,
-      },
-    };
-
-    const config = performanceConfig[environment];
-    if (config) {
-      Object.entries(config).forEach(([key, value]: [string, number]) => {
-        new ssm.StringParameter(this, `Config${key.charAt(0).toUpperCase() + key.slice(1)}`, {
-          parameterName: `/rtm/${environment}/config/${key}`,
-          stringValue: value.toString(),
-        });
-      });
-    }
+    // Create configuration parameters using parameter manager
+    this.parameterManager.createParameters(ParameterSets.config(environment, this.region));
+    this.parameterManager.createParameters(ParameterSets.performance(environment));
 
     // Auto-scaling configuration for production
     if (environment === 'production') {
@@ -583,42 +387,15 @@ export class InfrastructureStack extends cdk.Stack {
       });
 
       // Store read replica endpoint
-      new ssm.StringParameter(this, 'DatabaseReadReplicaEndpoint', {
-        parameterName: `/rtm/${environment}/database/read-replica-endpoint`,
-        stringValue: readReplica.instanceEndpoint.hostname,
+      this.parameterManager.createParameter('databaseReadReplicaEndpoint', {
+        section: 'database',
+        key: 'read-replica-endpoint',
+        value: readReplica.instanceEndpoint.hostname,
+        description: 'RDS PostgreSQL read replica endpoint',
       });
 
-      // Add CloudWatch alarms for read replica
-      const readReplicaCpuAlarm = new cloudwatch.Alarm(this, 'DBReadReplicaCpuAlarm', {
-        alarmName: `rtm-${environment}-db-read-replica-high-cpu`,
-        alarmDescription: 'RDS read replica high CPU utilization',
-        metric: readReplica.metricCPUUtilization({
-          statistic: 'Average',
-          period: cdk.Duration.minutes(5),
-        }),
-        threshold: 80,
-        evaluationPeriods: 3,
-        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-      });
-      readReplicaCpuAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.alertsTopic));
-
-      const replicationLagAlarm = new cloudwatch.Alarm(this, 'DBReplicationLagAlarm', {
-        alarmName: `rtm-${environment}-db-replication-lag`,
-        alarmDescription: 'RDS read replica replication lag',
-        metric: new cloudwatch.Metric({
-          namespace: 'AWS/RDS',
-          metricName: 'ReadReplicaLag',
-          dimensionsMap: {
-            DBInstanceIdentifier: readReplica.instanceIdentifier,
-          },
-          statistic: 'Average',
-          period: cdk.Duration.minutes(5),
-        }),
-        threshold: 300, // 5 minutes in seconds
-        evaluationPeriods: 2,
-        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-      });
-      replicationLagAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.alertsTopic));
+      // Add CloudWatch alarms for read replica using alarm factory
+      this.alarmFactory.createAlarms(AlarmSets.readReplica(readReplica));
     }
   }
 
@@ -629,105 +406,15 @@ export class InfrastructureStack extends cdk.Stack {
       displayName: `RTM ${environment} Alerts`,
     });
 
-    // Store alerts topic ARN
-    new ssm.StringParameter(this, 'AlertsTopicArn', {
-      parameterName: `/rtm/${environment}/monitoring/alerts-topic-arn`,
-      stringValue: this.alertsTopic.topicArn,
-    });
+    // Store alerts topic ARN and create exports using helpers
+    this.parameterManager.createParameters(ParameterSets.monitoring(this.alertsTopic));
+    this.exportManager.createExports(ExportSets.monitoring(this.alertsTopic));
 
-    // Export for cross-stack references
-    new cdk.CfnOutput(this, 'AlertsTopicArnOutput', {
-      value: this.alertsTopic.topicArn,
-      description: 'SNS Topic ARN for alerts',
-      exportName: `rtm-${environment}-alerts-topic-arn`,
-    });
+    // Create log groups using factory
+    this.logGroupFactory.createLogGroups(LogGroupSets.apiGateway());
 
-    // CloudWatch Log Groups
-    new logs.LogGroup(this, 'APIGatewayLogGroup', {
-      logGroupName: `/aws/apigateway/rtm-${environment}-api`,
-      retention:
-        environment === 'production' ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.ONE_WEEK,
-      removalPolicy:
-        environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
-
-    // RDS Alarms
-    const dbCpuAlarm = new cloudwatch.Alarm(this, 'DBCpuAlarm', {
-      alarmName: `rtm-${environment}-db-high-cpu`,
-      alarmDescription: 'RDS high CPU utilization',
-      metric: this.database.metricCPUUtilization({
-        statistic: 'Average',
-        period: cdk.Duration.minutes(5),
-      }),
-      threshold: environment === 'production' ? 80 : 90,
-      evaluationPeriods: 3,
-      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-    });
-    dbCpuAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.alertsTopic));
-
-    const dbConnectionsAlarm = new cloudwatch.Alarm(this, 'DBConnectionsAlarm', {
-      alarmName: `rtm-${environment}-db-high-connections`,
-      alarmDescription: 'RDS high connection count',
-      metric: this.database.metricDatabaseConnections({
-        statistic: 'Average',
-        period: cdk.Duration.minutes(5),
-      }),
-      threshold: environment === 'production' ? 15 : 8, // Based on our configuration
-      evaluationPeriods: 2,
-      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-    });
-    dbConnectionsAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.alertsTopic));
-
-    const dbFreeSpaceAlarm = new cloudwatch.Alarm(this, 'DBFreeSpaceAlarm', {
-      alarmName: `rtm-${environment}-db-low-free-space`,
-      alarmDescription: 'RDS low free storage space',
-      metric: this.database.metricFreeStorageSpace({
-        statistic: 'Average',
-        period: cdk.Duration.minutes(15),
-      }),
-      threshold: 2 * 1024 * 1024 * 1024, // 2GB in bytes
-      evaluationPeriods: 1,
-      comparisonOperator: cloudwatch.ComparisonOperator.LESS_THAN_THRESHOLD,
-      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-    });
-    dbFreeSpaceAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.alertsTopic));
-
-    // Cognito Alarms
-    const cognitoThrottleAlarm = new cloudwatch.Alarm(this, 'CognitoThrottleAlarm', {
-      alarmName: `rtm-${environment}-cognito-throttling`,
-      alarmDescription: 'Cognito API throttling',
-      metric: new cloudwatch.Metric({
-        namespace: 'AWS/Cognito',
-        metricName: 'UserPoolRequestThrottled',
-        dimensionsMap: {
-          UserPool: this.userPool.userPoolId,
-        },
-        statistic: 'Sum',
-        period: cdk.Duration.minutes(5),
-      }),
-      threshold: environment === 'production' ? 5 : 10,
-      evaluationPeriods: 2,
-      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-    });
-    cognitoThrottleAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.alertsTopic));
-
-    // Lambda concurrency monitoring (will be configured when Lambda functions are added)
-    const lambdaConcurrencyMetric = new cloudwatch.Metric({
-      namespace: 'AWS/Lambda',
-      metricName: 'ConcurrentExecutions',
-      statistic: 'Maximum',
-      period: cdk.Duration.minutes(1),
-    });
-
-    const lambdaConcurrencyAlarm = new cloudwatch.Alarm(this, 'LambdaConcurrencyAlarm', {
-      alarmName: `rtm-${environment}-lambda-high-concurrency`,
-      alarmDescription: 'Lambda high concurrency usage',
-      metric: lambdaConcurrencyMetric,
-      threshold: environment === 'production' ? 800 : 100,
-      evaluationPeriods: 3,
-      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-    });
-    lambdaConcurrencyAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.alertsTopic));
+    // Create alarms using alarm factory (will be initialized after this method)
+    // Alarms will be created in a separate method called after alarm factory initialization
 
     // CloudWatch Dashboard
     const dashboard = new cloudwatch.Dashboard(this, 'MonitoringDashboard', {
@@ -750,6 +437,20 @@ export class InfrastructureStack extends cdk.Stack {
     ];
 
     dashboard.addWidgets(...rdsWidgets);
+  }
+
+  /**
+   * Setup CloudWatch alarms using alarm factory
+   */
+  private setupCloudWatchAlarms(environment: string) {
+    // Create database alarms
+    this.alarmFactory.createAlarms(AlarmSets.database(this.database));
+    
+    // Create Cognito alarms
+    this.alarmFactory.createAlarms(AlarmSets.cognito(this.userPool));
+    
+    // Create Lambda concurrency alarms
+    this.alarmFactory.createAlarms(AlarmSets.lambda());
   }
 
   private setupHostedZone(environment: string, config: EnvironmentConfig) {
@@ -775,35 +476,9 @@ export class InfrastructureStack extends cdk.Stack {
         comment: `Hosted zone for ${rootDomain} - managed by RTM ${environment} infrastructure`,
       });
 
-      // Export hosted zone ID and domain name for cross-stack access
-      new cdk.CfnOutput(this, 'HostedZoneId', {
-        value: this.hostedZone.hostedZoneId,
-        description: 'Route 53 Hosted Zone ID',
-        exportName: `rtm-${environment}-hosted-zone-id`,
-      });
-
-      new cdk.CfnOutput(this, 'HostedZoneName', {
-        value: rootDomain,
-        description: 'Route 53 Hosted Zone Domain Name',
-        exportName: `rtm-${environment}-hosted-zone-name`,
-      });
-
-      new cdk.CfnOutput(this, 'HostedZoneNameServers', {
-        value: cdk.Fn.join(',', this.hostedZone.hostedZoneNameServers || []),
-        description: 'Route 53 Name Servers (configure these at your domain registrar)',
-        exportName: `rtm-${environment}-name-servers`,
-      });
-
-      // Store hosted zone configuration in SSM
-      new ssm.StringParameter(this, 'HostedZoneDomain', {
-        parameterName: `/rtm/${environment}/dns/root-domain`,
-        stringValue: rootDomain,
-      });
-
-      new ssm.StringParameter(this, 'HostedZoneIdParam', {
-        parameterName: `/rtm/${environment}/dns/hosted-zone-id`,
-        stringValue: this.hostedZone.hostedZoneId,
-      });
+      // Create exports and parameters using helpers
+      this.exportManager.createExports(ExportSets.dns(this.hostedZone, rootDomain));
+      this.parameterManager.createParameters(ParameterSets.dns(this.hostedZone, rootDomain));
 
       console.log(`✅ Hosted zone created for ${rootDomain} - configure name servers at domain registrar`);
     } else {
