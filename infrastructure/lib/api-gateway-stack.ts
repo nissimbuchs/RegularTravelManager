@@ -441,6 +441,7 @@ export class ApiGatewayStack extends cdk.Stack {
     // Project management endpoints (admin protected)
     // GET /projects - List all projects (for admin), use existing projects resource
     const getAllProjectsIntegration = new apigateway.LambdaIntegration(getAllProjectsFunction);
+    projectsResource.addMethod('GET', getAllProjectsIntegration, defaultMethodOptions); // List all projects (for managers)
     projectsResource.addMethod('POST', new apigateway.LambdaIntegration(createProjectFunction), defaultMethodOptions); // Create project
 
     // Project by ID endpoints
