@@ -15,8 +15,10 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambdaNodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as customResources from 'aws-cdk-lib/custom-resources';
+import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as path from 'path';
 import { getTestUsersForEnvironment } from './config/test-users';
+import { getEnvironmentConfig, EnvironmentConfig } from './config/environment-config';
 
 export interface InfrastructureStackProps extends cdk.StackProps {
   environment: 'dev' | 'staging' | 'production';
@@ -32,11 +34,13 @@ export class InfrastructureStack extends cdk.Stack {
   public lambdaRole!: iam.Role;
   public lambdaSecurityGroup!: ec2.SecurityGroup;
   public alertsTopic!: sns.Topic;
+  public hostedZone?: route53.HostedZone;
 
   constructor(scope: Construct, id: string, props: InfrastructureStackProps) {
     super(scope, id, props);
 
     const { environment } = props;
+    const config = getEnvironmentConfig(environment);
 
     // VPC for RDS and Lambda
     this.vpc = new ec2.Vpc(this, 'RTM-VPC', {
@@ -78,6 +82,9 @@ export class InfrastructureStack extends cdk.Stack {
 
     // CloudWatch monitoring and alerting
     this.setupMonitoring(environment);
+
+    // Route 53 hosted zone for custom domains
+    this.setupHostedZone(environment, config);
 
     // Environment-specific parameters
     this.setupEnvironmentParameters(environment);
@@ -158,6 +165,9 @@ export class InfrastructureStack extends cdk.Stack {
       parameterName: `/rtm/${environment}/database/port`,
       stringValue: this.database.instanceEndpoint.port.toString(),
     });
+
+    // PostGIS Extension Installation
+    this.setupPostGISExtension(environment);
   }
 
   private setupCognito(environment: string) {
@@ -316,7 +326,9 @@ export class InfrastructureStack extends cdk.Stack {
       properties: {
         UserPoolId: this.userPool.userPoolId,
         Users: testUsers,
-        DatabaseUrl: `postgresql://rtm_admin:[SECRET]@${this.database.instanceEndpoint.hostname}:5432/rtm_database`,
+        DatabaseUrl: this.database.instanceEndpoint.hostname 
+          ? `postgresql://rtm_admin:[SECRET]@${this.database.instanceEndpoint.hostname}:5432/rtm_database`
+          : '',
         DatabaseSecretArn: this.database.secret?.secretArn || '',
         Environment: environment,
         // Add a timestamp to force updates when needed
@@ -331,6 +343,69 @@ export class InfrastructureStack extends cdk.Stack {
     console.log(
       `Configured to create ${testUsers.length} test users for ${environment} environment`
     );
+  }
+
+  private setupPostGISExtension(environment: string) {
+    // Create Lambda function to install PostGIS extension
+    const postgisInstallerFunction = new lambdaNodejs.NodejsFunction(this, 'PostGISInstallerFunction', {
+      functionName: `rtm-${environment}-postgis-installer`,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'postgisInstaller',
+      entry: path.join(__dirname, 'lambda/postgis-installer.ts'),
+      timeout: cdk.Duration.minutes(5),
+      vpc: this.vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [this.lambdaSecurityGroup],
+      environment: {
+        RTM_ENVIRONMENT: environment,
+        DB_HOST: this.database.instanceEndpoint.hostname,
+        DB_PORT: this.database.instanceEndpoint.port.toString(),
+        DB_NAME: 'rtm_database',
+      },
+      bundling: {
+        externalModules: ['pg-native'],
+      },
+    });
+
+    // Grant access to database credentials
+    postgisInstallerFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['secretsmanager:GetSecretValue'],
+        resources: [
+          `arn:aws:secretsmanager:${this.region}:${this.account}:secret:rtm-${environment}-db-credentials*`,
+        ],
+      })
+    );
+
+    // Create log group for PostGIS installer
+    const postgisInstallerLogGroup = new logs.LogGroup(this, 'PostGISInstallerProviderLogs', {
+      logGroupName: `/aws/lambda/rtm-${environment}-postgis-installer-provider`,
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    // Create Custom Resource Provider
+    const postgisProvider = new customResources.Provider(this, 'PostGISInstallerProvider', {
+      onEventHandler: postgisInstallerFunction,
+      logGroup: postgisInstallerLogGroup,
+    });
+
+    // Create Custom Resource to install PostGIS
+    const postgisResource = new cdk.CustomResource(this, 'PostGISInstallerResource', {
+      serviceToken: postgisProvider.serviceToken,
+      properties: {
+        Environment: environment,
+        DatabaseEndpoint: this.database.instanceEndpoint.hostname,
+        // Change this value to force re-installation if needed
+        Version: '1.0.0',
+      },
+    });
+
+    // Ensure PostGIS installation happens after database is ready
+    postgisResource.node.addDependency(this.database);
   }
 
   private setupLocationService(environment: string) {
@@ -675,6 +750,65 @@ export class InfrastructureStack extends cdk.Stack {
     ];
 
     dashboard.addWidgets(...rdsWidgets);
+  }
+
+  private setupHostedZone(environment: string, config: EnvironmentConfig) {
+    // Only create hosted zone if custom domains are enabled for staging/production
+    const shouldCreateHostedZone = (config.api.customDomainEnabled || config.web.customDomainEnabled) && 
+                                   (config.api.domainName || config.web.domainName);
+
+    if (shouldCreateHostedZone) {
+      // Extract root domain from either API or web domain
+      const domainName = config.api.domainName || config.web.domainName;
+      if (!domainName) {
+        throw new Error('Domain name is required when custom domain is enabled');
+      }
+      
+      const domainParts = domainName.split('.');
+      const rootDomain = domainParts.slice(-2).join('.'); // Get the last two parts (domain.tld)
+
+      console.log(`Creating hosted zone for root domain: ${rootDomain}`);
+
+      // Create hosted zone for the root domain
+      this.hostedZone = new route53.HostedZone(this, 'RootDomainHostedZone', {
+        zoneName: rootDomain,
+        comment: `Hosted zone for ${rootDomain} - managed by RTM ${environment} infrastructure`,
+      });
+
+      // Export hosted zone ID and domain name for cross-stack access
+      new cdk.CfnOutput(this, 'HostedZoneId', {
+        value: this.hostedZone.hostedZoneId,
+        description: 'Route 53 Hosted Zone ID',
+        exportName: `rtm-${environment}-hosted-zone-id`,
+      });
+
+      new cdk.CfnOutput(this, 'HostedZoneName', {
+        value: rootDomain,
+        description: 'Route 53 Hosted Zone Domain Name',
+        exportName: `rtm-${environment}-hosted-zone-name`,
+      });
+
+      new cdk.CfnOutput(this, 'HostedZoneNameServers', {
+        value: cdk.Fn.join(',', this.hostedZone.hostedZoneNameServers || []),
+        description: 'Route 53 Name Servers (configure these at your domain registrar)',
+        exportName: `rtm-${environment}-name-servers`,
+      });
+
+      // Store hosted zone configuration in SSM
+      new ssm.StringParameter(this, 'HostedZoneDomain', {
+        parameterName: `/rtm/${environment}/dns/root-domain`,
+        stringValue: rootDomain,
+      });
+
+      new ssm.StringParameter(this, 'HostedZoneIdParam', {
+        parameterName: `/rtm/${environment}/dns/hosted-zone-id`,
+        stringValue: this.hostedZone.hostedZoneId,
+      });
+
+      console.log(`✅ Hosted zone created for ${rootDomain} - configure name servers at domain registrar`);
+    } else {
+      console.log('ℹ️ Custom domains not enabled, skipping hosted zone creation');
+    }
   }
 
   private setupResourceTags(environment: string) {

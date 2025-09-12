@@ -253,10 +253,13 @@ exports.handler = async event => {
     // Check if we should clear existing data
     const clearData = event.clearData || event.force || false;
 
-    // Get database credentials
+    // Get database credentials based on environment
+    const secretId = `rtm-${environment}-db-credentials`;
+    console.log(`Loading database credentials from secret: ${secretId}`);
+    
     const secret = await secretsManager
       .getSecretValue({
-        SecretId: 'rtm-dev-db-credentials',
+        SecretId: secretId,
       })
       .promise();
 
@@ -302,7 +305,7 @@ exports.handler = async event => {
     // Load sample data from infrastructure/data directory (single source of truth)
     console.log('Reading sample data template from infrastructure/data/sample-data.sql...');
     const sampleDataPath = path.join(__dirname, 'data/sample-data.sql');
-    const sampleDataSQL = fs.readFileSync(sampleDataPath, 'utf8');
+    let sampleDataSQL = fs.readFileSync(sampleDataPath, 'utf8');
 
     if (useMockIds) {
       console.log(
@@ -313,10 +316,51 @@ exports.handler = async event => {
         console.log(`Mock user: ${userInfo.email} → ${userInfo.mockId} (pre-configured in SQL)`);
       }
     } else {
-      console.log('Production environment detected - would need real Cognito user creation');
-      // TODO: Implement production Cognito user creation if needed
-      // For now, production environments should use real Cognito authentication
-      throw new Error('Production environment Cognito user creation not implemented yet');
+      console.log('Staging/Production environment detected - using existing Cognito user system');
+      console.log('Note: Users should already exist from the user creator function during CDK deployment');
+      
+      // Get real Cognito user IDs to replace mock UUIDs in sample data
+      const userPoolId = process.env.USER_POOL_ID;
+      if (userPoolId) {
+        console.log('Retrieving real Cognito user IDs for sample data mapping...');
+        
+        // Create mapping from mock UUIDs to real Cognito IDs
+        const userIdMapping = {};
+        
+        for (const userInfo of sampleUsers) {
+          try {
+            const getUserParams = {
+              UserPoolId: userPoolId,
+              Username: userInfo.email,
+            };
+            
+            const existingUser = await cognitoClient.adminGetUser(getUserParams).promise();
+            const realCognitoId = existingUser.Username;
+            
+            userIdMapping[userInfo.mockId] = realCognitoId;
+            console.log(`Mapping: ${userInfo.email} → ${userInfo.mockId} → ${realCognitoId}`);
+          } catch (err) {
+            console.warn(`Could not find user ${userInfo.email} in Cognito:`, err.message);
+            // Use mock ID as fallback if user doesn't exist
+            userIdMapping[userInfo.mockId] = userInfo.mockId;
+          }
+        }
+        
+        // Replace mock UUIDs with real Cognito IDs in sample data
+        console.log('Replacing mock UUIDs with real Cognito user IDs...');
+        let updatedSampleDataSQL = sampleDataSQL;
+        
+        for (const [mockId, realId] of Object.entries(userIdMapping)) {
+          // Replace all occurrences of mock UUID with real UUID
+          const regex = new RegExp(mockId.replace(/-/g, '\\-'), 'g');
+          updatedSampleDataSQL = updatedSampleDataSQL.replace(regex, realId);
+        }
+        
+        sampleDataSQL = updatedSampleDataSQL;
+        console.log('UUID replacement completed');
+      } else {
+        console.warn('USER_POOL_ID not available, using sample data as-is with mock UUIDs');
+      }
     }
 
     console.log('Loading sample data...');

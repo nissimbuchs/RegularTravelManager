@@ -8,6 +8,10 @@ export interface EnvironmentConfig {
     domainName?: string;
     customDomainEnabled: boolean;
   };
+  web: {
+    domainName?: string;
+    customDomainEnabled: boolean;
+  };
   monitoring: {
     enableDetailedLogs: boolean;
     enableXrayTracing: boolean;
@@ -19,6 +23,9 @@ export const ENVIRONMENT_CONFIG: Record<string, EnvironmentConfig> = {
     api: {
       customDomainEnabled: false,
     },
+    web: {
+      customDomainEnabled: false,
+    },
     monitoring: {
       enableDetailedLogs: true,
       enableXrayTracing: true,
@@ -27,7 +34,11 @@ export const ENVIRONMENT_CONFIG: Record<string, EnvironmentConfig> = {
 
   staging: {
     api: {
-      domainName: 'api-staging.company.com',
+      domainName: 'api-staging.buchs.be',
+      customDomainEnabled: true,
+    },
+    web: {
+      domainName: 'rtm-staging.buchs.be',
       customDomainEnabled: true,
     },
     monitoring: {
@@ -39,6 +50,10 @@ export const ENVIRONMENT_CONFIG: Record<string, EnvironmentConfig> = {
   production: {
     api: {
       domainName: 'api.company.com',
+      customDomainEnabled: true,
+    },
+    web: {
+      domainName: 'company.com',
       customDomainEnabled: true,
     },
     monitoring: {

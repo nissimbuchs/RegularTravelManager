@@ -1,0 +1,54 @@
+{
+  "rtm-staging-infrastructure": {
+    "HostedZoneName": "buchs.be",
+    "ExportsOutputRefUserPoolWebClient4C9370B02E2C9FF9": "3k2h2kvkplmf0k3vf2k39j4v9b",
+    "AlertsTopicArnOutput": "arn:aws:sns:eu-central-1:991687235565:rtm-staging-alerts",
+    "HostedZoneId": "Z02464981OGDO5OZW6ENF",
+    "ExportsOutputFnGetAttDatabaseB269D8BBEndpointPort3ACB3F51": "5432",
+    "ExportsOutputRefRTMVPCprivateSubnet2SubnetE1B61EE733A2FCBF": "subnet-0e48aaf3d8ae639bd",
+    "HostedZoneNameServers": "ns-1135.awsdns-13.org,ns-1575.awsdns-04.co.uk,ns-541.awsdns-03.net,ns-454.awsdns-56.com",
+    "ExportsOutputFnGetAttLambdaSecurityGroup0BD9FC99GroupId34A98CFB": "sg-05b3f5a9e0852197c",
+    "ExportsOutputRefAlertsTopic3414BE910C2DFF03": "arn:aws:sns:eu-central-1:991687235565:rtm-staging-alerts",
+    "UserPoolIdOutput": "eu-central-1_zxdJgdsjJ",
+    "UserPoolClientIdOutput": "3k2h2kvkplmf0k3vf2k39j4v9b",
+    "ExportsOutputRefRTMVPCprivateSubnet1Subnet1F2FCCEC3A3D2EFE": "subnet-080b498fe588059ff",
+    "ExportsOutputFnGetAttLambdaExecutionRoleD5C26073ArnADAF6607": "arn:aws:iam::991687235565:role/rtm-staging-lambda-role",
+    "ExportsOutputRefUserPool6BA7E5F296FD7236": "eu-central-1_zxdJgdsjJ",
+    "ExportsOutputFnGetAttDatabaseB269D8BBEndpointAddressA4DBD059": "rtm-staging-infrastructure-databaseb269d8bb-nzx9cjvc78ae.c18k2mga4rnh.eu-central-1.rds.amazonaws.com"
+  },
+  "rtm-staging-lambda": {
+    "AdminProjectManagementFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-admin-project-management",
+    "CreateSubprojectFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-create-subproject",
+    "ProjectsManagementFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-projects-management",
+    "GetManagersFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-get-managers",
+    "CalculateAllowanceFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-calculate-allowance",
+    "CheckProjectReferencesFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-check-project-references",
+    "CalculateTravelCostFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-calculate-travel-cost",
+    "SearchProjectsFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-search-projects",
+    "GetCalculationAuditFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-get-calculation-audit",
+    "CalculateDistanceFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-calculate-distance",
+    "GetEmployeeProfileFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-get-employee-profile",
+    "ManagersDashboardFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-managers-dashboard",
+    "CleanupExpiredCacheFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-cleanup-expired-cache",
+    "GetActiveProjectsFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-get-active-projects",
+    "GetProjectByIdFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-get-project-by-id",
+    "UpdateEmployeeAddressFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-update-employee-address",
+    "CreateProjectFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-create-project",
+    "GetSubprojectsForProjectFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-get-subprojects-for-project",
+    "InvalidateCalculationCacheFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-invalidate-calculation-cache",
+    "HealthFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-health",
+    "GetSubprojectByIdFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-get-subproject-by-id",
+    "AuthorizerFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-authorizer",
+    "GetAllProjectsFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-get-all-projects",
+    "EmployeesTravelRequestsFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-employees-travel-requests",
+    "AdminUserManagementFunctionArnExport": "arn:aws:lambda:eu-central-1:991687235565:function:rtm-staging-admin-user-management"
+  },
+  "rtm-staging-api-gateway": {
+    "ApiGatewayUrlOutput": "https://api-staging.buchs.be/",
+    "APIEndpoint1793E782": "https://bd973p2m2g.execute-api.eu-central-1.amazonaws.com/staging/"
+  },
+  "rtm-staging-web": {
+    "WebApplicationURL": "https://rtm-staging.buchs.be",
+    "CloudFrontDomainOutput": "d23i41oue7n59b.cloudfront.net"
+  }
+}

@@ -12,7 +12,11 @@ import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as cloudwatchActions from 'aws-cdk-lib/aws-cloudwatch-actions';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as path from 'path';
+import { getEnvironmentConfig } from './config/environment-config';
 
 export interface WebStackProps extends cdk.StackProps {
   environment: 'dev' | 'staging' | 'production';
@@ -21,11 +25,14 @@ export interface WebStackProps extends cdk.StackProps {
 export class WebStack extends cdk.Stack {
   public readonly webBucket: s3.Bucket;
   public readonly distribution: cloudfront.Distribution;
+  public hostedZone?: route53.IHostedZone;
+  public certificate?: acm.ICertificate;
 
   constructor(scope: Construct, id: string, props: WebStackProps) {
     super(scope, id, props);
 
     const { environment } = props;
+    const config = getEnvironmentConfig(environment);
 
     // Import required values from other stacks
     const apiUrl = cdk.Fn.importValue(`rtm-${environment}-api-url`);
@@ -79,8 +86,13 @@ function handler(event) {
       comment: 'Routes SPA paths to index.html while preserving API paths',
     });
 
-    // CloudFront distribution with API Gateway reverse proxy
-    this.distribution = new cloudfront.Distribution(this, 'WebDistribution', {
+    // Setup custom domain and SSL certificate if enabled
+    if (config.web.customDomainEnabled && config.web.domainName) {
+      this.setupCustomDomain(environment, config.web.domainName);
+    }
+
+    // CloudFront distribution configuration
+    const distributionConfig: cloudfront.DistributionProps = {
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(this.webBucket, {
           originAccessControl,
@@ -97,9 +109,7 @@ function handler(event) {
       },
       additionalBehaviors: {
         '/api/*': {
-          origin: new origins.HttpOrigin(apiGatewayDomain, {
-            originPath: `/${environment}`, // API Gateway stage path
-          }),
+          origin: new origins.HttpOrigin(apiGatewayDomain),
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, // Disable caching for API calls
           allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL, // Support all HTTP methods
@@ -109,13 +119,31 @@ function handler(event) {
         },
       },
       defaultRootObject: 'index.html',
-      // Error responses removed - SPA routing is now handled by CloudFront Function
       priceClass:
         environment === 'production'
           ? cloudfront.PriceClass.PRICE_CLASS_ALL
           : cloudfront.PriceClass.PRICE_CLASS_100,
       comment: `RTM ${environment} Web Distribution with API Proxy - Updated`,
-    });
+    };
+
+    // Add custom domain configuration if enabled
+    if (config.web.customDomainEnabled && config.web.domainName && this.certificate) {
+      Object.assign(distributionConfig, {
+        domainNames: [config.web.domainName],
+        certificate: this.certificate,
+      });
+    }
+
+    // CloudFront distribution with API Gateway reverse proxy
+    this.distribution = new cloudfront.Distribution(this, 'WebDistribution', distributionConfig);
+
+    // Note: DNS records are managed externally via CNAME records
+    // CNAME record needed: rtm-staging.buchs.be -> d23i41oue7n59b.cloudfront.net
+    if (config.web.customDomainEnabled && config.web.domainName) {
+      console.log(`Custom domain enabled: ${config.web.domainName}`);
+      console.log(`CloudFront distribution: ${this.distribution.distributionDomainName}`);
+      console.log(`Create CNAME record: ${config.web.domainName} -> ${this.distribution.distributionDomainName}`);
+    }
 
     // Deploy web application to S3 with environment-specific source map handling
     const excludePatterns = ['assets/config/config.json', 'assets/config/config.*.json'];
@@ -164,10 +192,14 @@ function handler(event) {
       exportName: `rtm-${environment}-cloudfront-domain`,
     });
 
-    // Output the web URL
+    // Output the web URL (custom domain if configured, otherwise CloudFront domain)
+    const webUrl = config.web.customDomainEnabled && config.web.domainName 
+      ? `https://${config.web.domainName}`
+      : `https://${this.distribution.distributionDomainName}`;
+
     new cdk.CfnOutput(this, 'WebApplicationURL', {
       description: 'Web application URL',
-      value: `https://${this.distribution.distributionDomainName}`,
+      value: webUrl,
       exportName: `rtm-${environment}-web-url`,
     });
 
@@ -306,6 +338,45 @@ function handler(event) {
       treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
     });
     cloudFrontLatencyAlarm.addAlarmAction(new cloudwatchActions.SnsAction(alertsTopic));
+  }
+
+  private setupCustomDomain(environment: string, domainName: string) {
+    // Extract the root domain from the subdomain (e.g., 'buchs.be' from 'rtm-staging.buchs.be')
+    const domainParts = domainName.split('.');
+    const rootDomain = domainParts.slice(-2).join('.'); // Get the last two parts (domain.tld)
+
+    console.log(`Setting up custom domain: ${domainName} for root domain: ${rootDomain}`);
+
+    // Import the hosted zone that was created in InfrastructureStack
+    const hostedZoneId = cdk.Fn.importValue(`rtm-${environment}-hosted-zone-id`);
+    const hostedZoneName = cdk.Fn.importValue(`rtm-${environment}-hosted-zone-name`);
+    this.hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+      hostedZoneId: hostedZoneId,
+      zoneName: hostedZoneName,
+    });
+
+    // Create SSL certificate for the web subdomain with DNS validation
+    // CloudFront requires certificates to be in us-east-1 region
+    // Using DnsValidatedCertificate as it supports cross-region deployment
+    this.certificate = new acm.DnsValidatedCertificate(this, 'WebCertificate', {
+      domainName: domainName,
+      hostedZone: this.hostedZone,
+      region: 'us-east-1', // Required for CloudFront
+    });
+
+    // Store certificate ARN in SSM for reference
+    new ssm.StringParameter(this, 'WebCertificateArn', {
+      parameterName: `/rtm/${environment}/web/certificate-arn`,
+      stringValue: this.certificate.certificateArn,
+    });
+
+    // Store custom domain in SSM
+    new ssm.StringParameter(this, 'WebCustomDomain', {
+      parameterName: `/rtm/${environment}/web/custom-domain`,
+      stringValue: domainName,
+    });
+
+    console.log(`✅ Custom domain setup completed for ${domainName}`);
   }
 
   private setupResourceTags(environment: string) {

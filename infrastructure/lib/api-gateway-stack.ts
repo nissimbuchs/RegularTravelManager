@@ -5,6 +5,9 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { getEnvironmentConfig } from './config/environment-config';
 
 export interface ApiGatewayStackProps extends cdk.StackProps {
@@ -13,11 +16,15 @@ export interface ApiGatewayStackProps extends cdk.StackProps {
 
 export class ApiGatewayStack extends cdk.Stack {
   public readonly restApi: apigateway.RestApi;
+  public customDomain?: apigateway.DomainName;
+  public hostedZone?: route53.IHostedZone;
+  public certificate?: acm.ICertificate;
 
   constructor(scope: Construct, id: string, props: ApiGatewayStackProps) {
     super(scope, id, props);
 
     const { environment } = props;
+    const config = getEnvironmentConfig(environment);
 
     // Create API Gateway without CORS (CloudFront reverse proxy handles same-origin requests)
     this.restApi = new apigateway.RestApi(this, 'API', {
@@ -274,6 +281,8 @@ export class ApiGatewayStack extends cdk.Stack {
       handler: authorizerFunction,
       authorizerName: `rtm-${environment}-authorizer-v3`,
       resultsCacheTtl: cdk.Duration.minutes(0), // Disable caching for development
+      identitySource: 'method.request.header.Authorization', // Explicitly specify Authorization header
+      validationRegex: '^Bearer [-0-9A-Za-z._~+/]+=*$', // JWT token validation regex
     });
 
     // Grant API Gateway permission to invoke authorizer function
@@ -339,20 +348,30 @@ export class ApiGatewayStack extends cdk.Stack {
       managersDashboardFunction
     );
 
+    // Setup custom domain and SSL certificate if enabled
+    if (config.api.customDomainEnabled && config.api.domainName) {
+      this.setupApiCustomDomain(environment, config.api.domainName);
+    }
+
     // Store API configuration in SSM for reference
     new ssm.StringParameter(this, 'ApiGatewayId', {
       parameterName: `/rtm/${environment}/api/gateway-id`,
       stringValue: this.restApi.restApiId,
     });
 
+    // Store API URL (custom domain if configured, otherwise default API Gateway URL)
+    const apiUrl = config.api.customDomainEnabled && config.api.domainName && this.customDomain
+      ? `https://${config.api.domainName}/`
+      : this.restApi.url;
+
     new ssm.StringParameter(this, 'ApiGatewayUrl', {
       parameterName: `/rtm/${environment}/api/gateway-url`,
-      stringValue: this.restApi.url,
+      stringValue: apiUrl,
     });
 
     // Output API Gateway URL
     new cdk.CfnOutput(this, 'ApiGatewayUrlOutput', {
-      value: this.restApi.url,
+      value: apiUrl,
       description: 'API Gateway URL',
       exportName: `rtm-${environment}-api-url`,
     });
@@ -779,5 +798,59 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // Grant API Gateway permission to invoke manager dashboard function
     managersDashboardFunction.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));
+  }
+
+  private setupApiCustomDomain(environment: string, domainName: string) {
+    // Extract the root domain from the subdomain (e.g., 'buchs.be' from 'api-staging.buchs.be')
+    const domainParts = domainName.split('.');
+    const rootDomain = domainParts.slice(-2).join('.'); // Get the last two parts (domain.tld)
+
+    console.log(`Setting up API custom domain: ${domainName} for root domain: ${rootDomain}`);
+
+    // Import the hosted zone that was created in InfrastructureStack
+    const hostedZoneId = cdk.Fn.importValue(`rtm-${environment}-hosted-zone-id`);
+    const hostedZoneName = cdk.Fn.importValue(`rtm-${environment}-hosted-zone-name`);
+    this.hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'ApiHostedZone', {
+      hostedZoneId: hostedZoneId,
+      zoneName: hostedZoneName,
+    });
+
+    // Create SSL certificate for the API subdomain with DNS validation
+    this.certificate = new acm.Certificate(this, 'ApiCertificate', {
+      domainName: domainName,
+      certificateName: `rtm-${environment}-api-cert`,
+      validation: acm.CertificateValidation.fromDns(this.hostedZone),
+    });
+
+    // Create API Gateway custom domain
+    this.customDomain = new apigateway.DomainName(this, 'ApiCustomDomain', {
+      domainName: domainName,
+      certificate: this.certificate,
+    });
+
+    // Add base path mapping to route root path to the staging stage
+    this.customDomain.addBasePathMapping(this.restApi, {
+      basePath: undefined, // Maps root path (/) to the API
+      stage: this.restApi.deploymentStage,
+    });
+
+    // Note: DNS records are managed externally via CNAME records
+    // CNAME record needed: api-staging.buchs.be -> d-ngwdhkrqv4.execute-api.eu-central-1.amazonaws.com
+    console.log(`API custom domain enabled: ${domainName}`);
+    console.log(`API Gateway regional domain: ${this.customDomain.domainNameAliasDomainName}`);
+    console.log(`Create CNAME record: ${domainName} -> ${this.customDomain.domainNameAliasDomainName}`);
+
+    // Store custom domain configuration in SSM
+    new ssm.StringParameter(this, 'ApiCustomDomainCertificateArn', {
+      parameterName: `/rtm/${environment}/api/certificate-arn`,
+      stringValue: this.certificate.certificateArn,
+    });
+
+    new ssm.StringParameter(this, 'ApiCustomDomainName', {
+      parameterName: `/rtm/${environment}/api/custom-domain`,
+      stringValue: domainName,
+    });
+
+    console.log(`✅ API custom domain setup completed for ${domainName}`);
   }
 }

@@ -124,44 +124,56 @@ async function createOrUpdateUsers(
 ): Promise<void> {
   console.log(`Processing ${users.length} users for User Pool: ${userPoolId}`);
 
-  // Get database credentials from Secrets Manager
-  let actualDatabaseUrl = databaseUrl;
-  if (databaseSecretArn) {
+  // Get database credentials from Secrets Manager and connect directly
+  let dbClient: PgClient | null = null;
+  let skipDatabaseOperations = false;
+  
+  if (!databaseSecretArn) {
+    console.warn('Database secret ARN not provided, skipping database operations');
+    console.log('Cognito user processing will continue without database sync');
+    skipDatabaseOperations = true;
+  } else {
     try {
+      // Get credentials directly from Secrets Manager
       const secretCommand = new GetSecretValueCommand({
         SecretId: databaseSecretArn,
       });
       const secretResponse = await secretsClient.send(secretCommand);
-      const secret = JSON.parse(secretResponse.SecretString || '{}');
-
-      // Replace [SECRET] placeholder with actual password
-      actualDatabaseUrl = databaseUrl.replace('[SECRET]', secret.password);
+      const credentials = JSON.parse(secretResponse.SecretString || '{}');
+      
       console.log('Successfully retrieved database credentials from Secrets Manager');
-    } catch (error) {
-      console.error('Failed to get database secret:', error);
-      throw error;
+      console.log('Connecting to database host:', credentials.host);
+      
+      // Use credentials directly - no URL parsing needed
+      const connectionConfig = {
+        host: credentials.host,
+        port: credentials.port || 5432,
+        database: credentials.dbname,
+        user: credentials.username,
+        password: credentials.password,
+        ssl: {
+          rejectUnauthorized: false, // Required for AWS RDS connections from Lambda
+        },
+      };
+      
+      console.log('Connection config:', {
+        host: connectionConfig.host,
+        port: connectionConfig.port,
+        database: connectionConfig.database,
+        user: connectionConfig.user,
+        password: '***'
+      });
+      
+      dbClient = new PgClient(connectionConfig);
+      await dbClient.connect();
+      console.log('Successfully connected to database');
+    } catch (dbError) {
+      console.error('Error connecting to database:', dbError);
+      console.warn('Continuing without database sync');
+      skipDatabaseOperations = true;
+      dbClient = null;
     }
   }
-
-  // Initialize database connection
-  console.log(
-    'Attempting to connect to database with URL pattern:',
-    actualDatabaseUrl.replace(/:[^:@]+@/, ':***@')
-  );
-
-  let dbClient: PgClient;
-  try {
-    dbClient = new PgClient({
-      connectionString: actualDatabaseUrl,
-      ssl: {
-        rejectUnauthorized: false, // Required for AWS RDS connections from Lambda
-      },
-    });
-  } catch (parseError) {
-    console.error('Error creating database client:', parseError);
-    throw new Error(`Database URL parsing failed: ${parseError}`);
-  }
-  await dbClient.connect();
 
   try {
     for (const user of users) {
@@ -239,24 +251,30 @@ async function createOrUpdateUsers(
       }
 
       // Sync with database using the existing sync function
-      try {
-        console.log(`Syncing user ${user.email} with database`);
-        const syncResult = await dbClient.query(
-          'SELECT sync_employee_with_cognito($1, $2, $3, $4) as employee_id',
-          [user.email, cognitoUserId, user.firstName, user.lastName]
-        );
-        console.log(
-          `Database sync completed for ${user.email}, employee_id: ${syncResult.rows[0].employee_id}`
-        );
-      } catch (dbError) {
-        console.error(`Database sync failed for ${user.email}:`, dbError);
-        // Continue with other users even if database sync fails
+      if (!skipDatabaseOperations && dbClient) {
+        try {
+          console.log(`Syncing user ${user.email} with database`);
+          const syncResult = await dbClient.query(
+            'SELECT sync_employee_with_cognito($1, $2, $3, $4) as employee_id',
+            [user.email, cognitoUserId, user.firstName, user.lastName]
+          );
+          console.log(
+            `Database sync completed for ${user.email}, employee_id: ${syncResult.rows[0].employee_id}`
+          );
+        } catch (dbError) {
+          console.error(`Database sync failed for ${user.email}:`, dbError);
+          // Continue with other users even if database sync fails
+        }
+      } else {
+        console.log(`Skipping database sync for ${user.email} (database not available)`);
       }
 
       console.log(`Successfully processed user: ${user.email}`);
     }
   } finally {
-    await dbClient.end();
+    if (dbClient) {
+      await dbClient.end();
+    }
   }
 }
 

@@ -8,11 +8,18 @@ RegularTravelManager is a Swiss employee travel allowance management system buil
 
 ## 🚀 Live Application Access
 
-**Production Environment (Dev Stack):**
+**Development Environment (AWS Dev Stack):**
 - **Frontend Application**: https://dz57qvo83kxos.cloudfront.net
 - **API Endpoint**: https://1kkd1bbkmh.execute-api.eu-central-1.amazonaws.com/dev/
 - **Database**: `rtm-dev-infrastructure-databaseb269d8bb-ynfofwwlfkkm.c18k2mga4rnh.eu-central-1.rds.amazonaws.com`
 - **Cognito User Pool**: `eu-central-1_LFA9Rhk2y`
+
+**Staging Environment ✅:**
+- **Frontend Application**: https://rtm-staging.buchs.be
+- **API Endpoint**: https://api-staging.buchs.be
+- **CloudFront Distribution**: d23i41oue7n59b.cloudfront.net
+- **SSL Certificates**: Valid TLS in us-east-1 region
+- **Custom Domains**: Configured with DNS validation
 
 ## Development Commands
 
