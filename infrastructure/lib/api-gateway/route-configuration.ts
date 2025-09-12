@@ -87,7 +87,13 @@ export class ApiRouteBuilder {
     let currentResource: apigateway.IResource = this.restApi.root;
     
     for (const segment of segments) {
-      currentResource = currentResource.addResource(segment);
+      // Try to find existing child resource first
+      const existingChild = (currentResource as any).children?.[segment];
+      if (existingChild) {
+        currentResource = existingChild;
+      } else {
+        currentResource = currentResource.addResource(segment);
+      }
     }
     
     return currentResource;
@@ -105,7 +111,13 @@ export class ApiRouteBuilder {
     let currentResource = baseResource;
     
     for (const segment of segments) {
-      currentResource = currentResource.addResource(segment);
+      // Try to find existing child resource first
+      const existingChild = (currentResource as any).children?.[segment];
+      if (existingChild) {
+        currentResource = existingChild;
+      } else {
+        currentResource = currentResource.addResource(segment);
+      }
     }
     
     return currentResource;
