@@ -21,6 +21,7 @@
 - ✅ Swiss business sample data (10 employees, 4 projects, 8 subprojects)
 - ✅ AWS Cognito authentication with test users
 - ✅ Complete audit trails and status tracking
+- 🚧 **Epic 5 - User Management:** Self-service registration, profile management, admin user control (in development)
 
 ## Introduction
 
@@ -36,6 +37,7 @@ This unified approach combines what would traditionally be separate backend and 
 
 | Date | Version | Description | Author |
 |------|---------|-------------|--------|
+| 2025-09-12 | 2.1 | **Brownfield Enhancement:** Added Epic 5 - User Management architecture with Cognito user registration, profile management, and admin user control capabilities. Enhanced authentication system with dynamic user onboarding while maintaining backward compatibility. | Product Owner Sarah |
 | 2025-09-12 | 2.0 | **Major Update:** Added comprehensive Frontend Subscription Lifecycle Management, Dynamic Configuration Management, and API Gateway & Lambda Integration Management sections. Enhanced with Phase 1 & Phase 2 subscription patterns, S3/CloudFront config generation, and complete development workflow documentation. | Architect Winston |
 | 2025-09-08 | 1.3 | Implemented 4-stack CDK architecture with improved separation of concerns | Architect Winston |
 | 2025-09-01 | 1.2 | Added LocalStack development environment with 95% AWS parity | Architect Winston |
@@ -2547,6 +2549,177 @@ This subscription lifecycle management is **non-negotiable architecture** that e
 - API Gateway 4xx/5xx error rates
 - Database query performance
 - Business KPIs (requests submitted, approval rates)
+
+## Epic 5: User Management - Brownfield Enhancement Architecture
+
+### Overview
+
+Epic 5 extends the existing Cognito authentication system with comprehensive user lifecycle management capabilities, enabling self-service registration, profile management, and administrative user control while maintaining full backward compatibility with existing authentication flows.
+
+### Integration Points
+
+**Existing Systems Enhanced:**
+- **AWS Cognito User Pool** (`eu-central-1_LFA9Rhk2y`): Extended with registration APIs and user management operations
+- **Employee Database Schema**: Enhanced with additional profile fields and audit tracking
+- **Angular Authentication Service**: Extended with registration and profile management methods
+- **Lambda Authorizer**: Enhanced to support new user management operations with proper role-based access
+
+### API Extensions
+
+**New Lambda Functions:**
+```typescript
+// User Registration & Profile Management
+POST /api/auth/register           // User registration with email verification
+PUT  /api/auth/profile            // Profile updates with geocoding
+POST /api/auth/change-password    // Password change with validation
+POST /api/auth/verify-email       // Email verification process
+
+// Admin User Management  
+GET  /api/admin/users             // List all users with pagination
+PUT  /api/admin/users/{id}/role   // Role assignment (employee/manager/admin)
+PUT  /api/admin/users/{id}/manager // Manager assignment
+DELETE /api/admin/users/{id}      // User deletion with cleanup
+
+// Manager Team Management
+GET  /api/manager/team            // Team member listing
+PUT  /api/manager/employees/{id}  // Limited employee profile updates
+```
+
+**Authentication Extensions:**
+- Registration flow integrates with existing JWT token validation
+- Profile updates trigger address geocoding using existing PostGIS functions
+- Admin operations respect existing role-based authorization patterns
+- Manager team access follows existing employee-manager relationship model
+
+### Database Schema Extensions
+
+**Employee Table Enhancement:**
+```sql
+-- Add columns to existing employees table (backward compatible)
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS phone_number VARCHAR(20);
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS notification_preferences JSONB DEFAULT '{"email": true}';
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS profile_updated_at TIMESTAMP;
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMP;
+
+-- Audit trail for profile changes
+CREATE TABLE employee_profile_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id UUID REFERENCES employees(id),
+    changed_fields JSONB,
+    old_values JSONB,
+    new_values JSONB,
+    changed_by UUID,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**User Registration Tracking:**
+```sql
+-- Track registration process and verification
+CREATE TABLE user_registrations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE,
+    verification_token VARCHAR(255),
+    verified_at TIMESTAMP,
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Frontend Architecture Extensions
+
+**New Angular Components:**
+- `UserRegistrationComponent`: Self-service registration with form validation
+- `ProfileManagementComponent`: User profile editing with address geocoding
+- `AdminUserManagementComponent`: Admin dashboard for user operations
+- `ManagerTeamComponent`: Manager team management interface
+
+**Service Extensions:**
+```typescript
+// AuthService extensions (maintains existing functionality)
+class AuthService {
+  // Existing methods preserved...
+  
+  // New registration methods
+  register(userData: RegisterRequest): Observable<RegisterResponse>
+  verifyEmail(token: string): Observable<void>
+  updateProfile(updates: ProfileUpdate): Observable<UserProfile>
+  changePassword(passwordChange: PasswordChange): Observable<void>
+}
+
+// New admin service
+class AdminService {
+  getUsers(filters: UserFilters): Observable<UserList>
+  updateUserRole(userId: string, role: UserRole): Observable<void>
+  assignManager(userId: string, managerId: string): Observable<void>
+  deleteUser(userId: string): Observable<void>
+}
+```
+
+**Route Extensions:**
+```typescript
+// Add to existing route configuration
+const routes: Routes = [
+  // Existing routes preserved...
+  
+  // Public registration routes
+  { path: 'register', component: UserRegistrationComponent },
+  { path: 'verify-email', component: EmailVerificationComponent },
+  
+  // Protected user routes  
+  { path: 'profile', component: ProfileManagementComponent, canActivate: [AuthGuard] },
+  
+  // Admin-only routes
+  { path: 'admin/users', component: AdminUserManagementComponent, canActivate: [AdminGuard] },
+  
+  // Manager routes
+  { path: 'manager/team', component: ManagerTeamComponent, canActivate: [ManagerGuard] }
+];
+```
+
+### Security & Compatibility Considerations
+
+**Backward Compatibility Guarantees:**
+- All existing API endpoints remain unchanged
+- Current user sessions continue working without interruption  
+- Existing authentication flow (login/logout/token refresh) preserved
+- Database schema changes are purely additive
+
+**Security Enhancements:**
+- Registration requires email verification before account activation
+- Password complexity requirements align with existing Cognito policies
+- Admin operations require elevated permissions with audit logging
+- Manager authority limited to assigned employees only
+
+**Migration Strategy:**
+- Existing test users remain functional in Cognito User Pool
+- New registration creates both Cognito user and employee database record
+- Profile updates for existing users are optional (default values provided)
+- Feature flags enable gradual rollout with safe rollback capability
+
+### Implementation Sequence
+
+**Story 5.1 - User Registration:**
+- Extend Cognito with registration APIs
+- Add email verification workflow  
+- Create registration UI components
+
+**Story 5.2 - Profile Management:**
+- Extend AuthService with profile methods
+- Add profile management UI
+- Implement address geocoding integration
+
+**Story 5.3 - Admin User Management:**
+- Create admin Lambda functions
+- Build admin dashboard UI
+- Implement role assignment workflows
+
+**Story 5.4 - Manager Team Management:**
+- Extend manager permissions
+- Create team management UI
+- Add employee profile editing for managers
+
+This architecture maintains the system's existing reliability while adding comprehensive user management capabilities that transform the static test user system into a dynamic, production-ready user management platform.
 
 ---
 

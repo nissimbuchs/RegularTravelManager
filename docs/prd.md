@@ -170,6 +170,9 @@ Implement manager review dashboard, approval/rejection capabilities, and email n
 **Epic 4: Request Management & Tracking**  
 Add employee request history, status tracking, withdrawal capabilities, and manager bulk approval operations for enhanced productivity.
 
+**Epic 5: User Management - Brownfield Enhancement**  
+Enable comprehensive user lifecycle management including self-service registration, profile management, and administrative user control, extending the existing Cognito authentication system to support dynamic user onboarding and organizational management.
+
 ## Epic 1: Foundation & Core Infrastructure
 
 **Epic Goal:** Establish the foundational technical infrastructure including AWS serverless architecture, authentication system, database schema, and basic user management capabilities. This epic creates a deployable system with role-based access control and validates the complete technology stack through a simple health check endpoint, ensuring all components are properly integrated and ready for business logic implementation.
@@ -586,6 +589,74 @@ Your comprehensive UX design work is already complete with 5 detailed design doc
 ### Architect Prompt
 
 Your technical architecture is already comprehensive and complete, documented in docs/architecture.md with full AWS serverless + DDD specification. The architecture is ready for development implementation following the epic sequence defined in this PRD.
+
+## Epic 5: User Management - Brownfield Enhancement
+
+**Epic Goal:** Enable comprehensive user lifecycle management including self-service registration, profile management, and administrative user control, extending the existing Cognito authentication system to support dynamic user onboarding and organizational management. This epic transforms the current static test user system into a fully dynamic user management platform while maintaining backward compatibility with existing authentication workflows.
+
+### Story 5.1: User Registration & Email Verification
+
+As a **new user**,
+I want **to register for an account with email verification and initial profile setup**,
+so that **I can access the RegularTravelManager system and begin submitting travel requests**.
+
+#### Acceptance Criteria
+1. Registration form accepts email, password, first name, last name, and home address with proper validation
+2. Password requirements enforce minimum 8 characters with uppercase, lowercase, number, and special character
+3. Email verification process sends confirmation email and requires click-through verification before account activation
+4. Address geocoding automatically converts home address to coordinates for distance calculations
+5. New user accounts default to 'employee' role with ability for admin to modify role assignment
+6. Registration process integrates with existing Cognito User Pool without affecting current users
+7. Form validation provides clear error messages for invalid inputs or duplicate email addresses
+8. Successful registration creates both Cognito user record and corresponding employee database record
+
+### Story 5.2: User Profile Management
+
+As a **registered user**,
+I want **to update my profile information, change my password, and manage account settings**,
+so that **I can maintain accurate personal information and secure access to my account**.
+
+#### Acceptance Criteria
+1. Profile management interface allows updating first name, last name, home address, and contact information
+2. Password change functionality requires current password verification and enforces same complexity requirements as registration
+3. Home address updates trigger automatic geocoding and recalculation of pending travel request distances
+4. Profile changes maintain audit trail with timestamps and change tracking for compliance
+5. Email address changes require verification process to confirm new email ownership
+6. Account settings allow users to configure notification preferences and privacy settings
+7. Profile updates integrate seamlessly with existing authentication flow without requiring re-login
+8. Changes to critical profile information require additional confirmation for security
+
+### Story 5.3: Administrator User Management
+
+As an **administrator**,
+I want **to view all registered users, manage user roles, assign managers, and control user access**,
+so that **I can maintain proper organizational structure and security controls**.
+
+#### Acceptance Criteria
+1. User management dashboard displays all registered users with search, filter, and pagination capabilities
+2. Role assignment interface allows changing user roles between employee, manager, and administrator with confirmation dialogs
+3. Manager assignment functionality enables setting default managers for employees with validation of manager role requirements
+4. User deletion capability includes confirmation process and handles cleanup of associated travel requests and audit records
+5. Bulk operations support for role changes and manager assignments across multiple selected users
+6. User activity monitoring shows last login times, request submission patterns, and system usage statistics
+7. Export functionality generates user reports for compliance and organizational management purposes
+8. Manager view displays all assigned employees with ability to see their travel request patterns and current status
+
+### Story 5.4: Manager Team Management
+
+As a **manager**,
+I want **to view all employees assigned to me and manage their basic profile information**,
+so that **I can maintain accurate team records and support my employees' travel request needs**.
+
+#### Acceptance Criteria
+1. Team dashboard displays all assigned employees with their current travel request status and recent activity
+2. Employee profile view shows detailed information including home address, recent requests, and approval patterns
+3. Manager can update employee information such as contact details and organizational assignments within their authority
+4. Team statistics provide insights into travel patterns, expense trends, and approval workflows for management reporting
+5. Employee search and filtering capabilities allow efficient team management for managers with large teams
+6. Integration with existing approval workflows shows pending requests from team members with contextual information
+7. Team management actions maintain proper audit trails and respect existing security boundaries
+8. Manager authority validation ensures managers can only access and modify information for their assigned employees
 
 ---
 
