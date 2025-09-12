@@ -743,10 +743,10 @@ export const getProjectById = async (
 // Get subprojects for a project
 export const getSubprojectsForProject = validateRequest({
   pathParams: {
-    projectId: { required: true, type: 'string' },
+    id: { required: true, type: 'string' },
   },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
-  const projectId = event.pathParameters?.projectId;
+  const projectId = event.pathParameters?.id;
   const userContext = getUserContextFromEvent(event);
 
   logger.info('Getting subprojects for project', {
