@@ -355,18 +355,30 @@ export class InfrastructureStack extends cdk.Stack {
   }
 
   private setupSES(environment: string, domainName?: string) {
-    if (domainName) {
+    // Extract domain from environment config if not provided as prop
+    const config = getEnvironmentConfig(environment);
+    const effectiveDomainName = domainName || config.web.domainName;
+
+    if (effectiveDomainName) {
+      // Extract root domain for SES (e.g., 'buchs.be' from 'rtm-staging.buchs.be')
+      const domainParts = effectiveDomainName.split('.');
+      const rootDomain = domainParts.slice(-2).join('.');
+
       // Domain identity
       new ses.EmailIdentity(this, 'DomainIdentity', {
-        identity: ses.Identity.domain(domainName),
+        identity: ses.Identity.domain(rootDomain),
       });
 
       // Create SES exports for DKIM records
-      this.exportManager.createExports(ExportSets.ses(domainName));
-    }
+      this.exportManager.createExports(ExportSets.ses(rootDomain));
 
-    // Store SES configuration using parameter manager
-    this.parameterManager.createParameters(ParameterSets.ses(domainName));
+      // Store SES configuration using parameter manager
+      this.parameterManager.createParameters(ParameterSets.ses(rootDomain));
+    } else {
+      console.log('ℹ️ No domain configured for SES, using default configuration');
+      // Store default SES configuration for development
+      this.parameterManager.createParameters(ParameterSets.ses());
+    }
   }
 
   private setupEnvironmentParameters(environment: string) {

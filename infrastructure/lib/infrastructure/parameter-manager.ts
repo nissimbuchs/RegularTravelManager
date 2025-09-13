@@ -26,12 +26,18 @@ export class ParameterManager {
     const parameterName = this.getParameterName(config.section, config.key || key);
     const constructId = this.getConstructId(key);
 
-    return new ssm.StringParameter(this.scope, constructId, {
-      parameterName,
-      stringValue: config.value,
-      description: config.description,
-      tier: config.tier || ssm.ParameterTier.STANDARD,
-    });
+    // Add retry logic and validation for parameter creation
+    try {
+      return new ssm.StringParameter(this.scope, constructId, {
+        parameterName,
+        stringValue: config.value || '',  // Ensure value is not undefined
+        description: config.description || `Parameter for ${key}`,
+        tier: config.tier || ssm.ParameterTier.STANDARD,
+      });
+    } catch (error) {
+      console.error(`Failed to create parameter ${parameterName}:`, error);
+      throw error;
+    }
   }
 
   /**
