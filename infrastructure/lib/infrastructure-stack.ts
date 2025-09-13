@@ -466,35 +466,38 @@ export class InfrastructureStack extends cdk.Stack {
   }
 
   private setupHostedZone(environment: string, config: EnvironmentConfig) {
-    // Only create hosted zone if custom domains are enabled for staging/production
-    const shouldCreateHostedZone = (config.api.customDomainEnabled || config.web.customDomainEnabled) && 
-                                   (config.api.domainName || config.web.domainName);
+    // Skip Route53 hosted zone creation - using external DNS provider with CNAME records
+    const hasCustomDomains = (config.api.customDomainEnabled || config.web.customDomainEnabled) &&
+                             (config.api.domainName || config.web.domainName);
 
-    if (shouldCreateHostedZone) {
-      // Extract root domain from either API or web domain
+    if (hasCustomDomains) {
       const domainName = config.api.domainName || config.web.domainName;
       if (!domainName) {
-        throw new Error('Domain name is required when custom domain is enabled');
+        console.log('ℹ️ No domain name configured, skipping DNS setup');
+        return;
       }
-      
       const domainParts = domainName.split('.');
       const rootDomain = domainParts.slice(-2).join('.'); // Get the last two parts (domain.tld)
 
-      console.log(`Creating hosted zone for root domain: ${rootDomain}`);
+      console.log(`ℹ️ Custom domains configured for ${rootDomain} - using external DNS with CNAME records`);
+      console.log(`ℹ️ Route53 hosted zone creation skipped - external DNS provider will handle subdomains`);
 
-      // Create hosted zone for the root domain
-      this.hostedZone = new route53.HostedZone(this, 'RootDomainHostedZone', {
-        zoneName: rootDomain,
-        comment: `Hosted zone for ${rootDomain} - managed by RTM ${environment} infrastructure`,
+      // Store domain information for reference without creating hosted zone
+      this.parameterManager.createParameter('rootDomain', {
+        section: 'dns',
+        key: 'root-domain',
+        value: rootDomain,
+        description: 'Root domain name for custom domains (external DNS)',
       });
 
-      // Create exports and parameters using helpers
-      this.exportManager.createExports(ExportSets.dns(this.hostedZone, rootDomain));
-      this.parameterManager.createParameters(ParameterSets.dns(this.hostedZone, rootDomain));
-
-      console.log(`✅ Hosted zone created for ${rootDomain} - configure name servers at domain registrar`);
+      this.parameterManager.createParameter('dnsMode', {
+        section: 'dns',
+        key: 'dns-mode',
+        value: 'external',
+        description: 'DNS mode: external (CNAME records) vs route53 (hosted zone)',
+      });
     } else {
-      console.log('ℹ️ Custom domains not enabled, skipping hosted zone creation');
+      console.log('ℹ️ Custom domains not enabled, skipping DNS configuration');
     }
   }
 

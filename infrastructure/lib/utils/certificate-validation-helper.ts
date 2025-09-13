@@ -1,6 +1,4 @@
 import * as cdk from 'aws-cdk-lib';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as iam from 'aws-cdk-lib/aws-iam';
 import * as customResources from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
 
@@ -35,11 +33,9 @@ export class CertificateValidationHelper extends Construct {
       }),
     });
 
-    // Add dependency on certificate
-    this.validationRecords.node.addDependency(this.validationRecords);
+    // Dependencies are automatically handled by CDK when using certificateArn
 
     // Create outputs for the validation records
-    const validationData = this.validationRecords.getResponseField('Certificate.DomainValidationOptions.0');
 
     new cdk.CfnOutput(this, 'CertificateValidationInstructions', {
       description: `DNS Validation Instructions for ${domainName}`,

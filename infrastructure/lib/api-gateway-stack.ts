@@ -5,8 +5,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as logs from 'aws-cdk-lib/aws-logs';
-import * as route53 from 'aws-cdk-lib/aws-route53';
-import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
+// Route53 imports removed - using external DNS with CNAME records
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { getEnvironmentConfig } from './config/environment-config';
 import { LambdaFunctionFactory } from './api-gateway/lambda-function-factory';
@@ -21,7 +20,6 @@ export interface ApiGatewayStackProps extends cdk.StackProps {
 export class ApiGatewayStack extends cdk.Stack {
   public readonly restApi: apigateway.RestApi;
   public customDomain?: apigateway.DomainName;
-  public hostedZone?: route53.IHostedZone;
   public certificate?: acm.ICertificate;
 
   constructor(scope: Construct, id: string, props: ApiGatewayStackProps) {
@@ -167,22 +165,16 @@ export class ApiGatewayStack extends cdk.Stack {
     const rootDomain = domainParts.slice(-2).join('.'); // Get the last two parts (domain.tld)
 
     console.log(`Setting up API custom domain: ${domainName} for root domain: ${rootDomain}`);
-
-    // Import the hosted zone that was created in InfrastructureStack
-    const hostedZoneId = cdk.Fn.importValue(`rtm-${environment}-hosted-zone-id`);
-    const hostedZoneName = cdk.Fn.importValue(`rtm-${environment}-hosted-zone-name`);
-    this.hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'ApiHostedZone', {
-      hostedZoneId: hostedZoneId,
-      zoneName: hostedZoneName,
-    });
+    console.log(`ℹ️ Using external DNS validation - no Route53 hosted zone needed`);
 
     // Display comprehensive certificate validation instructions
     CertificateValidationHelper.logValidationInstructions(domainName);
 
+    // Create certificate with external DNS validation (no hosted zone required)
     this.certificate = new acm.Certificate(this, 'ApiCertificate', {
       domainName: domainName,
       certificateName: `rtm-${environment}-api-cert`,
-      validation: acm.CertificateValidation.fromDns(this.hostedZone),
+      validation: acm.CertificateValidation.fromDns(), // External DNS validation
     });
 
     // Log post-creation status
@@ -207,16 +199,6 @@ export class ApiGatewayStack extends cdk.Stack {
       stage: this.restApi.deploymentStage,
     });
 
-    // Create Route53 A record pointing to the API Gateway custom domain
-    new route53.ARecord(this, 'ApiCustomDomainARecord', {
-      zone: this.hostedZone,
-      recordName: environment === 'production' ? 'api' : `api-${environment}`, // Dynamic subdomain based on environment
-      target: route53.RecordTarget.fromAlias(new route53Targets.ApiGatewayDomain(this.customDomain)),
-    });
-
-    console.log(`✅ API custom domain configured: ${domainName}`);
-    console.log(`✅ Route53 A record created automatically: ${domainName} -> ${this.customDomain.domainNameAliasDomainName}`);
-
     // Store custom domain configuration in SSM
     new ssm.StringParameter(this, 'ApiCustomDomainCertificateArn', {
       parameterName: `/rtm/${environment}/api/certificate-arn`,
@@ -228,6 +210,14 @@ export class ApiGatewayStack extends cdk.Stack {
       stringValue: domainName,
     });
 
+    new ssm.StringParameter(this, 'ApiCustomDomainTarget', {
+      parameterName: `/rtm/${environment}/api/custom-domain-target`,
+      stringValue: this.customDomain.domainNameAliasDomainName,
+    });
+
+    console.log(`✅ API custom domain configured: ${domainName}`);
+    console.log(`✅ CNAME target: ${this.customDomain.domainNameAliasDomainName}`);
+    console.log(`ℹ️ Manual DNS setup required: Add CNAME record ${domainName.split('.')[0]} -> ${this.customDomain.domainNameAliasDomainName}`);
     console.log(`✅ API custom domain setup completed for ${domainName}`);
   }
 }

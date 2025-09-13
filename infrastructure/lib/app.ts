@@ -5,6 +5,7 @@ import { InfrastructureStack } from './infrastructure-stack';
 import { LambdaStack } from './lambda-stack';
 import { ApiGatewayStack } from './api-gateway-stack';
 import { WebStack } from './web-stack';
+import { CertificateStack } from './certificate-stack';
 
 const app = new cdk.App();
 
@@ -78,14 +79,33 @@ const apiGatewayStack = new ApiGatewayStack(app, apiGatewayStackName, {
   },
 });
 
+// Create the Certificate stack (CloudFront SSL certificates in us-east-1)
+const certificateStackName = `rtm-${config.environment}-certificate`;
+const certificateStack = new CertificateStack(app, certificateStackName, {
+  environment: config.environment,
+  env: {
+    account: config.account,
+    region: 'us-east-1', // CloudFront requires certificates in us-east-1
+  },
+  crossRegionReferences: true, // Enable cross-region references
+  description: `RegularTravelManager SSL certificates for ${config.environment} environment (CloudFront)`,
+  tags: {
+    Project: 'RegularTravelManager',
+    Environment: config.environment,
+    ManagedBy: 'CDK',
+  },
+});
+
 // Create the Web stack (frontend hosting)
 const webStackName = `rtm-${config.environment}-web`;
 const webStack = new WebStack(app, webStackName, {
   environment: config.environment,
+  certificateStack: certificateStack, // Pass certificate stack for cross-region reference
   env: {
     account: config.account,
     region: config.region,
   },
+  crossRegionReferences: true, // Enable cross-region references
   description: `RegularTravelManager Web frontend for ${config.environment} environment`,
   tags: {
     Project: 'RegularTravelManager',
@@ -94,11 +114,12 @@ const webStack = new WebStack(app, webStackName, {
   },
 });
 
-// Set up proper dependencies: Infrastructure → Lambda → API Gateway → Web
+// Set up proper dependencies: Infrastructure → Lambda → API Gateway → Certificate → Web
 lambdaStack.addDependency(infrastructureStack);
 apiGatewayStack.addDependency(lambdaStack);
 webStack.addDependency(apiGatewayStack);
 webStack.addDependency(infrastructureStack); // WebStack needs cognito exports from infrastructure
+webStack.addDependency(certificateStack); // WebStack needs certificate from us-east-1
 
 // Synthesize all stacks
 app.synth();

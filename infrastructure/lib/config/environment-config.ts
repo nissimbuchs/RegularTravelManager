@@ -21,10 +21,12 @@ export interface EnvironmentConfig {
 export const ENVIRONMENT_CONFIG: Record<string, EnvironmentConfig> = {
   dev: {
     api: {
-      customDomainEnabled: false,
+      domainName: 'api-dev.buchs.be',
+      customDomainEnabled: true,
     },
     web: {
-      customDomainEnabled: false,
+      domainName: 'rtfm-dev.buchs.be',
+      customDomainEnabled: true,
     },
     monitoring: {
       enableDetailedLogs: true,
@@ -38,7 +40,7 @@ export const ENVIRONMENT_CONFIG: Record<string, EnvironmentConfig> = {
       customDomainEnabled: true,
     },
     web: {
-      domainName: 'rtm-staging.buchs.be',
+      domainName: 'rtfm-staging.buchs.be',
       customDomainEnabled: true,
     },
     monitoring: {
@@ -49,11 +51,11 @@ export const ENVIRONMENT_CONFIG: Record<string, EnvironmentConfig> = {
 
   production: {
     api: {
-      domainName: 'api.company.com',
+      domainName: 'api.buchs.be',
       customDomainEnabled: true,
     },
     web: {
-      domainName: 'company.com',
+      domainName: 'rtfm.buchs.be',
       customDomainEnabled: true,
     },
     monitoring: {
