@@ -12,6 +12,7 @@ import { getEnvironmentConfig } from './config/environment-config';
 import { LambdaFunctionFactory } from './api-gateway/lambda-function-factory';
 import { ApiRouteBuilder, API_ROUTES } from './api-gateway/route-configuration';
 import { ApiPermissionManager } from './api-gateway/permission-manager';
+import { CertificateValidationHelper } from './utils/certificate-validation-helper';
 
 export interface ApiGatewayStackProps extends cdk.StackProps {
   environment: 'dev' | 'staging' | 'production';
@@ -175,11 +176,23 @@ export class ApiGatewayStack extends cdk.Stack {
       zoneName: hostedZoneName,
     });
 
-    // Create SSL certificate for the API subdomain with DNS validation
+    // Display comprehensive certificate validation instructions
+    CertificateValidationHelper.logValidationInstructions(domainName);
+
     this.certificate = new acm.Certificate(this, 'ApiCertificate', {
       domainName: domainName,
       certificateName: `rtm-${environment}-api-cert`,
       validation: acm.CertificateValidation.fromDns(this.hostedZone),
+    });
+
+    // Log post-creation status
+    CertificateValidationHelper.logPostCreation(domainName, this.certificate.certificateArn);
+
+    // Create helper to display validation records in CloudFormation outputs
+    new CertificateValidationHelper(this, 'CertValidationHelper', {
+      certificateArn: this.certificate.certificateArn,
+      domainName: domainName,
+      environment: environment,
     });
 
     // Create API Gateway custom domain
@@ -194,11 +207,15 @@ export class ApiGatewayStack extends cdk.Stack {
       stage: this.restApi.deploymentStage,
     });
 
-    // Note: DNS records are managed externally via CNAME records
-    // CNAME record needed: api-staging.buchs.be -> d-ngwdhkrqv4.execute-api.eu-central-1.amazonaws.com
-    console.log(`API custom domain enabled: ${domainName}`);
-    console.log(`API Gateway regional domain: ${this.customDomain.domainNameAliasDomainName}`);
-    console.log(`Create CNAME record: ${domainName} -> ${this.customDomain.domainNameAliasDomainName}`);
+    // Create Route53 A record pointing to the API Gateway custom domain
+    new route53.ARecord(this, 'ApiCustomDomainARecord', {
+      zone: this.hostedZone,
+      recordName: environment === 'production' ? 'api' : `api-${environment}`, // Dynamic subdomain based on environment
+      target: route53.RecordTarget.fromAlias(new route53Targets.ApiGatewayDomain(this.customDomain)),
+    });
+
+    console.log(`✅ API custom domain configured: ${domainName}`);
+    console.log(`✅ Route53 A record created automatically: ${domainName} -> ${this.customDomain.domainNameAliasDomainName}`);
 
     // Store custom domain configuration in SSM
     new ssm.StringParameter(this, 'ApiCustomDomainCertificateArn', {

@@ -17,6 +17,7 @@ import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as path from 'path';
 import { getEnvironmentConfig } from './config/environment-config';
+import { CertificateValidationHelper } from './utils/certificate-validation-helper';
 
 export interface WebStackProps extends cdk.StackProps {
   environment: 'dev' | 'staging' | 'production';
@@ -137,12 +138,20 @@ function handler(event) {
     // CloudFront distribution with API Gateway reverse proxy
     this.distribution = new cloudfront.Distribution(this, 'WebDistribution', distributionConfig);
 
-    // Note: DNS records are managed externally via CNAME records
-    // CNAME record needed: rtm-staging.buchs.be -> d23i41oue7n59b.cloudfront.net
-    if (config.web.customDomainEnabled && config.web.domainName) {
+    // Create Route53 A record pointing to the CloudFront distribution
+    if (config.web.customDomainEnabled && config.web.domainName && this.hostedZone) {
+      new route53.ARecord(this, 'WebCustomDomainARecord', {
+        zone: this.hostedZone,
+        recordName: environment === 'production' ? 'rtm' : `rtm-${environment}`, // Just the subdomain
+        target: route53.RecordTarget.fromAlias(new route53Targets.CloudFrontTarget(this.distribution)),
+      });
+
+      console.log(`✅ Web custom domain configured: ${config.web.domainName}`);
+      console.log(`✅ Route53 A record created automatically: ${config.web.domainName} -> ${this.distribution.distributionDomainName}`);
+    } else if (config.web.customDomainEnabled && config.web.domainName) {
       console.log(`Custom domain enabled: ${config.web.domainName}`);
       console.log(`CloudFront distribution: ${this.distribution.distributionDomainName}`);
-      console.log(`Create CNAME record: ${config.web.domainName} -> ${this.distribution.distributionDomainName}`);
+      console.log(`⚠️  No hosted zone available - manual DNS configuration required`);
     }
 
     // Deploy web application to S3 with environment-specific source map handling
@@ -358,11 +367,16 @@ function handler(event) {
     // Create SSL certificate for the web subdomain with DNS validation
     // CloudFront requires certificates to be in us-east-1 region
     // Using DnsValidatedCertificate as it supports cross-region deployment
+    CertificateValidationHelper.logValidationInstructions(domainName);
+
     this.certificate = new acm.DnsValidatedCertificate(this, 'WebCertificate', {
       domainName: domainName,
       hostedZone: this.hostedZone,
       region: 'us-east-1', // Required for CloudFront
     });
+
+    // Log post-creation status
+    CertificateValidationHelper.logPostCreation(domainName, this.certificate.certificateArn);
 
     // Store certificate ARN in SSM for reference
     new ssm.StringParameter(this, 'WebCertificateArn', {
