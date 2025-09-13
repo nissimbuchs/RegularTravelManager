@@ -15,11 +15,11 @@ RegularTravelManager is a Swiss employee travel allowance management system buil
 - **Cognito User Pool**: `eu-central-1_LFA9Rhk2y`
 
 **Staging Environment ✅:**
-- **Frontend Application**: https://rtm-staging.buchs.be
+- **Frontend Application**: https://rtfm-staging.buchs.be (corrected subdomain)
 - **API Endpoint**: https://api-staging.buchs.be
-- **CloudFront Distribution**: d23i41oue7n59b.cloudfront.net
-- **SSL Certificates**: Valid TLS in us-east-1 region
-- **Custom Domains**: Configured with DNS validation
+- **CloudFront Distribution**: d23i41oue7n59b.cloudfront.net (will be updated after deployment)
+- **SSL Certificates**: Cross-region certificates in us-east-1 for CloudFront compatibility
+- **Custom Domains**: External DNS validation with Hostpoint provider
 
 ## Development Commands
 
@@ -59,6 +59,7 @@ cd infrastructure
 npm run deploy:infrastructure:dev # Deploy core infrastructure only
 npm run deploy:lambda:dev        # Deploy Lambda functions only
 npm run deploy:api:dev           # Deploy API Gateway only
+npm run deploy:certificate:dev   # Deploy SSL certificates (us-east-1)
 npm run deploy:web:dev           # Deploy web stack only
 ```
 
@@ -124,36 +125,49 @@ npm run debug:api         # Start API in debug mode
 - **Infrastructure**: AWS CDK 2.100+ in TypeScript
 - **Development**: Docker Compose + LocalStack for AWS parity
 
-### AWS CDK Architecture (4-Stack Design)
+### AWS CDK Architecture (5-Stack Design)
 
-The infrastructure is organized into 4 independent CDK stacks for better separation of concerns and deployment flexibility:
+The infrastructure is organized into 5 independent CDK stacks for better separation of concerns and deployment flexibility:
 
 ```
 1. InfrastructureStack (rtm-{env}-infrastructure)
    └── Core backend resources: VPC, RDS, Cognito, Location Service, SES, SNS
+   └── Region: eu-central-1 (Swiss data residency)
    └── Exports: User Pool ID, Database endpoints, SNS Topic ARN
 
-2. LambdaStack (rtm-{env}-lambda) 
+2. LambdaStack (rtm-{env}-lambda)
    └── All Lambda functions and their configurations
+   └── Region: eu-central-1
    └── Depends on: InfrastructureStack (for VPC, database, etc.)
    └── Exports: ~30 Lambda function ARNs
 
 3. ApiGatewayStack (rtm-{env}-api-gateway)
-   └── REST API, routes, and Lambda integrations
+   └── REST API, routes, Lambda integrations, API custom domain
+   └── Region: eu-central-1
    └── Depends on: LambdaStack (imports Lambda ARNs)
    └── Exports: API Gateway URL
 
-4. WebStack (rtm-{env}-web)
+4. CertificateStack (rtm-{env}-certificate) ⭐ NEW
+   └── SSL certificates for CloudFront distribution
+   └── Region: us-east-1 (CloudFront requirement)
+   └── Cross-region references enabled
+   └── Exports: Certificate ARN for CloudFront
+
+5. WebStack (rtm-{env}-web)
    └── Frontend hosting: S3, CloudFront, web deployment
-   └── Depends on: ApiGatewayStack + InfrastructureStack (via imports)
+   └── Region: eu-central-1
+   └── Depends on: ApiGatewayStack + InfrastructureStack + CertificateStack
+   └── Uses cross-region certificate from us-east-1
    └── Exports: CloudFront domain URL
 ```
 
 **Benefits of this architecture:**
 - **Independent deployments**: Update frontend without touching backend
+- **Cross-region compliance**: CloudFront certificates in us-east-1, data in eu-central-1
 - **Clear dependencies**: No circular dependencies
 - **Better CI/CD**: Each stack can have its own deployment pipeline
 - **Cost optimization**: Destroy/recreate individual stacks as needed
+- **DNS flexibility**: External DNS validation with any provider (Hostpoint, etc.)
 
 ### Key Service Configurations
 ```typescript
@@ -166,6 +180,13 @@ DATABASE_URL: 'postgresql://nissim:devpass123@localhost:5432/travel_manager_dev'
 
 // Production Database connection (AWS RDS)
 DATABASE_URL: 'postgresql://rtm_admin:[SECRET]@rtm-dev-infrastructure-databaseb269d8bb-ynfofwwlfkkm.c18k2mga4rnh.eu-central-1.rds.amazonaws.com:5432/rtm_database'
+
+// Cross-region SSL Certificate Configuration
+// CloudFront requires certificates in us-east-1 region
+const certificateStack = new CertificateStack(app, 'rtm-staging-certificate', {
+  env: { region: 'us-east-1' }, // Required for CloudFront
+  crossRegionReferences: true   // Enable cross-region access
+});
 ```
 
 ## Development Guidelines
@@ -195,6 +216,15 @@ RegularTravelManager/
 ├── apps/
 │   ├── api/                 # Node.js Lambda functions
 │   └── web/                 # Angular frontend
+├── infrastructure/          # AWS CDK infrastructure code
+│   ├── lib/
+│   │   ├── infrastructure-stack.ts  # Core infrastructure (eu-central-1)
+│   │   ├── lambda-stack.ts          # Lambda functions (eu-central-1)
+│   │   ├── api-gateway-stack.ts     # API Gateway (eu-central-1)
+│   │   ├── certificate-stack.ts     # SSL certificates (us-east-1) ⭐ NEW
+│   │   ├── web-stack.ts             # Frontend hosting (eu-central-1)
+│   │   └── config/environment-config.ts  # Environment configuration
+│   └── package.json         # Deployment scripts
 ├── docs/
 │   ├── architecture.md      # Complete architecture documentation
 │   └── DEVELOPMENT_SETUP.md # Detailed setup guide
@@ -310,5 +340,31 @@ Use the email addresses and passwords listed above to log in directly via the Co
 - **`web-bundles/`** - Essential files for correct development practices
 
 These are **development tooling files**, not project artifacts. Removing them will break the development workflow.
+
+## Certificate & DNS Management
+
+### SSL Certificate Process
+1. **Certificate Creation**: Created in us-east-1 region for CloudFront compatibility
+2. **DNS Validation**: External DNS provider (Hostpoint) adds CNAME validation records
+3. **Cross-Region Access**: CDK's experimental `crossRegionReferences: true` enables access
+4. **Domain Configuration**:
+   - Frontend: `rtfm-staging.buchs.be` (corrected from rtm-staging)
+   - API: `api-staging.buchs.be`
+
+### Deployment Order
+```bash
+# Required deployment sequence for cross-region setup
+cd infrastructure
+npm run bootstrap:all-regions        # Bootstrap both eu-central-1 and us-east-1
+npm run deploy:certificate:staging   # Deploy certificates to us-east-1
+npm run deploy:frontend:staging      # Deploy frontend with certificate reference
+```
+
+### DNS Configuration (Manual)
+After deployment, configure these CNAME records in your DNS provider:
+```
+rtfm-staging  CNAME  d23i41oue7n59b.cloudfront.net  # Frontend (will be updated)
+api-staging   CNAME  xyz.cloudfront.net             # API Gateway custom domain
+```
 
 - always update the readme.md when you update package.json, aws urls or other readme relevant files
