@@ -47,9 +47,9 @@ export const validateRequest = (schema: ValidationSchema) => {
       }
 
       // Validate query parameters
-      if (schema.queryParams && event.queryStringParameters) {
+      if (schema.queryParams) {
         for (const [field, rule] of Object.entries(schema.queryParams)) {
-          const value = event.queryStringParameters[field];
+          const value = event.queryStringParameters?.[field];
           const fieldError = validateField(field, value, rule);
           if (fieldError) {
             errors[field] = fieldError;
