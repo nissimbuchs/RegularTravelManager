@@ -76,6 +76,11 @@ npm run deploy:dev        # Build + deploy all stacks to dev environment
 npm run deploy:staging    # Build + deploy all stacks to staging environment
 npm run deploy:production # Build + deploy all stacks to production environment
 
+# Safe deployment with health checks (recommended)
+npm run deploy:safe:dev        # Safe deploy to dev with health checks
+npm run deploy:safe:staging    # Safe deploy to staging with health checks
+npm run deploy:safe:production # Safe deploy to production with health checks
+
 # Frontend-only deployment (faster for UI changes)
 npm run deploy:frontend:dev        # Deploy frontend to dev environment
 npm run deploy:frontend:staging    # Deploy frontend to staging environment
@@ -93,6 +98,19 @@ npm run deploy:stack:web:dev           # Deploy web stack only
 npm run deploy:web:dev     # Deploy web + certificate for dev
 npm run deploy:web:staging # Deploy web + certificate for staging
 npm run deploy:web:production # Deploy web + certificate for production
+
+# Environment destruction with cleanup
+npm run destroy:clean:dev     # Destroy dev + clean log groups
+npm run destroy:clean:staging # Destroy staging + clean log groups
+npm run destroy:clean:production # Destroy production + clean log groups
+
+# Health checks and cleanup utilities
+npm run health:check:dev          # Check dev environment health
+npm run health:check:staging      # Check staging environment health
+npm run health:check:production   # Check production environment health
+npm run cleanup:logs:dev          # Clean orphaned log groups (dev)
+npm run cleanup:logs:staging      # Clean orphaned log groups (staging)
+npm run cleanup:logs:production   # Clean orphaned log groups (production)
 ```
 
 **IaC Deployment Flow**:

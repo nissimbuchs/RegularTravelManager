@@ -51,14 +51,15 @@ Infrastructure Deployment → Config Generation → S3 Upload → CloudFront Del
 
 **🚨 MANDATORY:** New frontend service calls require infrastructure updates. Missing this causes 403/404 errors.
 
-### 4-Stack Integration Architecture
+### 5-Stack Integration Architecture
 
-**Dependency Chain:** `InfrastructureStack → LambdaStack → ApiGatewayStack → WebStack`
+**Dependency Chain:** `InfrastructureStack → LambdaStack → ApiGatewayStack → CertificateStack → WebStack`
 
 **CloudFormation Export/Import Pattern:**
 - LambdaStack exports Lambda ARNs
 - ApiGatewayStack imports ARNs and creates integrations
-- WebStack imports API URL for configuration generation
+- CertificateStack exports SSL certificate ARNs (us-east-1 region)
+- WebStack imports API URL and certificate ARNs for configuration generation
 
 ### Mandatory Integration Process
 

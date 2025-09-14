@@ -12,7 +12,7 @@
 - **Database**: rtm-dev-infrastructure-databaseb269d8bb-ynfofwwlfkkm.c18k2mga4rnh.eu-central-1.rds.amazonaws.com
 - **Cognito User Pool**: eu-central-1_LFA9Rhk2y
 - **Region**: eu-central-1 (Frankfurt)
-- **Architecture**: 4-stack CDK deployment with complete sample data
+- **Architecture**: 5-stack CDK deployment with complete sample data
 
 **Available Features:**
 - ✅ Real-time travel request submission and management
@@ -39,7 +39,7 @@ This unified approach combines what would traditionally be separate backend and 
 |------|---------|-------------|--------|
 | 2025-09-12 | 2.1 | **Brownfield Enhancement:** Added Epic 5 - User Management architecture with Cognito user registration, profile management, and admin user control capabilities. Enhanced authentication system with dynamic user onboarding while maintaining backward compatibility. | Product Owner Sarah |
 | 2025-09-12 | 2.0 | **Major Update:** Added comprehensive Frontend Subscription Lifecycle Management, Dynamic Configuration Management, and API Gateway & Lambda Integration Management sections. Enhanced with Phase 1 & Phase 2 subscription patterns, S3/CloudFront config generation, and complete development workflow documentation. | Architect Winston |
-| 2025-09-08 | 1.3 | Implemented 4-stack CDK architecture with improved separation of concerns | Architect Winston |
+| 2025-09-08 | 1.3 | Implemented 5-stack CDK architecture with improved separation of concerns | Architect Winston |
 | 2025-09-01 | 1.2 | Added LocalStack development environment with 95% AWS parity | Architect Winston |
 | 2025-08-30 | 1.1 | Updated to use Angular instead of React | Architect Winston |
 | 2025-08-30 | 1.0 | Initial architecture document | Architect Winston |
@@ -130,9 +130,9 @@ WebStack (presentation layer)
 - **Missing Lambda functions** (commit d05e677) - API Gateway referenced functions that didn't exist in LambdaStack
 - **Path mismatches** - Frontend called different paths than what was configured in infrastructure
 
-### 4-Stack Integration Pattern
+### 5-Stack Integration Pattern
 
-The RegularTravelManager uses a **4-stack architecture** where each component depends on exports from the previous stack:
+The RegularTravelManager uses a **5-stack architecture** where each component depends on exports from the previous stack:
 
 ```
 InfrastructureStack → LambdaStack → ApiGatewayStack → WebStack
@@ -384,7 +384,7 @@ aws logs tail /aws/apigateway/rtm-dev-access-logs --follow
 - **Testing must include** direct API endpoint verification
 - **Documentation must be updated** when new service patterns are established
 
-This integration management ensures that the 4-stack CDK architecture functions correctly and prevents the recurring infrastructure issues that have impacted development velocity.
+This integration management ensures that the 5-stack CDK architecture functions correctly and prevents the recurring infrastructure issues that have impacted development velocity.
 
 ## Dynamic Configuration Management
 
@@ -1692,7 +1692,7 @@ npm run dev:web           # Angular frontend
 npm run dev:env:logs      # View all service logs
 npm run dev:env:restart   # Clean restart all services
 
-# Deployment commands (4-stack architecture)
+# Deployment commands (5-stack architecture)
 npm run deploy            # Deploy all stacks to dev environment
 npm run deploy:staging    # Deploy all stacks to staging
 npm run deploy:production # Deploy all stacks to production

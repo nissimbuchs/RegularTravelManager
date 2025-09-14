@@ -15,7 +15,7 @@ Swiss employee travel allowance management system designed for enterprise-grade 
 
 **Geographic Focus:** Swiss business requirements with eu-central-1 (Frankfurt) deployment for data residency compliance.
 
-## AWS CDK 4-Stack Architecture
+## AWS CDK 5-Stack Architecture
 
 **Architecture Philosophy:** Independent, linearly-dependent CDK stacks enabling isolated deployments and clear separation of concerns.
 
@@ -24,11 +24,12 @@ Swiss employee travel allowance management system designed for enterprise-grade 
 1. **InfrastructureStack** - Foundation layer with core AWS services (VPC, RDS, Cognito, SES)
 2. **LambdaStack** - Compute layer with ~30 Lambda functions for business logic
 3. **ApiGatewayStack** - API layer with REST endpoints and Lambda integration
-4. **WebStack** - Presentation layer with frontend hosting and dynamic configuration
+4. **CertificateStack** - SSL certificates for CloudFront (us-east-1 region)
+5. **WebStack** - Presentation layer with frontend hosting and dynamic configuration
 
 ### Dependency Flow
 ```
-InfrastructureStack → LambdaStack → ApiGatewayStack → WebStack
+InfrastructureStack → LambdaStack → ApiGatewayStack → CertificateStack → WebStack
 ```
 
 **Key Architectural Benefits:**

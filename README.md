@@ -46,7 +46,7 @@ RegularTravelManager/
 
 ## AWS Infrastructure Architecture
 
-The project uses a **4-stack CDK architecture** for better separation of concerns and deployment flexibility:
+The project uses a **5-stack CDK architecture** for better separation of concerns and deployment flexibility:
 
 ### Stack Overview
 
@@ -64,9 +64,14 @@ The project uses a **4-stack CDK architecture** for better separation of concern
    - Depends on: LambdaStack (via imports)
    - Exports: API Gateway URL
 
-4. **WebStack** (`rtm-{env}-web`)
+4. **CertificateStack** (`rtm-{env}-certificate`)
+   - SSL certificates for CloudFront distribution
+   - Region: us-east-1 (CloudFront requirement)
+   - Exports: Certificate ARN for cross-region access
+
+5. **WebStack** (`rtm-{env}-web`)
    - Frontend hosting: S3, CloudFront, web deployment
-   - Depends on: ApiGatewayStack + InfrastructureStack (via imports)
+   - Depends on: ApiGatewayStack + InfrastructureStack + CertificateStack (via imports)
    - Exports: CloudFront domain URL
 
 ### Deployment Benefits
@@ -266,7 +271,7 @@ window.location.reload();
 - **Region:** `eu-central-1` (Frankfurt)  
 - **Database:** AWS RDS PostgreSQL with complete sample data
 - **Authentication:** AWS Cognito User Pool with real user management
-- **Architecture:** 4-stack CDK deployment with CloudFront distribution and API Gateway integration
+- **Architecture:** 5-stack CDK deployment with CloudFront distribution and API Gateway integration
 
 **✅ Available Features:**
 - Complete Swiss business sample data (10 employees, 4 projects, 8 subprojects, 5 travel requests)
@@ -290,24 +295,26 @@ The project uses clear environment naming conventions:
 ### Build Commands by Environment
 ```bash
 # Local development (default)
-npm run dev
+npm run start:local
 
-# AWS Dev environment (current deployment)
-npm run build:frontend:dev
-npm run deploy:frontend:dev
+# Build commands
+npm run build                     # Build entire project
+npm run build:frontend           # Build frontend only
 
-# Safe deployments (recommended)
-npm run deploy:safe              # Deploy with health checks
-npm run deploy:safe:staging      # Deploy staging with health checks  
-npm run deploy:safe:production   # Deploy production with health checks
+# Full deployment (all stacks)
+npm run deploy:dev               # Deploy all stacks to dev
+npm run deploy:staging           # Deploy all stacks to staging
+npm run deploy:production        # Deploy all stacks to production
 
-# Future staging environment
-npm run build:frontend:staging
-npm run deploy:frontend:staging
+# Safe deployments with health checks (recommended)
+npm run deploy:safe:dev          # Safe deploy to dev
+npm run deploy:safe:staging      # Safe deploy to staging
+npm run deploy:safe:production   # Safe deploy to production
 
-# Future production environment
-npm run build:frontend:prod
-npm run deploy:frontend:prod
+# Frontend-only deployment (faster for UI changes)
+npm run deploy:frontend:dev      # Deploy frontend to dev
+npm run deploy:frontend:staging  # Deploy frontend to staging
+npm run deploy:frontend:production # Deploy frontend to production
 ```
 
 See [ENVIRONMENTS.md](./ENVIRONMENTS.md) for detailed environment configuration guide.
@@ -370,27 +377,55 @@ npm run build:frontend:staging # Build for AWS staging environment
 npm run build:frontend:prod    # Build for AWS production environment
 
 # Safe deployment commands (recommended)
-npm run deploy:safe              # Safe deploy to dev with health checks
-npm run deploy:safe:staging      # Safe deploy to staging with health checks
-npm run deploy:safe:production   # Safe deploy to production with health checks
+npm run deploy:safe:dev           # Safe deploy to dev with health checks
+npm run deploy:safe:staging       # Safe deploy to staging with health checks
+npm run deploy:safe:production    # Safe deploy to production with health checks
 
-# Environment-specific deployments
-npm run deploy:frontend:dev        # Deploy to AWS dev environment
-npm run deploy:frontend:staging    # Deploy to AWS staging environment
-npm run deploy:frontend:production # Deploy to AWS production environment
+# Full stack deployments
+npm run deploy:dev                # Deploy all stacks to dev environment
+npm run deploy:staging            # Deploy all stacks to staging environment
+npm run deploy:production         # Deploy all stacks to production environment
 
-# Infrastructure-only deployments
-npm run deploy:dev --workspace=infrastructure       # Deploy infrastructure to dev
-npm run deploy:staging --workspace=infrastructure   # Deploy infrastructure to staging  
-npm run deploy:production --workspace=infrastructure # Deploy infrastructure to production
+# Frontend-only deployments (faster for UI changes)
+npm run deploy:frontend:dev       # Deploy frontend to dev environment
+npm run deploy:frontend:staging   # Deploy frontend to staging environment
+npm run deploy:frontend:production # Deploy frontend to production environment
+
+# Infrastructure workspace commands (from infrastructure directory)
+cd infrastructure
+npm run deploy:dev                # Deploy all stacks to dev
+npm run deploy:staging            # Deploy all stacks to staging
+npm run deploy:production         # Deploy all stacks to production
+
+# Individual stack deployment
+npm run deploy:stack:infrastructure:dev    # Deploy core infrastructure only
+npm run deploy:stack:lambda:dev           # Deploy Lambda functions only
+npm run deploy:stack:api:dev              # Deploy API Gateway only
+npm run deploy:stack:certificate:dev      # Deploy SSL certificates (us-east-1)
+npm run deploy:stack:web:dev              # Deploy web stack only
+
+# Cross-region certificate + web deployment
+npm run deploy:web:dev            # Deploy certificates + web for dev
+npm run deploy:web:staging        # Deploy certificates + web for staging
+npm run deploy:web:production     # Deploy certificates + web for production
 
 # Health checks and cleanup
-npm run health:check           # Check dev environment health
-npm run health:check:staging   # Check staging environment health
-npm run health:check:production # Check production environment health
-npm run cleanup:logs           # Clean orphaned log groups (dev)
-npm run cleanup:logs:staging   # Clean orphaned log groups (staging)
-npm run cleanup:logs:production # Clean orphaned log groups (production)
+npm run health:check:dev          # Check dev environment health
+npm run health:check:staging      # Check staging environment health
+npm run health:check:production   # Check production environment health
+npm run cleanup:logs:dev          # Clean orphaned log groups (dev)
+npm run cleanup:logs:staging      # Clean orphaned log groups (staging)
+npm run cleanup:logs:production   # Clean orphaned log groups (production)
+
+# Environment destruction with cleanup
+npm run destroy:clean:dev         # Destroy dev + clean log groups
+npm run destroy:clean:staging     # Destroy staging + clean log groups
+npm run destroy:clean:production  # Destroy production + clean log groups
+
+# Web configuration sync
+npm run sync:web:dev              # Generate web config for dev
+npm run sync:web:staging          # Generate web config for staging
+npm run sync:web:production       # Generate web config for production
 ```
 
 #### **Database Management** (Consolidated Approach)
@@ -443,21 +478,32 @@ npm run build --workspace=apps/api
 The project includes a streamlined and safe deployment process using AWS CDK:
 
 ```bash
-# Safe deployment (recommended)
-npm run deploy:safe
+# Safe deployment with health checks (recommended)
+npm run deploy:safe:dev          # Safe deploy to dev environment
+npm run deploy:safe:staging      # Safe deploy to staging environment
+npm run deploy:safe:production   # Safe deploy to production environment
 
-# Standard deployment
-npm run deploy
+# Standard full deployment
+npm run deploy:dev               # Deploy all stacks to dev
+npm run deploy:staging           # Deploy all stacks to staging
+npm run deploy:production        # Deploy all stacks to production
+
+# Frontend-only deployment (faster for UI changes)
+npm run deploy:frontend:dev      # Build + deploy frontend to dev
+npm run deploy:frontend:staging  # Build + deploy frontend to staging
+npm run deploy:frontend:production # Build + deploy frontend to production
 
 # Safe deployment process:
 # 1. Run health check to identify potential conflicts
 # 2. Clean up orphaned CloudWatch log groups
 # 3. Build all workspaces (packages, domains, apps, infrastructure)
-# 4. Deploy 4 CDK stacks in correct order (Infrastructure → Lambda → API Gateway → Web)
+# 4. Deploy 5 CDK stacks in correct order (Infrastructure → Lambda → API Gateway → Certificate → Web)
 # 5. Output deployment URLs and status
 
 # Infrastructure cleanup (if needed)
-npm run destroy:clean     # Destroy stacks + clean log groups
+npm run destroy:clean:dev        # Destroy dev stacks + clean log groups
+npm run destroy:clean:staging    # Destroy staging stacks + clean log groups
+npm run destroy:clean:production # Destroy production stacks + clean log groups
 ```
 
 **Prerequisites for Deployment:**
