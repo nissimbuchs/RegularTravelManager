@@ -1,0 +1,93 @@
+@import '../../../styles/base/variables';
+@import '../../../styles/base/mixins';
+
+.unauthorized-container {
+  @include elca-flex-center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, $elca-bg-secondary 0%, lighten($elca-bg-secondary, 5%) 100%);
+  padding: $elca-spacing-xl;
+}
+
+.unauthorized-card {
+  @include elca-card;
+  max-width: 500px;
+  text-align: center;
+}
+
+.unauthorized-content {
+  @include elca-flex-center;
+  flex-direction: column;
+  padding: $elca-spacing-2xl $elca-spacing-xl;
+
+  .unauthorized-icon {
+    font-size: 72px;
+    height: 72px;
+    width: 72px;
+    color: $elca-error;
+    margin-bottom: $elca-spacing-xl;
+  }
+
+  h2 {
+    @include elca-heading('lg');
+    margin: $elca-spacing-base 0;
+    color: $elca-text-primary;
+  }
+
+  p {
+    @include elca-body-text;
+    margin: $elca-spacing-sm 0;
+    color: $elca-text-secondary;
+    line-height: 1.6;
+    max-width: 400px;
+  }
+}
+
+.action-buttons {
+  margin-top: $elca-spacing-2xl;
+  display: flex;
+  gap: $elca-spacing-base;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  button {
+    @include elca-button-size('base');
+    min-width: 140px;
+
+    &[color="primary"] {
+      @include elca-button-primary;
+    }
+
+    &[color="warn"] {
+      background-color: $elca-error;
+      color: white;
+
+      &:hover {
+        background-color: darken($elca-error, 5%);
+      }
+    }
+
+    mat-icon {
+      margin-right: $elca-spacing-xs;
+    }
+  }
+}
+
+// Responsive design
+@include elca-media-sm {
+  .unauthorized-container {
+    padding: $elca-spacing-base;
+  }
+
+  .unauthorized-content {
+    padding: $elca-spacing-xl $elca-spacing-base;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    align-items: stretch;
+
+    button {
+      min-width: unset;
+    }
+  }
+}

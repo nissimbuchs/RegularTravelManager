@@ -1,0 +1,221 @@
+// Import ELCA variables and mixins
+@import '../../../../styles/base/variables';
+@import '../../../../styles/base/mixins';
+
+.travel-request-form-container {
+  max-width: 800px;
+  margin: $elca-spacing-2xl auto;
+  padding: 0 $elca-spacing-base;
+}
+
+.form-card {
+  @include elca-card;
+  margin-bottom: $elca-spacing-2xl;
+
+  .form-title {
+    @include elca-heading('lg');
+    color: $elca-coral-red;
+    margin-bottom: $elca-spacing-lg;
+  }
+}
+
+.form-content {
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-xl;
+  padding: $elca-spacing-base 0;
+}
+
+.full-width {
+  width: 100% !important;
+}
+
+.calculation-preview {
+  margin-top: $elca-spacing-base;
+}
+
+.preview-card {
+  @include elca-card;
+  background-color: $elca-coral-red-light;
+  border: 1px solid $elca-coral-red;
+  border-radius: $elca-border-radius-lg;
+}
+
+.preview-title {
+  @include elca-heading('sm');
+  color: $elca-coral-red;
+  margin-bottom: $elca-spacing-md;
+}
+
+.calculation-loading {
+  @include elca-flex-center;
+  gap: $elca-spacing-sm;
+  padding: $elca-spacing-base;
+  color: $elca-text-secondary;
+}
+
+.loading-text {
+  color: $elca-text-secondary;
+  font-size: $elca-font-size-sm;
+}
+
+.preview-details {
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-md;
+}
+
+.preview-item {
+  @include elca-flex-between;
+  padding: $elca-spacing-sm 0;
+
+  &.highlight {
+    font-weight: $elca-font-weight-semibold;
+    border-top: 1px solid $elca-coral-red;
+    padding-top: $elca-spacing-md;
+    margin-top: $elca-spacing-sm;
+    color: $elca-coral-red;
+  }
+
+  .label {
+    color: $elca-text-secondary;
+  }
+
+  .value {
+    @include elca-currency;
+    font-weight: $elca-font-weight-medium;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: $elca-spacing-base;
+  justify-content: flex-end;
+  padding: $elca-spacing-base;
+
+  .submit-button {
+    @include elca-button-primary;
+    @include elca-button-size('base');
+    position: relative;
+    min-width: 150px;
+
+    .submit-spinner {
+      position: absolute;
+      left: $elca-spacing-base;
+      top: 50%;
+      transform: translateY(-50%);
+      color: white;
+    }
+  }
+
+  .cancel-button {
+    @include elca-button-secondary;
+    @include elca-button-size('base');
+  }
+}
+
+// Responsive Design with ELCA breakpoints
+@media (max-width: #{$elca-breakpoint-md - 1px}) {
+  .travel-request-form-container {
+    margin: $elca-spacing-base auto;
+    padding: 0 $elca-spacing-sm;
+  }
+
+  .form-card {
+    margin: 0;
+    padding: $elca-spacing-base;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: $elca-spacing-sm;
+
+    .submit-button,
+    .cancel-button {
+      width: 100% !important;
+      @include elca-button-size('lg'); // Larger buttons for mobile
+    }
+  }
+}
+
+// Enhanced form field styling with ELCA colors
+.mat-mdc-form-field {
+  &.mat-form-field-invalid {
+    .mat-mdc-form-field-hint-wrapper {
+      color: $elca-error;
+    }
+  }
+
+  .mat-mdc-form-field-hint-wrapper {
+    color: $elca-text-tertiary;
+    font-size: $elca-font-size-xs;
+  }
+}
+
+// Enhanced button interactions
+.mat-mdc-raised-button:not([disabled]) {
+  &:hover {
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+  }
+
+  &.mat-primary:hover {
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
+  }
+}
+
+// Section dividers
+.form-section {
+  padding: $elca-spacing-lg 0;
+  border-bottom: 1px solid $elca-border-secondary;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .section-title {
+    @include elca-heading('base');
+    color: $elca-coral-red;
+    margin-bottom: $elca-spacing-base;
+    display: flex;
+    align-items: center;
+    gap: $elca-spacing-sm;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+// Status indicators for form validation
+.validation-summary {
+  background-color: rgba($elca-error, 0.1);
+  border: 1px solid $elca-error;
+  border-radius: $elca-border-radius-base;
+  padding: $elca-spacing-base;
+  margin-bottom: $elca-spacing-base;
+
+  .error-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      color: $elca-error;
+      font-size: $elca-font-size-sm;
+      padding: $elca-spacing-xs 0;
+      display: flex;
+      align-items: center;
+      gap: $elca-spacing-xs;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+}

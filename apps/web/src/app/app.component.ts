@@ -16,7 +16,7 @@ declare global {
   standalone: true,
   imports: [RouterOutlet, MaterialModule],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css',
+  styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
   title = 'RegularTravelManager';

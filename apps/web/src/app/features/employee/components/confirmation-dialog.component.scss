@@ -1,33 +1,38 @@
+// Import ELCA variables and mixins
+@import '../../../../styles/base/variables';
+@import '../../../../styles/base/mixins';
+
 .confirmation-dialog {
   min-width: 500px;
   max-width: 600px;
 }
 
 .dialog-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #4caf50;
-  margin-bottom: 1rem;
-}
+  @include elca-flex-center;
+  gap: $elca-spacing-sm;
+  @include elca-heading('base');
+  color: $elca-success;
+  margin-bottom: $elca-spacing-base;
 
-.success-icon {
-  color: #4caf50;
-  font-size: 1.5rem;
+  .success-icon {
+    color: $elca-success;
+    font-size: $elca-font-size-xl;
+  }
 }
 
 .auto-close-notice {
   text-align: center;
-  padding: 0.5rem;
-  background-color: #e3f2fd;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-  border: 1px solid #bbdefb;
-}
+  padding: $elca-spacing-sm;
+  background-color: $elca-coral-red-light;
+  border-radius: $elca-border-radius-base;
+  margin-bottom: $elca-spacing-base;
+  border: 1px solid $elca-coral-red;
 
-.auto-close-notice small {
-  color: #1565c0;
-  font-weight: 500;
+  small {
+    color: $elca-coral-red;
+    font-weight: $elca-font-weight-medium;
+    font-size: $elca-font-size-sm;
+  }
 }
 
 .dialog-content {

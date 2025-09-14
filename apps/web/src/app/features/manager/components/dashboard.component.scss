@@ -1,0 +1,99 @@
+@import '../../../../styles/base/variables';
+@import '../../../../styles/base/mixins';
+
+.manager-dashboard-container {
+  padding: $elca-spacing-base;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-base;
+}
+
+.dashboard-header {
+  @include elca-card;
+  padding: $elca-spacing-lg;
+
+  h1 {
+    @include elca-heading('xl');
+    color: $elca-coral-red;
+    margin: 0 0 $elca-spacing-sm 0;
+  }
+
+  p {
+    color: $elca-text-secondary;
+    margin: 0;
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: $elca-spacing-base;
+  margin-bottom: $elca-spacing-base;
+}
+
+.stat-card {
+  @include elca-card;
+  padding: $elca-spacing-lg;
+  text-align: center;
+
+  .stat-icon {
+    font-size: 2.5rem;
+    color: $elca-coral-red;
+    margin-bottom: $elca-spacing-sm;
+  }
+
+  .stat-number {
+    @include elca-heading('2xl');
+    color: $elca-text-primary;
+    margin: 0 0 $elca-spacing-xs 0;
+  }
+
+  .stat-label {
+    color: $elca-text-secondary;
+    font-size: $elca-font-size-sm;
+    margin: 0;
+  }
+}
+
+.quick-actions {
+  @include elca-card;
+  padding: $elca-spacing-lg;
+
+  h2 {
+    @include elca-heading('base');
+    color: $elca-coral-red;
+    margin: 0 0 $elca-spacing-base 0;
+  }
+
+  .actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: $elca-spacing-sm;
+  }
+
+  button {
+    @include elca-button-primary;
+    @include elca-button-size('base');
+    justify-content: flex-start;
+
+    mat-icon {
+      margin-right: $elca-spacing-sm;
+    }
+  }
+}
+
+@include elca-media-md {
+  .manager-dashboard-container {
+    padding: $elca-spacing-md;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,186 @@
+@import '../../../../styles/base/variables';
+@import '../../../../styles/base/mixins';
+
+.registration-container {
+  @include elca-flex-center;
+  min-height: 100vh;
+  padding: $elca-spacing-base;
+  background: linear-gradient(135deg, $elca-coral-red 0%, lighten($elca-coral-red, 15%) 100%);
+
+  @include elca-media-sm {
+    padding: $elca-spacing-xs;
+  }
+}
+
+.registration-card {
+  @include elca-card;
+  max-width: 500px;
+  width: 100%;
+  padding: $elca-spacing-xl;
+  border-radius: $elca-border-radius-lg;
+  box-shadow: $elca-shadow-lg;
+
+  @include elca-media-sm {
+    padding: $elca-spacing-base;
+    margin: $elca-spacing-xs;
+  }
+}
+
+.registration-header {
+  text-align: center;
+  margin-bottom: $elca-spacing-md;
+
+  .elca-logo {
+    margin: 0 auto $elca-spacing-sm auto;
+  }
+
+  h2, .subtitle {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+h2 {
+  @include elca-heading('lg');
+  text-align: center;
+  margin-bottom: $elca-spacing-sm;
+  color: $elca-coral-red;
+}
+
+h3 {
+  @include elca-heading('base');
+  color: $elca-coral-red;
+  margin: $elca-spacing-base 0 $elca-spacing-xs 0;
+}
+
+.subtitle {
+  @include elca-text-secondary;
+  text-align: center;
+  margin-bottom: $elca-spacing-xl;
+}
+
+mat-form-field {
+  width: 100%;
+  margin-bottom: $elca-spacing-md;
+
+  .mat-mdc-form-field {
+    .mdc-text-field {
+      border-radius: $elca-border-radius-base;
+
+      &:not(.mdc-text-field--disabled) {
+        .mdc-text-field__input {
+          color: $elca-text-primary;
+        }
+
+        .mdc-floating-label {
+          color: $elca-text-secondary;
+        }
+      }
+
+      &.mdc-text-field--focused {
+        .mdc-text-field__input {
+          caret-color: $elca-coral-red;
+        }
+
+        .mdc-floating-label {
+          color: $elca-coral-red;
+        }
+
+        .mdc-line-ripple::after {
+          border-bottom-color: $elca-coral-red;
+        }
+      }
+    }
+  }
+}
+
+.checkbox-section {
+  margin: $elca-spacing-md 0;
+
+  .mat-mdc-checkbox {
+    .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background {
+      background-color: $elca-coral-red;
+      border-color: $elca-coral-red;
+    }
+  }
+}
+
+.submit-button {
+  @include elca-button-primary;
+  width: 100%;
+  height: 48px;
+  margin-top: $elca-spacing-base;
+  font-weight: $elca-font-weight-medium;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.success-step,
+.error-step {
+  text-align: center;
+  padding: $elca-spacing-2xl $elca-spacing-base;
+  min-height: 300px;
+  @include elca-flex-center;
+  flex-direction: column;
+}
+
+.success-icon,
+.error-icon {
+  font-size: 64px;
+  height: 64px;
+  width: 64px;
+  margin-bottom: $elca-spacing-base;
+}
+
+.success-icon {
+  color: $elca-success;
+}
+
+.error-icon {
+  color: $elca-error;
+}
+
+.action-buttons {
+  margin-top: $elca-spacing-base;
+  display: flex;
+  gap: $elca-spacing-sm;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  button {
+    &.mat-mdc-raised-button.mat-primary {
+      @include elca-button-primary;
+      @include elca-button-size('base');
+    }
+
+    &.mat-mdc-button {
+      @include elca-button-secondary;
+      @include elca-button-size('base');
+    }
+  }
+
+  @include elca-media-sm {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+// Loading states
+.mat-mdc-progress-bar {
+  .mdc-linear-progress__bar-inner {
+    border-color: $elca-coral-red;
+  }
+}
+
+mat-spinner {
+  ::ng-deep .mdc-circular-progress__determinate-circle,
+  ::ng-deep .mdc-circular-progress__indeterminate-circle-graphic {
+    stroke: $elca-coral-red;
+  }
+}

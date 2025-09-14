@@ -1,0 +1,118 @@
+@import '../../../../styles/base/variables';
+@import '../../../../styles/base/mixins';
+
+.verification-container {
+  @include elca-flex-center;
+  min-height: 100vh;
+  padding: $elca-spacing-base;
+  background: linear-gradient(135deg, $elca-coral-red 0%, lighten($elca-coral-red, 15%) 100%);
+
+  @include elca-media-sm {
+    padding: $elca-spacing-xs;
+  }
+}
+
+.verification-card {
+  @include elca-card;
+  max-width: 500px;
+  width: 100%;
+  padding: $elca-spacing-xl;
+  border-radius: $elca-border-radius-lg;
+  box-shadow: $elca-shadow-lg;
+
+  @include elca-media-sm {
+    padding: $elca-spacing-base;
+    margin: $elca-spacing-xs;
+  }
+}
+
+.verification-step {
+  text-align: center;
+  padding: $elca-spacing-2xl $elca-spacing-base;
+
+  h2 {
+    @include elca-heading('base');
+    margin: $elca-spacing-base 0 $elca-spacing-md 0;
+    color: $elca-text-primary;
+  }
+
+  p {
+    color: $elca-text-secondary;
+    line-height: $elca-line-height-base;
+    margin-bottom: $elca-spacing-xl;
+  }
+
+  @include elca-media-sm {
+    padding: $elca-spacing-base $elca-spacing-xs;
+  }
+}
+
+.status-icon {
+  font-size: 64px;
+  height: 64px;
+  width: 64px;
+  margin-bottom: $elca-spacing-base;
+
+  &.success-icon {
+    color: $elca-success;
+  }
+
+  &.error-icon {
+    color: $elca-error;
+  }
+
+  &.warning-icon {
+    color: $elca-warning;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-md;
+  align-items: center;
+
+  button {
+    min-width: 200px;
+
+    &.mat-mdc-raised-button.mat-primary {
+      @include elca-button-primary;
+      @include elca-button-size('base');
+    }
+
+    &.mat-mdc-button {
+      @include elca-button-secondary;
+      @include elca-button-size('base');
+    }
+  }
+}
+
+mat-spinner {
+  margin: 0 auto $elca-spacing-base;
+
+  ::ng-deep .mdc-circular-progress__determinate-circle,
+  ::ng-deep .mdc-circular-progress__indeterminate-circle-graphic {
+    stroke: $elca-coral-red;
+  }
+}
+
+// State-specific styling
+.verification-step {
+  &.success {
+    .status-icon {
+      color: $elca-success;
+    }
+  }
+
+  &.error {
+    .status-icon {
+      color: $elca-error;
+    }
+  }
+
+  &.expired {
+    .status-icon {
+      color: $elca-warning;
+    }
+  }
+}

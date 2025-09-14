@@ -66,7 +66,7 @@ import {
     ]),
   ],
   templateUrl: './manager-request-queue.component.html',
-  styleUrls: ['./manager-request-queue.component.css'],
+  styleUrls: ['./manager-request-queue.component.scss'],
 })
 export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
   @ViewChild(MatPaginator) paginator!: MatPaginator;

@@ -20,18 +20,6 @@ import { MatIconModule } from '@angular/material/icon';
       </mat-card>
     </div>
   `,
-  styles: [
-    `
-      .projects-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      mat-card-header mat-icon {
-        background-color: #fff3e0;
-        color: #f57c00;
-      }
-    `,
-  ],
+  styleUrls: ['./projects.component.scss'],
 })
 export class ProjectsComponent {}

@@ -1,0 +1,242 @@
+@import '../../../../styles/base/variables';
+@import '../../../../styles/base/mixins';
+
+.project-detail-container {
+  padding: $elca-spacing-base;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-base;
+}
+
+.project-header-card {
+  .title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .title-info {
+    display: flex;
+    align-items: center;
+    gap: $elca-spacing-md;
+  }
+
+  .project-icon {
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+    color: $elca-coral-red;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.8rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: $elca-spacing-sm;
+  }
+}
+
+.project-info {
+  margin-top: $elca-spacing-md;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: $elca-spacing-base;
+}
+
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: $elca-spacing-md;
+  padding: $elca-spacing-md;
+  background-color: $elca-bg-tertiary;
+  border-radius: $elca-border-radius-base;
+
+  mat-icon {
+    color: $elca-text-secondary;
+    margin-top: 2px;
+  }
+
+  strong {
+    display: block;
+    margin-bottom: $elca-spacing-xs;
+    color: $elca-text-primary;
+  }
+
+  p {
+    margin: 0;
+    color: $elca-text-secondary;
+  }
+}
+
+.cost-value {
+  font-weight: $elca-font-weight-medium;
+  color: $elca-success;
+  font-family: $elca-font-family-monospace;
+}
+
+.subprojects-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: $elca-spacing-sm;
+}
+
+.table-container {
+  overflow-x: auto;
+  margin-top: $elca-spacing-md;
+}
+
+.subprojects-table {
+  width: 100%;
+  min-width: 800px;
+}
+
+.location-name {
+  display: flex;
+  align-items: center;
+  gap: $elca-spacing-sm;
+
+  mat-chip {
+    font-size: $elca-font-size-xs;
+    min-height: 20px;
+  }
+}
+
+.address {
+  display: flex;
+  align-items: flex-start;
+  gap: $elca-spacing-sm;
+}
+
+.address-icon {
+  color: $elca-text-secondary;
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 2px;
+}
+
+.address-text {
+  font-size: $elca-font-size-sm;
+}
+
+.city-postal {
+  color: $elca-text-secondary;
+  font-size: $elca-font-size-xs;
+}
+
+.no-address,
+.no-coordinates {
+  color: $elca-text-tertiary;
+  font-style: italic;
+  font-size: $elca-font-size-sm;
+}
+
+.coordinates {
+  display: flex;
+  align-items: center;
+  gap: $elca-spacing-xs;
+  font-family: $elca-font-family-monospace;
+  font-size: $elca-font-size-xs;
+}
+
+.coords-icon {
+  color: $elca-coral-red;
+  font-size: $elca-font-size-sm;
+  width: $elca-font-size-sm;
+  height: $elca-font-size-sm;
+}
+
+.cost-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.cost-source {
+  font-size: $elca-font-size-xs;
+  color: $elca-text-tertiary;
+  font-style: italic;
+}
+
+.action-buttons {
+  display: flex;
+  gap: $elca-spacing-xs;
+
+  button {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+  }
+}
+
+.no-subprojects {
+  text-align: center;
+  padding: $elca-spacing-2xl $elca-spacing-base;
+  color: $elca-text-secondary;
+
+  mat-icon {
+    font-size: 4rem;
+    width: 4rem;
+    height: 4rem;
+    color: $elca-text-tertiary;
+    margin-bottom: $elca-spacing-md;
+  }
+
+  h3 {
+    margin: $elca-spacing-md 0 $elca-spacing-sm 0;
+    color: $elca-text-primary;
+  }
+
+  p {
+    margin: 0 0 $elca-spacing-xl 0;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@include elca-media-md {
+  .project-detail-container {
+    padding: $elca-spacing-md;
+  }
+
+  .title-row {
+    flex-direction: column;
+    gap: $elca-spacing-md;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    justify-content: stretch;
+
+    button {
+      flex: 1;
+    }
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .subprojects-header {
+    flex-direction: column;
+    gap: $elca-spacing-md;
+    align-items: stretch;
+  }
+}

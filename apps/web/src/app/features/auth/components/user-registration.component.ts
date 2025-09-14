@@ -117,8 +117,11 @@ interface RegistrationState {
 
           <!-- Form Step -->
           <div *ngIf="state.step === 'form'">
-            <h2>Create Your Account</h2>
-            <p class="subtitle">Join RegularTravelManager to manage your travel allowances</p>
+            <div class="registration-header">
+              <div class="elca-logo"></div>
+              <h2>Create Your Account</h2>
+              <p class="subtitle">Join RegularTravelManager to manage your travel allowances</p>
+            </div>
 
             <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
               <!-- Personal Information -->
@@ -300,91 +303,7 @@ interface RegistrationState {
       </mat-card>
     </div>
   `,
-  styles: [
-    `
-      .registration-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        padding: 20px;
-        background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
-      }
-
-      .registration-card {
-        max-width: 500px;
-        width: 100%;
-        padding: 20px;
-      }
-
-      h2 {
-        text-align: center;
-        margin-bottom: 8px;
-        color: #1976d2;
-      }
-
-      .subtitle {
-        text-align: center;
-        color: #666;
-        margin-bottom: 30px;
-      }
-
-      mat-form-field {
-        width: 100%;
-        margin-bottom: 16px;
-      }
-
-      .checkbox-section {
-        margin: 16px 0;
-      }
-
-      .submit-button {
-        width: 100%;
-        height: 48px;
-        margin-top: 20px;
-      }
-
-      .success-step,
-      .error-step {
-        text-align: center;
-        padding: 40px 20px;
-        min-height: 300px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-      }
-
-      .success-icon,
-      .error-icon {
-        font-size: 64px;
-        height: 64px;
-        width: 64px;
-        margin-bottom: 20px;
-      }
-
-      .success-icon {
-        color: #4caf50;
-      }
-
-      .error-icon {
-        color: #f44336;
-      }
-
-      .action-buttons {
-        margin-top: 20px;
-      }
-
-      .action-buttons button {
-        margin: 0 8px;
-      }
-
-      h3 {
-        color: #1976d2;
-        margin: 20px 0 10px 0;
-      }
-    `,
-  ],
+  styleUrls: ['./user-registration.component.scss'],
 })
 export class UserRegistrationComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();

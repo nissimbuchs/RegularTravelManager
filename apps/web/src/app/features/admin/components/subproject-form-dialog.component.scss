@@ -1,0 +1,230 @@
+@import '../../../../styles/base/variables';
+@import '../../../../styles/base/mixins';
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $elca-spacing-base;
+
+  h2 {
+    @include elca-heading('base');
+    margin: 0;
+    color: $elca-text-primary;
+  }
+
+  button[mat-icon-button] {
+    color: $elca-text-tertiary;
+
+    &:hover {
+      color: $elca-text-secondary;
+    }
+  }
+}
+
+.subproject-form {
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-xl;
+  min-width: 600px;
+  max-width: 700px;
+}
+
+.form-section {
+  @include elca-card;
+  border: 1px solid $elca-border-primary;
+  border-radius: $elca-border-radius-lg;
+  padding: $elca-spacing-base;
+  background-color: $elca-bg-primary;
+
+  h4 {
+    @include elca-heading('xs');
+    margin: 0 0 $elca-spacing-base 0;
+    display: flex;
+    align-items: center;
+    gap: $elca-spacing-xs;
+    color: $elca-text-primary;
+
+    mat-icon {
+      color: $elca-coral-red;
+    }
+  }
+}
+
+.status-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-xs;
+  padding: $elca-spacing-base;
+  background-color: white;
+  border-radius: $elca-border-radius-lg;
+
+  .toggle-label {
+    display: flex;
+    align-items: center;
+    gap: $elca-spacing-xs;
+    font-weight: $elca-font-weight-medium;
+
+    mat-icon {
+      &[color="primary"] {
+        color: $elca-coral-red;
+      }
+
+      &[color="warn"] {
+        color: $elca-error;
+      }
+    }
+  }
+}
+
+.address-row,
+.coords-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $elca-spacing-base;
+}
+
+.geocoding-actions {
+  display: flex;
+  gap: $elca-spacing-xs;
+  margin-top: $elca-spacing-xs;
+
+  button {
+    @include elca-button-size('small');
+
+    &[color="primary"] {
+      @include elca-button-primary;
+    }
+
+    &[mat-button] {
+      @include elca-button-secondary;
+    }
+  }
+}
+
+// Animation for spinning icon
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.coordinates-display {
+  margin-top: $elca-spacing-xs;
+
+  .coords-card {
+    @include elca-card;
+    padding: $elca-spacing-sm;
+    background-color: white;
+
+    .coords-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: $elca-spacing-base;
+
+      .coord-item {
+        display: flex;
+        flex-direction: column;
+        gap: $elca-spacing-xs;
+
+        .coord-value {
+          font-family: $elca-font-family-monospace;
+          font-size: $elca-font-size-sm;
+          color: #1976d2;
+          font-weight: $elca-font-weight-medium;
+        }
+      }
+    }
+  }
+}
+
+.manual-coords-actions {
+  margin-top: $elca-spacing-base;
+  display: flex;
+  gap: $elca-spacing-xs;
+
+  button {
+    @include elca-button-size('small');
+
+    &[color="warn"] {
+      background-color: $elca-error;
+      color: white;
+
+      &:hover {
+        background-color: darken($elca-error, 5%);
+      }
+    }
+  }
+}
+
+.cost-preview {
+  display: flex;
+  align-items: center;
+  gap: $elca-spacing-xs;
+  margin-top: $elca-spacing-base;
+  padding: $elca-spacing-sm;
+  background-color: white;
+  border-radius: $elca-border-radius-lg;
+
+  .cost-display {
+    font-family: $elca-font-family-monospace;
+    font-size: 1.1rem;
+    color: $elca-success;
+    font-weight: $elca-font-weight-medium;
+  }
+}
+
+// Dialog content and actions
+mat-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+mat-dialog-actions {
+  padding: $elca-spacing-base 0;
+  gap: $elca-spacing-xs;
+
+  button {
+    @include elca-button-size('base');
+
+    &[mat-button] {
+      @include elca-button-secondary;
+    }
+
+    &[mat-raised-button][color="primary"] {
+      @include elca-button-primary;
+    }
+
+    mat-icon {
+      margin-right: $elca-spacing-xs;
+    }
+  }
+}
+
+// Responsive design
+@include elca-media-md {
+  .subproject-form {
+    min-width: auto;
+    max-width: 100%;
+  }
+
+  .address-row,
+  .coords-row {
+    grid-template-columns: 1fr;
+  }
+
+  .coordinates-display {
+    .coords-card {
+      .coords-info {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+}

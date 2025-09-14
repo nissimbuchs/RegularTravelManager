@@ -35,61 +35,7 @@ import { AuthService } from '../../core/services/auth.service';
       </mat-card>
     </div>
   `,
-  styles: [
-    `
-      .unauthorized-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        background-color: #f5f5f5;
-        padding: 20px;
-      }
-
-      .unauthorized-card {
-        max-width: 500px;
-        text-align: center;
-      }
-
-      .unauthorized-content {
-        padding: 40px 20px;
-      }
-
-      .unauthorized-icon {
-        font-size: 72px;
-        height: 72px;
-        width: 72px;
-        color: #f44336;
-        margin-bottom: 24px;
-      }
-
-      h2 {
-        margin: 16px 0;
-        color: #333;
-      }
-
-      p {
-        margin: 12px 0;
-        color: #666;
-        line-height: 1.5;
-      }
-
-      .action-buttons {
-        margin-top: 32px;
-        display: flex;
-        gap: 16px;
-        justify-content: center;
-        flex-wrap: wrap;
-      }
-
-      @media (max-width: 480px) {
-        .action-buttons {
-          flex-direction: column;
-          align-items: stretch;
-        }
-      }
-    `,
-  ],
+  styleUrls: ['./unauthorized.component.scss'],
 })
 export class UnauthorizedComponent {
   constructor(

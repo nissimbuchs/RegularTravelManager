@@ -1,0 +1,175 @@
+@import '../../../styles/base/variables';
+@import '../../../styles/base/mixins';
+
+.sidenav-container {
+  height: 100vh;
+  position: relative;
+
+  &.is-mobile {
+    .sidenav {
+      width: 100%;
+      max-width: 280px;
+    }
+
+    .main-content {
+      padding: $elca-spacing-base;
+    }
+  }
+}
+
+.sidenav {
+  width: 250px;
+  background-color: $elca-bg-primary;
+  border-right: 1px solid $elca-border-primary;
+  z-index: 200;
+}
+
+.sidenav-header {
+  @include elca-flex-center;
+  justify-content: flex-start;
+  padding: 0 $elca-spacing-base;
+  background-color: $elca-coral-red;
+  color: white;
+  min-height: 64px;
+  position: relative;
+  z-index: 210;
+
+  .app-icon {
+    margin-right: $elca-spacing-xs;
+    font-size: 24px;
+    color: white;
+  }
+
+  .app-title {
+    @include elca-heading('base');
+    font-size: 20px;
+    font-weight: $elca-font-weight-semibold;
+    color: white;
+  }
+}
+
+.main-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: $elca-shadow-sm;
+
+  .toolbar-title {
+    @include elca-heading('sm');
+    font-size: 18px;
+    font-weight: $elca-font-weight-medium;
+    color: white;
+  }
+
+  .toolbar-spacer {
+    flex: 1 1 auto;
+  }
+
+  button[mat-icon-button] {
+    color: white;
+
+    mat-icon {
+      color: white;
+    }
+  }
+}
+
+.main-content {
+  padding: $elca-spacing-xl;
+  min-height: calc(100vh - 64px);
+  background-color: $elca-bg-secondary;
+  position: relative;
+  z-index: 1;
+}
+
+// Navigation styles
+mat-nav-list {
+  a[mat-list-item] {
+    transition: all 0.2s ease-in-out;
+    border-radius: $elca-border-radius-base;
+    margin: $elca-spacing-xs $elca-spacing-sm;
+
+    &:hover {
+      background-color: $elca-coral-red-light;
+    }
+
+    &.active-nav-item {
+      background-color: $elca-coral-red-light;
+      color: $elca-coral-red;
+
+      mat-icon {
+        color: $elca-coral-red;
+      }
+
+      span {
+        font-weight: $elca-font-weight-medium;
+      }
+    }
+
+    mat-icon[matListItemIcon] {
+      color: $elca-text-secondary;
+    }
+
+    span[matListItemTitle] {
+      @include elca-body-text;
+      color: $elca-text-primary;
+    }
+  }
+
+  // Logout button styling
+  a[mat-list-item]:last-child {
+    margin-top: $elca-spacing-base;
+
+    mat-icon {
+      color: $elca-error !important;
+    }
+
+    span {
+      color: $elca-error;
+    }
+
+    &:hover {
+      background-color: rgba($elca-error, 0.1);
+    }
+  }
+}
+
+// User menu styles
+.user-menu-header {
+  padding: $elca-spacing-base !important;
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+
+    .user-name {
+      @include elca-heading('xs');
+      font-weight: $elca-font-weight-medium;
+      font-size: 14px;
+      color: $elca-text-primary;
+    }
+
+    .user-role {
+      font-size: 12px;
+      color: $elca-text-tertiary;
+      margin-top: $elca-spacing-xs;
+    }
+  }
+}
+
+// Responsive design
+@include elca-media-md {
+  .main-content {
+    padding: $elca-spacing-md;
+  }
+
+  .toolbar-title {
+    font-size: 16px;
+  }
+}
+
+@include elca-media-sm {
+  .main-content {
+    padding: $elca-spacing-sm;
+  }
+}

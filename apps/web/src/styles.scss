@@ -1,0 +1,258 @@
+// ELCA Global Styles - RegularTravelManager
+// Main entry point importing the complete ELCA styling architecture
+
+// Import the complete ELCA styling system
+@import 'styles/main';
+
+// Legacy compatibility: Preserve existing utility classes for backward compatibility
+.full-width {
+  width: 100% !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+.text-left {
+  text-align: left !important;
+}
+
+.text-right {
+  text-align: right !important;
+}
+
+// Loading overlay - updated with ELCA styling
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  @include elca-flex-center;
+  z-index: $elca-z-modal;
+  backdrop-filter: blur(2px);
+
+  .loading-content {
+    @include elca-flex-center;
+    flex-direction: column;
+    color: $elca-coral-red;
+    font-weight: $elca-font-weight-medium;
+
+    .loading-spinner {
+      margin-bottom: $elca-spacing-base;
+    }
+  }
+}
+
+// Enhanced Material Icons with ELCA context
+mat-icon {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+
+  &.mat-icon-inline {
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  // ELCA-specific icon colors
+  &.elca-coral {
+    color: $elca-coral-red;
+  }
+
+  &.elca-success {
+    color: $elca-success;
+  }
+
+  &.elca-warning {
+    color: $elca-warning;
+  }
+
+  &.elca-error {
+    color: $elca-error;
+  }
+}
+
+// Enhanced button icon spacing with ELCA design
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-flat-button,
+.mat-mdc-outlined-button {
+  mat-icon {
+    margin-right: $elca-spacing-sm;
+    vertical-align: middle;
+  }
+
+  // No margin for icon-only buttons
+  &.mat-mdc-icon-button mat-icon {
+    margin-right: 0;
+  }
+}
+
+// Enhanced snackbar styles with ELCA colors
+.mat-mdc-snack-bar-container {
+  &.success-snackbar {
+    background-color: $elca-success !important;
+    color: white !important;
+  }
+
+  &.error-snackbar {
+    background-color: $elca-error !important;
+    color: white !important;
+  }
+
+  &.warning-snackbar {
+    background-color: $elca-warning !important;
+    color: $elca-text-primary !important;
+  }
+
+  &.info-snackbar {
+    background-color: $elca-info !important;
+    color: white !important;
+  }
+}
+
+// Mobile-first responsive design (enhanced with ELCA breakpoints)
+@media (max-width: #{$elca-breakpoint-sm - 1px}) {
+  .hide-mobile {
+    display: none !important;
+  }
+
+  // Touch-friendly button sizing
+  .mat-mdc-raised-button,
+  .mat-mdc-outlined-button,
+  .mat-mdc-flat-button,
+  .mat-mdc-button {
+    min-height: 44px !important;
+    padding: 0 $elca-spacing-base !important;
+  }
+
+  .mat-mdc-form-field {
+    width: 100% !important;
+  }
+
+  // Mobile-specific ELCA styling
+  .elca-card {
+    margin: $elca-spacing-sm;
+    padding: $elca-spacing-base;
+    border-radius: $elca-border-radius-base;
+  }
+
+  .form-section {
+    margin: $elca-spacing-sm;
+    padding: $elca-spacing-base;
+  }
+}
+
+@include elca-media-sm {
+  .show-mobile {
+    display: none !important;
+  }
+}
+
+// High-contrast mode support
+@media (prefers-contrast: high) {
+  :root {
+    --elca-coral-red: #d32f2f;
+    --elca-text-primary: #000000;
+    --elca-border-primary: #000000;
+  }
+}
+
+// Dark mode support (future enhancement)
+@media (prefers-color-scheme: dark) {
+  // Reserved for future dark theme implementation
+  // Will extend ELCA colors to support dark mode variants
+}
+
+// Focus indicators for accessibility (WCAG 2.1 AA compliance)
+:focus-visible {
+  outline: 2px solid $elca-coral-red !important;
+  outline-offset: 2px !important;
+  border-radius: 2px !important;
+}
+
+// Ensure proper z-index stacking for ELCA components
+.cdk-overlay-container {
+  z-index: $elca-z-modal;
+}
+
+.mat-mdc-menu-panel {
+  z-index: $elca-z-dropdown;
+}
+
+.mat-mdc-dialog-container {
+  z-index: $elca-z-modal;
+}
+
+// RegularTravelManager specific enhancements
+.travel-request-form {
+  .calculation-alert {
+    background-color: $elca-coral-red-light;
+    border: 1px solid $elca-coral-red;
+    border-radius: $elca-border-radius-base;
+
+    .calculation-details {
+      color: $elca-text-primary;
+
+      strong {
+        color: $elca-coral-red;
+      }
+    }
+  }
+
+  .allowance-summary {
+    background-color: $elca-bg-primary;
+    border: 1px solid $elca-border-primary;
+    border-radius: $elca-border-radius-lg;
+    padding: $elca-spacing-lg;
+    margin-top: $elca-spacing-base;
+  }
+}
+
+// Manager dashboard enhancements
+.manager-dashboard {
+  .pending-requests-count {
+    background-color: $elca-warning;
+    color: $elca-text-primary;
+    border-radius: $elca-border-radius-round;
+    padding: $elca-spacing-xs $elca-spacing-sm;
+    font-size: $elca-font-size-xs;
+    font-weight: $elca-font-weight-semibold;
+  }
+
+  .approval-actions {
+    display: flex;
+    gap: $elca-spacing-sm;
+
+    .approve-btn {
+      @include elca-button-primary;
+      @include elca-button-size('sm');
+    }
+
+    .reject-btn {
+      background-color: transparent;
+      border: 1px solid $elca-error;
+      color: $elca-error;
+      border-radius: $elca-border-radius-base;
+      padding: $elca-spacing-xs $elca-spacing-md;
+      font-size: $elca-font-size-sm;
+      font-weight: $elca-font-weight-medium;
+
+      &:hover {
+        background-color: rgba($elca-error, 0.1);
+      }
+    }
+  }
+}
