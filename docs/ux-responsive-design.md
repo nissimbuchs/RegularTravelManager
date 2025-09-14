@@ -731,6 +731,548 @@ Desktop.parameters = {
 };
 ```
 
+## Epic 5.1: User Management Responsive Patterns
+
+### User Registration Form - Mobile First
+```typescript
+const ResponsiveUserRegistrationForm: React.FC = () => {
+  const { xs, sm } = useBreakpoint();
+  const isMobile = xs || sm;
+
+  return (
+    <div className="registration-container">
+      <Card
+        className="registration-card"
+        style={{
+          margin: isMobile ? '0 16px' : '0 auto',
+          maxWidth: isMobile ? 'none' : '600px',
+          marginTop: isMobile ? '16px' : '40px'
+        }}
+      >
+        <div className="registration-header">
+          <div className="elca-logo-container">
+            <img src="/assets/elca-logo-square.svg" alt="ELCA Informatik SA" className="elca-logo" />
+          </div>
+          {isMobile ? (
+            <Typography.Title level={3} className="elca-heading">Create Account</Typography.Title>
+          ) : (
+            <Typography.Title level={2} className="elca-heading">Create Your Account</Typography.Title>
+          )}
+          <Typography.Text type="secondary">Welcome to ELCA RegularTravelManager</Typography.Text>
+        </div>
+
+        <Form layout="vertical" size={isMobile ? 'large' : 'middle'}>
+          {/* Password field with responsive strength indicator */}
+          <Form.Item name="password" label="Password">
+            <Input.Password size={isMobile ? 'large' : 'middle'} />
+          </Form.Item>
+
+          <div className="password-strength-container">
+            <Progress
+              size={isMobile ? 'default' : 'small'}
+              strokeWidth={isMobile ? 6 : 4}
+            />
+          </div>
+
+          {/* Responsive name fields */}
+          <Row gutter={isMobile ? [0, 16] : [16, 0]}>
+            <Col xs={24} sm={12}>
+              <Form.Item name="firstName" label="First Name">
+                <Input size={isMobile ? 'large' : 'middle'} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item name="lastName" label="Last Name">
+                <Input size={isMobile ? 'large' : 'middle'} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* Mobile-optimized submit button */}
+          <Form.Item>
+            {isMobile ? (
+              <Button
+                type="primary"
+                htmlType="submit"
+                block
+                size="large"
+                style={{ height: '48px' }}
+              >
+                Create Account
+              </Button>
+            ) : (
+              <Button type="primary" htmlType="submit" size="large">
+                Create Account
+              </Button>
+            )}
+          </Form.Item>
+        </Form>
+      </Card>
+    </div>
+  );
+};
+```
+
+### Admin User Management - Responsive Table
+```typescript
+const ResponsiveUserManagementTable: React.FC = () => {
+  const { xs, sm, md } = useBreakpoint();
+  const isMobile = xs;
+  const isTablet = sm;
+
+  if (isMobile) {
+    // Mobile card view
+    return (
+      <div className="mobile-user-management">
+        <div className="mobile-search">
+          <Input.Search
+            placeholder="Search users..."
+            size="large"
+            style={{ marginBottom: 16 }}
+          />
+        </div>
+
+        <div className="mobile-filters">
+          <Row gutter={8}>
+            <Col span={12}>
+              <Select placeholder="Role" size="large" style={{ width: '100%' }}>
+                <Option value="all">All Roles</Option>
+                <Option value="employee">Employees</Option>
+                <Option value="manager">Managers</Option>
+                <Option value="admin">Administrators</Option>
+              </Select>
+            </Col>
+            <Col span={12}>
+              <Select placeholder="Status" size="large" style={{ width: '100%' }}>
+                <Option value="all">All Status</Option>
+                <Option value="active">Active</Option>
+                <Option value="inactive">Inactive</Option>
+              </Select>
+            </Col>
+          </Row>
+        </div>
+
+        <List
+          dataSource={users}
+          renderItem={(user) => (
+            <List.Item className="mobile-user-card">
+              <Card size="small" className="user-card">
+                <div className="user-card-header">
+                  <Avatar icon={<UserOutlined />} />
+                  <div className="user-info">
+                    <Typography.Text strong>{user.name}</Typography.Text>
+                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                      {user.email}
+                    </Typography.Text>
+                  </div>
+                  <Tag color="blue">{user.role}</Tag>
+                </div>
+
+                <div className="user-card-details">
+                  <Row gutter={8}>
+                    <Col span={12}>
+                      <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+                        Department
+                      </Typography.Text>
+                      <div>{user.department}</div>
+                    </Col>
+                    <Col span={12}>
+                      <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+                        Last Login
+                      </Typography.Text>
+                      <div>{user.lastLogin ? dayjs(user.lastLogin).fromNow() : 'Never'}</div>
+                    </Col>
+                  </Row>
+                </div>
+
+                <div className="user-card-actions">
+                  <Button size="small" type="link">Edit</Button>
+                  <Button size="small" type="link">View</Button>
+                  <Button size="small" type="link" icon={<MoreOutlined />} />
+                </div>
+              </Card>
+            </List.Item>
+          )}
+        />
+      </div>
+    );
+  }
+
+  // Desktop/Tablet table view
+  return (
+    <Table
+      columns={columns}
+      dataSource={users}
+      scroll={{ x: isTablet ? 1000 : undefined }}
+      size={isTablet ? 'small' : 'middle'}
+    />
+  );
+};
+```
+
+### Manager Team Management - Responsive Layout
+```typescript
+const ResponsiveTeamManagement: React.FC = () => {
+  const { xs, sm, md, lg } = useBreakpoint();
+  const isMobile = xs;
+  const isTablet = sm;
+
+  return (
+    <div className="team-management-container">
+      {/* Responsive team stats */}
+      <Row gutter={[16, 16]} className="team-stats">
+        <Col xs={24} sm={12} md={6}>
+          <Statistic
+            title="Team Size"
+            value={teamStats.size}
+            prefix={<TeamOutlined />}
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <Statistic
+            title="Active Requests"
+            value={teamStats.activeRequests}
+            valueStyle={{ color: '#faad14' }}
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <Statistic
+            title="Monthly Expense"
+            value={teamStats.expense}
+            prefix="CHF"
+            precision={2}
+          />
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <div className="budget-indicator">
+            <Typography.Text strong>Budget Usage</Typography.Text>
+            <Progress
+              percent={budgetUsage}
+              size={isMobile ? 'default' : 'small'}
+              strokeColor={budgetUsage > 80 ? '#ff4d4f' : '#52c41a'}
+            />
+          </div>
+        </Col>
+      </Row>
+
+      {/* Team members list */}
+      <Card
+        title="Team Members"
+        className="team-members-card"
+        extra={
+          !isMobile && (
+            <Space>
+              <Select size="small" defaultValue="name" style={{ width: 100 }}>
+                <Option value="name">Name</Option>
+                <Option value="expense">Expense</Option>
+                <Option value="requests">Requests</Option>
+              </Select>
+              <Button size="small">Team Report</Button>
+            </Space>
+          )
+        }
+      >
+        {isMobile ? (
+          // Mobile: Card-based list
+          <List
+            dataSource={teamMembers}
+            renderItem={(member) => (
+              <List.Item className="mobile-team-member">
+                <Card size="small">
+                  <Row align="middle">
+                    <Col span={4}>
+                      <Avatar
+                        size={40}
+                        icon={<UserOutlined />}
+                        style={{
+                          backgroundColor: member.activeRequests > 0 ? '#52c41a' : '#d9d9d9'
+                        }}
+                      />
+                    </Col>
+                    <Col span={14}>
+                      <div>
+                        <Typography.Text strong>{member.name}</Typography.Text>
+                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>
+                          {member.email}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>
+                          {member.department} • {member.activeRequests} active requests
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={6} style={{ textAlign: 'right' }}>
+                      <Typography.Text strong>
+                        CHF {member.monthlyExpense}
+                      </Typography.Text>
+                      <div style={{ fontSize: 10, color: '#8c8c8c' }}>
+                        {member.lastRequestDate ? dayjs(member.lastRequestDate).fromNow() : 'No requests'}
+                      </div>
+                    </Col>
+                  </Row>
+                </Card>
+              </List.Item>
+            )}
+          />
+        ) : (
+          // Desktop/Tablet: Traditional list
+          <List
+            dataSource={teamMembers}
+            renderItem={(member) => (
+              <List.Item actions={[
+                <Button size="small">View Profile</Button>,
+                <Button size="small">Edit</Button>
+              ]}>
+                <List.Item.Meta
+                  avatar={<Avatar size={40} icon={<UserOutlined />} />}
+                  title={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Typography.Text strong>{member.name}</Typography.Text>
+                      <Tag color="blue" size="small">Employee</Tag>
+                    </div>
+                  }
+                  description={
+                    <div>
+                      <div>{member.email} | {member.department}</div>
+                      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                        Home: {member.homeCity} | Active Requests: {member.activeRequests}
+                      </Typography.Text>
+                    </div>
+                  }
+                />
+                <div style={{ textAlign: 'right' }}>
+                  <Typography.Text strong>CHF {member.monthlyExpense}</Typography.Text>
+                  <div style={{ fontSize: 11, color: '#8c8c8c' }}>
+                    Last request: {member.lastRequestDate ?
+                      dayjs(member.lastRequestDate).fromNow() : 'Never'}
+                  </div>
+                </div>
+              </List.Item>
+            )}
+          />
+        )}
+      </Card>
+
+      {/* Mobile floating action button */}
+      {isMobile && (
+        <Button
+          type="primary"
+          shape="circle"
+          size="large"
+          icon={<PlusOutlined />}
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            width: 56,
+            height: 56,
+            zIndex: 1000
+          }}
+          onClick={() => console.log('Add team member')}
+        />
+      )}
+    </div>
+  );
+};
+```
+
+### Mobile-Specific User Management Patterns
+```scss
+// Mobile user management styles
+@media (max-width: 768px) {
+  .mobile-user-management {
+    .mobile-search {
+      position: sticky;
+      top: 64px; // Below header
+      background: white;
+      z-index: 10;
+      padding: 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .mobile-filters {
+      padding: 0 16px 16px;
+      background: white;
+    }
+
+    .user-card {
+      margin-bottom: 8px;
+
+      .user-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+
+        .user-info {
+          flex: 1;
+          min-width: 0;
+
+          .ant-typography {
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+      }
+
+      .user-card-details {
+        margin-bottom: 12px;
+
+        .ant-row {
+          font-size: 12px;
+        }
+      }
+
+      .user-card-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #f0f0f0;
+      }
+    }
+  }
+
+  // Team management mobile styles
+  .team-management-container {
+    .team-stats {
+      .ant-statistic {
+        text-align: center;
+
+        .ant-statistic-title {
+          font-size: 12px;
+        }
+
+        .ant-statistic-content {
+          font-size: 20px;
+        }
+      }
+    }
+
+    .mobile-team-member {
+      .ant-card-body {
+        padding: 12px;
+      }
+    }
+  }
+
+  // Registration form mobile styles - ELCA CI/CD
+  .registration-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+
+    .registration-card {
+      border-radius: 0;
+      box-shadow: none;
+      border: none;
+      min-height: 100vh;
+      border-top: 4px solid #e74c3c; // ELCA coral-red accent
+
+      .ant-card-body {
+        padding: 24px 20px;
+      }
+    }
+
+    .registration-header {
+      text-align: center;
+      margin-bottom: 32px;
+
+      .elca-logo-container {
+        margin-bottom: 16px;
+
+        .elca-logo {
+          height: 48px;
+          width: 48px;
+        }
+      }
+
+      .elca-heading {
+        color: #e74c3c !important; // ELCA coral-red
+        font-weight: 600;
+      }
+    }
+
+    .password-strength-container {
+      margin-bottom: 16px;
+
+      .strength-fill {
+        &.very-weak { background: #e74c3c !important; } // ELCA coral-red for weak
+        &.weak { background: #f39c12; }
+        &.fair { background: #f1c40f; }
+        &.good { background: #27ae60; }
+        &.strong { background: #229954; }
+      }
+    }
+  }
+
+  // Touch-friendly enhancements with ELCA styling
+  .ant-input,
+  .ant-select-selector,
+  .ant-btn {
+    min-height: 44px;
+    border-radius: 6px;
+  }
+
+  .ant-btn-primary {
+    background: #e74c3c !important; // ELCA coral-red
+    border-color: #e74c3c !important;
+    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+
+    &:hover {
+      background: #c0392b !important; // Darker ELCA coral-red
+      border-color: #c0392b !important;
+      box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
+    }
+
+    &:active {
+      background: #a93226 !important;
+      border-color: #a93226 !important;
+    }
+  }
+
+  .ant-form-item-label {
+    padding-bottom: 8px;
+  }
+
+  .ant-form-item {
+    margin-bottom: 20px;
+  }
+
+  // Swipe gestures for user cards
+  .user-card,
+  .mobile-team-member .ant-card {
+    position: relative;
+    transition: transform 0.2s ease;
+
+    &.swiping {
+      transform: translateX(-80px);
+    }
+
+    &::after {
+      content: 'Edit';
+      position: absolute;
+      right: -80px;
+      top: 0;
+      bottom: 0;
+      width: 80px;
+      background: #1677ff;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    &.swiping::after {
+      opacity: 1;
+    }
+  }
+}
+```
+
 ## Implementation Checklist
 
 ### Phase 1: Foundation

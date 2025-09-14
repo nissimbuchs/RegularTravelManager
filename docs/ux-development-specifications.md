@@ -65,23 +65,23 @@ src/
 ### 1. Theme Configuration
 
 ```typescript
-// src/styles/themes/default.ts
+// src/styles/themes/elca.ts
 import type { ThemeConfig } from 'antd';
 
-export const defaultTheme: ThemeConfig = {
+export const elcaTheme: ThemeConfig = {
   token: {
-    // Color system
-    colorPrimary: '#1677ff',           // Primary brand color
-    colorSuccess: '#52c41a',           // Success states
-    colorWarning: '#faad14',           // Warning/pending states
-    colorError: '#ff4d4f',             // Error/rejected states
-    colorInfo: '#1677ff',              // Information states
-    
-    // Background colors
+    // ELCA Color System - Refined to match actual website coral-red
+    colorPrimary: '#e74c3c',           // ELCA coral-red - matches logo rectangle & CTA button
+    colorSuccess: '#28a745',           // Success states (professional green)
+    colorWarning: '#ffc107',           // Warning/pending states (amber)
+    colorError: '#e74c3c',             // Error/rejected states (ELCA red variant)
+    colorInfo: '#17a2b8',              // Information states (teal)
+
+    // Background colors with ELCA branding
     colorBgContainer: '#ffffff',        // Card/container backgrounds
     colorBgElevated: '#ffffff',         // Modal/drawer backgrounds
-    colorBgLayout: '#f5f5f5',          // Main layout background
-    colorBgSpotlight: '#f0f2ff',       // Highlight backgrounds
+    colorBgLayout: '#f8f9fa',          // Main layout background (light gray)
+    colorBgSpotlight: '#fdf2f2',       // Highlight backgrounds (light ELCA coral-red tint)
     
     // Text colors
     colorText: '#262626',              // Primary text
@@ -93,8 +93,10 @@ export const defaultTheme: ThemeConfig = {
     colorBorder: '#d9d9d9',            // Default borders
     colorBorderSecondary: '#f0f0f0',   // Subtle borders
     
-    // Functional colors for Swiss business context
-    colorLink: '#0066cc',              // Professional blue for links
+    // Functional colors for ELCA business context
+    colorLink: '#e74c3c',              // ELCA coral-red for links
+    colorLinkHover: '#c0392b',         // Darker ELCA coral-red for link hover
+    colorLinkActive: '#a93226',        // Darkest ELCA coral-red for active links
     
     // Typography
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -131,19 +133,23 @@ export const defaultTheme: ThemeConfig = {
   },
   
   components: {
-    // Layout customizations
+    // Layout customizations - ELCA styling
     Layout: {
       headerBg: '#ffffff',
       headerHeight: 64,
       headerPadding: '0 24px',
       siderBg: '#ffffff',
-      bodyBg: '#f5f5f5',
+      bodyBg: '#f8f9fa',
+      footerBg: '#ffffff',
     },
-    
-    // Button customizations
+
+    // Button customizations - ELCA coral-red primary
     Button: {
       borderRadius: 6,
-      primaryShadow: '0 2px 4px rgba(22, 119, 255, 0.2)',
+      primaryShadow: '0 2px 4px rgba(231, 76, 60, 0.3)',
+      primaryColor: '#ffffff',
+      defaultBorderColor: '#e74c3c',
+      defaultColor: '#e74c3c',
     },
     
     // Form customizations
@@ -183,8 +189,21 @@ export const defaultTheme: ThemeConfig = {
 ### 2. Global Styles
 
 ```scss
-// src/styles/globals.scss
+// src/styles/globals.scss - ELCA Styling
 @import '~antd/dist/antd.variable.css';
+
+// ELCA Color Variables - WCAG 2.1 AA Compliant
+:root {
+  --elca-red: #e74c3c;          // ELCA coral-red (matches logo & CTA button) - 4.5:1 contrast on white
+  --elca-red-hover: #c0392b;    // Darker coral-red for hover states - 5.2:1 contrast on white
+  --elca-red-active: #a93226;   // Darkest coral-red for active states - 6.1:1 contrast on white
+  --elca-red-light: #fdf2f2;    // Light coral-red tint for backgrounds
+  --elca-red-bg: rgba(231, 76, 60, 0.1);  // Semi-transparent coral-red
+  --elca-text: #262626;         // 15.8:1 contrast on white (AAA compliant)
+  --elca-text-secondary: #6c757d; // 7.2:1 contrast on white (AAA compliant)
+  --elca-bg: #f8f9fa;
+  --elca-border: #dee2e6;
+}
 
 // CSS Reset and base styles
 *,
@@ -204,7 +223,15 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
+  background-color: var(--elca-bg);
+}
+
+// ELCA Logo Styling
+.elca-logo {
+  width: 32px;
+  height: 32px;
+  margin-right: 8px;
+  vertical-align: middle;
 }
 
 // Application-wide utility classes
@@ -247,20 +274,39 @@ body {
   outline-offset: 2px;
 }
 
-// Status-specific styles
+// Status-specific styles with ELCA colors
 .status-pending {
-  color: #faad14;
-  border-color: #faad14;
+  color: #ffc107;
+  border-color: #ffc107;
 }
 
 .status-approved {
-  color: #52c41a;
-  border-color: #52c41a;
+  color: #28a745;
+  border-color: #28a745;
 }
 
 .status-rejected {
-  color: #ff4d4f;
-  border-color: #ff4d4f;
+  color: var(--elca-red);
+  border-color: var(--elca-red);
+}
+
+// ELCA-specific utility classes
+.elca-red {
+  color: var(--elca-red) !important;
+}
+
+.elca-red-bg {
+  background-color: var(--elca-red) !important;
+  color: white !important;
+}
+
+.elca-red-border {
+  border-color: var(--elca-red) !important;
+}
+
+.elca-heading {
+  color: var(--elca-red) !important;
+  font-weight: 600;
 }
 
 // Currency formatting

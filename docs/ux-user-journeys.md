@@ -335,6 +335,194 @@ This document outlines the complete user journeys for both Employee and Manager 
 
 ---
 
+## Epic 5.1: User Management User Journeys
+
+### User Registration Journey: New Employee Onboarding
+
+#### Journey Overview
+**Goal:** Successfully register for a RegularTravelManager account and set up initial profile
+**Duration:** 10-15 minutes for complete setup
+**Frequency:** One-time per employee
+
+#### Journey Stages
+
+##### Stage 1: Registration Initiation
+**Touchpoint:** Company email or HR portal link
+
+**User Actions:**
+- Receives invitation email with registration link
+- Clicks registration link to access form
+- Begins account creation process
+
+**User Thoughts:**
+- "I need to set up my travel allowance account"
+- "This should be straightforward and quick"
+
+**Emotional State:** Neutral → Focused
+**Pain Points:** Broken links, expired invitations
+
+##### Stage 2: Account Information Entry
+**Touchpoint:** Registration form
+
+**User Actions:**
+- Enters email address (pre-filled from invitation)
+- Creates secure password meeting requirements
+- Enters first name and last name
+- Provides home address for distance calculations
+
+**User Thoughts:**
+- "The password requirements are clear"
+- "I hope the address geocoding works properly"
+
+**Emotional State:** Task-oriented
+**Pain Points:** Complex password requirements, address validation issues
+
+##### Stage 3: Email Verification
+**Touchpoint:** Email verification process
+
+**User Actions:**
+- Receives verification email
+- Clicks verification link
+- Returns to application to complete setup
+
+**User Thoughts:**
+- "I need to verify my email before proceeding"
+- "The verification email should arrive quickly"
+
+**Emotional State:** Waiting → Anticipatory
+**Pain Points:** Delayed email delivery, spam filters
+
+##### Stage 4: Profile Completion
+**Touchpoint:** Initial profile setup
+
+**User Actions:**
+- Reviews auto-geocoded home location
+- Sets notification preferences
+- Reviews role assignment (employee by default)
+- Completes initial profile setup
+
+**User Thoughts:**
+- "My home address is correctly mapped"
+- "I can change these settings later if needed"
+
+**Emotional State:** Confident
+**Pain Points:** Incorrect geocoding, unclear settings
+
+### Administrator User Management Journey
+
+#### Journey Overview
+**Goal:** Efficiently manage user accounts, roles, and organizational structure
+**Duration:** 2-5 minutes per user action
+**Frequency:** Daily/weekly for active administrators
+
+#### Journey Stages
+
+##### Stage 1: User Management Access
+**Touchpoint:** Admin dashboard navigation
+
+**User Actions:**
+- Navigates to user management section
+- Views list of all registered users
+- Uses search and filter capabilities
+
+**User Thoughts:**
+- "I need to see all users in the system"
+- "Filtering by role will help me find specific users"
+
+**Emotional State:** Administrative focus
+**Pain Points:** Slow loading, poor search functionality
+
+##### Stage 2: Role and Permission Management
+**Touchpoint:** User role assignment interface
+
+**User Actions:**
+- Selects user requiring role change
+- Reviews current permissions and assignments
+- Changes role from employee to manager or admin
+- Confirms role change with security checks
+
+**User Thoughts:**
+- "This user needs manager privileges now"
+- "I need to ensure the role change is immediate"
+
+**Emotional State:** Decisive → Cautious
+**Pain Points:** Unclear permission implications, delayed role updates
+
+##### Stage 3: Manager Assignment and Team Structure
+**Touchpoint:** Organizational management interface
+
+**User Actions:**
+- Assigns employees to specific managers
+- Reviews reporting structures
+- Bulk updates for organizational changes
+- Monitors team distributions
+
+**User Thoughts:**
+- "The team structure should reflect our org chart"
+- "Bulk operations save time for reorganizations"
+
+**Emotional State:** Systematic
+**Pain Points:** Complex organizational relationships, cascading assignment effects
+
+### Manager Team Management Journey
+
+#### Journey Overview
+**Goal:** Oversee assigned team members and maintain accurate team information
+**Duration:** 5-10 minutes per session
+**Frequency:** Weekly team review sessions
+
+#### Journey Stages
+
+##### Stage 1: Team Overview Access
+**Touchpoint:** Manager team dashboard
+
+**User Actions:**
+- Views all assigned team members
+- Reviews team travel request activity
+- Checks team expense summaries
+- Identifies team members needing attention
+
+**User Thoughts:**
+- "How is my team doing with travel requests?"
+- "Are there any issues I need to address?"
+
+**Emotional State:** Supervisory awareness
+**Pain Points:** Missing team member data, outdated information
+
+##### Stage 2: Individual Team Member Review
+**Touchpoint:** Employee profile management
+
+**User Actions:**
+- Selects team member for detailed review
+- Views employee's travel history and patterns
+- Reviews contact information and profile accuracy
+- Updates employee information within manager authority
+
+**User Thoughts:**
+- "Is this employee's information current?"
+- "Their travel pattern seems reasonable"
+
+**Emotional State:** Evaluative
+**Pain Points:** Limited edit permissions, unclear data freshness
+
+##### Stage 3: Team Performance Analysis
+**Touchpoint:** Team analytics and reporting
+
+**User Actions:**
+- Reviews team travel expense trends
+- Compares individual employee patterns
+- Identifies cost optimization opportunities
+- Plans team travel budget discussions
+
+**User Thoughts:**
+- "Are we within our travel budget?"
+- "Some employees might need guidance on travel efficiency"
+
+**Emotional State:** Analytical → Planning
+**Pain Points:** Limited historical data, unclear trend indicators
+
+---
+
 ## UX Design Principles for Implementation
 
 ### 1. Progressive Disclosure

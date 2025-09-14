@@ -102,7 +102,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user, children }) => {
             onClick={() => setCollapsed(!collapsed)}
             className="mobile-menu-trigger"
           />
-          <div className="logo">RegularTravelManager</div>
+          <div className="logo">
+            <img src="/assets/elca-logo-square.svg" alt="ELCA" className="elca-logo" />
+            ELCA TravelManager
+          </div>
         </div>
         <div className="header-right">
           <Badge count={3} size="small">
@@ -997,6 +1000,690 @@ const VirtualizedRequestList: React.FC<{ requests: TravelRequest[] }> = ({
       rowHeight={120}
       rowRenderer={rowRenderer}
     />
+  );
+};
+```
+
+---
+
+## Epic 5.1: User Management Components
+
+### 7. User Registration Form
+
+**Component:** `Form`, `Input`, `Button`, `Checkbox`
+
+```typescript
+interface UserRegistrationFormProps {
+  invitationToken?: string;
+  onSubmit: (userData: RegistrationData) => Promise<void>;
+  onResendVerification?: (email: string) => Promise<void>;
+}
+
+const UserRegistrationForm: React.FC<UserRegistrationFormProps> = ({
+  invitationToken,
+  onSubmit,
+  onResendVerification
+}) => {
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState(0);
+  const [addressSuggestions, setAddressSuggestions] = useState<Address[]>([]);
+
+  const passwordValidation = (password: string) => {
+    const checks = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+
+    const score = Object.values(checks).filter(Boolean).length;
+    setPasswordStrength(score);
+    return checks;
+  };
+
+  const handleAddressChange = debounce(async (address: string) => {
+    if (address.length > 3) {
+      try {
+        const suggestions = await geocodeService.getSuggestions(address);
+        setAddressSuggestions(suggestions);
+      } catch (error) {
+        console.error('Failed to fetch address suggestions');
+      }
+    }
+  }, 300);
+
+  const handleSubmit = async (values: RegistrationFormData) => {
+    setLoading(true);
+    try {
+      await onSubmit({
+        ...values,
+        invitationToken,
+        homeCoordinates: await geocodeService.getCoordinates(values.homeAddress)
+      });
+      message.success('Account created successfully! Please check your email for verification.');
+    } catch (error) {
+      message.error('Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="registration-form-card" title="Create Your Account">
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        size="large"
+        requiredMark="optional"
+      >
+        <Form.Item
+          name="email"
+          label="Email Address"
+          rules={[
+            { required: true, message: 'Please enter your email address' },
+            { type: 'email', message: 'Please enter a valid email address' }
+          ]}
+        >
+          <Input
+            prefix={<MailOutlined />}
+            placeholder="john.doe@company.ch"
+            disabled={!!invitationToken}
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="password"
+          label="Password"
+          rules={[
+            { required: true, message: 'Please create a password' },
+            { min: 8, message: 'Password must be at least 8 characters' },
+            {
+              validator: (_, value) => {
+                const checks = passwordValidation(value);
+                const allValid = Object.values(checks).every(Boolean);
+                return allValid ? Promise.resolve() :
+                  Promise.reject('Password must include uppercase, lowercase, number, and special character');
+              }
+            }
+          ]}
+        >
+          <Input.Password
+            prefix={<LockOutlined />}
+            placeholder="Enter secure password"
+            onChange={(e) => passwordValidation(e.target.value)}
+          />
+        </Form.Item>
+
+        <div className="password-strength">
+          <Progress
+            percent={(passwordStrength / 5) * 100}
+            size="small"
+            strokeColor={{
+              '0%': '#ff4d4f',
+              '50%': '#faad14',
+              '100%': '#52c41a'
+            }}
+            showInfo={false}
+          />
+          <Typography.Text type="secondary">
+            Password strength: {passwordStrength < 3 ? 'Weak' : passwordStrength < 5 ? 'Good' : 'Strong'}
+          </Typography.Text>
+        </div>
+
+        <Row gutter={16}>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="firstName"
+              label="First Name"
+              rules={[{ required: true, message: 'Please enter your first name' }]}
+            >
+              <Input placeholder="John" />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="lastName"
+              label="Last Name"
+              rules={[{ required: true, message: 'Please enter your last name' }]}
+            >
+              <Input placeholder="Doe" />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Form.Item
+          name="homeAddress"
+          label="Home Address"
+          rules={[{ required: true, message: 'Please enter your home address' }]}
+        >
+          <AutoComplete
+            options={addressSuggestions.map(addr => ({ value: addr.formatted_address }))}
+            onSearch={handleAddressChange}
+            placeholder="Bahnhofstrasse 1, 8001 Zurich, Switzerland"
+          >
+            <Input.TextArea
+              rows={2}
+              prefix={<HomeOutlined />}
+            />
+          </AutoComplete>
+        </Form.Item>
+
+        <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+          📍 Your home address is used to calculate travel distances for allowance requests
+        </Typography.Text>
+
+        <Form.Item
+          name="agreeToTerms"
+          valuePropName="checked"
+          rules={[
+            {
+              validator: (_, value) =>
+                value ? Promise.resolve() : Promise.reject('Please agree to the terms')
+            }
+          ]}
+          style={{ marginTop: 24 }}
+        >
+          <Checkbox>
+            I agree to the <a href="/terms">Terms of Service</a> and{' '}
+            <a href="/privacy">Privacy Policy</a>
+          </Checkbox>
+        </Form.Item>
+
+        <Form.Item>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={loading}
+            block
+            size="large"
+          >
+            Create Account
+          </Button>
+        </Form.Item>
+
+        <div className="form-footer">
+          <Typography.Text type="secondary">
+            Already have an account?{' '}
+            <a href="/login">Sign In</a>
+          </Typography.Text>
+        </div>
+      </Form>
+    </Card>
+  );
+};
+```
+
+### 8. Admin User Management Table
+
+**Component:** `Table`, `Tag`, `Dropdown`, `Modal`, `Button`
+
+```typescript
+interface UserManagementTableProps {
+  users: User[];
+  loading: boolean;
+  onUserEdit: (user: User) => void;
+  onUserDelete: (userId: string) => void;
+  onRoleChange: (userId: string, newRole: UserRole) => void;
+  onBulkAction: (userIds: string[], action: BulkAction) => void;
+}
+
+const UserManagementTable: React.FC<UserManagementTableProps> = ({
+  users,
+  loading,
+  onUserEdit,
+  onUserDelete,
+  onRoleChange,
+  onBulkAction
+}) => {
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [searchText, setSearchText] = useState('');
+  const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
+
+  const getRoleTag = (role: UserRole) => {
+    const roleConfig = {
+      employee: { color: 'blue', text: 'Employee' },
+      manager: { color: 'green', text: 'Manager' },
+      administrator: { color: 'red', text: 'Administrator' }
+    };
+
+    const config = roleConfig[role];
+    return <Tag color={config.color}>{config.text}</Tag>;
+  };
+
+  const getStatusTag = (isActive: boolean, lastLogin?: string) => {
+    if (!isActive) {
+      return <Tag color="default">Inactive</Tag>;
+    }
+
+    const daysSinceLogin = lastLogin ? dayjs().diff(dayjs(lastLogin), 'day') : 999;
+
+    if (daysSinceLogin > 30) {
+      return <Tag color="orange">Dormant</Tag>;
+    }
+
+    return <Tag color="green">Active</Tag>;
+  };
+
+  const columns = [
+    {
+      title: 'User',
+      dataIndex: 'name',
+      key: 'name',
+      filterable: true,
+      render: (name: string, record: User) => (
+        <div>
+          <div className="user-name">
+            <Avatar size="small" icon={<UserOutlined />} />
+            <span style={{ marginLeft: 8 }}>{name}</span>
+          </div>
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            {record.email}
+          </Typography.Text>
+        </div>
+      ),
+    },
+    {
+      title: 'Role',
+      dataIndex: 'role',
+      key: 'role',
+      filters: [
+        { text: 'Employee', value: 'employee' },
+        { text: 'Manager', value: 'manager' },
+        { text: 'Administrator', value: 'administrator' }
+      ],
+      render: (role: UserRole) => getRoleTag(role),
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      render: (_, record: User) => getStatusTag(record.isActive, record.lastLogin),
+    },
+    {
+      title: 'Department',
+      dataIndex: 'department',
+      key: 'department',
+      filters: [
+        { text: 'Marketing', value: 'marketing' },
+        { text: 'Sales', value: 'sales' },
+        { text: 'IT', value: 'it' },
+        { text: 'HR', value: 'hr' }
+      ],
+    },
+    {
+      title: 'Last Login',
+      dataIndex: 'lastLogin',
+      key: 'lastLogin',
+      render: (lastLogin: string) => (
+        <Typography.Text type="secondary">
+          {lastLogin ? dayjs(lastLogin).fromNow() : 'Never'}
+        </Typography.Text>
+      ),
+    },
+    {
+      title: 'Team',
+      key: 'team',
+      render: (_, record: User) => (
+        record.role === 'manager' && record.teamSize ? (
+          <Typography.Text>
+            👥 {record.teamSize} employees
+          </Typography.Text>
+        ) : record.managerName ? (
+          <Typography.Text type="secondary">
+            Reports to {record.managerName}
+          </Typography.Text>
+        ) : null
+      ),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record: User) => (
+        <Space>
+          <Button size="small" onClick={() => onUserEdit(record)}>
+            Edit
+          </Button>
+          <Button size="small" onClick={() => onUserView(record.id)}>
+            View
+          </Button>
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'changeRole',
+                  label: 'Change Role',
+                  icon: <SwapOutlined />,
+                },
+                {
+                  key: 'resetPassword',
+                  label: 'Reset Password',
+                  icon: <KeyOutlined />,
+                },
+                {
+                  key: 'deactivate',
+                  label: record.isActive ? 'Deactivate' : 'Activate',
+                  icon: <StopOutlined />,
+                },
+                {
+                  key: 'delete',
+                  label: 'Delete User',
+                  icon: <DeleteOutlined />,
+                  danger: true,
+                }
+              ],
+              onClick: ({ key }) => handleUserAction(key, record)
+            }}
+          >
+            <Button size="small" icon={<MoreOutlined />} />
+          </Dropdown>
+        </Space>
+      ),
+    },
+  ];
+
+  const rowSelection = {
+    selectedRowKeys: selectedUsers,
+    onChange: setSelectedUsers,
+    onSelectAll: (selected: boolean, selectedRows: User[], changeRows: User[]) => {
+      // Handle select all logic
+    }
+  };
+
+  return (
+    <div className="user-management-table">
+      <div className="table-header">
+        <Row gutter={16} align="middle">
+          <Col xs={24} sm={12} md={8}>
+            <Input.Search
+              placeholder="Search users..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onSearch={(value) => console.log('Search:', value)}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={4}>
+            <Select
+              value={roleFilter}
+              onChange={setRoleFilter}
+              style={{ width: '100%' }}
+            >
+              <Select.Option value="all">All Roles</Select.Option>
+              <Select.Option value="employee">Employees</Select.Option>
+              <Select.Option value="manager">Managers</Select.Option>
+              <Select.Option value="administrator">Administrators</Select.Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={24} md={12}>
+            <Space className="table-actions">
+              {selectedUsers.length > 0 && (
+                <Dropdown
+                  menu={{
+                    items: [
+                      { key: 'activate', label: 'Activate Selected' },
+                      { key: 'deactivate', label: 'Deactivate Selected' },
+                      { key: 'export', label: 'Export Selected' },
+                      { key: 'delete', label: 'Delete Selected', danger: true }
+                    ],
+                    onClick: ({ key }) => handleBulkAction(key)
+                  }}
+                >
+                  <Button>
+                    Bulk Actions ({selectedUsers.length}) <DownOutlined />
+                  </Button>
+                </Dropdown>
+              )}
+              <Button type="primary" icon={<PlusOutlined />}>
+                Invite User
+              </Button>
+              <Button icon={<ExportOutlined />}>
+                Export CSV
+              </Button>
+            </Space>
+          </Col>
+        </Row>
+      </div>
+
+      <Table
+        columns={columns}
+        dataSource={users}
+        loading={loading}
+        rowKey="id"
+        rowSelection={rowSelection}
+        pagination={{
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: (total, range) =>
+            `${range[0]}-${range[1]} of ${total} users`,
+        }}
+        scroll={{ x: 1200 }}
+      />
+    </div>
+  );
+};
+```
+
+### 9. Manager Team Overview
+
+**Component:** `Card`, `List`, `Statistic`, `Progress`
+
+```typescript
+interface TeamOverviewProps {
+  teamMembers: TeamMember[];
+  teamStats: TeamStats;
+  onMemberSelect: (memberId: string) => void;
+  onTeamReport: () => void;
+}
+
+const TeamOverview: React.FC<TeamOverviewProps> = ({
+  teamMembers,
+  teamStats,
+  onMemberSelect,
+  onTeamReport
+}) => {
+  const [sortBy, setSortBy] = useState<'name' | 'expense' | 'requests'>('name');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+
+  const sortedMembers = useMemo(() => {
+    let sorted = [...teamMembers];
+
+    switch (sortBy) {
+      case 'expense':
+        sorted.sort((a, b) => b.monthlyExpense - a.monthlyExpense);
+        break;
+      case 'requests':
+        sorted.sort((a, b) => b.activeRequests - a.activeRequests);
+        break;
+      default:
+        sorted.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    if (filterStatus !== 'all') {
+      sorted = sorted.filter(member =>
+        filterStatus === 'active' ? member.activeRequests > 0 : member.activeRequests === 0
+      );
+    }
+
+    return sorted;
+  }, [teamMembers, sortBy, filterStatus]);
+
+  const budgetUtilization = (teamStats.totalExpense / teamStats.budget) * 100;
+
+  return (
+    <div className="team-overview">
+      <Card className="team-stats-card">
+        <Row gutter={24}>
+          <Col xs={24} sm={6}>
+            <Statistic
+              title="Team Size"
+              value={teamStats.totalMembers}
+              prefix={<TeamOutlined />}
+            />
+          </Col>
+          <Col xs={24} sm={6}>
+            <Statistic
+              title="Active Requests"
+              value={teamStats.activeRequests}
+              prefix={<FileTextOutlined />}
+              valueStyle={{ color: '#faad14' }}
+            />
+          </Col>
+          <Col xs={24} sm={6}>
+            <Statistic
+              title="Monthly Expense"
+              value={teamStats.totalExpense}
+              prefix="CHF"
+              precision={2}
+              valueStyle={{ color: budgetUtilization > 80 ? '#ff4d4f' : '#52c41a' }}
+            />
+          </Col>
+          <Col xs={24} sm={6}>
+            <div className="budget-progress">
+              <Typography.Text strong>Budget Usage</Typography.Text>
+              <Progress
+                percent={budgetUtilization}
+                size="small"
+                strokeColor={budgetUtilization > 80 ? '#ff4d4f' : '#52c41a'}
+                format={(percent) => `${percent?.toFixed(0)}%`}
+              />
+              <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+                CHF {teamStats.totalExpense} / CHF {teamStats.budget}
+              </Typography.Text>
+            </div>
+          </Col>
+        </Row>
+      </Card>
+
+      <Card
+        title="Team Members"
+        className="team-members-card"
+        extra={
+          <Space>
+            <Select
+              value={sortBy}
+              onChange={setSortBy}
+              style={{ width: 120 }}
+              size="small"
+            >
+              <Select.Option value="name">Name</Select.Option>
+              <Select.Option value="expense">Expense</Select.Option>
+              <Select.Option value="requests">Requests</Select.Option>
+            </Select>
+            <Select
+              value={filterStatus}
+              onChange={setFilterStatus}
+              style={{ width: 100 }}
+              size="small"
+            >
+              <Select.Option value="all">All</Select.Option>
+              <Select.Option value="active">Active</Select.Option>
+              <Select.Option value="inactive">Inactive</Select.Option>
+            </Select>
+            <Button size="small" onClick={onTeamReport}>
+              Team Report
+            </Button>
+          </Space>
+        }
+      >
+        <List
+          dataSource={sortedMembers}
+          renderItem={(member) => (
+            <List.Item
+              className="team-member-item"
+              actions={[
+                <Button
+                  size="small"
+                  onClick={() => onMemberSelect(member.id)}
+                >
+                  View Profile
+                </Button>,
+                <Button size="small">Edit</Button>
+              ]}
+            >
+              <List.Item.Meta
+                avatar={
+                  <Avatar
+                    size={40}
+                    icon={<UserOutlined />}
+                    style={{
+                      backgroundColor: member.activeRequests > 0 ? '#52c41a' : '#d9d9d9'
+                    }}
+                  />
+                }
+                title={
+                  <div className="member-title">
+                    <Typography.Text strong>{member.name}</Typography.Text>
+                    <Tag color="blue" size="small">Employee</Tag>
+                  </div>
+                }
+                description={
+                  <div className="member-details">
+                    <div>{member.email} | {member.department}</div>
+                    <div>
+                      <Typography.Text type="secondary">
+                        Home: {member.homeCity} |
+                        Active Requests: {member.activeRequests}
+                      </Typography.Text>
+                    </div>
+                  </div>
+                }
+              />
+              <div className="member-stats">
+                <Typography.Text strong>
+                  CHF {member.monthlyExpense}
+                </Typography.Text>
+                <Typography.Text type="secondary" style={{ display: 'block', fontSize: 11 }}>
+                  Last request: {member.lastRequestDate ?
+                    dayjs(member.lastRequestDate).fromNow() :
+                    'Never'
+                  }
+                </Typography.Text>
+              </div>
+            </List.Item>
+          )}
+        />
+      </Card>
+
+      <Card title="Team Insights" className="team-insights-card">
+        <Row gutter={16}>
+          <Col xs={24} md={8}>
+            <Typography.Text strong>Top Travelers</Typography.Text>
+            <div className="top-travelers">
+              {teamMembers
+                .sort((a, b) => b.monthlyExpense - a.monthlyExpense)
+                .slice(0, 3)
+                .map((member, index) => (
+                  <div key={member.id} className="top-traveler-item">
+                    <Badge count={index + 1} size="small">
+                      <Avatar size="small" icon={<UserOutlined />} />
+                    </Badge>
+                    <span>{member.name} (CHF {member.monthlyExpense})</span>
+                  </div>
+                ))}
+            </div>
+          </Col>
+          <Col xs={24} md={8}>
+            <Typography.Text strong>Performance Metrics</Typography.Text>
+            <div className="metrics">
+              <div>Avg Request Value: CHF {teamStats.avgRequestValue}</div>
+              <div>Approval Rate: {teamStats.approvalRate}%</div>
+              <div>Processing Time: {teamStats.avgProcessingTime} days</div>
+            </div>
+          </Col>
+          <Col xs={24} md={8}>
+            <Typography.Text strong>Active Projects</Typography.Text>
+            <div className="active-projects">
+              {teamStats.topProjects.map((project) => (
+                <div key={project.name} className="project-item">
+                  <Typography.Text>{project.name} ({project.count})</Typography.Text>
+                </div>
+              ))}
+            </div>
+          </Col>
+        </Row>
+      </Card>
+    </div>
   );
 };
 ```
