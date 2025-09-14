@@ -1086,11 +1086,18 @@ export const geocodeAddress = validateRequest({
   },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
   const address = event.queryStringParameters?.address;
-  const userContext = getUserContextFromEvent(event);
+
+  // Get user context if available (optional for public geocoding endpoint)
+  let userContext = null;
+  try {
+    userContext = getUserContextFromEvent(event);
+  } catch (error) {
+    // User context not available - this is fine for public geocoding endpoint
+  }
 
   logger.info('Geocoding address', {
     address,
-    requestedBy: userContext.sub,
+    requestedBy: userContext?.sub || 'anonymous',
     requestId: context.awsRequestId,
   });
 
@@ -1142,7 +1149,7 @@ export const updateSubproject = validateRequest({
   const userContext = getUserContextFromEvent(event);
   requireManager(userContext);
 
-  const projectId = event.pathParameters?.projectId;
+  const projectId = event.pathParameters?.id;
   const subprojectId = event.pathParameters?.subprojectId;
   const body = JSON.parse(event.body!);
 
@@ -1193,7 +1200,7 @@ export const deleteSubproject = async (
   const userContext = getUserContextFromEvent(event);
   requireManager(userContext);
 
-  const projectId = event.pathParameters?.projectId;
+  const projectId = event.pathParameters?.id;
   const subprojectId = event.pathParameters?.subprojectId;
 
   if (!projectId || !subprojectId) {

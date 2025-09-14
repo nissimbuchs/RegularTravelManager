@@ -209,14 +209,20 @@ export const projectsManagement = errorHandler(
     const method = event.httpMethod;
     const path = event.path;
 
-    console.log('🔄 ProjectsManagement router:', {
+    console.log('🔄 ProjectsManagement router (with geocoding):', {
       method,
       path,
       requestId: context.awsRequestId,
     });
 
-    // Route based on HTTP method and path
-    if (method === 'PUT' && path.includes('/projects/')) {
+    // Route based on HTTP method and path - check subprojects first since they are more specific
+    if (method === 'PUT' && path.includes('/subprojects/')) {
+      console.log('🔄 Routing to updateSubprojectHandler');
+      return updateSubprojectHandler(event, context);
+    } else if (method === 'DELETE' && path.includes('/subprojects/')) {
+      console.log('🔄 Routing to deleteSubprojectHandler');
+      return deleteSubprojectHandler(event, context);
+    } else if (method === 'PUT' && path.includes('/projects/')) {
       console.log('🔄 Routing to updateProjectHandler');
       const result = await updateProjectHandler(event, context);
       console.log('✅ UpdateProjectHandler completed:', {
@@ -227,12 +233,9 @@ export const projectsManagement = errorHandler(
     } else if (method === 'DELETE' && path.includes('/projects/')) {
       console.log('🔄 Routing to deleteProjectHandler');
       return deleteProjectHandler(event, context);
-    } else if (method === 'PUT' && path.includes('/subprojects/')) {
-      console.log('🔄 Routing to updateSubprojectHandler');
-      return updateSubprojectHandler(event, context);
-    } else if (method === 'DELETE' && path.includes('/subprojects/')) {
-      console.log('🔄 Routing to deleteSubprojectHandler');
-      return deleteSubprojectHandler(event, context);
+    } else if (method === 'GET' && path.includes('/geocode')) {
+      console.log('🔄 Routing to geocodeAddressHandler');
+      return geocodeAddressHandler(event, context);
     } else {
       console.log('❌ No route matched:', { method, path });
       return {
