@@ -30,24 +30,41 @@ export class GeocodingService {
 
   async geocodeAddress(request: GeocodeRequest): Promise<GeocodeResult> {
     const fullAddress = this.formatAddress(request);
+    const config = getEnvironmentConfig();
+    const rtmEnvironment = config.RTM_ENVIRONMENT;
+    const useAWSGeocoding = rtmEnvironment === 'staging' || rtmEnvironment === 'production';
 
     logger.info('Geocoding address', {
       address: fullAddress,
       placeIndex: this.placeIndexName,
+      rtmEnvironment,
+      useAWSGeocoding,
     });
 
     try {
-      // Try AWS Location Service in production only
-      if (process.env.NODE_ENV === 'production') {
+      // Use AWS Location Service for staging and production
+      if (useAWSGeocoding) {
+        logger.info('Using AWS Location Service for geocoding', {
+          address: fullAddress,
+          environment: rtmEnvironment,
+        });
         return await this.geocodeWithAWS(fullAddress, request);
       }
 
-      // Use mock geocoding for development/testing
+      // Use mock geocoding for local and dev environments
+      logger.info('Using mock geocoding service', {
+        address: fullAddress,
+        environment: rtmEnvironment,
+      });
       return await this.geocodeWithMock(request);
     } catch (error) {
-      logger.error('Geocoding failed', {
-        error: error.message,
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('Geocoding failed, falling back to mock', {
+        error: errorMessage,
         address: fullAddress,
+        environment: rtmEnvironment,
+        useAWSGeocoding,
+        stack: error instanceof Error ? error.stack : undefined,
       });
 
       // Fallback to mock coordinates for Swiss locations
@@ -59,38 +76,76 @@ export class GeocodingService {
     fullAddress: string,
     request: GeocodeRequest
   ): Promise<GeocodeResult> {
-    const command = new SearchPlaceIndexForTextCommand({
-      IndexName: this.placeIndexName,
-      Text: fullAddress,
-      MaxResults: 1,
-      FilterCountries: [request.country === 'Switzerland' ? 'CHE' : request.country],
-    });
-
-    const response = await this.client.send(command);
-
-    if (!response.Results || response.Results.length === 0) {
-      throw new Error('No geocoding results found');
-    }
-
-    const result = response.Results[0];
-    const geometry = result.Place?.Geometry?.Point;
-
-    if (!geometry || geometry.length !== 2) {
-      throw new Error('Invalid geocoding result format');
-    }
-
-    logger.info('AWS geocoding successful', {
+    logger.info('Attempting AWS Location Service geocoding', {
       address: fullAddress,
-      coordinates: geometry,
-      relevance: result.Relevance,
+      placeIndex: this.placeIndexName,
+      country: request.country,
     });
 
-    return {
-      longitude: geometry[0],
-      latitude: geometry[1],
-      accuracy: result.Relevance,
-      formattedAddress: this.formatPlaceResult(result.Place),
-    };
+    try {
+      const command = new SearchPlaceIndexForTextCommand({
+        IndexName: this.placeIndexName,
+        Text: fullAddress,
+        MaxResults: 1,
+        FilterCountries: [request.country === 'Switzerland' ? 'CHE' : request.country],
+      });
+
+      logger.info('Sending SearchPlaceIndexForTextCommand', {
+        indexName: this.placeIndexName,
+        text: fullAddress,
+        filterCountries: [request.country === 'Switzerland' ? 'CHE' : request.country],
+      });
+
+      const response = await this.client.send(command);
+
+      logger.info('AWS Location Service response received', {
+        resultsCount: response.Results?.length || 0,
+        hasResults: !!(response.Results && response.Results.length > 0),
+      });
+
+      if (!response.Results || response.Results.length === 0) {
+        logger.warn('No geocoding results found from AWS Location Service', {
+          address: fullAddress,
+          response: response,
+        });
+        throw new Error(`No geocoding results found for address: ${fullAddress}`);
+      }
+
+      const result = response.Results[0];
+      const geometry = result.Place?.Geometry?.Point;
+
+      if (!geometry || geometry.length !== 2) {
+        logger.error('Invalid geocoding result format from AWS Location Service', {
+          address: fullAddress,
+          geometry: geometry,
+          place: result.Place,
+        });
+        throw new Error('Invalid geocoding result format - missing or invalid coordinates');
+      }
+
+      logger.info('AWS geocoding successful', {
+        address: fullAddress,
+        coordinates: geometry,
+        relevance: result.Relevance,
+        formattedAddress: this.formatPlaceResult(result.Place),
+      });
+
+      return {
+        longitude: geometry[0],
+        latitude: geometry[1],
+        accuracy: result.Relevance || 0.5,
+        formattedAddress: this.formatPlaceResult(result.Place),
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown AWS Location Service error';
+      logger.error('AWS Location Service geocoding failed', {
+        error: errorMessage,
+        address: fullAddress,
+        placeIndex: this.placeIndexName,
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error; // Re-throw to allow fallback to mock
+    }
   }
 
   private async geocodeWithMock(request: GeocodeRequest): Promise<GeocodeResult> {
