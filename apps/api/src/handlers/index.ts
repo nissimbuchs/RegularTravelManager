@@ -397,3 +397,37 @@ export const managersDashboard = errorHandler(
 //     return listUsersHandler(event, context);
 //   })
 // );
+
+// Registration handlers (Story 5.1) - Public endpoints, no auth required
+import { handler as registerUserHandler } from './auth/register-user';
+import { handler as verifyEmailHandler } from './auth/verify-email';
+import { handler as resendVerificationHandler } from './auth/resend-verification';
+import { handler as registrationStatusHandler } from './auth/registration-status';
+
+export const registerUser = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return registerUserHandler(event, context);
+  })
+);
+
+export const verifyEmail = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return verifyEmailHandler(event, context);
+  })
+);
+
+export const resendVerification = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return resendVerificationHandler(event, context);
+  })
+);
+
+export const registrationStatus = errorHandler(
+  corsMiddleware(async (event, context) => {
+    await ensureDatabaseInitialized();
+    return registrationStatusHandler(event, context);
+  })
+);

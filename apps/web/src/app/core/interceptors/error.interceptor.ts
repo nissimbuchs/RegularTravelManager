@@ -29,7 +29,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         if (globalErrorCleanup$.closed) {
           throw error; // Stop retrying during cleanup
         }
-        
+
         // Retry after 1 second, then 2 seconds
         if (error instanceof HttpErrorResponse && error.status >= 500) {
           return timer(retryCount * 1000).pipe(takeUntil(globalErrorCleanup$));
@@ -44,8 +44,18 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         timeout(1000), // Quick timeout for user check
         catchError(() => EMPTY), // If user check fails, assume logged out
         switchMap((user: User | null) => {
-          // If cleanup was triggered or user is not authenticated, suppress error
-          if (globalErrorCleanup$.closed || !user) {
+          // If cleanup was triggered, suppress error
+          if (globalErrorCleanup$.closed) {
+            return EMPTY;
+          }
+
+          // For auth endpoints, always pass through errors even if user not authenticated
+          if (req.url.includes('/auth')) {
+            return throwError(() => error);
+          }
+
+          // For other endpoints, suppress error if user not authenticated
+          if (!user) {
             return EMPTY;
           }
 
@@ -83,7 +93,12 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           // 2. Not an auth URL
           // 3. Not a 401 error (handled by auth interceptor)
           // 4. Cleanup hasn't been triggered
-          if (user && !req.url.includes('/auth') && error.status !== 401 && !globalErrorCleanup$.closed) {
+          if (
+            user &&
+            !req.url.includes('/auth') &&
+            error.status !== 401 &&
+            !globalErrorCleanup$.closed
+          ) {
             snackBar.open(errorMessage, 'Close', {
               duration: 5000,
               panelClass: ['error-snackbar'],

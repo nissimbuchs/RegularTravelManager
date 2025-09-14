@@ -26,9 +26,7 @@ export class PolicyBuilder {
    */
   createPolicyStatement(config: PolicyConfig): iam.PolicyStatement {
     // Resolve resource ARNs using templates
-    const resources = config.resources.map(resource => 
-      this.resolveResourceArn(resource)
-    );
+    const resources = config.resources.map(resource => this.resolveResourceArn(resource));
 
     return new iam.PolicyStatement({
       effect: config.effect || iam.Effect.ALLOW,
@@ -74,7 +72,9 @@ export const PolicySets = {
 
   secretsManager: (): PolicyConfig => ({
     actions: ['secretsmanager:GetSecretValue'],
-    resources: ['arn:aws:secretsmanager:{region}:{account}:secret:rtm-{environment}-db-credentials*'],
+    resources: [
+      'arn:aws:secretsmanager:{region}:{account}:secret:rtm-{environment}-db-credentials*',
+    ],
   }),
 
   cognito: (userPoolArn: string): PolicyConfig => ({

@@ -33,10 +33,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
               'x-user-groups': user.groups.join(','),
             },
           });
-          return next(authReq).pipe(
-            takeUntil(globalHttpCleanup$),
-            timeout(30000)
-          );
+          return next(authReq).pipe(takeUntil(globalHttpCleanup$), timeout(30000));
         }
 
         // Production - get current token and add to request
@@ -49,10 +46,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                 Authorization: `Bearer ${token}`,
               },
             });
-            return next(authReq).pipe(
-              takeUntil(globalHttpCleanup$),
-              timeout(30000)
-            );
+            return next(authReq).pipe(takeUntil(globalHttpCleanup$), timeout(30000));
           }),
           catchError(() => {
             // Current token failed - try to refresh token once
@@ -65,10 +59,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
                     Authorization: `Bearer ${refreshedToken}`,
                   },
                 });
-                return next(authReq).pipe(
-                  takeUntil(globalHttpCleanup$),
-                  timeout(30000)
-                );
+                return next(authReq).pipe(takeUntil(globalHttpCleanup$), timeout(30000));
               }),
               catchError(refreshError => {
                 // Token refresh also failed - return original error
@@ -81,12 +72,19 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       } else {
         // Allow config file requests to proceed (needed for app initialization)
         if (req.url.includes('/assets/config/')) {
-          return next(req).pipe(
-            takeUntil(globalHttpCleanup$),
-            timeout(30000)
-          );
+          return next(req).pipe(takeUntil(globalHttpCleanup$), timeout(30000));
         }
-        
+
+        // Allow authentication endpoints to proceed without user authentication
+        if (
+          req.url.includes('/auth/register') ||
+          req.url.includes('/auth/verify-email') ||
+          req.url.includes('/auth/resend-verification') ||
+          req.url.includes('/auth/login')
+        ) {
+          return next(req).pipe(takeUntil(globalHttpCleanup$), timeout(30000));
+        }
+
         // No user authenticated - cancel request to prevent unauthorized errors
         return EMPTY;
       }
@@ -97,17 +95,17 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       if (error.name === 'TimeoutError') {
         return EMPTY; // Cancel timed out requests
       }
-      
+
       // Check if cleanup was triggered
       if (globalHttpCleanup$.closed) {
         return EMPTY; // Cancel requests during cleanup
       }
-      
+
       // Only log if it's not an auth-related error during logout
       if (!(error.status === 401 || error.status === 403)) {
         console.warn('Auth interceptor error:', error);
       }
-      
+
       // For auth errors when user is logged out, return EMPTY instead of proceeding
       const currentUser = authService.getCurrentUser();
       return currentUser.pipe(

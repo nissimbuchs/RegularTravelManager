@@ -17,11 +17,11 @@ export class LogGroupFactory {
    */
   createLogGroups(logGroups: Record<string, LogGroupConfig>): Record<string, logs.LogGroup> {
     const result: Record<string, logs.LogGroup> = {};
-    
+
     for (const [key, config] of Object.entries(logGroups)) {
       result[key] = this.createLogGroup(key, config);
     }
-    
+
     return result;
   }
 
@@ -34,7 +34,7 @@ export class LogGroupFactory {
 
     // Get environment-specific retention
     const retention = this.getEnvironmentRetention(config.retention);
-    
+
     // Get environment-specific removal policy
     const removalPolicy = this.getEnvironmentRemovalPolicy(config.removalPolicy);
 
@@ -56,7 +56,7 @@ export class LogGroupFactory {
 
     const service = config.service || 'lambda';
     const name = config.name;
-    
+
     return `/aws/${service}/rtm-${this.environment}-${name}`;
   }
 
@@ -87,7 +87,10 @@ export class LogGroupFactory {
       production: logs.RetentionDays.ONE_MONTH,
     };
 
-    return defaultRetention[this.environment as keyof typeof defaultRetention] || logs.RetentionDays.ONE_WEEK;
+    return (
+      defaultRetention[this.environment as keyof typeof defaultRetention] ||
+      logs.RetentionDays.ONE_WEEK
+    );
   }
 
   /**
@@ -103,9 +106,7 @@ export class LogGroupFactory {
     }
 
     // Default environment-specific removal policy
-    return this.environment === 'production' 
-      ? cdk.RemovalPolicy.RETAIN 
-      : cdk.RemovalPolicy.DESTROY;
+    return this.environment === 'production' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY;
   }
 
   /**
@@ -137,20 +138,24 @@ export interface LogGroupConfig {
 /**
  * Retention configuration - can be a single value or environment-specific
  */
-export type RetentionConfig = logs.RetentionDays | {
-  dev: logs.RetentionDays;
-  staging: logs.RetentionDays;
-  production: logs.RetentionDays;
-};
+export type RetentionConfig =
+  | logs.RetentionDays
+  | {
+      dev: logs.RetentionDays;
+      staging: logs.RetentionDays;
+      production: logs.RetentionDays;
+    };
 
 /**
  * Removal policy configuration - can be a single value or environment-specific
  */
-export type RemovalPolicyConfig = cdk.RemovalPolicy | {
-  dev: cdk.RemovalPolicy;
-  staging: cdk.RemovalPolicy;
-  production: cdk.RemovalPolicy;
-};
+export type RemovalPolicyConfig =
+  | cdk.RemovalPolicy
+  | {
+      dev: cdk.RemovalPolicy;
+      staging: cdk.RemovalPolicy;
+      production: cdk.RemovalPolicy;
+    };
 
 /**
  * Pre-configured log group sets for common services
@@ -183,14 +188,14 @@ export const LogGroupSets = {
 
   lambdaFunctions: (functionNames: string[]): Record<string, LogGroupConfig> => {
     const result: Record<string, LogGroupConfig> = {};
-    
+
     functionNames.forEach(name => {
       result[name] = {
         name,
         service: 'lambda',
       };
     });
-    
+
     return result;
   },
 };

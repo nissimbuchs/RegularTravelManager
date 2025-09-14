@@ -17,7 +17,6 @@ export function initializeApp(configService: ConfigService) {
   };
 }
 
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),

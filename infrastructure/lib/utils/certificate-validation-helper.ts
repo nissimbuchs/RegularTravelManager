@@ -9,29 +9,39 @@ import { Construct } from 'constructs';
 export class CertificateValidationHelper extends Construct {
   public readonly validationRecords: customResources.AwsCustomResource;
 
-  constructor(scope: Construct, id: string, props: {
-    certificateArn: string;
-    domainName: string;
-    environment: string;
-  }) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: {
+      certificateArn: string;
+      domainName: string;
+      environment: string;
+    }
+  ) {
     super(scope, id);
 
     const { certificateArn, domainName, environment } = props;
 
     // Custom resource to get certificate validation records
-    this.validationRecords = new customResources.AwsCustomResource(this, 'GetCertificateValidation', {
-      onUpdate: {
-        service: 'ACM',
-        action: 'describeCertificate',
-        parameters: {
-          CertificateArn: certificateArn,
+    this.validationRecords = new customResources.AwsCustomResource(
+      this,
+      'GetCertificateValidation',
+      {
+        onUpdate: {
+          service: 'ACM',
+          action: 'describeCertificate',
+          parameters: {
+            CertificateArn: certificateArn,
+          },
+          physicalResourceId: customResources.PhysicalResourceId.of(
+            `cert-validation-${environment}-${Date.now()}`
+          ),
         },
-        physicalResourceId: customResources.PhysicalResourceId.of(`cert-validation-${environment}-${Date.now()}`),
-      },
-      policy: customResources.AwsCustomResourcePolicy.fromSdkCalls({
-        resources: [certificateArn],
-      }),
-    });
+        policy: customResources.AwsCustomResourcePolicy.fromSdkCalls({
+          resources: [certificateArn],
+        }),
+      }
+    );
 
     // Dependencies are automatically handled by CDK when using certificateArn
 

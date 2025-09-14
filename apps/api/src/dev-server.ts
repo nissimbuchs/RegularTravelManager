@@ -37,6 +37,14 @@ import {
   rejectRequest,
 } from './handlers/managers/dashboard';
 
+// Import registration handlers (Story 5.1)
+import {
+  registerUser,
+  verifyEmail,
+  resendVerification,
+  registrationStatus,
+} from './handlers/index';
+
 const app = express();
 const PORT = 3000;
 
@@ -66,6 +74,11 @@ function lambdaToExpress(lambdaHandler) {
       body: req.body ? JSON.stringify(req.body) : null,
       headers: req.headers,
       requestContext: {
+        requestId: `dev-${Date.now()}`,
+        identity: {
+          sourceIp: req.ip || req.connection.remoteAddress || '127.0.0.1',
+          userAgent: req.headers['user-agent'],
+        },
         authorizer: {
           // Raw claims (what the real authorizer would pass)
           claims: {
@@ -201,6 +214,12 @@ app.get('/api/manager/dashboard', lambdaToExpress(getManagerDashboard));
 app.get('/api/manager/employee-context/:employeeId', lambdaToExpress(getEmployeeContext));
 app.put('/api/manager/requests/:requestId/approve', lambdaToExpress(approveRequest));
 app.put('/api/manager/requests/:requestId/reject', lambdaToExpress(rejectRequest));
+
+// Registration endpoints (Story 5.1) - Public endpoints, no auth required
+app.post('/auth/register', lambdaToExpress(registerUser));
+app.post('/auth/verify-email', lambdaToExpress(verifyEmail));
+app.post('/auth/resend-verification', lambdaToExpress(resendVerification));
+app.get('/auth/registration-status', lambdaToExpress(registrationStatus));
 
 // Initialize database and start server
 async function startServer() {

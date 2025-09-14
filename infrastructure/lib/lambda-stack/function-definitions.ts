@@ -58,7 +58,10 @@ export const EnvironmentConfigs = {
   }),
 
   /** Cognito and location services combined */
-  cognitoAndLocation: (environment: string, infra: InfrastructureStack): Record<string, string> => ({
+  cognitoAndLocation: (
+    environment: string,
+    infra: InfrastructureStack
+  ): Record<string, string> => ({
     COGNITO_USER_POOL_ID: infra.userPool.userPoolId,
     PLACE_INDEX_NAME: infra.placeIndex.indexName,
     API_VERSION: '1.0.0',
@@ -273,6 +276,73 @@ export const LAMBDA_FUNCTIONS: Record<string, LambdaFunctionConfig> = {
     handler: 'index.employeesTravelRequests',
     description: 'Employee travel request management (create, update, submit)',
     environmentConfig: EnvironmentConfigs.cognitoAndLocation,
+  },
+
+  // User Registration Functions (Story 5.1)
+  registerUser: {
+    id: 'RegisterUserFunction',
+    name: 'RegisterUser',
+    handler: 'index.registerUser',
+    description: 'User registration with email verification for RTM',
+    timeout: 60, // Longer timeout for user creation process
+    environmentConfig: (environment: string, infra: InfrastructureStack) => ({
+      COGNITO_USER_POOL_ID: infra.userPool.userPoolId,
+      FROM_EMAIL_ADDRESS: 'nissim@buchs.be',
+      SUPPORT_EMAIL: 'nissim@buchs.be',
+      FRONTEND_BASE_URL:
+        environment === 'production'
+          ? 'https://rtfm.buchs.be'
+          : environment === 'staging'
+            ? 'https://rtm-staging.buchs.be'
+            : 'https://dz57qvo83kxos.cloudfront.net',
+      API_VERSION: '1.0.0',
+    }),
+  },
+
+  verifyEmail: {
+    id: 'VerifyEmailFunction',
+    name: 'VerifyEmail',
+    handler: 'index.verifyEmail',
+    description: 'Email verification for user registration',
+    environmentConfig: (environment: string, infra: InfrastructureStack) => ({
+      COGNITO_USER_POOL_ID: infra.userPool.userPoolId,
+      FROM_EMAIL_ADDRESS: 'nissim@buchs.be',
+      SUPPORT_EMAIL: 'nissim@buchs.be',
+      FRONTEND_BASE_URL:
+        environment === 'production'
+          ? 'https://rtfm.buchs.be'
+          : environment === 'staging'
+            ? 'https://rtfm-staging.buchs.be'
+            : 'https://rtfm-dev.buchs.be',
+      API_VERSION: '1.0.0',
+    }),
+  },
+
+  resendVerification: {
+    id: 'ResendVerificationFunction',
+    name: 'ResendVerification',
+    handler: 'index.resendVerification',
+    description: 'Resend verification email for user registration',
+    environmentConfig: (environment: string, infra: InfrastructureStack) => ({
+      COGNITO_USER_POOL_ID: infra.userPool.userPoolId,
+      FROM_EMAIL_ADDRESS: 'nissim@buchs.be',
+      SUPPORT_EMAIL: 'nissim@buchs.be',
+      FRONTEND_BASE_URL:
+        environment === 'production'
+          ? 'https://rtfm.buchs.be'
+          : environment === 'staging'
+            ? 'https://rtm-staging.buchs.be'
+            : 'https://dz57qvo83kxos.cloudfront.net',
+      API_VERSION: '1.0.0',
+    }),
+  },
+
+  registrationStatus: {
+    id: 'RegistrationStatusFunction',
+    name: 'RegistrationStatus',
+    handler: 'index.registrationStatus',
+    description: 'Check registration status for user account',
+    environmentConfig: EnvironmentConfigs.cognito,
   },
 
   // Utility Functions

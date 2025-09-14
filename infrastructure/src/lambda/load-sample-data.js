@@ -256,7 +256,7 @@ exports.handler = async event => {
     // Get database credentials based on environment
     const secretId = `rtm-${environment}-db-credentials`;
     console.log(`Loading database credentials from secret: ${secretId}`);
-    
+
     const secret = await secretsManager
       .getSecretValue({
         SecretId: secretId,
@@ -317,26 +317,28 @@ exports.handler = async event => {
       }
     } else {
       console.log('Staging/Production environment detected - using existing Cognito user system');
-      console.log('Note: Users should already exist from the user creator function during CDK deployment');
-      
+      console.log(
+        'Note: Users should already exist from the user creator function during CDK deployment'
+      );
+
       // Get real Cognito user IDs to replace mock UUIDs in sample data
       const userPoolId = process.env.USER_POOL_ID;
       if (userPoolId) {
         console.log('Retrieving real Cognito user IDs for sample data mapping...');
-        
+
         // Create mapping from mock UUIDs to real Cognito IDs
         const userIdMapping = {};
-        
+
         for (const userInfo of sampleUsers) {
           try {
             const getUserParams = {
               UserPoolId: userPoolId,
               Username: userInfo.email,
             };
-            
+
             const existingUser = await cognitoClient.adminGetUser(getUserParams).promise();
             const realCognitoId = existingUser.Username;
-            
+
             userIdMapping[userInfo.mockId] = realCognitoId;
             console.log(`Mapping: ${userInfo.email} → ${userInfo.mockId} → ${realCognitoId}`);
           } catch (err) {
@@ -345,17 +347,17 @@ exports.handler = async event => {
             userIdMapping[userInfo.mockId] = userInfo.mockId;
           }
         }
-        
+
         // Replace mock UUIDs with real Cognito IDs in sample data
         console.log('Replacing mock UUIDs with real Cognito user IDs...');
         let updatedSampleDataSQL = sampleDataSQL;
-        
+
         for (const [mockId, realId] of Object.entries(userIdMapping)) {
           // Replace all occurrences of mock UUID with real UUID
           const regex = new RegExp(mockId.replace(/-/g, '\\-'), 'g');
           updatedSampleDataSQL = updatedSampleDataSQL.replace(regex, realId);
         }
-        
+
         sampleDataSQL = updatedSampleDataSQL;
         console.log('UUID replacement completed');
       } else {

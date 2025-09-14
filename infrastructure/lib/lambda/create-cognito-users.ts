@@ -127,7 +127,7 @@ async function createOrUpdateUsers(
   // Get database credentials from Secrets Manager and connect directly
   let dbClient: PgClient | null = null;
   let skipDatabaseOperations = false;
-  
+
   if (!databaseSecretArn) {
     console.warn('Database secret ARN not provided, skipping database operations');
     console.log('Cognito user processing will continue without database sync');
@@ -140,10 +140,10 @@ async function createOrUpdateUsers(
       });
       const secretResponse = await secretsClient.send(secretCommand);
       const credentials = JSON.parse(secretResponse.SecretString || '{}');
-      
+
       console.log('Successfully retrieved database credentials from Secrets Manager');
       console.log('Connecting to database host:', credentials.host);
-      
+
       // Use credentials directly - no URL parsing needed
       const connectionConfig = {
         host: credentials.host,
@@ -155,15 +155,15 @@ async function createOrUpdateUsers(
           rejectUnauthorized: false, // Required for AWS RDS connections from Lambda
         },
       };
-      
+
       console.log('Connection config:', {
         host: connectionConfig.host,
         port: connectionConfig.port,
         database: connectionConfig.database,
         user: connectionConfig.user,
-        password: '***'
+        password: '***',
       });
-      
+
       dbClient = new PgClient(connectionConfig);
       await dbClient.connect();
       console.log('Successfully connected to database');

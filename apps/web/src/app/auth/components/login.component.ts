@@ -98,6 +98,18 @@ import { LoadingService } from '../../core/services/loading.service';
               <span *ngIf="!(isLoading$ | async)">Sign In</span>
               <span *ngIf="isLoading$ | async">Signing In...</span>
             </button>
+
+            <div class="registration-link">
+              Don't have an account?
+              <button
+                mat-button
+                color="primary"
+                (click)="goToRegistration()"
+                class="register-button"
+              >
+                Create Account
+              </button>
+            </div>
           </form>
         </mat-card-content>
       </mat-card>
@@ -155,6 +167,16 @@ import { LoadingService } from '../../core/services/loading.service';
 
       .password-toggle {
         cursor: pointer;
+      }
+
+      .registration-link {
+        text-align: center;
+        margin-top: 16px;
+        color: #666;
+      }
+
+      .register-button {
+        margin-left: 4px;
       }
 
       mat-card-header {
@@ -287,5 +309,9 @@ export class LoginComponent implements OnInit {
         this.router.navigate([redirectUrl]);
       }
     });
+  }
+
+  goToRegistration(): void {
+    this.router.navigate(['/register']);
   }
 }

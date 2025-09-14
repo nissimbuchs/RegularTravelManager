@@ -27,7 +27,7 @@ export class LambdaExportManager {
   exportFunctionArn(functionKey: string, lambdaFunction: lambda.Function): void {
     const exportName = this.getExportName(functionKey);
     const exportId = this.getExportId(functionKey);
-    
+
     new cdk.CfnOutput(this.scope, exportId, {
       value: lambdaFunction.functionArn,
       exportName: exportName,
@@ -55,7 +55,10 @@ export class LambdaExportManager {
    * Convert camelCase to kebab-case
    */
   private toKebabCase(str: string): string {
-    return str.replace(/([A-Z])/g, '-$1').replace(/^-/, '').toLowerCase();
+    return str
+      .replace(/([A-Z])/g, '-$1')
+      .replace(/^-/, '')
+      .toLowerCase();
   }
 
   /**

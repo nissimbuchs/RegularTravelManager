@@ -32,13 +32,15 @@ export class CustomResourceBuilder {
   /**
    * Create multiple custom resources from configuration
    */
-  createCustomResources(resources: Record<string, CustomResourceConfig>): Record<string, CustomResourceResult> {
+  createCustomResources(
+    resources: Record<string, CustomResourceConfig>
+  ): Record<string, CustomResourceResult> {
     const result: Record<string, CustomResourceResult> = {};
-    
+
     for (const [key, config] of Object.entries(resources)) {
       result[key] = this.createCustomResource(key, config);
     }
-    
+
     return result;
   }
 
@@ -48,7 +50,7 @@ export class CustomResourceBuilder {
   createCustomResource(key: string, config: CustomResourceConfig): CustomResourceResult {
     // Create Lambda function
     const lambdaFunction = this.createLambdaFunction(key, config);
-    
+
     // Add policies to Lambda function
     if (config.policies) {
       this.policyBuilder.addPoliciesToRole(lambdaFunction.role as iam.Role, config.policies);
@@ -91,7 +93,10 @@ export class CustomResourceBuilder {
   /**
    * Create Lambda function for custom resource
    */
-  private createLambdaFunction(key: string, config: CustomResourceConfig): lambdaNodejs.NodejsFunction {
+  private createLambdaFunction(
+    key: string,
+    config: CustomResourceConfig
+  ): lambdaNodejs.NodejsFunction {
     const constructId = `${this.toPascalCase(key)}Function`;
     const functionName = `rtm-${this.environment}-${config.functionName}`;
 
@@ -113,14 +118,17 @@ export class CustomResourceBuilder {
     };
 
     // Add VPC configuration if needed
-    const lambdaConfig: lambdaNodejs.NodejsFunctionProps = config.needsVpc !== false ? {
-      ...baseConfig,
-      vpc: this.vpc,
-      vpcSubnets: {
-        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      securityGroups: [this.lambdaSecurityGroup],
-    } : baseConfig;
+    const lambdaConfig: lambdaNodejs.NodejsFunctionProps =
+      config.needsVpc !== false
+        ? {
+            ...baseConfig,
+            vpc: this.vpc,
+            vpcSubnets: {
+              subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+            },
+            securityGroups: [this.lambdaSecurityGroup],
+          }
+        : baseConfig;
 
     return new lambdaNodejs.NodejsFunction(this.scope, constructId, lambdaConfig);
   }
@@ -182,8 +190,8 @@ export interface CustomResourceResult {
  */
 export const CustomResourceSets = {
   userCreator: (
-    entryPath: string, 
-    userPool: any, 
+    entryPath: string,
+    userPool: any,
     database: any,
     userPoolArn: string
   ): CustomResourceConfig => ({
@@ -209,16 +217,15 @@ export const CustomResourceSets = {
       },
       {
         actions: ['secretsmanager:GetSecretValue'],
-        resources: ['arn:aws:secretsmanager:{region}:{account}:secret:rtm-{environment}-db-credentials*'],
+        resources: [
+          'arn:aws:secretsmanager:{region}:{account}:secret:rtm-{environment}-db-credentials*',
+        ],
       },
     ],
     dependencies: [userPool, database],
   }),
 
-  postgisInstaller: (
-    entryPath: string,
-    database: any
-  ): CustomResourceConfig => ({
+  postgisInstaller: (entryPath: string, database: any): CustomResourceConfig => ({
     functionName: 'postgis-installer',
     entry: entryPath,
     handler: 'postgisInstaller',
@@ -235,7 +242,9 @@ export const CustomResourceSets = {
     policies: [
       {
         actions: ['secretsmanager:GetSecretValue'],
-        resources: ['arn:aws:secretsmanager:{region}:{account}:secret:rtm-{environment}-db-credentials*'],
+        resources: [
+          'arn:aws:secretsmanager:{region}:{account}:secret:rtm-{environment}-db-credentials*',
+        ],
       },
     ],
     properties: {
