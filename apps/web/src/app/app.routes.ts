@@ -10,6 +10,22 @@ export const routes: Routes = [
     loadComponent: () => import('./auth/components/login.component').then(m => m.LoginComponent),
   },
   {
+    path: 'register',
+    loadComponent: () => import('./features/auth/components/user-registration.component').then(m => m.UserRegistrationComponent),
+    data: {
+      title: 'Register - RegularTravelManager',
+      description: 'Create your RegularTravelManager account'
+    }
+  },
+  {
+    path: 'verify-email',
+    loadComponent: () => import('./features/auth/components/email-verification.component').then(m => m.EmailVerificationComponent),
+    data: {
+      title: 'Email Verification - RegularTravelManager',
+      description: 'Verify your email address to complete registration'
+    }
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./shared/components/main-layout.component').then(m => m.MainLayoutComponent),

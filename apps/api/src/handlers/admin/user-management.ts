@@ -148,7 +148,8 @@ export const listUsersHandler = async (
           timestamp: new Date().toISOString(),
           requestId: context.awsRequestId,
         },
-      });
+      }),
+    };
   }
 };
 
@@ -181,7 +182,7 @@ export const updateUserStatusHandler = async (
             requestId: context.awsRequestId,
           },
         }),
-      });
+      };
     }
 
     let requestBody;
@@ -199,7 +200,7 @@ export const updateUserStatusHandler = async (
             requestId: context.awsRequestId,
           },
         }),
-      });
+      };
     }
 
     const { isActive } = requestBody;
@@ -215,7 +216,7 @@ export const updateUserStatusHandler = async (
             requestId: context.awsRequestId,
           },
         }),
-      });
+      };
     }
 
 
@@ -237,7 +238,7 @@ export const updateUserStatusHandler = async (
             requestId: context.awsRequestId,
           },
         }),
-      });
+      };
     }
 
     const user = userCheck.rows[0];
@@ -279,7 +280,8 @@ export const updateUserStatusHandler = async (
         },
         timestamp: new Date().toISOString(),
         requestId: context.awsRequestId,
-      });
+      }),
+    };
   } catch (error) {
     logger.error('Admin update user status error', {
       error: error.message,
@@ -301,7 +303,8 @@ export const updateUserStatusHandler = async (
           timestamp: new Date().toISOString(),
           requestId: context.awsRequestId,
         },
-      });
+      }),
+    };
   }
 };
 
@@ -334,7 +337,7 @@ export const updateUserManagerHandler = async (
             requestId: context.awsRequestId,
           },
         }),
-      });
+      };
     }
 
     let requestBody;
@@ -352,7 +355,7 @@ export const updateUserManagerHandler = async (
             requestId: context.awsRequestId,
           },
         }),
-      });
+      };
     }
 
     const { managerId } = requestBody;
@@ -376,7 +379,7 @@ export const updateUserManagerHandler = async (
             requestId: context.awsRequestId,
           },
         }),
-      });
+      };
     }
 
     // Validate manager exists (if provided)
@@ -398,7 +401,7 @@ export const updateUserManagerHandler = async (
               requestId: context.awsRequestId,
             },
           }),
-        });
+        };
       }
 
       // Prevent circular reference
@@ -414,7 +417,7 @@ export const updateUserManagerHandler = async (
               requestId: context.awsRequestId,
             },
           }),
-        });
+        };
       }
     }
 
@@ -471,7 +474,8 @@ export const updateUserManagerHandler = async (
         },
         timestamp: new Date().toISOString(),
         requestId: context.awsRequestId,
-      });
+      }),
+    };
   } catch (error) {
     logger.error('Admin update user manager error', {
       error: error.message,
@@ -493,6 +497,7 @@ export const updateUserManagerHandler = async (
           timestamp: new Date().toISOString(),
           requestId: context.awsRequestId,
         },
-      });
+      }),
+    };
   }
 };

@@ -3,5 +3,6 @@
 
 export * from './types';
 export * from './types/api';
+export * from './types/auth';
 export * from './utils';
 export * from './constants';

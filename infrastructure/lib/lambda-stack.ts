@@ -49,6 +49,12 @@ export class LambdaStack extends cdk.Stack {
   public get managersDashboardFunction() { return this.functions.managersDashboard; }
   public get projectsManagementFunction() { return this.functions.projectsManagement; }
 
+  // Registration Lambda functions (Story 5.1)
+  public get registerUserFunction() { return this.functions.registerUser; }
+  public get verifyEmailFunction() { return this.functions.verifyEmail; }
+  public get resendVerificationFunction() { return this.functions.resendVerification; }
+  public get registrationStatusFunction() { return this.functions.registrationStatus; }
+
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
 

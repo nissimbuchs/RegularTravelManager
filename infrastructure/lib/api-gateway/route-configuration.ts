@@ -142,6 +142,68 @@ export const API_ROUTES: RouteGroupConfig[] = [
     ]
   },
   {
+    basePath: 'api/auth',
+    description: 'Authentication and registration endpoints (Story 5.1)',
+    routes: [
+      {
+        path: 'register',
+        method: 'POST',
+        functionName: 'register-user',
+        requiresAuth: false,
+        description: 'User registration with email verification'
+      },
+      {
+        path: 'register',
+        method: 'OPTIONS',
+        functionName: 'register-user',
+        requiresAuth: false,
+        description: 'CORS preflight for user registration'
+      },
+      {
+        path: 'verify-email',
+        method: 'POST',
+        functionName: 'verify-email',
+        requiresAuth: false,
+        description: 'Email verification for registration'
+      },
+      {
+        path: 'verify-email',
+        method: 'OPTIONS',
+        functionName: 'verify-email',
+        requiresAuth: false,
+        description: 'CORS preflight for email verification'
+      },
+      {
+        path: 'resend-verification',
+        method: 'POST',
+        functionName: 'resend-verification',
+        requiresAuth: false,
+        description: 'Resend verification email'
+      },
+      {
+        path: 'resend-verification',
+        method: 'OPTIONS',
+        functionName: 'resend-verification',
+        requiresAuth: false,
+        description: 'CORS preflight for resend verification'
+      },
+      {
+        path: 'registration-status',
+        method: 'GET',
+        functionName: 'registration-status',
+        requiresAuth: false,
+        description: 'Check registration status'
+      },
+      {
+        path: 'registration-status',
+        method: 'OPTIONS',
+        functionName: 'registration-status',
+        requiresAuth: false,
+        description: 'CORS preflight for registration status'
+      }
+    ]
+  },
+  {
     basePath: 'api/projects',
     description: 'Project management endpoints',
     routes: [

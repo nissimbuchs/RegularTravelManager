@@ -53,13 +53,14 @@ export class ApiGatewayStack extends cdk.Stack {
     // Import all required Lambda functions using factory
     const functionNames = [
       'health', 'get-active-projects', 'get-employee-profile', 'update-employee-address',
-      'get-managers', 'create-project', 'create-subproject', 'get-all-projects', 
+      'get-managers', 'create-project', 'create-subproject', 'get-all-projects',
       'get-project-by-id', 'get-subprojects-for-project', 'get-subproject-by-id',
       'check-project-references', 'search-projects', 'projects-management',
       'admin-project-management', 'calculate-distance', 'calculate-allowance',
       'calculate-travel-cost', 'get-calculation-audit', 'invalidate-calculation-cache',
       'cleanup-expired-cache', 'employees-travel-requests', 'admin-user-management',
-      'managers-dashboard'
+      'managers-dashboard', 'register-user', 'verify-email', 'resend-verification',
+      'registration-status'
     ];
     
     const functions = functionFactory.getFunctions(functionNames);

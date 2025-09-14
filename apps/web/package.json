@@ -3,24 +3,18 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "predev": "cp src/assets/config/config.local.json src/assets/config/config.json",
-    "dev": "ng serve --host 0.0.0.0 --port 4200",
-    "prestart": "cp src/assets/config/config.local.json src/assets/config/config.json",
-    "start": "ng serve",
-    "build": "ng build --configuration dev",
-    "build:dev": "ng build --configuration dev",
-    "build:staging": "ng build --configuration staging",
-    "build:prod": "ng build --configuration production",
+
+    "start:local": "cp src/assets/config/config.local.json src/assets/config/config.json && ng serve --host 0.0.0.0 --port 4200",
+    "dev": "npm run start:local",
+    "start": "npm run start:local",
+
+    "build": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:e2e": "echo 'E2E tests not configured yet'",
+
     "lint": "eslint src --ext .ts,.js,.tsx,.jsx --config ../../.eslintrc.js",
-    "lint:fix": "eslint src --ext .ts,.js,.tsx,.jsx --config ../../.eslintrc.js --fix",
-    "deploy": "./scripts/deploy.sh",
-    "deploy:setup:dev": "aws s3 mb s3://rtm-frontend-dev --region eu-central-1 && aws s3 website s3://rtm-frontend-dev --index-document index.html --error-document index.html --region eu-central-1",
-    "deploy:setup:staging": "aws s3 mb s3://rtm-frontend-staging --region eu-central-1 && aws s3 website s3://rtm-frontend-staging --index-document index.html --error-document index.html --region eu-central-1",
-    "deploy:setup:production": "aws s3 mb s3://rtm-frontend-production --region eu-central-1 && aws s3 website s3://rtm-frontend-production --index-document index.html --error-document index.html --region eu-central-1",
-    "deploy:setup": "echo 'Please specify environment: npm run deploy:setup:dev, deploy:setup:staging, or deploy:setup:production'",
-    "cloudfront:setup": "./scripts/setup-cloudfront.sh"
+    "lint:fix": "eslint src --ext .ts,.js,.tsx,.jsx --config ../../.eslintrc.js --fix"
   },
   "private": true,
   "dependencies": {
