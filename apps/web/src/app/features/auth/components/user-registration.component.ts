@@ -21,6 +21,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Subject, BehaviorSubject, Observable, of } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged, timeout, catchError } from 'rxjs/operators';
 import { RegistrationService } from '../../../core/services/registration.service';
+import { ConfigService } from '../../../core/services/config.service';
 import { RegisterRequest } from '@rtm/shared';
 
 // Custom validators
@@ -102,12 +103,15 @@ interface RegistrationState {
     <div class="registration-container">
       <mat-card class="registration-card">
         <mat-card-content>
-          <!-- Debug Info -->
-          <div
-            style="background: #f0f0f0; padding: 8px; margin-bottom: 16px; border-radius: 4px; font-size: 12px;"
-          >
-            Debug: Current step = {{ state.step }}, Loading = {{ state.loading }}
+          <!-- Staging Environment Notice -->
+          <div *ngIf="isStaging" class="staging-notice">
+            <mat-icon class="notice-icon">info</mat-icon>
+            <div class="notice-content">
+              <strong>Staging Environment Notice</strong>
+              <p>This is a test environment. Your verification email will be sent to our admin (nissim&#64;buchs.be) who will verify your account on your behalf. You'll receive a confirmation once your account is activated.</p>
+            </div>
           </div>
+
           <!-- Submitting Step -->
           <div *ngIf="state.step === 'submitting'" class="success-step">
             <mat-spinner diameter="64"></mat-spinner>
@@ -383,6 +387,41 @@ interface RegistrationState {
         color: #1976d2;
         margin: 20px 0 10px 0;
       }
+
+      .staging-notice {
+        display: flex;
+        align-items: flex-start;
+        background-color: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+        color: #1565c0;
+      }
+
+      .notice-icon {
+        margin-right: 12px;
+        margin-top: 2px;
+        color: #1976d2;
+        flex-shrink: 0;
+      }
+
+      .notice-content {
+        flex: 1;
+      }
+
+      .notice-content strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #0d47a1;
+        font-size: 16px;
+      }
+
+      .notice-content p {
+        margin: 0;
+        line-height: 1.5;
+        font-size: 14px;
+      }
     `,
   ],
 })
@@ -400,6 +439,9 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
 
   state$ = this.stateSubject.asObservable();
 
+  // Environment detection
+  isStaging = false;
+
   get state() {
     return this.stateSubject.value;
   }
@@ -408,11 +450,27 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
     private formBuilder: FormBuilder,
     private router: Router,
     private snackBar: MatSnackBar,
-    private registrationService: RegistrationService
+    private registrationService: RegistrationService,
+    private configService: ConfigService
   ) {}
 
   ngOnInit(): void {
     this.initializeForm();
+    this.detectEnvironment();
+  }
+
+  private detectEnvironment(): void {
+    const config = this.configService.config;
+    if (config) {
+      this.isStaging = config.environment === 'staging';
+    } else {
+      // Subscribe to config changes if not yet loaded
+      this.configService.config$.pipe(takeUntil(this.destroy$)).subscribe(config => {
+        if (config) {
+          this.isStaging = config.environment === 'staging';
+        }
+      });
+    }
   }
 
   ngOnDestroy(): void {
@@ -476,31 +534,19 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
         )
         .subscribe({
           next: response => {
-            console.log('Registration success:', response);
-            console.log('Response structure debug:', {
-              response: response,
-              responseData: response.data,
-              responseDataMessage: response.data?.message,
-            });
+            // Use staging-specific success message
+            const successMessage = this.isStaging
+              ? 'Registration successful! Our admin will verify your account shortly and you\'ll be notified when it\'s ready.'
+              : response.data?.message || 'Registration successful! Please check your email for verification instructions.';
+
             this.updateState({
               step: 'verification-sent',
               loading: false,
-              message:
-                response.data?.message ||
-                'Registration successful! Please check your email for verification instructions.',
+              message: successMessage,
             });
-            console.log('State after update:', this.state);
           },
           error: error => {
             console.error('Registration failed:', error);
-            console.error('Error structure debug:', {
-              error: error,
-              errorError: error.error,
-              errorErrorCode: error.error?.code,
-              errorErrorMessage: error.error?.message,
-              errorStatus: error.status,
-              errorName: error.name,
-            });
 
             // Handle different error types
             let errorMessage = 'Registration failed. Please try again.';
@@ -523,7 +569,6 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
             }
 
             // Force error state regardless of error structure
-            console.error('Forcing error state with message:', errorMessage);
             this.updateState({
               step: 'error',
               loading: false,

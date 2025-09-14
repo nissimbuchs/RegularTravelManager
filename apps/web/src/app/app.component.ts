@@ -25,20 +25,26 @@ export class AppComponent implements OnInit {
   private authService = inject(AuthService);
 
   async ngOnInit(): Promise<void> {
-    console.log('🚀 App Component initializing...');
-
     // Wait for configuration to be loaded by APP_INITIALIZER
-    console.log('⏳ Waiting for config to be loaded...');
     await this.configService.waitForConfig();
-    console.log('✅ Config loaded in AppComponent');
+
+    const config = this.configService.config;
+    const isDevelopment = config?.environment === 'dev' || config?.cognito.useMockAuth;
+
+    if (isDevelopment) {
+      console.log('🚀 App Component initializing...');
+      console.log('⏳ Config loaded in AppComponent');
+      console.log('🔧 Configuring Amplify from AppComponent...');
+    }
 
     // Configure Amplify with runtime configuration
-    console.log('🔧 Configuring Amplify from AppComponent...');
     configureAmplify(this.configService);
 
-    // Add debug helper to window for manual testing
-    this.setupDebugHelpers();
-    console.log('🛠️ Debug helpers added to window.debugAuth');
+    // Add debug helper to window for manual testing (only in development)
+    if (isDevelopment) {
+      this.setupDebugHelpers();
+      console.log('🛠️ Debug helpers added to window.debugAuth');
+    }
   }
 
   private setupDebugHelpers(): void {
