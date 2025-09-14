@@ -5,9 +5,9 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import { InfrastructureStack } from './infrastructure-stack';
-import { LambdaFunctionFactory } from './lambda-stack/function-factory';
-import { LambdaExportManager } from './lambda-stack/export-manager';
-import { LAMBDA_FUNCTIONS, DEV_ONLY_FUNCTIONS } from './lambda-stack/function-definitions';
+import { LambdaFunctionFactory } from './lambda/function-factory';
+import { LambdaExportManager } from './lambda/export-manager';
+import { LAMBDA_FUNCTIONS, DEV_ONLY_FUNCTIONS } from './lambda/function-definitions';
 
 export interface LambdaStackProps extends cdk.StackProps {
   environment: 'dev' | 'staging' | 'production';
