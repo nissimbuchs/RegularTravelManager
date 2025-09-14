@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { BehaviorSubject } from 'rxjs';
+import { RegistrationService } from '../../../core/services/registration.service';
 
 interface VerificationState {
   status: 'loading' | 'success' | 'error' | 'expired';
@@ -22,7 +23,7 @@ interface VerificationState {
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
   ],
   template: `
     <div class="verification-container">
@@ -89,91 +90,93 @@ interface VerificationState {
       </mat-card>
     </div>
   `,
-  styles: [`
-    .verification-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-      background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
-    }
-
-    .verification-card {
-      max-width: 500px;
-      width: 100%;
-      padding: 20px;
-    }
-
-    .verification-step {
-      text-align: center;
-      padding: 40px 20px;
-    }
-
-    h2 {
-      margin: 20px 0 16px 0;
-      color: #333;
-    }
-
-    p {
-      color: #666;
-      line-height: 1.5;
-      margin-bottom: 30px;
-    }
-
-    .status-icon {
-      font-size: 64px;
-      height: 64px;
-      width: 64px;
-      margin-bottom: 20px;
-    }
-
-    .success-icon {
-      color: #4caf50;
-    }
-
-    .error-icon {
-      color: #f44336;
-    }
-
-    .warning-icon {
-      color: #ff9800;
-    }
-
-    .action-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .action-buttons button {
-      min-width: 200px;
-    }
-
-    mat-spinner {
-      margin: 0 auto 20px;
-    }
-
-    @media (max-width: 600px) {
+  styles: [
+    `
       .verification-container {
-        padding: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+        background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
       }
-      
+
       .verification-card {
-        padding: 10px;
+        max-width: 500px;
+        width: 100%;
+        padding: 20px;
       }
-      
+
       .verification-step {
-        padding: 20px 10px;
+        text-align: center;
+        padding: 40px 20px;
       }
-    }
-  `]
+
+      h2 {
+        margin: 20px 0 16px 0;
+        color: #333;
+      }
+
+      p {
+        color: #666;
+        line-height: 1.5;
+        margin-bottom: 30px;
+      }
+
+      .status-icon {
+        font-size: 64px;
+        height: 64px;
+        width: 64px;
+        margin-bottom: 20px;
+      }
+
+      .success-icon {
+        color: #4caf50;
+      }
+
+      .error-icon {
+        color: #f44336;
+      }
+
+      .warning-icon {
+        color: #ff9800;
+      }
+
+      .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .action-buttons button {
+        min-width: 200px;
+      }
+
+      mat-spinner {
+        margin: 0 auto 20px;
+      }
+
+      @media (max-width: 600px) {
+        .verification-container {
+          padding: 10px;
+        }
+
+        .verification-card {
+          padding: 10px;
+        }
+
+        .verification-step {
+          padding: 20px 10px;
+        }
+      }
+    `,
+  ],
 })
 export class EmailVerificationComponent implements OnInit {
   private stateSubject = new BehaviorSubject<VerificationState>({
     status: 'loading',
-    message: null
+    message: null,
   });
 
   state$ = this.stateSubject.asObservable();
@@ -185,7 +188,8 @@ export class EmailVerificationComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private registrationService: RegistrationService
   ) {}
 
   ngOnInit(): void {
@@ -196,7 +200,8 @@ export class EmailVerificationComponent implements OnInit {
       if (!token || !email) {
         this.updateState({
           status: 'error',
-          message: 'Invalid verification link. Please check your email for the correct link or request a new one.'
+          message:
+            'Invalid verification link. Please check your email for the correct link or request a new one.',
         });
         return;
       }
@@ -206,20 +211,46 @@ export class EmailVerificationComponent implements OnInit {
   }
 
   private verifyEmail(token: string, email: string): void {
-    // Simulate API call
-    setTimeout(() => {
-      // For now, just simulate success
-      this.updateState({
-        status: 'success',
-        message: 'Your email has been successfully verified! You can now log in to your account.'
-      });
-    }, 2000);
+    // Call actual verification API
+    this.registrationService.verifyEmail({ verificationToken: token, email }).subscribe({
+      next: response => {
+        this.updateState({
+          status: 'success',
+          message:
+            response?.data?.message ||
+            'Your email has been successfully verified! You can now log in to your account.',
+        });
+      },
+      error: error => {
+        console.error('Email verification failed:', error);
+
+        let errorMessage = 'Email verification failed. Please try again.';
+
+        if (error.error?.error?.code === 'TOKEN_EXPIRED') {
+          this.updateState({
+            status: 'expired',
+            message: 'Your verification link has expired. Please request a new verification email.',
+          });
+          return;
+        } else if (error.error?.error?.code === 'TOKEN_INVALID') {
+          errorMessage =
+            'The verification link is invalid. Please check your email for the correct link.';
+        } else if (error.error?.error?.message) {
+          errorMessage = error.error.error.message;
+        }
+
+        this.updateState({
+          status: 'error',
+          message: errorMessage,
+        });
+      },
+    });
   }
 
   resendVerification(): void {
     // Implement resend logic
     this.snackBar.open('A new verification email has been sent', 'Close', {
-      duration: 5000
+      duration: 5000,
     });
   }
 

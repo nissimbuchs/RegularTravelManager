@@ -100,8 +100,13 @@ import { LoadingService } from '../../core/services/loading.service';
             </button>
 
             <div class="registration-link">
-              Don't have an account? 
-              <button mat-button color="primary" (click)="goToRegistration()" class="register-button">
+              Don't have an account?
+              <button
+                mat-button
+                color="primary"
+                (click)="goToRegistration()"
+                class="register-button"
+              >
                 Create Account
               </button>
             </div>

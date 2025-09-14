@@ -30,7 +30,7 @@ export class ParameterManager {
     try {
       return new ssm.StringParameter(this.scope, constructId, {
         parameterName,
-        stringValue: config.value || '',  // Ensure value is not undefined
+        stringValue: config.value || '', // Ensure value is not undefined
         description: config.description || `Parameter for ${key}`,
         tier: config.tier || ssm.ParameterTier.STANDARD,
       });

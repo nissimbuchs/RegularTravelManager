@@ -1,5 +1,6 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { logger } from '../middleware/logger';
+import { isLocalDevelopment } from '../config/environment';
 
 export interface EmailConfig {
   fromAddress: string;
@@ -21,7 +22,9 @@ export class EmailService {
       fromAddress: process.env.FROM_EMAIL_ADDRESS || 'noreply@regulartravelmanager.com',
       replyToAddress: process.env.REPLY_TO_EMAIL || 'support@regulartravelmanager.com',
       supportEmail: process.env.SUPPORT_EMAIL || 'support@regulartravelmanager.com',
-      baseUrl: process.env.FRONTEND_BASE_URL || 'https://dz57qvo83kxos.cloudfront.net',
+      baseUrl: isLocalDevelopment()
+        ? 'http://localhost:4200'
+        : process.env.FRONTEND_BASE_URL || 'https://dz57qvo83kxos.cloudfront.net',
     };
   }
 
@@ -36,6 +39,28 @@ export class EmailService {
     try {
       const verificationUrl = `${this.config.baseUrl}/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`;
 
+      // Mock email service for local development
+      if (isLocalDevelopment() || process.env.MOCK_EMAIL === 'true') {
+        logger.info('📧 MOCK EMAIL SERVICE - Verification Email', {
+          email,
+          firstName,
+          verificationUrl,
+          subject: 'Welcome to RegularTravelManager - Please Verify Your Email',
+        });
+
+        console.log('\n' + '='.repeat(80));
+        console.log('📧 MOCK EMAIL SENT TO:', email);
+        console.log('👤 RECIPIENT:', firstName);
+        console.log('📋 SUBJECT: Welcome to RegularTravelManager - Please Verify Your Email');
+        console.log('🔗 VERIFICATION URL:');
+        console.log(verificationUrl);
+        console.log('⏰ TOKEN EXPIRES: 24 hours');
+        console.log('='.repeat(80) + '\n');
+
+        return true;
+      }
+
+      // Production email sending via SES
       const emailContent = this.generateVerificationEmailContent(firstName, verificationUrl);
 
       const command = new SendEmailCommand({
@@ -86,6 +111,29 @@ export class EmailService {
   async sendWelcomeEmail(email: string, firstName: string): Promise<boolean> {
     try {
       const loginUrl = `${this.config.baseUrl}/login`;
+
+      // Mock email service for local development
+      if (isLocalDevelopment() || process.env.MOCK_EMAIL === 'true') {
+        logger.info('📧 MOCK EMAIL SERVICE - Welcome Email', {
+          email,
+          firstName,
+          loginUrl,
+          subject: 'Welcome to RegularTravelManager - Your Account is Ready!',
+        });
+
+        console.log('\n' + '='.repeat(80));
+        console.log('🎉 MOCK WELCOME EMAIL SENT TO:', email);
+        console.log('👤 RECIPIENT:', firstName);
+        console.log('📋 SUBJECT: Welcome to RegularTravelManager - Your Account is Ready!');
+        console.log('🔗 LOGIN URL:');
+        console.log(loginUrl);
+        console.log('✅ ACCOUNT STATUS: Verified and Active');
+        console.log('='.repeat(80) + '\n');
+
+        return true;
+      }
+
+      // Production email sending via SES
       const emailContent = this.generateWelcomeEmailContent(firstName, loginUrl);
 
       const command = new SendEmailCommand({

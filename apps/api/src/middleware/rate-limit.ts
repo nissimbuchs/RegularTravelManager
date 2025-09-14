@@ -1,5 +1,6 @@
 import { APIGatewayProxyEvent } from 'aws-lambda';
 import { logger } from './logger';
+import { isLocalDevelopment } from '../config/environment';
 
 // In-memory rate limiting cache (in production, use Redis or DynamoDB)
 const rateLimitCache = new Map<string, { count: number; resetTime: number }>();
@@ -128,7 +129,7 @@ function cleanupExpiredEntries(now: number): void {
 export const RateLimitConfigs = {
   REGISTRATION: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 5, // 5 registration attempts per 15 minutes per IP
+    maxRequests: isLocalDevelopment() ? 100 : 5, // 100 for local, 5 for production
     keyGenerator: ipRateLimitKey,
   },
   EMAIL_VERIFICATION: {

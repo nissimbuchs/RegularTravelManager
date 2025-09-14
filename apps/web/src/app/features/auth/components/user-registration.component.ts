@@ -1,6 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+  AbstractControl,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -18,7 +24,7 @@ import { RegistrationService } from '../../../core/services/registration.service
 import { RegisterRequest } from '@rtm/shared';
 
 // Custom validators
-function passwordStrengthValidator(control: AbstractControl): {[key: string]: any} | null {
+function passwordStrengthValidator(control: AbstractControl): { [key: string]: any } | null {
   const value = control.value;
   if (!value) {
     return null;
@@ -30,7 +36,8 @@ function passwordStrengthValidator(control: AbstractControl): {[key: string]: an
   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
   const isLongEnough = value.length >= 8;
 
-  const passwordValid = hasUpperCase && hasLowerCase && hasNumeric && hasSpecialChar && isLongEnough;
+  const passwordValid =
+    hasUpperCase && hasLowerCase && hasNumeric && hasSpecialChar && isLongEnough;
 
   if (!passwordValid) {
     return {
@@ -39,15 +46,15 @@ function passwordStrengthValidator(control: AbstractControl): {[key: string]: an
         hasLowerCase,
         hasNumeric,
         hasSpecialChar,
-        isLongEnough
-      }
+        isLongEnough,
+      },
     };
   }
 
   return null;
 }
 
-function confirmPasswordValidator(control: AbstractControl): {[key: string]: any} | null {
+function confirmPasswordValidator(control: AbstractControl): { [key: string]: any } | null {
   const password = control.get('password');
   const confirmPassword = control.get('confirmPassword');
 
@@ -89,14 +96,16 @@ interface RegistrationState {
     MatProgressSpinnerModule,
     MatCheckboxModule,
     MatStepperModule,
-    MatSnackBarModule
+    MatSnackBarModule,
   ],
   template: `
     <div class="registration-container">
       <mat-card class="registration-card">
         <mat-card-content>
           <!-- Debug Info -->
-          <div style="background: #f0f0f0; padding: 8px; margin-bottom: 16px; border-radius: 4px; font-size: 12px;">
+          <div
+            style="background: #f0f0f0; padding: 8px; margin-bottom: 16px; border-radius: 4px; font-size: 12px;"
+          >
             Debug: Current step = {{ state.step }}, Loading = {{ state.loading }}
           </div>
           <!-- Submitting Step -->
@@ -110,12 +119,12 @@ interface RegistrationState {
           <div *ngIf="state.step === 'form'">
             <h2>Create Your Account</h2>
             <p class="subtitle">Join RegularTravelManager to manage your travel allowances</p>
-            
+
             <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
               <!-- Personal Information -->
               <mat-form-field appearance="outline">
                 <mat-label>First Name</mat-label>
-                <input matInput formControlName="firstName" required>
+                <input matInput formControlName="firstName" required />
                 <mat-error *ngIf="registrationForm.get('firstName')?.hasError('required')">
                   First name is required
                 </mat-error>
@@ -123,7 +132,7 @@ interface RegistrationState {
 
               <mat-form-field appearance="outline">
                 <mat-label>Last Name</mat-label>
-                <input matInput formControlName="lastName" required>
+                <input matInput formControlName="lastName" required />
                 <mat-error *ngIf="registrationForm.get('lastName')?.hasError('required')">
                   Last name is required
                 </mat-error>
@@ -131,7 +140,7 @@ interface RegistrationState {
 
               <mat-form-field appearance="outline">
                 <mat-label>Email</mat-label>
-                <input matInput type="email" formControlName="email" required>
+                <input matInput type="email" formControlName="email" required />
                 <mat-error *ngIf="registrationForm.get('email')?.hasError('required')">
                   Email is required
                 </mat-error>
@@ -143,8 +152,11 @@ interface RegistrationState {
               <!-- Password Section -->
               <mat-form-field appearance="outline">
                 <mat-label>Password</mat-label>
-                <input matInput type="password" formControlName="password" required>
-                <mat-hint>Minimum 8 characters with uppercase, lowercase, number, and special character</mat-hint>
+                <input matInput type="password" formControlName="password" required />
+                <mat-hint
+                  >Minimum 8 characters with uppercase, lowercase, number, and special
+                  character</mat-hint
+                >
                 <mat-error *ngIf="registrationForm.get('password')?.hasError('required')">
                   Password is required
                 </mat-error>
@@ -158,11 +170,13 @@ interface RegistrationState {
 
               <mat-form-field appearance="outline">
                 <mat-label>Confirm Password</mat-label>
-                <input matInput type="password" formControlName="confirmPassword" required>
+                <input matInput type="password" formControlName="confirmPassword" required />
                 <mat-error *ngIf="registrationForm.get('confirmPassword')?.hasError('required')">
                   Please confirm your password
                 </mat-error>
-                <mat-error *ngIf="registrationForm.get('confirmPassword')?.hasError('passwordMismatch')">
+                <mat-error
+                  *ngIf="registrationForm.get('confirmPassword')?.hasError('passwordMismatch')"
+                >
                   Passwords don't match
                 </mat-error>
               </mat-form-field>
@@ -172,15 +186,17 @@ interface RegistrationState {
               <div formGroupName="homeAddress">
                 <mat-form-field appearance="outline">
                   <mat-label>Street Address</mat-label>
-                  <input matInput formControlName="street" required>
-                  <mat-error *ngIf="registrationForm.get('homeAddress.street')?.hasError('required')">
+                  <input matInput formControlName="street" required />
+                  <mat-error
+                    *ngIf="registrationForm.get('homeAddress.street')?.hasError('required')"
+                  >
                     Street address is required
                   </mat-error>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>City</mat-label>
-                  <input matInput formControlName="city" required>
+                  <input matInput formControlName="city" required />
                   <mat-error *ngIf="registrationForm.get('homeAddress.city')?.hasError('required')">
                     City is required
                   </mat-error>
@@ -188,19 +204,23 @@ interface RegistrationState {
 
                 <mat-form-field appearance="outline">
                   <mat-label>Postal Code</mat-label>
-                  <input matInput formControlName="postalCode" placeholder="1234" required>
+                  <input matInput formControlName="postalCode" placeholder="1234" required />
                   <mat-hint>Swiss postal code (4 digits)</mat-hint>
-                  <mat-error *ngIf="registrationForm.get('homeAddress.postalCode')?.hasError('required')">
+                  <mat-error
+                    *ngIf="registrationForm.get('homeAddress.postalCode')?.hasError('required')"
+                  >
                     Postal code is required
                   </mat-error>
-                  <mat-error *ngIf="registrationForm.get('homeAddress.postalCode')?.hasError('pattern')">
+                  <mat-error
+                    *ngIf="registrationForm.get('homeAddress.postalCode')?.hasError('pattern')"
+                  >
                     Swiss postal code must be 4 digits
                   </mat-error>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
                   <mat-label>Country</mat-label>
-                  <input matInput formControlName="country" value="Switzerland" readonly>
+                  <input matInput formControlName="country" value="Switzerland" readonly />
                 </mat-form-field>
               </div>
 
@@ -224,9 +244,13 @@ interface RegistrationState {
               </div>
 
               <!-- Submit Button -->
-              <button mat-raised-button color="primary" type="submit" 
-                      [disabled]="!registrationForm.valid || state.loading"
-                      class="submit-button">
+              <button
+                mat-raised-button
+                color="primary"
+                type="submit"
+                [disabled]="!registrationForm.valid || state.loading"
+                class="submit-button"
+              >
                 <mat-icon *ngIf="state.loading">hourglass_empty</mat-icon>
                 <mat-icon *ngIf="!state.loading">person_add</mat-icon>
                 {{ state.loading ? 'Creating Account...' : 'Create Account' }}
@@ -276,102 +300,106 @@ interface RegistrationState {
       </mat-card>
     </div>
   `,
-  styles: [`
-    .registration-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-      background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
-    }
+  styles: [
+    `
+      .registration-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+        background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+      }
 
-    .registration-card {
-      max-width: 500px;
-      width: 100%;
-      padding: 20px;
-    }
+      .registration-card {
+        max-width: 500px;
+        width: 100%;
+        padding: 20px;
+      }
 
-    h2 {
-      text-align: center;
-      margin-bottom: 8px;
-      color: #1976d2;
-    }
+      h2 {
+        text-align: center;
+        margin-bottom: 8px;
+        color: #1976d2;
+      }
 
-    .subtitle {
-      text-align: center;
-      color: #666;
-      margin-bottom: 30px;
-    }
+      .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 30px;
+      }
 
-    mat-form-field {
-      width: 100%;
-      margin-bottom: 16px;
-    }
+      mat-form-field {
+        width: 100%;
+        margin-bottom: 16px;
+      }
 
-    .checkbox-section {
-      margin: 16px 0;
-    }
+      .checkbox-section {
+        margin: 16px 0;
+      }
 
-    .submit-button {
-      width: 100%;
-      height: 48px;
-      margin-top: 20px;
-    }
+      .submit-button {
+        width: 100%;
+        height: 48px;
+        margin-top: 20px;
+      }
 
-    .success-step, .error-step {
-      text-align: center;
-      padding: 40px 20px;
-      min-height: 300px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
+      .success-step,
+      .error-step {
+        text-align: center;
+        padding: 40px 20px;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
 
-    .success-icon, .error-icon {
-      font-size: 64px;
-      height: 64px;
-      width: 64px;
-      margin-bottom: 20px;
-    }
+      .success-icon,
+      .error-icon {
+        font-size: 64px;
+        height: 64px;
+        width: 64px;
+        margin-bottom: 20px;
+      }
 
-    .success-icon {
-      color: #4caf50;
-    }
+      .success-icon {
+        color: #4caf50;
+      }
 
-    .error-icon {
-      color: #f44336;
-    }
+      .error-icon {
+        color: #f44336;
+      }
 
-    .action-buttons {
-      margin-top: 20px;
-    }
+      .action-buttons {
+        margin-top: 20px;
+      }
 
-    .action-buttons button {
-      margin: 0 8px;
-    }
+      .action-buttons button {
+        margin: 0 8px;
+      }
 
-    h3 {
-      color: #1976d2;
-      margin: 20px 0 10px 0;
-    }
-  `]
+      h3 {
+        color: #1976d2;
+        margin: 20px 0 10px 0;
+      }
+    `,
+  ],
 })
 export class UserRegistrationComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  
+
   registrationForm!: FormGroup;
-  
+
   private stateSubject = new BehaviorSubject<RegistrationState>({
     step: 'form',
     loading: false,
     error: null,
-    message: null
+    message: null,
   });
-  
+
   state$ = this.stateSubject.asObservable();
-  
+
   get state() {
     return this.stateSubject.value;
   }
@@ -393,29 +421,32 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
   }
 
   private initializeForm(): void {
-    this.registrationForm = this.formBuilder.group({
-      firstName: ['', [Validators.required, Validators.maxLength(50)]],
-      lastName: ['', [Validators.required, Validators.maxLength(50)]],
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(8), passwordStrengthValidator]],
-      confirmPassword: ['', Validators.required],
-      homeAddress: this.formBuilder.group({
-        street: ['', [Validators.required, Validators.maxLength(100)]],
-        city: ['', [Validators.required, Validators.maxLength(50)]],
-        postalCode: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]],
-        country: ['Switzerland']
-      }),
-      acceptTerms: [false, Validators.requiredTrue],
-      acceptPrivacy: [false, Validators.requiredTrue]
-    }, { validators: confirmPasswordValidator });
+    this.registrationForm = this.formBuilder.group(
+      {
+        firstName: ['', [Validators.required, Validators.maxLength(50)]],
+        lastName: ['', [Validators.required, Validators.maxLength(50)]],
+        email: ['', [Validators.required, Validators.email]],
+        password: ['', [Validators.required, Validators.minLength(8), passwordStrengthValidator]],
+        confirmPassword: ['', Validators.required],
+        homeAddress: this.formBuilder.group({
+          street: ['', [Validators.required, Validators.maxLength(100)]],
+          city: ['', [Validators.required, Validators.maxLength(50)]],
+          postalCode: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]],
+          country: ['Switzerland'],
+        }),
+        acceptTerms: [false, Validators.requiredTrue],
+        acceptPrivacy: [false, Validators.requiredTrue],
+      },
+      { validators: confirmPasswordValidator }
+    );
   }
 
   onSubmit(): void {
     if (this.registrationForm.valid) {
       this.updateState({ loading: true, step: 'submitting' });
-      
+
       const formData = this.registrationForm.value;
-      
+
       // Transform form data to match API expected format
       const registerRequest: RegisterRequest = {
         email: formData.email,
@@ -426,90 +457,116 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
           street: formData.homeAddress.street,
           city: formData.homeAddress.city,
           postalCode: formData.homeAddress.postalCode,
-          country: formData.homeAddress.country || 'Switzerland'
+          country: formData.homeAddress.country || 'Switzerland',
         },
         acceptTerms: formData.acceptTerms,
-        acceptPrivacy: formData.acceptPrivacy
+        acceptPrivacy: formData.acceptPrivacy,
       };
 
       // Call actual registration API
-      this.registrationService.register(registerRequest)
+      this.registrationService
+        .register(registerRequest)
         .pipe(
           timeout(30000), // 30 second timeout
           takeUntil(this.destroy$),
-          catchError((error) => {
+          catchError(error => {
             console.error('Registration error caught in pipe:', error);
             throw error; // Re-throw to be handled by error handler below
           })
         )
         .subscribe({
-          next: (response) => {
+          next: response => {
             console.log('Registration success:', response);
+            console.log('Response structure debug:', {
+              response: response,
+              responseData: response.data,
+              responseDataMessage: response.data?.message,
+            });
             this.updateState({
               step: 'verification-sent',
               loading: false,
-              message: response.data.message
+              message:
+                response.data?.message ||
+                'Registration successful! Please check your email for verification instructions.',
             });
             console.log('State after update:', this.state);
           },
-          error: (error) => {
+          error: error => {
             console.error('Registration failed:', error);
-            
+            console.error('Error structure debug:', {
+              error: error,
+              errorError: error.error,
+              errorErrorCode: error.error?.code,
+              errorErrorMessage: error.error?.message,
+              errorStatus: error.status,
+              errorName: error.name,
+            });
+
             // Handle different error types
             let errorMessage = 'Registration failed. Please try again.';
-            
+
             if (error.name === 'TimeoutError') {
-              errorMessage = 'Registration is taking longer than expected. Please check your internet connection and try again.';
-            } else if (error.error?.error?.code === 'EMAIL_EXISTS') {
-              errorMessage = 'An account with this email address already exists. Please try logging in.';
-            } else if (error.error?.error?.code === 'VALIDATION_ERROR') {
+              errorMessage =
+                'Registration is taking longer than expected. Please check your internet connection and try again.';
+            } else if (error.error?.code === 'EMAIL_EXISTS') {
+              errorMessage =
+                'An account with this email address already exists. Please try logging in.';
+            } else if (error.error?.code === 'VALIDATION_ERROR') {
               errorMessage = 'Please check your information and try again.';
-            } else if (error.error?.error?.code === 'GEOCODING_ERROR') {
+            } else if (error.error?.code === 'GEOCODING_ERROR') {
               errorMessage = 'Unable to verify your address. Please check your address details.';
-            } else if (error.error?.error?.message) {
-              errorMessage = error.error.error.message;
+            } else if (error.error?.message) {
+              errorMessage = error.error.message;
             } else if (error.status === 0) {
-              errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+              errorMessage =
+                'Unable to connect to the server. Please check your internet connection.';
             }
-            
+
+            // Force error state regardless of error structure
+            console.error('Forcing error state with message:', errorMessage);
             this.updateState({
               step: 'error',
               loading: false,
-              error: errorMessage
+              error: errorMessage,
             });
-          }
+          },
         });
     } else {
       this.snackBar.open('Please fill in all required fields correctly', 'Close', {
-        duration: 5000
+        duration: 5000,
       });
     }
   }
 
   resendVerification(): void {
     const formData = this.registrationForm.value;
-    
+
     if (!formData.email) {
       this.snackBar.open('Email address not found. Please fill in the form again.', 'Close', {
-        duration: 5000
+        duration: 5000,
       });
       return;
     }
 
-    this.registrationService.resendVerification({ email: formData.email })
+    this.registrationService
+      .resendVerification({ email: formData.email })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
-          this.snackBar.open(response.data.message || 'Verification email resent successfully', 'Close', {
-            duration: 3000
-          });
+        next: response => {
+          this.snackBar.open(
+            response.data.message || 'Verification email resent successfully',
+            'Close',
+            {
+              duration: 3000,
+            }
+          );
         },
-        error: (error) => {
+        error: error => {
           console.error('Resend verification failed:', error);
           this.snackBar.open('Failed to resend verification email. Please try again.', 'Close', {
-            duration: 5000
+            duration: 5000,
           });
-        }
+        },
       });
   }
 

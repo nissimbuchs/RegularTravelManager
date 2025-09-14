@@ -219,7 +219,6 @@ export const updateUserStatusHandler = async (
       };
     }
 
-
     // Check if user exists
     const userCheck = await db.query(
       'SELECT id, first_name, last_name, is_active FROM employees WHERE id = $1',
@@ -360,7 +359,6 @@ export const updateUserManagerHandler = async (
 
     const { managerId } = requestBody;
 
-
     // Validate user exists
     const userCheck = await db.query(
       'SELECT id, first_name, last_name, manager_id FROM employees WHERE id = $1',
@@ -390,7 +388,7 @@ export const updateUserManagerHandler = async (
       );
 
       if (managerCheck.rows.length === 0) {
-          return {
+        return {
           statusCode: 400,
           body: JSON.stringify({
             success: false,
@@ -406,7 +404,7 @@ export const updateUserManagerHandler = async (
 
       // Prevent circular reference
       if (managerId === userId) {
-          return {
+        return {
           statusCode: 400,
           body: JSON.stringify({
             success: false,

@@ -8,9 +8,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 export class ApiPermissionManager {
   private grantedFunctions: Set<string> = new Set();
 
-  constructor(
-    private functions: Record<string, lambda.IFunction>
-  ) {}
+  constructor(private functions: Record<string, lambda.IFunction>) {}
 
   /**
    * Grant API Gateway invoke permissions to all functions

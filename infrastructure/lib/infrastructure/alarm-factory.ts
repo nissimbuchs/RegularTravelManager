@@ -20,11 +20,11 @@ export class AlarmFactory {
    */
   createAlarms(alarms: Record<string, AlarmConfig>): Record<string, cloudwatch.Alarm> {
     const result: Record<string, cloudwatch.Alarm> = {};
-    
+
     for (const [key, config] of Object.entries(alarms)) {
       result[key] = this.createAlarm(key, config);
     }
-    
+
     return result;
   }
 
@@ -37,14 +37,15 @@ export class AlarmFactory {
 
     // Get environment-specific threshold
     const threshold = this.getEnvironmentThreshold(config.threshold);
-    
+
     const alarm = new cloudwatch.Alarm(this.scope, constructId, {
       alarmName,
       alarmDescription: config.description,
       metric: config.metric,
       threshold,
       evaluationPeriods: config.evaluationPeriods || 2,
-      comparisonOperator: config.comparisonOperator || cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+      comparisonOperator:
+        config.comparisonOperator || cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
       treatMissingData: config.treatMissingData || cloudwatch.TreatMissingData.NOT_BREACHING,
       datapointsToAlarm: config.datapointsToAlarm,
     });
@@ -85,7 +86,7 @@ export class AlarmFactory {
     if (typeof threshold === 'number') {
       return threshold;
     }
-    
+
     return threshold[this.environment as keyof ThresholdConfig] || threshold.dev;
   }
 
@@ -93,7 +94,10 @@ export class AlarmFactory {
    * Convert camelCase to kebab-case
    */
   private toKebabCase(str: string): string {
-    return str.replace(/([A-Z])/g, '-$1').replace(/^-/, '').toLowerCase();
+    return str
+      .replace(/([A-Z])/g, '-$1')
+      .replace(/^-/, '')
+      .toLowerCase();
   }
 
   /**
@@ -133,11 +137,13 @@ export interface AlarmConfig {
 /**
  * Threshold configuration - can be a single value or environment-specific
  */
-export type ThresholdConfig = number | {
-  dev: number;
-  staging: number;
-  production: number;
-};
+export type ThresholdConfig =
+  | number
+  | {
+      dev: number;
+      staging: number;
+      production: number;
+    };
 
 /**
  * Pre-configured alarm sets for common resources

@@ -46,23 +46,42 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // Initialize Lambda function factory for clean imports
     const functionFactory = new LambdaFunctionFactory(this, environment);
-    
+
     // Import authorizer function separately (needed for authorizer creation)
     const authorizerFunction = functionFactory.getFunction('authorizer');
-    
+
     // Import all required Lambda functions using factory
     const functionNames = [
-      'health', 'get-active-projects', 'get-employee-profile', 'update-employee-address',
-      'get-managers', 'create-project', 'create-subproject', 'get-all-projects',
-      'get-project-by-id', 'get-subprojects-for-project', 'get-subproject-by-id',
-      'check-project-references', 'search-projects', 'projects-management',
-      'admin-project-management', 'calculate-distance', 'calculate-allowance',
-      'calculate-travel-cost', 'get-calculation-audit', 'invalidate-calculation-cache',
-      'cleanup-expired-cache', 'employees-travel-requests', 'admin-user-management',
-      'managers-dashboard', 'register-user', 'verify-email', 'resend-verification',
-      'registration-status'
+      'health',
+      'get-active-projects',
+      'get-employee-profile',
+      'update-employee-address',
+      'get-managers',
+      'create-project',
+      'create-subproject',
+      'get-all-projects',
+      'get-project-by-id',
+      'get-subprojects-for-project',
+      'get-subproject-by-id',
+      'check-project-references',
+      'search-projects',
+      'projects-management',
+      'admin-project-management',
+      'calculate-distance',
+      'calculate-allowance',
+      'calculate-travel-cost',
+      'get-calculation-audit',
+      'invalidate-calculation-cache',
+      'cleanup-expired-cache',
+      'employees-travel-requests',
+      'admin-user-management',
+      'managers-dashboard',
+      'register-user',
+      'verify-email',
+      'resend-verification',
+      'registration-status',
     ];
-    
+
     const functions = functionFactory.getFunctions(functionNames);
 
     // Create Lambda authorizer using TOKEN authorizer
@@ -123,9 +142,10 @@ export class ApiGatewayStack extends cdk.Stack {
     });
 
     // Store API URL (custom domain if configured, otherwise default API Gateway URL)
-    const apiUrl = config.api.customDomainEnabled && config.api.domainName && this.customDomain
-      ? `https://${config.api.domainName}/`
-      : this.restApi.url;
+    const apiUrl =
+      config.api.customDomainEnabled && config.api.domainName && this.customDomain
+        ? `https://${config.api.domainName}/`
+        : this.restApi.url;
 
     new ssm.StringParameter(this, 'ApiGatewayUrl', {
       parameterName: `/rtm/${environment}/api/gateway-url`,
@@ -145,19 +165,22 @@ export class ApiGatewayStack extends cdk.Stack {
     functions: Record<string, lambda.IFunction>,
     authorizer: apigateway.IAuthorizer
   ) {
-
     // Initialize route builder with functions and authorizer
     const routeBuilder = new ApiRouteBuilder(this.restApi, functions, authorizer);
-    
+
     // Build all API routes from configuration
     routeBuilder.buildRouteGroups(API_ROUTES);
-    
+
     // Initialize permission manager and grant all permissions
     const permissionManager = new ApiPermissionManager(functions);
     permissionManager.grantAllPermissions();
-    
-    console.log(`✅ API Gateway routes configured with ${Object.keys(functions).length} Lambda functions`);
-    console.log(`✅ Permissions granted to ${permissionManager.getGrantedFunctions().length} functions`);
+
+    console.log(
+      `✅ API Gateway routes configured with ${Object.keys(functions).length} Lambda functions`
+    );
+    console.log(
+      `✅ Permissions granted to ${permissionManager.getGrantedFunctions().length} functions`
+    );
   }
 
   private setupApiCustomDomain(environment: string, domainName: string) {
@@ -218,7 +241,9 @@ export class ApiGatewayStack extends cdk.Stack {
 
     console.log(`✅ API custom domain configured: ${domainName}`);
     console.log(`✅ CNAME target: ${this.customDomain.domainNameAliasDomainName}`);
-    console.log(`ℹ️ Manual DNS setup required: Add CNAME record ${domainName.split('.')[0]} -> ${this.customDomain.domainNameAliasDomainName}`);
+    console.log(
+      `ℹ️ Manual DNS setup required: Add CNAME record ${domainName.split('.')[0]} -> ${this.customDomain.domainNameAliasDomainName}`
+    );
     console.log(`✅ API custom domain setup completed for ${domainName}`);
   }
 }

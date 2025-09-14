@@ -25,16 +25,13 @@ import { RegistrationService } from './services/registration.service';
 import { AuthRoutingModule } from './auth-routing.module';
 
 @NgModule({
-  declarations: [
-    UserRegistrationComponent,
-    EmailVerificationComponent
-  ],
+  declarations: [UserRegistrationComponent, EmailVerificationComponent],
   imports: [
     CommonModule,
     ReactiveFormsModule,
     RouterModule,
     AuthRoutingModule,
-    
+
     // Angular Material
     MatCardModule,
     MatFormFieldModule,
@@ -44,10 +41,8 @@ import { AuthRoutingModule } from './auth-routing.module';
     MatCheckboxModule,
     MatSelectModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
   ],
-  providers: [
-    RegistrationService
-  ]
+  providers: [RegistrationService],
 })
-export class AuthModule { }
+export class AuthModule {}

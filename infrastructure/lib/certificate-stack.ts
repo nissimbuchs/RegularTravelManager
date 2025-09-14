@@ -24,13 +24,17 @@ export class CertificateStack extends cdk.Stack {
 
     // Validate that this stack is being deployed to us-east-1
     if (this.region !== 'us-east-1') {
-      console.warn(`⚠️  Certificate stack should be deployed to us-east-1, but is being deployed to ${this.region}`);
+      console.warn(
+        `⚠️  Certificate stack should be deployed to us-east-1, but is being deployed to ${this.region}`
+      );
       console.warn('   CloudFront requires certificates to be in us-east-1 region');
     }
 
     // Only create certificate if custom domain is enabled
     if (!config.web.customDomainEnabled || !config.web.domainName) {
-      throw new Error(`Custom domain must be enabled for certificate creation. Environment: ${environment}`);
+      throw new Error(
+        `Custom domain must be enabled for certificate creation. Environment: ${environment}`
+      );
     }
 
     const domainName = config.web.domainName;

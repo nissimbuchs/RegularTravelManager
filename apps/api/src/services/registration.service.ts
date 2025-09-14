@@ -160,12 +160,11 @@ export class RegistrationService {
         return false;
       }
 
-      // Update employee record
+      // Update employee record - activate the account after email verification
       const employeeQuery = `
-        UPDATE employees 
-        SET email_verified_at = CURRENT_TIMESTAMP,
-            account_status = 'active',
-            profile_updated_at = CURRENT_TIMESTAMP
+        UPDATE employees
+        SET is_active = true,
+            updated_at = CURRENT_TIMESTAMP
         WHERE email = $1
       `;
 
@@ -276,59 +275,68 @@ export class RegistrationService {
     const client = await this.db.connect();
 
     try {
-      const homeAddress = `${registerData.homeAddress.street}, ${registerData.homeAddress.city}, ${registerData.homeAddress.postalCode}, ${registerData.homeAddress.country}`;
-
       let insertQuery: string;
       let queryParams: any[];
+
+      // Generate unique employee ID for registration users
+      const employeeId = await this.generateEmployeeId(client, 'EMP');
 
       if (coordinates) {
         // Insert with coordinates using PostGIS POINT
         insertQuery = `
           INSERT INTO employees (
-            id, cognito_user_id, email, first_name, last_name, 
-            home_address, home_location, role, is_active, 
-            registration_source, account_status, created_at
+            id, cognito_user_id, email, first_name, last_name,
+            home_street, home_city, home_postal_code, home_country,
+            home_location, employee_id, is_active, created_at
           )
           VALUES (
-            gen_random_uuid(), $1, $2, $3, $4, $5, 
-            ST_SetSRID(ST_MakePoint($6, $7), 4326), 'employee', false,
-            'registration', 'pending_verification', CURRENT_TIMESTAMP
+            gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8,
+            ST_SetSRID(ST_MakePoint($9, $10), 4326), $11, false, CURRENT_TIMESTAMP
           )
-          RETURNING id, cognito_user_id as "cognitoUserId", email, first_name as "firstName", 
-                   last_name as "lastName", home_address as "homeAddress", role, is_active as "isActive", 
-                   created_at as "registeredAt"
+          RETURNING id, cognito_user_id as "cognitoUserId", email, first_name as "firstName",
+                   last_name as "lastName", home_street as "homeStreet", home_city as "homeCity",
+                   home_postal_code as "homePostalCode", home_country as "homeCountry",
+                   employee_id as "employeeId", is_active as "isActive", created_at as "registeredAt"
         `;
         queryParams = [
           cognitoUserId,
           registerData.email,
           registerData.firstName,
           registerData.lastName,
-          homeAddress,
+          registerData.homeAddress.street,
+          registerData.homeAddress.city,
+          registerData.homeAddress.postalCode,
+          registerData.homeAddress.country,
           coordinates.longitude, // PostGIS uses longitude first
           coordinates.latitude,
+          employeeId,
         ];
       } else {
         // Insert without coordinates
         insertQuery = `
           INSERT INTO employees (
-            id, cognito_user_id, email, first_name, last_name, 
-            home_address, role, is_active, registration_source, 
-            account_status, created_at
+            id, cognito_user_id, email, first_name, last_name,
+            home_street, home_city, home_postal_code, home_country,
+            employee_id, is_active, created_at
           )
           VALUES (
-            gen_random_uuid(), $1, $2, $3, $4, $5, 'employee', false,
-            'registration', 'pending_verification', CURRENT_TIMESTAMP
+            gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, false, CURRENT_TIMESTAMP
           )
-          RETURNING id, cognito_user_id as "cognitoUserId", email, first_name as "firstName", 
-                   last_name as "lastName", home_address as "homeAddress", role, is_active as "isActive", 
-                   created_at as "registeredAt"
+          RETURNING id, cognito_user_id as "cognitoUserId", email, first_name as "firstName",
+                   last_name as "lastName", home_street as "homeStreet", home_city as "homeCity",
+                   home_postal_code as "homePostalCode", home_country as "homeCountry",
+                   employee_id as "employeeId", is_active as "isActive", created_at as "registeredAt"
         `;
         queryParams = [
           cognitoUserId,
           registerData.email,
           registerData.firstName,
           registerData.lastName,
-          homeAddress,
+          registerData.homeAddress.street,
+          registerData.homeAddress.city,
+          registerData.homeAddress.postalCode,
+          registerData.homeAddress.country,
+          employeeId,
         ];
       }
 
@@ -376,7 +384,7 @@ export class RegistrationService {
 
       // Check employee record status
       const employeeQuery = `
-        SELECT is_active, email_verified_at, account_status 
+        SELECT is_active
         FROM employees WHERE email = $1
       `;
       const employeeResult = await client.query(employeeQuery, [email]);
@@ -404,7 +412,7 @@ export class RegistrationService {
 
     try {
       const query = `
-        DELETE FROM user_registrations 
+        DELETE FROM user_registrations
         WHERE expires_at < CURRENT_TIMESTAMP AND verified_at IS NULL
         RETURNING id
       `;
@@ -419,6 +427,77 @@ export class RegistrationService {
       return deletedCount;
     } finally {
       client.release();
+    }
+  }
+
+  /**
+   * Get employee details by email for local development
+   */
+  async getEmployeeByEmail(email: string): Promise<any> {
+    const client = await this.db.connect();
+
+    try {
+      const query = `
+        SELECT
+          id, cognito_user_id, email, first_name, last_name,
+          home_street, home_city, home_postal_code, home_country,
+          employee_id, is_active, created_at
+        FROM employees
+        WHERE email = $1
+      `;
+
+      const result = await client.query(query, [email.toLowerCase()]);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return result.rows[0];
+    } catch (error) {
+      logger.error('Failed to get employee by email', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        email,
+      });
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Generate unique employee ID in format: PREFIX-NNNN (e.g., EMP-0001)
+   */
+  private async generateEmployeeId(client: any, prefix: 'EMP' | 'MGR' | 'ADM'): Promise<string> {
+    try {
+      // Find the highest existing number for this prefix
+      const query = `
+        SELECT employee_id
+        FROM employees
+        WHERE employee_id LIKE $1
+        ORDER BY employee_id DESC
+        LIMIT 1
+      `;
+
+      const result = await client.query(query, [`${prefix}-%`]);
+
+      let nextNumber = 1;
+      if (result.rows.length > 0) {
+        const lastId = result.rows[0].employee_id;
+        const lastNumber = parseInt(lastId.split('-')[1]);
+        nextNumber = lastNumber + 1;
+      }
+
+      // Format with leading zeros (e.g., EMP-0001)
+      const employeeId = `${prefix}-${nextNumber.toString().padStart(4, '0')}`;
+
+      logger.info('Generated employee ID', { employeeId, prefix });
+      return employeeId;
+    } catch (error) {
+      logger.error('Failed to generate employee ID', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        prefix,
+      });
+      throw error;
     }
   }
 }

@@ -58,7 +58,10 @@ export const EnvironmentConfigs = {
   }),
 
   /** Cognito and location services combined */
-  cognitoAndLocation: (environment: string, infra: InfrastructureStack): Record<string, string> => ({
+  cognitoAndLocation: (
+    environment: string,
+    infra: InfrastructureStack
+  ): Record<string, string> => ({
     COGNITO_USER_POOL_ID: infra.userPool.userPoolId,
     PLACE_INDEX_NAME: infra.placeIndex.indexName,
     API_VERSION: '1.0.0',
@@ -286,11 +289,12 @@ export const LAMBDA_FUNCTIONS: Record<string, LambdaFunctionConfig> = {
       COGNITO_USER_POOL_ID: infra.userPool.userPoolId,
       FROM_EMAIL_ADDRESS: 'nissim@buchs.be',
       SUPPORT_EMAIL: 'nissim@buchs.be',
-      FRONTEND_BASE_URL: environment === 'production'
-        ? 'https://rtfm.buchs.be'
-        : environment === 'staging'
-        ? 'https://rtm-staging.buchs.be'
-        : 'https://dz57qvo83kxos.cloudfront.net',
+      FRONTEND_BASE_URL:
+        environment === 'production'
+          ? 'https://rtfm.buchs.be'
+          : environment === 'staging'
+            ? 'https://rtm-staging.buchs.be'
+            : 'https://dz57qvo83kxos.cloudfront.net',
       API_VERSION: '1.0.0',
     }),
   },
@@ -304,11 +308,12 @@ export const LAMBDA_FUNCTIONS: Record<string, LambdaFunctionConfig> = {
       COGNITO_USER_POOL_ID: infra.userPool.userPoolId,
       FROM_EMAIL_ADDRESS: 'nissim@buchs.be',
       SUPPORT_EMAIL: 'nissim@buchs.be',
-      FRONTEND_BASE_URL: environment === 'production'
-        ? 'https://rtfm.buchs.be'
-        : environment === 'staging'
-        ? 'https://rtfm-staging.buchs.be'
-        : 'https://rtfm-dev.buchs.be',
+      FRONTEND_BASE_URL:
+        environment === 'production'
+          ? 'https://rtfm.buchs.be'
+          : environment === 'staging'
+            ? 'https://rtfm-staging.buchs.be'
+            : 'https://rtfm-dev.buchs.be',
       API_VERSION: '1.0.0',
     }),
   },
@@ -322,11 +327,12 @@ export const LAMBDA_FUNCTIONS: Record<string, LambdaFunctionConfig> = {
       COGNITO_USER_POOL_ID: infra.userPool.userPoolId,
       FROM_EMAIL_ADDRESS: 'nissim@buchs.be',
       SUPPORT_EMAIL: 'nissim@buchs.be',
-      FRONTEND_BASE_URL: environment === 'production'
-        ? 'https://rtfm.buchs.be'
-        : environment === 'staging'
-        ? 'https://rtm-staging.buchs.be'
-        : 'https://dz57qvo83kxos.cloudfront.net',
+      FRONTEND_BASE_URL:
+        environment === 'production'
+          ? 'https://rtfm.buchs.be'
+          : environment === 'staging'
+            ? 'https://rtm-staging.buchs.be'
+            : 'https://dz57qvo83kxos.cloudfront.net',
       API_VERSION: '1.0.0',
     }),
   },

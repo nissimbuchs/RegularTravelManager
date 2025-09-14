@@ -308,7 +308,7 @@ export class AuthService {
 
     // Force cleanup Angular internal subscriptions
     this.angularCleanupService.forceCleanupAngularInternals();
-    
+
     // Close all open dialogs before logout to prevent persistence issues
     this.dialog.closeAll();
 

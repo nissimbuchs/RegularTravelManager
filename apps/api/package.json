@@ -5,7 +5,7 @@
   "description": "RegularTravelManager Node.js API",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/dev-server.ts",
+    "dev": "RTM_ENVIRONMENT=local tsx watch src/dev-server.ts",
     "build": "npm run clean && npm run build:lambda",
     "build:lambda": "esbuild src/handlers/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --format=cjs --external:pg-native --external:@aws-sdk/* --external:aws-sdk",
     "test": "vitest run",

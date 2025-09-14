@@ -55,7 +55,10 @@ export class ExportManager {
    * Convert camelCase to kebab-case
    */
   private toKebabCase(str: string): string {
-    return str.replace(/([A-Z])/g, '-$1').replace(/^-/, '').toLowerCase();
+    return str
+      .replace(/([A-Z])/g, '-$1')
+      .replace(/^-/, '')
+      .toLowerCase();
   }
 
   /**

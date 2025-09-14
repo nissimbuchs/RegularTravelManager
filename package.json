@@ -58,9 +58,9 @@
     "clean:build": "rm -rf packages/*/dist domains/*/dist apps/*/dist infrastructure/cdk.out apps/web/.angular && find . -name '*.tsbuildinfo' -delete",
     "clean:cache": "rm -rf node_modules/.cache ~/.npm/_cacache .eslintcache .prettiercache 2>/dev/null || true",
 
-    "start:local": "npm-run-all --parallel start:local:api start:local:web",
-    "start:local:api": "npm run dev --workspace=apps/api",
-    "start:local:web": "npm run dev --workspace=apps/web",
+    "start:local": "RTM_ENVIRONMENT=local npm-run-all --parallel start:local:api start:local:web",
+    "start:local:api": "RTM_ENVIRONMENT=local npm run dev --workspace=apps/api",
+    "start:local:web": "RTM_ENVIRONMENT=local npm run dev --workspace=apps/web",
 
     "env:local": "docker compose up -d",
     "env:local:setup": "npm run env:local && ./scripts/setup-development.sh",

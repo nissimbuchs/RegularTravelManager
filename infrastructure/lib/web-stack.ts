@@ -142,7 +142,9 @@ function handler(event) {
     if (config.web.customDomainEnabled && config.web.domainName) {
       console.log(`✅ Web custom domain configured: ${config.web.domainName}`);
       console.log(`✅ CloudFront distribution: ${this.distribution.distributionDomainName}`);
-      console.log(`ℹ️ Manual DNS setup required: Add CNAME record ${config.web.domainName.split('.')[0]} -> ${this.distribution.distributionDomainName}`);
+      console.log(
+        `ℹ️ Manual DNS setup required: Add CNAME record ${config.web.domainName.split('.')[0]} -> ${this.distribution.distributionDomainName}`
+      );
 
       // Store CloudFront domain target for external DNS configuration
       new ssm.StringParameter(this, 'WebCustomDomainTarget', {
@@ -199,9 +201,10 @@ function handler(event) {
     });
 
     // Output the web URL (custom domain if configured, otherwise CloudFront domain)
-    const webUrl = config.web.customDomainEnabled && config.web.domainName 
-      ? `https://${config.web.domainName}`
-      : `https://${this.distribution.distributionDomainName}`;
+    const webUrl =
+      config.web.customDomainEnabled && config.web.domainName
+        ? `https://${config.web.domainName}`
+        : `https://${this.distribution.distributionDomainName}`;
 
     new cdk.CfnOutput(this, 'WebApplicationURL', {
       description: 'Web application URL',
@@ -356,7 +359,9 @@ function handler(event) {
     console.log(`🔗 Using cross-region certificate from us-east-1`);
 
     if (!certificateStack) {
-      throw new Error(`Certificate stack is required for custom domain setup. Domain: ${domainName}`);
+      throw new Error(
+        `Certificate stack is required for custom domain setup. Domain: ${domainName}`
+      );
     }
 
     // Import certificate from cross-region certificate stack
@@ -380,8 +385,12 @@ function handler(event) {
     });
 
     console.log(`✅ Custom domain setup completed for ${domainName}`);
-    console.log(`🔗 Using cross-region certificate: ${this.certificate?.certificateArn || 'Unknown'}`);
-    console.log(`ℹ️ Manual DNS setup required: Add CNAME record ${domainName.split('.')[0]} -> [CloudFront domain will be available after deployment]`);
+    console.log(
+      `🔗 Using cross-region certificate: ${this.certificate?.certificateArn || 'Unknown'}`
+    );
+    console.log(
+      `ℹ️ Manual DNS setup required: Add CNAME record ${domainName.split('.')[0]} -> [CloudFront domain will be available after deployment]`
+    );
   }
 
   private setupResourceTags(environment: string) {

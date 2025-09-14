@@ -11,19 +11,25 @@ export const routes: Routes = [
   },
   {
     path: 'register',
-    loadComponent: () => import('./features/auth/components/user-registration.component').then(m => m.UserRegistrationComponent),
+    loadComponent: () =>
+      import('./features/auth/components/user-registration.component').then(
+        m => m.UserRegistrationComponent
+      ),
     data: {
       title: 'Register - RegularTravelManager',
-      description: 'Create your RegularTravelManager account'
-    }
+      description: 'Create your RegularTravelManager account',
+    },
   },
   {
     path: 'verify-email',
-    loadComponent: () => import('./features/auth/components/email-verification.component').then(m => m.EmailVerificationComponent),
+    loadComponent: () =>
+      import('./features/auth/components/email-verification.component').then(
+        m => m.EmailVerificationComponent
+      ),
     data: {
       title: 'Email Verification - RegularTravelManager',
-      description: 'Verify your email address to complete registration'
-    }
+      description: 'Verify your email address to complete registration',
+    },
   },
   {
     path: '',

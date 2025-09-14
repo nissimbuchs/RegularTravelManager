@@ -7,6 +7,7 @@ import { RegistrationService } from '../../services/registration.service';
 import { CognitoRegistrationService } from '../../services/cognito-registration.service';
 import { EmailService } from '../../services/email.service';
 import { VerifyEmailRequest, VerifyEmailResponse } from '@rtm/shared';
+import { isLocalDevelopment } from '../../config/environment';
 
 // Validation schema for email verification request
 const verifyEmailSchema = z.object({
@@ -32,8 +33,18 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // Initialize services
     const registrationService = new RegistrationService();
-    const cognitoService = new CognitoRegistrationService();
     const emailService = new EmailService();
+
+    const isLocalDev = isLocalDevelopment();
+    let cognitoService: CognitoRegistrationService | null = null;
+
+    if (!isLocalDev) {
+      cognitoService = new CognitoRegistrationService();
+    } else {
+      logger.info('Local dev mode: Skipping Cognito service initialization', {
+        email: verifyData.email,
+      });
+    }
 
     // Step 1: Validate verification token
     const isValidToken = await registrationService.validateVerificationToken(
@@ -74,23 +85,56 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return createResponse(200, { data: response });
     }
 
-    // Step 3: Get user details from Cognito to extract firstName for welcome email
-    const cognitoUserDetails = await cognitoService.getUserDetails(verifyData.email);
+    // Step 3: Get user details (from Cognito in production, from database in local dev)
+    let cognitoUserDetails: any = null;
+    let firstName = 'User'; // Default fallback
 
-    if (!cognitoUserDetails) {
-      logger.error('Cognito user not found during verification', {
+    if (isLocalDev) {
+      // In local development, get user details from database
+      logger.info('Local dev mode: Getting user details from database', {
         email: verifyData.email,
-        requestId,
       });
+      const employeeDetails = await registrationService.getEmployeeByEmail(verifyData.email);
 
-      return createResponse(400, {
-        error: {
-          code: 'USER_NOT_FOUND',
-          message: 'User account not found. Please register again.',
-          timestamp: new Date().toISOString(),
+      if (!employeeDetails) {
+        logger.error('Employee not found during verification', {
+          email: verifyData.email,
           requestId,
-        },
-      });
+        });
+
+        return createResponse(400, {
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: 'User account not found. Please register again.',
+            timestamp: new Date().toISOString(),
+            requestId,
+          },
+        });
+      }
+
+      firstName = employeeDetails.first_name || verifyData.email.split('@')[0];
+      cognitoUserDetails = { userId: employeeDetails.cognito_user_id, email: verifyData.email };
+    } else {
+      // Production mode: get details from Cognito
+      cognitoUserDetails = await cognitoService!.getUserDetails(verifyData.email);
+
+      if (!cognitoUserDetails) {
+        logger.error('Cognito user not found during verification', {
+          email: verifyData.email,
+          requestId,
+        });
+
+        return createResponse(400, {
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: 'User account not found. Please register again.',
+            timestamp: new Date().toISOString(),
+            requestId,
+          },
+        });
+      }
+
+      firstName = cognitoUserDetails.email?.split('@')[0] || 'User';
     }
 
     try {
@@ -104,17 +148,20 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         throw new Error('Failed to mark email as verified in database');
       }
 
-      // Step 5: Enable Cognito user
-      const cognitoEnableSuccess = await cognitoService.enableUserAfterVerification(
-        verifyData.email
-      );
+      // Step 5: Enable Cognito user (skip in local development)
+      if (!isLocalDev) {
+        const cognitoEnableSuccess = await cognitoService!.enableUserAfterVerification(
+          verifyData.email
+        );
 
-      if (!cognitoEnableSuccess) {
-        throw new Error('Failed to enable user in Cognito');
+        if (!cognitoEnableSuccess) {
+          throw new Error('Failed to enable user in Cognito');
+        }
+      } else {
+        logger.info('Local dev mode: Skipping Cognito user enabling', { email: verifyData.email });
       }
 
       // Step 6: Send welcome email
-      const firstName = cognitoUserDetails.email?.split('@')[0] || 'User'; // Extract from email as fallback
       const welcomeEmailSent = await emailService.sendWelcomeEmail(verifyData.email, firstName);
 
       if (!welcomeEmailSent) {

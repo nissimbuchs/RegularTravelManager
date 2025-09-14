@@ -39,11 +39,11 @@ export class LambdaFunctionFactory {
    */
   getFunctions(functionNames: string[]): Record<string, lambda.IFunction> {
     const result: Record<string, lambda.IFunction> = {};
-    
+
     for (const name of functionNames) {
       result[name] = this.getFunction(name);
     }
-    
+
     return result;
   }
 

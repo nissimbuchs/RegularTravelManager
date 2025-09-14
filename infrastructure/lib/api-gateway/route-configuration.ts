@@ -41,7 +41,7 @@ export class ApiRouteBuilder {
    */
   buildRouteGroup(config: RouteGroupConfig): void {
     const baseResource = this.getOrCreateResource(config.basePath);
-    
+
     for (const route of config.routes) {
       this.buildRoute(baseResource, route);
     }
@@ -58,19 +58,20 @@ export class ApiRouteBuilder {
 
     // Create nested resources if path has segments
     const resource = this.createNestedResource(baseResource, config.path);
-    
+
     // Create integration
     const integration = new apigateway.LambdaIntegration(func);
-    
+
     // Determine method options
-    const methodOptions: apigateway.MethodOptions = config.requiresAuth !== false && this.authorizer
-      ? {
-          authorizer: this.authorizer,
-          authorizationType: apigateway.AuthorizationType.CUSTOM,
-        }
-      : {
-          authorizationType: apigateway.AuthorizationType.NONE,
-        };
+    const methodOptions: apigateway.MethodOptions =
+      config.requiresAuth !== false && this.authorizer
+        ? {
+            authorizer: this.authorizer,
+            authorizationType: apigateway.AuthorizationType.CUSTOM,
+          }
+        : {
+            authorizationType: apigateway.AuthorizationType.NONE,
+          };
 
     // Add method
     resource.addMethod(config.method, integration, methodOptions);
@@ -85,7 +86,7 @@ export class ApiRouteBuilder {
   private getOrCreateResource(path: string): apigateway.IResource {
     const segments = path.split('/').filter(s => s.length > 0);
     let currentResource: apigateway.IResource = this.restApi.root;
-    
+
     for (const segment of segments) {
       // Try to find existing child resource first
       const existingChild = (currentResource as any).children?.[segment];
@@ -95,21 +96,24 @@ export class ApiRouteBuilder {
         currentResource = currentResource.addResource(segment);
       }
     }
-    
+
     return currentResource;
   }
 
   /**
    * Create nested resources from path
    */
-  private createNestedResource(baseResource: apigateway.IResource, path: string): apigateway.IResource {
+  private createNestedResource(
+    baseResource: apigateway.IResource,
+    path: string
+  ): apigateway.IResource {
     if (!path || path === '/') {
       return baseResource;
     }
 
     const segments = path.split('/').filter(s => s.length > 0);
     let currentResource = baseResource;
-    
+
     for (const segment of segments) {
       // Try to find existing child resource first
       const existingChild = (currentResource as any).children?.[segment];
@@ -119,7 +123,7 @@ export class ApiRouteBuilder {
         currentResource = currentResource.addResource(segment);
       }
     }
-    
+
     return currentResource;
   }
 }
@@ -137,9 +141,9 @@ export const API_ROUTES: RouteGroupConfig[] = [
         method: 'GET',
         functionName: 'health',
         requiresAuth: false,
-        description: 'Health check endpoint'
-      }
-    ]
+        description: 'Health check endpoint',
+      },
+    ],
   },
   {
     basePath: 'api/auth',
@@ -150,58 +154,58 @@ export const API_ROUTES: RouteGroupConfig[] = [
         method: 'POST',
         functionName: 'register-user',
         requiresAuth: false,
-        description: 'User registration with email verification'
+        description: 'User registration with email verification',
       },
       {
         path: 'register',
         method: 'OPTIONS',
         functionName: 'register-user',
         requiresAuth: false,
-        description: 'CORS preflight for user registration'
+        description: 'CORS preflight for user registration',
       },
       {
         path: 'verify-email',
         method: 'POST',
         functionName: 'verify-email',
         requiresAuth: false,
-        description: 'Email verification for registration'
+        description: 'Email verification for registration',
       },
       {
         path: 'verify-email',
         method: 'OPTIONS',
         functionName: 'verify-email',
         requiresAuth: false,
-        description: 'CORS preflight for email verification'
+        description: 'CORS preflight for email verification',
       },
       {
         path: 'resend-verification',
         method: 'POST',
         functionName: 'resend-verification',
         requiresAuth: false,
-        description: 'Resend verification email'
+        description: 'Resend verification email',
       },
       {
         path: 'resend-verification',
         method: 'OPTIONS',
         functionName: 'resend-verification',
         requiresAuth: false,
-        description: 'CORS preflight for resend verification'
+        description: 'CORS preflight for resend verification',
       },
       {
         path: 'registration-status',
         method: 'GET',
         functionName: 'registration-status',
         requiresAuth: false,
-        description: 'Check registration status'
+        description: 'Check registration status',
       },
       {
         path: 'registration-status',
         method: 'OPTIONS',
         functionName: 'registration-status',
         requiresAuth: false,
-        description: 'CORS preflight for registration status'
-      }
-    ]
+        description: 'CORS preflight for registration status',
+      },
+    ],
   },
   {
     basePath: 'api/projects',
@@ -211,99 +215,99 @@ export const API_ROUTES: RouteGroupConfig[] = [
         path: '',
         method: 'GET',
         functionName: 'get-all-projects',
-        description: 'List all projects'
+        description: 'List all projects',
       },
       {
         path: '',
         method: 'POST',
         functionName: 'create-project',
-        description: 'Create new project'
+        description: 'Create new project',
       },
       {
         path: 'active',
         method: 'GET',
         functionName: 'get-active-projects',
-        description: 'Get active projects'
+        description: 'Get active projects',
       },
       {
         path: 'search',
         method: 'GET',
         functionName: 'search-projects',
-        description: 'Search projects'
+        description: 'Search projects',
       },
       {
         path: 'geocode',
         method: 'GET',
         functionName: 'update-employee-address',
-        description: 'Geocoding compatibility'
+        description: 'Geocoding compatibility',
       },
       {
         path: '{id}',
         method: 'GET',
         functionName: 'get-project-by-id',
-        description: 'Get project by ID'
+        description: 'Get project by ID',
       },
       {
         path: '{id}',
         method: 'PUT',
         functionName: 'projects-management',
-        description: 'Update project'
+        description: 'Update project',
       },
       {
         path: '{id}',
         method: 'DELETE',
         functionName: 'projects-management',
-        description: 'Delete project'
+        description: 'Delete project',
       },
       {
         path: '{id}/toggle-status',
         method: 'PATCH',
         functionName: 'projects-management',
-        description: 'Toggle project status'
+        description: 'Toggle project status',
       },
       {
         path: '{id}/references',
         method: 'GET',
         functionName: 'check-project-references',
-        description: 'Check project references'
+        description: 'Check project references',
       },
       {
         path: '{id}/subprojects',
         method: 'GET',
         functionName: 'get-subprojects-for-project',
-        description: 'Get project subprojects'
+        description: 'Get project subprojects',
       },
       {
         path: '{id}/subprojects',
         method: 'POST',
         functionName: 'create-subproject',
-        description: 'Create subproject'
+        description: 'Create subproject',
       },
       {
         path: '{id}/subprojects/{subprojectId}',
         method: 'GET',
         functionName: 'get-subproject-by-id',
-        description: 'Get subproject by ID'
+        description: 'Get subproject by ID',
       },
       {
         path: '{id}/subprojects/{subprojectId}',
         method: 'PUT',
         functionName: 'projects-management',
-        description: 'Update subproject'
+        description: 'Update subproject',
       },
       {
         path: '{id}/subprojects/{subprojectId}',
         method: 'DELETE',
         functionName: 'projects-management',
-        description: 'Delete subproject'
+        description: 'Delete subproject',
       },
       {
         path: '{id}/subprojects/{subprojectId}/toggle-status',
         method: 'PATCH',
         functionName: 'projects-management',
-        description: 'Toggle subproject status'
-      }
-    ]
+        description: 'Toggle subproject status',
+      },
+    ],
   },
   {
     basePath: 'api/subprojects',
@@ -313,27 +317,27 @@ export const API_ROUTES: RouteGroupConfig[] = [
         path: '',
         method: 'POST',
         functionName: 'create-subproject',
-        description: 'Create subproject'
+        description: 'Create subproject',
       },
       {
         path: '{id}',
         method: 'GET',
         functionName: 'get-subproject-by-id',
-        description: 'Get subproject by ID'
+        description: 'Get subproject by ID',
       },
       {
         path: '{id}',
         method: 'PUT',
         functionName: 'projects-management',
-        description: 'Update subproject'
+        description: 'Update subproject',
       },
       {
         path: '{id}',
         method: 'DELETE',
         functionName: 'projects-management',
-        description: 'Delete subproject'
-      }
-    ]
+        description: 'Delete subproject',
+      },
+    ],
   },
   {
     basePath: 'api/employees',
@@ -343,45 +347,45 @@ export const API_ROUTES: RouteGroupConfig[] = [
         path: '{cognitoUserId}',
         method: 'GET',
         functionName: 'get-employee-profile',
-        description: 'Get employee profile'
+        description: 'Get employee profile',
       },
       {
         path: '{cognitoUserId}/address',
         method: 'PUT',
         functionName: 'update-employee-address',
-        description: 'Update employee address'
+        description: 'Update employee address',
       },
       {
         path: '{cognitoUserId}/address/history',
         method: 'GET',
         functionName: 'get-employee-profile',
-        description: 'Get address history'
+        description: 'Get address history',
       },
       {
         path: 'managers',
         method: 'GET',
         functionName: 'get-managers',
-        description: 'Get managers list'
+        description: 'Get managers list',
       },
       {
         path: 'travel-requests',
         method: 'POST',
         functionName: 'employees-travel-requests',
-        description: 'Submit travel request'
+        description: 'Submit travel request',
       },
       {
         path: 'travel-requests',
         method: 'GET',
         functionName: 'employees-travel-requests',
-        description: 'Get employee travel requests'
+        description: 'Get employee travel requests',
       },
       {
         path: 'travel-requests/preview',
         method: 'POST',
         functionName: 'employees-travel-requests',
-        description: 'Preview travel request'
-      }
-    ]
+        description: 'Preview travel request',
+      },
+    ],
   },
   {
     basePath: 'api/managers',
@@ -391,9 +395,9 @@ export const API_ROUTES: RouteGroupConfig[] = [
         path: '',
         method: 'GET',
         functionName: 'get-managers',
-        description: 'Get managers (backward compatibility)'
-      }
-    ]
+        description: 'Get managers (backward compatibility)',
+      },
+    ],
   },
   {
     basePath: 'api/geocoding',
@@ -403,9 +407,9 @@ export const API_ROUTES: RouteGroupConfig[] = [
         path: 'address',
         method: 'POST',
         functionName: 'update-employee-address',
-        description: 'Geocode address'
-      }
-    ]
+        description: 'Geocode address',
+      },
+    ],
   },
   {
     basePath: 'api/calculations',
@@ -415,39 +419,39 @@ export const API_ROUTES: RouteGroupConfig[] = [
         path: 'distance',
         method: 'POST',
         functionName: 'calculate-distance',
-        description: 'Calculate distance'
+        description: 'Calculate distance',
       },
       {
         path: 'allowance',
         method: 'POST',
         functionName: 'calculate-allowance',
-        description: 'Calculate allowance'
+        description: 'Calculate allowance',
       },
       {
         path: 'preview',
         method: 'POST',
         functionName: 'calculate-travel-cost',
-        description: 'Calculate travel cost preview'
+        description: 'Calculate travel cost preview',
       },
       {
         path: 'audit/{requestId}',
         method: 'GET',
         functionName: 'get-calculation-audit',
-        description: 'Get calculation audit'
+        description: 'Get calculation audit',
       },
       {
         path: 'cache/invalidate',
         method: 'POST',
         functionName: 'invalidate-calculation-cache',
-        description: 'Invalidate calculation cache'
+        description: 'Invalidate calculation cache',
       },
       {
         path: 'cache/expired',
         method: 'DELETE',
         functionName: 'cleanup-expired-cache',
-        description: 'Cleanup expired cache'
-      }
-    ]
+        description: 'Cleanup expired cache',
+      },
+    ],
   },
   {
     basePath: 'api/travel-requests',
@@ -457,21 +461,21 @@ export const API_ROUTES: RouteGroupConfig[] = [
         path: '',
         method: 'POST',
         functionName: 'employees-travel-requests',
-        description: 'Submit travel request'
+        description: 'Submit travel request',
       },
       {
         path: '',
         method: 'GET',
         functionName: 'employees-travel-requests',
-        description: 'Get travel requests'
+        description: 'Get travel requests',
       },
       {
         path: 'preview',
         method: 'POST',
         functionName: 'employees-travel-requests',
-        description: 'Preview travel request'
-      }
-    ]
+        description: 'Preview travel request',
+      },
+    ],
   },
   {
     basePath: 'api/manager',
@@ -481,39 +485,39 @@ export const API_ROUTES: RouteGroupConfig[] = [
         path: 'dashboard',
         method: 'GET',
         functionName: 'managers-dashboard',
-        description: 'Get manager dashboard data'
+        description: 'Get manager dashboard data',
       },
       {
         path: 'requests',
         method: 'GET',
         functionName: 'managers-dashboard',
-        description: 'Get pending requests'
+        description: 'Get pending requests',
       },
       {
         path: 'employee-context/{employeeId}',
         method: 'GET',
         functionName: 'managers-dashboard',
-        description: 'Get employee context'
+        description: 'Get employee context',
       },
       {
         path: 'requests/{id}/context',
         method: 'GET',
         functionName: 'managers-dashboard',
-        description: 'Get request context'
+        description: 'Get request context',
       },
       {
         path: 'requests/{id}/approve',
         method: 'PUT',
         functionName: 'managers-dashboard',
-        description: 'Approve request'
+        description: 'Approve request',
       },
       {
         path: 'requests/{id}/reject',
         method: 'PUT',
         functionName: 'managers-dashboard',
-        description: 'Reject request'
-      }
-    ]
+        description: 'Reject request',
+      },
+    ],
   },
   {
     basePath: 'api/admin',
@@ -523,8 +527,8 @@ export const API_ROUTES: RouteGroupConfig[] = [
         path: 'projects',
         method: 'GET',
         functionName: 'admin-project-management',
-        description: 'Admin project management'
-      }
-    ]
-  }
+        description: 'Admin project management',
+      },
+    ],
+  },
 ];

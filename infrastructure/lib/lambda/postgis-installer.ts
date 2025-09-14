@@ -1,4 +1,8 @@
-import { CloudFormationCustomResourceEvent, CloudFormationCustomResourceResponse, Context } from 'aws-lambda';
+import {
+  CloudFormationCustomResourceEvent,
+  CloudFormationCustomResourceResponse,
+  Context,
+} from 'aws-lambda';
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import { Client } from 'pg';
 
@@ -104,7 +108,6 @@ export const postgisInstaller = async (
           PostGISVersion: 'installed',
           Status: 'success',
         };
-
       } finally {
         await client.end();
         console.log('Database connection closed');
@@ -113,7 +116,6 @@ export const postgisInstaller = async (
 
     console.log('PostGIS installer completed successfully');
     return response;
-
   } catch (error) {
     console.error('PostGIS installer failed:', error);
 

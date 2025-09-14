@@ -22,15 +22,24 @@ export interface CognitoUserCreationResult {
 export class CognitoRegistrationService {
   private client: CognitoIdentityProviderClient;
   private userPoolId: string;
+  private isLocalDevelopment: boolean;
 
   constructor() {
-    this.client = new CognitoIdentityProviderClient({
-      region: process.env.AWS_REGION || 'eu-central-1',
-    });
-    this.userPoolId = process.env.COGNITO_USER_POOL_ID || '';
+    this.isLocalDevelopment =
+      process.env.NODE_ENV === 'development' || process.env.MOCK_COGNITO === 'true';
 
-    if (!this.userPoolId) {
-      throw new Error('COGNITO_USER_POOL_ID environment variable is required');
+    if (this.isLocalDevelopment) {
+      this.userPoolId = 'local-user-pool-id';
+      logger.info('Using mock Cognito service for local development');
+    } else {
+      this.client = new CognitoIdentityProviderClient({
+        region: process.env.AWS_REGION || 'eu-central-1',
+      });
+      this.userPoolId = process.env.COGNITO_USER_POOL_ID || '';
+
+      if (!this.userPoolId) {
+        throw new Error('COGNITO_USER_POOL_ID environment variable is required');
+      }
     }
   }
 
@@ -38,6 +47,16 @@ export class CognitoRegistrationService {
    * Check if email already exists in Cognito User Pool
    */
   async emailExists(email: string): Promise<boolean> {
+    if (this.isLocalDevelopment) {
+      // Mock implementation for local development
+      logger.info('Mock Cognito - Checking if email exists', { email });
+
+      // Return false to allow registration (simulating user doesn't exist)
+      // You can add specific emails to test existing user scenarios
+      const existingEmails = ['existing@example.com', 'test.existing@company.com'];
+      return existingEmails.includes(email);
+    }
+
     try {
       const command = new AdminGetUserCommand({
         UserPoolId: this.userPoolId,
@@ -63,6 +82,31 @@ export class CognitoRegistrationService {
     logger.info('Creating Cognito user for registration', {
       email: registerData.email,
     });
+
+    if (this.isLocalDevelopment) {
+      // Mock implementation for local development
+      logger.info('Mock Cognito - Creating registration user', {
+        email: registerData.email,
+        firstName: registerData.firstName,
+        lastName: registerData.lastName,
+      });
+
+      // Check if user already exists
+      const userExists = await this.emailExists(registerData.email);
+      if (userExists) {
+        throw new Error('User already exists with this email address');
+      }
+
+      // Generate mock user ID
+      const mockUserId = `mock-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      return {
+        userId: mockUserId,
+        username: registerData.email,
+        isEnabled: false, // Disabled until verification
+        needsPasswordReset: false,
+      };
+    }
 
     try {
       // Check if user already exists

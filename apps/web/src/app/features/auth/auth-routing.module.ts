@@ -9,21 +9,21 @@ const routes: Routes = [
     component: UserRegistrationComponent,
     data: {
       title: 'Register - RegularTravelManager',
-      description: 'Create your RegularTravelManager account'
-    }
+      description: 'Create your RegularTravelManager account',
+    },
   },
   {
     path: 'verify-email',
     component: EmailVerificationComponent,
     data: {
       title: 'Email Verification - RegularTravelManager',
-      description: 'Verify your email address to complete registration'
-    }
-  }
+      description: 'Verify your email address to complete registration',
+    },
+  },
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class AuthRoutingModule { }
+export class AuthRoutingModule {}

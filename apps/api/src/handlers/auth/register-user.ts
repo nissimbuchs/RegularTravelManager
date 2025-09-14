@@ -9,6 +9,7 @@ import { RegistrationService } from '../../services/registration.service';
 import { CognitoRegistrationService } from '../../services/cognito-registration.service';
 import { EmailService } from '../../services/email.service';
 import { RegisterRequest, RegisterResponse } from '@rtm/shared';
+import { isLocalDevelopment } from '../../config/environment';
 
 // Validation schema for registration request
 const registerSchema = z.object({
@@ -100,14 +101,28 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // Initialize services
     const registrationService = new RegistrationService();
-    const cognitoService = new CognitoRegistrationService();
     const emailService = new EmailService();
 
+    const isLocalDev = isLocalDevelopment();
+
     // Check if email already exists
-    const emailExists = await Promise.all([
-      cognitoService.emailExists(registerData.email),
-      registrationService.checkEmailExists(registerData.email),
-    ]);
+    let emailExists;
+
+    if (isLocalDev) {
+      // In local development, only check database (skip Cognito entirely)
+      logger.info('Local dev mode: Skipping Cognito, checking database only', {
+        email: registerData.email,
+      });
+      const dbCheck = await registrationService.checkEmailExists(registerData.email);
+      emailExists = [false, dbCheck]; // Cognito check = false, database check = actual result
+    } else {
+      // In production, check both Cognito and database
+      const cognitoService = new CognitoRegistrationService();
+      emailExists = await Promise.all([
+        cognitoService.emailExists(registerData.email),
+        registrationService.checkEmailExists(registerData.email),
+      ]);
+    }
 
     if (emailExists[0] || emailExists[1].database) {
       logger.warn('Registration attempt with existing email', {
@@ -159,10 +174,21 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     let rollbackNeeded = false;
 
     try {
-      // Step 1: Create Cognito user (disabled until verification)
-      const cognitoResult = await cognitoService.createRegistrationUser(registerData);
-      cognitoUserId = cognitoResult.userId;
-      rollbackNeeded = true;
+      // Step 1: Create Cognito user (skip in local development)
+      if (isLocalDev) {
+        // Generate mock user ID for local development
+        cognitoUserId = `local-dev-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        logger.info('Local dev mode: Using mock Cognito user ID', {
+          email: registerData.email,
+          mockUserId: cognitoUserId,
+        });
+      } else {
+        // Production: Create real Cognito user
+        const cognitoService = new CognitoRegistrationService();
+        const cognitoResult = await cognitoService.createRegistrationUser(registerData);
+        cognitoUserId = cognitoResult.userId;
+        rollbackNeeded = true;
+      }
 
       // Step 2: Create employee database record
       const employeeRecord = await registrationService.createEmployeeRecord(

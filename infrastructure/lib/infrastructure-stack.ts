@@ -24,7 +24,10 @@ import { ExportManager, ExportSets } from './infrastructure/export-manager';
 import { AlarmFactory, AlarmSets } from './infrastructure/alarm-factory';
 import { PolicyBuilder, PolicySets } from './infrastructure/policy-builder';
 import { LogGroupFactory, LogGroupSets } from './infrastructure/log-group-factory';
-import { CustomResourceBuilder, CustomResourceSets } from './infrastructure/custom-resource-builder';
+import {
+  CustomResourceBuilder,
+  CustomResourceSets,
+} from './infrastructure/custom-resource-builder';
 
 export interface InfrastructureStackProps extends cdk.StackProps {
   environment: 'dev' | 'staging' | 'production';
@@ -41,7 +44,7 @@ export class InfrastructureStack extends cdk.Stack {
   public lambdaSecurityGroup!: ec2.SecurityGroup;
   public alertsTopic!: sns.Topic;
   public hostedZone?: route53.HostedZone;
-  
+
   // Helper utilities
   private parameterManager!: ParameterManager;
   private exportManager!: ExportManager;
@@ -55,7 +58,7 @@ export class InfrastructureStack extends cdk.Stack {
 
     const { environment } = props;
     const config = getEnvironmentConfig(environment);
-    
+
     // Initialize helper utilities
     this.initializeHelpers(environment);
 
@@ -99,10 +102,10 @@ export class InfrastructureStack extends cdk.Stack {
 
     // CloudWatch monitoring and alerting
     this.setupMonitoring(environment);
-    
+
     // Initialize alarm factory after alerts topic is created
     this.alarmFactory = new AlarmFactory(this, environment, this.alertsTopic);
-    
+
     // Create CloudWatch alarms using factory
     this.setupCloudWatchAlarms(environment);
 
@@ -259,7 +262,9 @@ export class InfrastructureStack extends cdk.Stack {
     });
 
     // Store Cognito configuration using helpers
-    this.parameterManager.createParameters(ParameterSets.cognito(this.userPool, this.userPoolClient));
+    this.parameterManager.createParameters(
+      ParameterSets.cognito(this.userPool, this.userPoolClient)
+    );
     this.exportManager.createExports(ExportSets.cognito(this.userPool, this.userPoolClient));
 
     // Create test users for non-production environments
@@ -286,7 +291,7 @@ export class InfrastructureStack extends cdk.Stack {
     userCreatorConfig.properties = {
       UserPoolId: this.userPool.userPoolId,
       Users: testUsers,
-      DatabaseUrl: this.database.instanceEndpoint.hostname 
+      DatabaseUrl: this.database.instanceEndpoint.hostname
         ? `postgresql://rtm_admin:[SECRET]@${this.database.instanceEndpoint.hostname}:5432/rtm_database`
         : '',
       DatabaseSecretArn: this.database.secret?.secretArn || '',
@@ -350,7 +355,7 @@ export class InfrastructureStack extends cdk.Stack {
       PolicySets.ses(),
       PolicySets.parameterStore(),
     ];
-    
+
     this.policyBuilder.addPoliciesToRole(this.lambdaRole, policies);
   }
 
@@ -457,18 +462,19 @@ export class InfrastructureStack extends cdk.Stack {
   private setupCloudWatchAlarms(environment: string) {
     // Create database alarms
     this.alarmFactory.createAlarms(AlarmSets.database(this.database));
-    
+
     // Create Cognito alarms
     this.alarmFactory.createAlarms(AlarmSets.cognito(this.userPool));
-    
+
     // Create Lambda concurrency alarms
     this.alarmFactory.createAlarms(AlarmSets.lambda());
   }
 
   private setupHostedZone(environment: string, config: EnvironmentConfig) {
     // Skip Route53 hosted zone creation - using external DNS provider with CNAME records
-    const hasCustomDomains = (config.api.customDomainEnabled || config.web.customDomainEnabled) &&
-                             (config.api.domainName || config.web.domainName);
+    const hasCustomDomains =
+      (config.api.customDomainEnabled || config.web.customDomainEnabled) &&
+      (config.api.domainName || config.web.domainName);
 
     if (hasCustomDomains) {
       const domainName = config.api.domainName || config.web.domainName;
@@ -479,8 +485,12 @@ export class InfrastructureStack extends cdk.Stack {
       const domainParts = domainName.split('.');
       const rootDomain = domainParts.slice(-2).join('.'); // Get the last two parts (domain.tld)
 
-      console.log(`ℹ️ Custom domains configured for ${rootDomain} - using external DNS with CNAME records`);
-      console.log(`ℹ️ Route53 hosted zone creation skipped - external DNS provider will handle subdomains`);
+      console.log(
+        `ℹ️ Custom domains configured for ${rootDomain} - using external DNS with CNAME records`
+      );
+      console.log(
+        `ℹ️ Route53 hosted zone creation skipped - external DNS provider will handle subdomains`
+      );
 
       // Store domain information for reference without creating hosted zone
       this.parameterManager.createParameter('rootDomain', {
