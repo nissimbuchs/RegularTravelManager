@@ -184,6 +184,11 @@ export const LogGroupSets = {
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     },
+    migrationRunnerProvider: {
+      name: 'migration-runner-provider',
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    },
   }),
 
   lambdaFunctions: (functionNames: string[]): Record<string, LogGroupConfig> => {

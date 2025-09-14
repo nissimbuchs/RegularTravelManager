@@ -207,6 +207,9 @@ export class InfrastructureStack extends cdk.Stack {
 
     // PostGIS Extension Installation
     this.setupPostGISExtension(environment);
+
+    // Database Migrations
+    this.setupMigrationRunner(environment);
   }
 
   private setupCognito(environment: string) {
@@ -321,6 +324,23 @@ export class InfrastructureStack extends cdk.Stack {
     };
 
     this.customResourceBuilder.createCustomResource('postgisInstaller', postgisConfig);
+  }
+
+  private setupMigrationRunner(environment: string) {
+    // Create migration runner custom resource using builder
+    const migrationConfig = CustomResourceSets.migrationRunner(
+      path.join(__dirname, 'lambda/migration-runner.ts'),
+      this.database
+    );
+
+    // Add custom properties for migration runner
+    migrationConfig.properties = {
+      Environment: environment,
+      DatabaseEndpoint: this.database.instanceEndpoint.hostname,
+      Version: '1.1.0', // Change to force migration re-run
+    };
+
+    this.customResourceBuilder.createCustomResource('migrationRunner', migrationConfig);
   }
 
   private setupLocationService(environment: string) {

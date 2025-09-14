@@ -252,4 +252,34 @@ export const CustomResourceSets = {
     },
     dependencies: [database],
   }),
+
+  migrationRunner: (entryPath: string, database: any): CustomResourceConfig => ({
+    functionName: 'migration-runner',
+    entry: entryPath,
+    handler: 'migrationRunner',
+    timeout: cdk.Duration.minutes(10),
+    memorySize: 512,
+    needsVpc: true,
+    environment: {
+      DB_HOST: database.instanceEndpoint.hostname,
+      DB_PORT: database.instanceEndpoint.port.toString(),
+      DB_NAME: 'rtm_database',
+    },
+    bundling: {
+      externalModules: ['pg-native'],
+      nodeModules: ['pg'],
+    },
+    policies: [
+      {
+        actions: ['secretsmanager:GetSecretValue'],
+        resources: [
+          'arn:aws:secretsmanager:{region}:{account}:secret:rtm-{environment}-db-credentials*',
+        ],
+      },
+    ],
+    properties: {
+      Version: '1.1.0', // Change to force migration re-run when needed
+    },
+    dependencies: [database],
+  }),
 };

@@ -238,8 +238,9 @@ export const API_ROUTES: RouteGroupConfig[] = [
       {
         path: 'geocode',
         method: 'GET',
-        functionName: 'update-employee-address',
-        description: 'Geocoding compatibility',
+        functionName: 'projects-management',
+        requiresAuth: false,
+        description: 'Geocode address for projects and subprojects',
       },
       {
         path: '{id}',
