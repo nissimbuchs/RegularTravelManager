@@ -304,7 +304,46 @@ const certificateStack = new CertificateStack(app, 'rtm-staging-certificate', {
 3. **Use LocalStack for all AWS operations in development**
 4. **Code should work identically in local and AWS deployment environments**
 
+### 🔥 CRITICAL: API Response Pattern (MANDATORY)
+**ALL API endpoints MUST use the centralized formatResponse pattern:**
+
+**Backend (Lambda Handlers):**
+```typescript
+// ✅ ALWAYS DO THIS
+import { formatResponse } from '../../middleware/response-formatter';
+
+export const myHandler = async (event, context) => {
+  // Success response
+  return formatResponse(200, { users: [...] }, context.awsRequestId);
+
+  // Error response
+  return formatResponse(404, { code: 'NOT_FOUND', message: 'User not found' }, context.awsRequestId);
+};
+
+// ❌ NEVER manually build responses
+return {
+  statusCode: 200,
+  body: JSON.stringify({ success: true, data: users })
+};
+```
+
+**Frontend (Angular Services):**
+```typescript
+// ✅ ALWAYS expect data-wrapped responses
+this.http.get<{data: UserType}>('/api/users').pipe(
+  map(response => response.data)
+)
+
+// ❌ NEVER expect direct responses
+this.http.get<UserType>('/api/users')
+```
+
+**Response Structure:**
+- Success: `{ success: true, data: T, timestamp, requestId }`
+- Error: `{ success: false, error: {...}, timestamp, requestId }`
+
 ### When Adding New Features
+- **MANDATORY: Use formatResponse() for all API responses** - see pattern above
 - **Use existing AWS service factory** in `apps/api/src/services/aws-factory.ts`
 - **Add tests that run against LocalStack services**
 - **Update environment configuration if new services needed**
@@ -475,3 +514,4 @@ api-staging   CNAME  xyz.cloudfront.net             # API Gateway custom domain
 ```
 
 - always update the readme.md when you update package.json, aws urls or other readme relevant files
+- when you develop software and update existing software, never keep old code or functions for backward compatibility

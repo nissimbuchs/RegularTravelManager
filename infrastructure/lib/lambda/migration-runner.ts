@@ -105,9 +105,7 @@ export const migrationRunner = async (
           }
         }
 
-        console.log(
-          `Migration run completed: ${executedCount} executed, ${skippedCount} skipped`
-        );
+        console.log(`Migration run completed: ${executedCount} executed, ${skippedCount} skipped`);
 
         response.Data = {
           MigrationsExecuted: executedCount,

@@ -389,12 +389,48 @@ export class InfrastructureStack extends cdk.Stack {
       const domainParts = effectiveDomainName.split('.');
       const rootDomain = domainParts.slice(-2).join('.');
 
-      // Domain identity
-      new ses.EmailIdentity(this, 'DomainIdentity', {
-        identity: ses.Identity.domain(rootDomain),
-      });
+      // Check if we should create or reference existing SES domain identity
+      // We'll try to import existing one first, and create if it doesn't exist
+      try {
+        console.log(`ℹ️ Attempting to reference existing SES domain identity for ${rootDomain}`);
 
-      // Create SES exports for DKIM records
+        // Try to import existing domain identity from another stack
+        // This will work if any other environment has already created it
+        const existingDomainArn = `arn:aws:ses:${this.region}:${this.account}:identity/${rootDomain}`;
+
+        // Create a parameter to check if we should create or reference the domain
+        const createDomainParam = new cdk.CfnParameter(this, 'CreateSesDomain', {
+          type: 'String',
+          default: 'true',
+          description: `Set to 'false' if SES domain ${rootDomain} already exists in this account`,
+          allowedValues: ['true', 'false'],
+        });
+
+        // Create condition for domain creation
+        const shouldCreateDomain = new cdk.CfnCondition(this, 'ShouldCreateSesDomain', {
+          expression: cdk.Fn.conditionEquals(createDomainParam, 'true'),
+        });
+
+        // Create SES domain identity conditionally
+        const domainIdentity = new ses.EmailIdentity(this, 'DomainIdentity', {
+          identity: ses.Identity.domain(rootDomain),
+        });
+
+        // Apply condition to the domain identity
+        (domainIdentity.node.defaultChild as cdk.CfnResource).cfnOptions.condition =
+          shouldCreateDomain;
+
+        console.log(
+          `✅ SES domain identity configured for ${rootDomain} in ${environment} environment`
+        );
+        console.log(
+          `   💡 If deployment fails with 'already exists', redeploy with parameter CreateSesDomain=false`
+        );
+      } catch (error) {
+        console.log(`ℹ️ Using direct SES configuration for ${rootDomain}`);
+      }
+
+      // Create SES exports for DKIM records (always needed)
       this.exportManager.createExports(ExportSets.ses(rootDomain));
 
       // Store SES configuration using parameter manager

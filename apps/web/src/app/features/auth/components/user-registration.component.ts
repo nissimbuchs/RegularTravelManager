@@ -108,7 +108,11 @@ interface RegistrationState {
             <mat-icon class="notice-icon">info</mat-icon>
             <div class="notice-content">
               <strong>Staging Environment Notice</strong>
-              <p>This is a test environment. Your verification email will be sent to our admin (nissim&#64;buchs.be) who will verify your account on your behalf. You'll receive a confirmation once your account is activated.</p>
+              <p>
+                This is a test environment. Your verification email will be sent to our admin
+                (nissim&#64;buchs.be) who will verify your account on your behalf. You'll receive a
+                confirmation once your account is activated.
+              </p>
             </div>
           </div>
 
@@ -536,8 +540,9 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
           next: response => {
             // Use staging-specific success message
             const successMessage = this.isStaging
-              ? 'Registration successful! Our admin will verify your account shortly and you\'ll be notified when it\'s ready.'
-              : response.data?.message || 'Registration successful! Please check your email for verification instructions.';
+              ? "Registration successful! Our admin will verify your account shortly and you'll be notified when it's ready."
+              : response.data?.message ||
+                'Registration successful! Please check your email for verification instructions.';
 
             this.updateState({
               step: 'verification-sent',

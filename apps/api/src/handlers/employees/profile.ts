@@ -8,7 +8,7 @@ import {
   EmployeeService,
   UpdateEmployeeAddressCommand,
   CreateEmployeeCommand,
-} from '../../../../domains/employee-management/EmployeeService';
+} from '../../../../../domains/employee-management/EmployeeService';
 import { GeocodingService, GeocodeResult } from '../../services/geocoding-service';
 import { getUserContextFromEvent } from '../auth/auth-utils';
 

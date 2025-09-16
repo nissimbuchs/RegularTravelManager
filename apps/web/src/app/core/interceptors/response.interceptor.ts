@@ -1,4 +1,9 @@
-import { HttpInterceptorFn, HttpEventType, HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import {
+  HttpInterceptorFn,
+  HttpEventType,
+  HttpResponse,
+  HttpErrorResponse,
+} from '@angular/common/http';
 import { map, catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 

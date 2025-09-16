@@ -1,5 +1,26 @@
 import { APIGatewayProxyResult } from 'aws-lambda';
 
+/**
+ * MANDATORY API Response Pattern for RegularTravelManager
+ *
+ * ⚠️  CRITICAL: ALL API endpoints MUST use formatResponse() - NO EXCEPTIONS
+ *
+ * This ensures consistent response structure across the entire application:
+ * - Success responses: { success: true, data: T, timestamp, requestId }
+ * - Error responses: { success: false, error: {...}, timestamp, requestId }
+ *
+ * DO NOT manually build JSON responses. Always use formatResponse().
+ *
+ * ✅ CORRECT Usage:
+ *   return formatResponse(200, { users: [...] }, context.awsRequestId);
+ *   return formatResponse(404, { code: 'NOT_FOUND', message: 'User not found' }, context.awsRequestId);
+ *
+ * ❌ NEVER DO THIS:
+ *   return {
+ *     statusCode: 200,
+ *     body: JSON.stringify({ success: true, data: users })
+ *   };
+ */
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -14,6 +35,15 @@ export interface ApiResponse<T = any> {
   requestId: string;
 }
 
+/**
+ * Central response formatter for all API endpoints
+ *
+ * @param statusCode HTTP status code (200, 404, 500, etc.)
+ * @param data Success data or error object { code, message, details? }
+ * @param requestId AWS request ID from context.awsRequestId
+ * @param headers Optional additional headers
+ * @returns Properly formatted APIGatewayProxyResult
+ */
 export const formatResponse = (
   statusCode: number,
   data: any,
@@ -42,9 +72,6 @@ export const formatResponse = (
 
   const defaultHeaders = {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
   };
 
   return {

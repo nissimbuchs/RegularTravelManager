@@ -146,3 +146,141 @@ export interface TravelRequestFormData {
   daysPerWeek: number; // 1-7
   justification: string; // 10-500 chars
 }
+
+// Admin User Management Types
+export interface UserSummary {
+  id: string;
+  employeeNumber: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: 'employee' | 'manager' | 'administrator';
+  status: 'active' | 'inactive' | 'pending';
+  managerId?: string;
+  managerName?: string;
+  department?: string;
+  lastLoginAt?: string;
+  registrationDate: string;
+  requestCount: number;
+  isVerified: boolean;
+}
+
+export interface UserDetails extends UserSummary {
+  phoneNumber?: string;
+  homeAddress: {
+    street: string;
+    city: string;
+    postalCode: string;
+    country: string;
+  };
+  notificationPreferences: {
+    email: boolean;
+    sms?: boolean;
+  };
+  activitySummary: UserActivitySummary;
+  directReports: UserSummary[];
+  recentRequests: TravelRequestSummary[];
+}
+
+export interface UserActivitySummary {
+  totalRequests: number;
+  requestsThisMonth: number;
+  averageRequestValue: number;
+  lastRequestDate?: string;
+  loginHistory: LoginEvent[];
+  securityEvents: SecurityEvent[];
+}
+
+export interface LoginEvent {
+  timestamp: string;
+  ipAddress: string;
+  userAgent: string;
+  location?: string;
+  success: boolean;
+  failureReason?: string;
+}
+
+export interface SecurityEvent {
+  type: 'suspicious_login' | 'multiple_failures' | 'unusual_activity' | 'role_escalation';
+  timestamp: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  resolved: boolean;
+}
+
+export interface TravelRequestSummary {
+  id: string;
+  projectName: string;
+  subprojectName: string;
+  status: 'pending' | 'approved' | 'rejected' | 'withdrawn';
+  allowanceAmount: number;
+  requestDate: string;
+}
+
+export interface AdminUserListing {
+  users: UserSummary[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalUsers: number;
+    pageSize: number;
+  };
+  filters: {
+    search?: string;
+    role?: 'employee' | 'manager' | 'administrator';
+    status?: 'active' | 'inactive' | 'pending';
+    department?: string;
+    managerId?: string;
+  };
+  sortBy: 'name' | 'email' | 'role' | 'lastLogin' | 'registrationDate';
+  sortOrder: 'asc' | 'desc';
+}
+
+export interface RoleChangeRequest {
+  userId: string;
+  newRole: 'employee' | 'manager' | 'administrator';
+  reason: string;
+  effectiveDate?: string;
+}
+
+export interface RoleChangeValidation {
+  canChangeRole: boolean;
+  warnings: string[];
+  impacts: string[];
+  confirmationRequired: boolean;
+  existingPermissions: string[];
+  newPermissions: string[];
+}
+
+export interface ManagerAssignmentRequest {
+  userId: string;
+  managerId: string;
+  reason: string;
+  effectiveDate?: string;
+}
+
+export interface ManagerAssignmentValidation {
+  canAssignManager: boolean;
+  warnings: string[];
+  hierarchyImpacts: string[];
+  loopDetected: boolean;
+  managerCapacityOk: boolean;
+}
+
+export interface UserStatusUpdateRequest {
+  isActive: boolean;
+  reason?: string;
+}
+
+export interface UserDeletionRequest {
+  reason: string;
+  reassignRequestsTo?: string;
+}
+
+export interface UserDeletionSummary {
+  userId: string;
+  travelRequestsArchived: number;
+  auditRecordsPreserved: number;
+  directReportsUpdated: number;
+  deletedAt: string;
+}

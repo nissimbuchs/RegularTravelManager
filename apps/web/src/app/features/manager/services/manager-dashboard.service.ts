@@ -57,8 +57,9 @@ export class ManagerDashboardService {
       params = params.set('urgencyLevels', filters.urgencyLevels.join(','));
     }
 
-    return this.http.get<ManagerDashboard>(`${this.baseUrl}/manager/dashboard`, { params }).pipe(
-      map(dashboard => {
+    return this.http.get<{data: ManagerDashboard}>(`${this.baseUrl}/manager/dashboard`, { params }).pipe(
+      map(response => {
+        const dashboard = response.data;
         // Transform date strings back to Date objects
         dashboard.pendingRequests = dashboard.pendingRequests.map(request => ({
           ...request,
@@ -71,7 +72,9 @@ export class ManagerDashboardService {
   }
 
   getEmployeeContext(employeeId: string): Observable<EmployeeContext> {
-    return this.http.get<EmployeeContext>(`${this.baseUrl}/manager/employee-context/${employeeId}`);
+    return this.http.get<{data: EmployeeContext}>(`${this.baseUrl}/manager/employee-context/${employeeId}`).pipe(
+      map(response => response.data)
+    );
   }
 
   startAutoRefresh(
@@ -112,9 +115,11 @@ export class ManagerDashboardService {
   }
 
   approveRequest(requestId: string): Observable<{ id: string; status: string; message: string }> {
-    return this.http.put<{ id: string; status: string; message: string }>(
+    return this.http.put<{data: { id: string; status: string; message: string }}>(
       `${this.baseUrl}/manager/requests/${requestId}/approve`,
       {}
+    ).pipe(
+      map(response => response.data)
     );
   }
 
@@ -122,9 +127,11 @@ export class ManagerDashboardService {
     requestId: string,
     reason: string
   ): Observable<{ id: string; status: string; message: string }> {
-    return this.http.put<{ id: string; status: string; message: string }>(
+    return this.http.put<{data: { id: string; status: string; message: string }}>(
       `${this.baseUrl}/manager/requests/${requestId}/reject`,
       { reason }
+    ).pipe(
+      map(response => response.data)
     );
   }
 

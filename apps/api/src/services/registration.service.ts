@@ -20,7 +20,6 @@ export interface EmployeeRecord {
 }
 
 export class RegistrationService {
-
   /**
    * Generate secure verification token with 24-hour expiration
    */

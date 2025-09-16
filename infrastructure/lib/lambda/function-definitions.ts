@@ -276,6 +276,14 @@ export const LAMBDA_FUNCTIONS: Record<string, LambdaFunctionConfig> = {
     environmentConfig: EnvironmentConfigs.admin,
   },
 
+  adminRoleManagement: {
+    id: 'AdminRoleManagementFunction',
+    name: 'AdminRoleManagement',
+    handler: 'index.adminRoleManagement',
+    description: 'Admin role management (change roles, assign managers, validate operations)',
+    environmentConfig: EnvironmentConfigs.admin,
+  },
+
   // Manager Functions
   managersDashboard: {
     id: 'ManagersDashboardFunction',

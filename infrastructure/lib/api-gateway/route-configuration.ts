@@ -530,6 +530,56 @@ export const API_ROUTES: RouteGroupConfig[] = [
         functionName: 'admin-project-management',
         description: 'Admin project management',
       },
+      // User Management Routes (Story 5.3)
+      {
+        path: 'users',
+        method: 'GET',
+        functionName: 'admin-user-management',
+        description: 'List all users with pagination and filtering',
+      },
+      {
+        path: 'users/{userId}',
+        method: 'GET',
+        functionName: 'admin-user-management',
+        description: 'Get detailed user information',
+      },
+      {
+        path: 'users/{userId}/status',
+        method: 'PUT',
+        functionName: 'admin-user-management',
+        description: 'Update user active status',
+      },
+      {
+        path: 'users/{userId}/manager',
+        method: 'PUT',
+        functionName: 'admin-user-management',
+        description: 'Update user manager assignment',
+      },
+      {
+        path: 'users/{userId}',
+        method: 'DELETE',
+        functionName: 'admin-user-management',
+        description: 'Delete user with comprehensive cleanup',
+      },
+      // Role Management Routes (Story 5.3)
+      {
+        path: 'users/{userId}/role',
+        method: 'PUT',
+        functionName: 'admin-role-management',
+        description: 'Update user role with validation',
+      },
+      {
+        path: 'users/{userId}/role/validate',
+        method: 'POST',
+        functionName: 'admin-role-management',
+        description: 'Validate role change before execution',
+      },
+      {
+        path: 'users/{userId}/manager/validate',
+        method: 'POST',
+        functionName: 'admin-role-management',
+        description: 'Validate manager assignment before execution',
+      },
     ],
   },
 ];

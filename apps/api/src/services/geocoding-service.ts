@@ -137,7 +137,8 @@ export class GeocodingService {
         formattedAddress: this.formatPlaceResult(result.Place),
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown AWS Location Service error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown AWS Location Service error';
       logger.error('AWS Location Service geocoding failed', {
         error: errorMessage,
         address: fullAddress,

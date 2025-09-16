@@ -1,0 +1,822 @@
+import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
+import { logger } from '../../middleware/logger';
+import { db } from '../../database/connection';
+import { formatResponse } from '../../middleware/response-formatter';
+import {
+  RoleChangeRequest,
+  RoleChangeValidation,
+  ManagerAssignmentValidation,
+} from '../../../../../packages/shared/src/types/api';
+
+interface AdminContext {
+  sub: string;
+  email: string;
+  isAdmin: string; // API Gateway context converts boolean to string
+  isManager: string;
+  groups: string;
+}
+
+class AdminAccessError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AdminAccessError';
+  }
+}
+
+function validateAdminAccess(event: APIGatewayProxyEvent): void {
+  const context = event.requestContext.authorizer as AdminContext;
+
+  if (!context || !context.isAdmin || context.isAdmin !== 'true') {
+    throw new AdminAccessError('Admin access required for this operation');
+  }
+}
+
+/**
+ * PUT /admin/users/{userId}/role - Update user role with validation (admin only)
+ */
+export const updateUserRoleHandler = async (
+  event: APIGatewayProxyEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> => {
+  logger.info('Admin update user role request', {
+    requestId: context.awsRequestId,
+    path: event.path,
+    pathParameters: event.pathParameters,
+  });
+
+  try {
+    validateAdminAccess(event);
+
+    const userId = event.pathParameters?.userId;
+    if (!userId) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: 'MISSING_USER_ID',
+            message: 'User ID is required in path parameters',
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          },
+        }),
+      };
+    }
+
+    let requestBody: RoleChangeRequest;
+    try {
+      requestBody = JSON.parse(event.body || '{}');
+    } catch {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: 'INVALID_JSON',
+            message: 'Invalid JSON in request body',
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          },
+        }),
+      };
+    }
+
+    const { newRole, reason } = requestBody;
+
+    // Validate role
+    if (!['employee', 'manager', 'administrator'].includes(newRole)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: 'INVALID_ROLE',
+            message: 'Role must be employee, manager, or administrator',
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          },
+        }),
+      };
+    }
+
+    if (!reason || reason.trim().length === 0) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: 'MISSING_REASON',
+            message: 'Role change reason is required',
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          },
+        }),
+      };
+    }
+
+    // Check if user exists and get current role
+    const userCheck = await db.query(
+      `
+      SELECT
+        e.id,
+        e.first_name,
+        e.last_name,
+        e.email,
+        e.cognito_user_id,
+        COALESCE(e.role, 'employee') as current_role,
+        e.is_active
+      FROM employees e
+      WHERE e.id = $1
+    `,
+      [userId]
+    );
+
+    if (userCheck.rows.length === 0) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: 'User not found',
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          },
+        }),
+      };
+    }
+
+    const user = userCheck.rows[0];
+    const adminContext = event.requestContext.authorizer as AdminContext;
+
+    // Check if role change is needed
+    if (user.current_role === newRole) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: 'NO_CHANGE_NEEDED',
+            message: `User already has role: ${newRole}`,
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          },
+        }),
+      };
+    }
+
+    // Validate role change impacts
+    const warnings: string[] = [];
+    const impacts: string[] = [];
+
+    // Check for direct reports if demoting from manager
+    if (user.current_role === 'manager' && newRole === 'employee') {
+      const reportsCheck = await db.query(
+        'SELECT COUNT(*) as count FROM employees WHERE manager_id = $1 AND is_active = true',
+        [userId]
+      );
+      const reportsCount = parseInt(reportsCheck.rows[0].count);
+
+      if (reportsCount > 0) {
+        warnings.push(`User has ${reportsCount} direct reports that will need reassignment`);
+        impacts.push(`${reportsCount} employees will lose their manager assignment`);
+      }
+    }
+
+    // Check for pending approvals if removing manager/admin privileges
+    if (['manager', 'administrator'].includes(user.current_role) && newRole === 'employee') {
+      const pendingCheck = await db.query(
+        `
+        SELECT COUNT(*) as count
+        FROM travel_requests
+        WHERE status = 'pending' AND manager_id = $1
+      `,
+        [userId]
+      );
+      const pendingCount = parseInt(pendingCheck.rows[0].count);
+
+      if (pendingCount > 0) {
+        warnings.push(`User has ${pendingCount} pending travel requests awaiting their approval`);
+        impacts.push('Pending travel request approvals will need to be reassigned');
+      }
+    }
+
+    // Begin transaction for role change
+    await db.query('BEGIN');
+
+    try {
+      // Update user role
+      const updateResult = await db.query(
+        `
+        UPDATE employees
+        SET role = $1,
+            updated_at = CURRENT_TIMESTAMP,
+            profile_updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2
+        RETURNING id, first_name, last_name, role, updated_at
+      `,
+        [newRole, userId]
+      );
+
+      const updatedUser = updateResult.rows[0];
+
+      // Create audit record
+      await db.query(
+        `
+        INSERT INTO employee_profile_history
+        (employee_id, changed_fields, old_values, new_values, changed_by, change_reason)
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `,
+        [
+          userId,
+          JSON.stringify(['role']),
+          JSON.stringify({ role: user.current_role }),
+          JSON.stringify({ role: newRole }),
+          adminContext.sub,
+          reason,
+        ]
+      );
+
+      // TODO: Update Cognito user groups based on new role
+      // This would require AWS SDK integration for Cognito
+
+      await db.query('COMMIT');
+
+      // Log the admin action
+      logger.info('Admin user role updated', {
+        requestId: context.awsRequestId,
+        adminEmail: adminContext.email,
+        userId: userId,
+        userName: `${user.first_name} ${user.last_name}`,
+        userEmail: user.email,
+        previousRole: user.current_role,
+        newRole: newRole,
+        reason: reason,
+        warnings: warnings,
+        impacts: impacts,
+      });
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          success: true,
+          data: {
+            id: updatedUser.id,
+            firstName: updatedUser.first_name,
+            lastName: updatedUser.last_name,
+            role: updatedUser.role,
+            updatedAt: updatedUser.updated_at.toISOString(),
+            warnings: warnings,
+            impacts: impacts,
+          },
+          timestamp: new Date().toISOString(),
+          requestId: context.awsRequestId,
+        }),
+      };
+    } catch (error: any) {
+      await db.query('ROLLBACK');
+      throw error;
+    }
+  } catch (error: any) {
+    logger.error('Admin update user role error', {
+      error: error.message,
+      stack: error.stack,
+      requestId: context.awsRequestId,
+    });
+
+    const statusCode = error instanceof AdminAccessError ? 403 : 500;
+    const errorMessage =
+      error instanceof AdminAccessError ? error.message : 'Internal server error';
+
+    return {
+      statusCode,
+      body: JSON.stringify({
+        success: false,
+        error: {
+          code: error.name,
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+          requestId: context.awsRequestId,
+        },
+      }),
+    };
+  }
+};
+
+/**
+ * POST /admin/users/{userId}/role/validate - Validate role change before execution (admin only)
+ */
+export const validateRoleChangeHandler = async (
+  event: APIGatewayProxyEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> => {
+  logger.info('Admin validate role change request', {
+    requestId: context.awsRequestId,
+    path: event.path,
+    pathParameters: event.pathParameters,
+  });
+
+  try {
+    validateAdminAccess(event);
+
+    const userId = event.pathParameters?.userId;
+    if (!userId) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: 'MISSING_USER_ID',
+            message: 'User ID is required in path parameters',
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          },
+        }),
+      };
+    }
+
+    let requestBody: { newRole: string };
+    try {
+      requestBody = JSON.parse(event.body || '{}');
+    } catch {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: 'INVALID_JSON',
+            message: 'Invalid JSON in request body',
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          },
+        }),
+      };
+    }
+
+    const { newRole } = requestBody;
+
+    // Validate role
+    if (!['employee', 'manager', 'administrator'].includes(newRole)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: 'INVALID_ROLE',
+            message: 'Role must be employee, manager, or administrator',
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          },
+        }),
+      };
+    }
+
+    // Get user current state
+    const userCheck = await db.query(
+      `
+      SELECT
+        e.id,
+        e.first_name,
+        e.last_name,
+        COALESCE(e.role, 'employee') as current_role,
+        e.is_active
+      FROM employees e
+      WHERE e.id = $1
+    `,
+      [userId]
+    );
+
+    if (userCheck.rows.length === 0) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: 'User not found',
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          },
+        }),
+      };
+    }
+
+    const user = userCheck.rows[0];
+
+    // Check if role change is needed
+    if (user.current_role === newRole) {
+      const validation: RoleChangeValidation = {
+        canChangeRole: false,
+        warnings: [`User already has role: ${newRole}`],
+        impacts: [],
+        confirmationRequired: false,
+        existingPermissions: getRolePermissions(user.current_role),
+        newPermissions: getRolePermissions(newRole),
+      };
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          success: true,
+          data: validation,
+          timestamp: new Date().toISOString(),
+          requestId: context.awsRequestId,
+        }),
+      };
+    }
+
+    // Validate role change impacts
+    const warnings: string[] = [];
+    const impacts: string[] = [];
+    let confirmationRequired = false;
+
+    // Check for direct reports if demoting from manager
+    if (user.current_role === 'manager' && newRole === 'employee') {
+      const reportsCheck = await db.query(
+        'SELECT COUNT(*) as count FROM employees WHERE manager_id = $1 AND is_active = true',
+        [userId]
+      );
+      const reportsCount = parseInt(reportsCheck.rows[0].count);
+
+      if (reportsCount > 0) {
+        warnings.push(`User has ${reportsCount} direct reports`);
+        impacts.push(`${reportsCount} employees will lose their manager assignment`);
+        confirmationRequired = true;
+      }
+    }
+
+    // Check for pending approvals
+    if (['manager', 'administrator'].includes(user.current_role) && newRole === 'employee') {
+      const pendingCheck = await db.query(
+        `
+        SELECT COUNT(*) as count
+        FROM travel_requests
+        WHERE status = 'pending' AND manager_id = $1
+      `,
+        [userId]
+      );
+      const pendingCount = parseInt(pendingCheck.rows[0].count);
+
+      if (pendingCount > 0) {
+        warnings.push(`User has ${pendingCount} pending travel requests awaiting approval`);
+        impacts.push('Pending approvals will need reassignment');
+        confirmationRequired = true;
+      }
+    }
+
+    const validation: RoleChangeValidation = {
+      canChangeRole: true,
+      warnings,
+      impacts,
+      confirmationRequired,
+      existingPermissions: getRolePermissions(user.current_role),
+      newPermissions: getRolePermissions(newRole),
+    };
+
+    logger.info('Role change validation completed', {
+      requestId: context.awsRequestId,
+      userId,
+      currentRole: user.current_role,
+      newRole,
+      canChange: validation.canChangeRole,
+      warningsCount: warnings.length,
+      impactsCount: impacts.length,
+    });
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        success: true,
+        data: validation,
+        timestamp: new Date().toISOString(),
+        requestId: context.awsRequestId,
+      }),
+    };
+  } catch (error: any) {
+    logger.error('Admin validate role change error', {
+      error: error.message,
+      stack: error.stack,
+      requestId: context.awsRequestId,
+    });
+
+    const statusCode = error instanceof AdminAccessError ? 403 : 500;
+    const errorMessage =
+      error instanceof AdminAccessError ? error.message : 'Internal server error';
+
+    return {
+      statusCode,
+      body: JSON.stringify({
+        success: false,
+        error: {
+          code: error.name,
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+          requestId: context.awsRequestId,
+        },
+      }),
+    };
+  }
+};
+
+/**
+ * POST /admin/users/{userId}/manager/validate - Validate manager assignment (admin only)
+ */
+export const validateManagerAssignmentHandler = async (
+  event: APIGatewayProxyEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> => {
+  logger.info('Admin validate manager assignment request', {
+    requestId: context.awsRequestId,
+    path: event.path,
+    pathParameters: event.pathParameters,
+  });
+
+  try {
+    validateAdminAccess(event);
+
+    const userId = event.pathParameters?.userId;
+    if (!userId) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: 'MISSING_USER_ID',
+            message: 'User ID is required in path parameters',
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          },
+        }),
+      };
+    }
+
+    let requestBody: { managerId: string };
+    try {
+      requestBody = JSON.parse(event.body || '{}');
+    } catch {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: 'INVALID_JSON',
+            message: 'Invalid JSON in request body',
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          },
+        }),
+      };
+    }
+
+    const { managerId } = requestBody;
+
+    // Validate user exists
+    const userCheck = await db.query(
+      'SELECT id, first_name, last_name, manager_id FROM employees WHERE id = $1 AND is_active = true',
+      [userId]
+    );
+
+    if (userCheck.rows.length === 0) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: 'User not found or inactive',
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          },
+        }),
+      };
+    }
+
+    const user = userCheck.rows[0];
+    const warnings: string[] = [];
+    const hierarchyImpacts: string[] = [];
+
+    // Validate manager exists and has appropriate role
+    if (managerId) {
+      const managerCheck = await db.query(
+        `
+        SELECT
+          id,
+          first_name,
+          last_name,
+          COALESCE(role, 'employee') as role,
+          is_active
+        FROM employees
+        WHERE id = $1
+      `,
+        [managerId]
+      );
+
+      if (managerCheck.rows.length === 0) {
+        const validation: ManagerAssignmentValidation = {
+          canAssignManager: false,
+          warnings: ['Manager not found'],
+          hierarchyImpacts: [],
+          loopDetected: false,
+          managerCapacityOk: false,
+        };
+
+        return {
+          statusCode: 200,
+          body: JSON.stringify({
+            success: true,
+            data: validation,
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          }),
+        };
+      }
+
+      const manager = managerCheck.rows[0];
+
+      if (!manager.is_active) {
+        warnings.push('Proposed manager is inactive');
+      }
+
+      if (manager.role === 'employee') {
+        warnings.push(
+          'Proposed manager has employee role (recommend manager or administrator role)'
+        );
+      }
+
+      // Check for circular reference
+      if (managerId === userId) {
+        const validation: ManagerAssignmentValidation = {
+          canAssignManager: false,
+          warnings: ['User cannot be their own manager'],
+          hierarchyImpacts: [],
+          loopDetected: true,
+          managerCapacityOk: false,
+        };
+
+        return {
+          statusCode: 200,
+          body: JSON.stringify({
+            success: true,
+            data: validation,
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          }),
+        };
+      }
+
+      // Check for hierarchy loops using recursive query
+      const loopCheck = await db.query(
+        `
+        WITH RECURSIVE manager_hierarchy AS (
+          SELECT id, manager_id, 1 as level
+          FROM employees
+          WHERE id = $1
+
+          UNION ALL
+
+          SELECT e.id, e.manager_id, mh.level + 1
+          FROM employees e
+          INNER JOIN manager_hierarchy mh ON e.id = mh.manager_id
+          WHERE mh.level < 10 -- Prevent infinite recursion
+        )
+        SELECT COUNT(*) as loop_count
+        FROM manager_hierarchy
+        WHERE id = $2
+      `,
+        [managerId, userId]
+      );
+
+      const loopDetected = parseInt(loopCheck.rows[0].loop_count) > 0;
+
+      if (loopDetected) {
+        const validation: ManagerAssignmentValidation = {
+          canAssignManager: false,
+          warnings: ['This assignment would create a circular hierarchy'],
+          hierarchyImpacts: ['Circular management hierarchy detected'],
+          loopDetected: true,
+          managerCapacityOk: false,
+        };
+
+        return {
+          statusCode: 200,
+          body: JSON.stringify({
+            success: true,
+            data: validation,
+            timestamp: new Date().toISOString(),
+            requestId: context.awsRequestId,
+          }),
+        };
+      }
+
+      // Check manager capacity (optional business rule)
+      const capacityCheck = await db.query(
+        'SELECT COUNT(*) as direct_reports FROM employees WHERE manager_id = $1 AND is_active = true',
+        [managerId]
+      );
+      const currentReports = parseInt(capacityCheck.rows[0].direct_reports);
+      const maxReports = 20; // Business rule: max 20 direct reports
+
+      let managerCapacityOk = true;
+      if (currentReports >= maxReports) {
+        warnings.push(
+          `Manager already has ${currentReports} direct reports (recommended max: ${maxReports})`
+        );
+        hierarchyImpacts.push('Manager may be overloaded with direct reports');
+        managerCapacityOk = false;
+      }
+
+      // Check if assignment is actually changing
+      if (user.manager_id === managerId) {
+        warnings.push('User already reports to this manager');
+      }
+
+      const validation: ManagerAssignmentValidation = {
+        canAssignManager: manager.is_active && !loopDetected,
+        warnings,
+        hierarchyImpacts,
+        loopDetected,
+        managerCapacityOk,
+      };
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          success: true,
+          data: validation,
+          timestamp: new Date().toISOString(),
+          requestId: context.awsRequestId,
+        }),
+      };
+    } else {
+      // Removing manager assignment
+      const validation: ManagerAssignmentValidation = {
+        canAssignManager: true,
+        warnings: user.manager_id ? [] : ['User already has no manager'],
+        hierarchyImpacts: user.manager_id ? ['User will no longer have a manager'] : [],
+        loopDetected: false,
+        managerCapacityOk: true,
+      };
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          success: true,
+          data: validation,
+          timestamp: new Date().toISOString(),
+          requestId: context.awsRequestId,
+        }),
+      };
+    }
+  } catch (error: any) {
+    logger.error('Admin validate manager assignment error', {
+      error: error.message,
+      stack: error.stack,
+      requestId: context.awsRequestId,
+    });
+
+    const statusCode = error instanceof AdminAccessError ? 403 : 500;
+    const errorMessage =
+      error instanceof AdminAccessError ? error.message : 'Internal server error';
+
+    return {
+      statusCode,
+      body: JSON.stringify({
+        success: false,
+        error: {
+          code: error.name,
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+          requestId: context.awsRequestId,
+        },
+      }),
+    };
+  }
+};
+
+/**
+ * Helper function to get role permissions
+ */
+function getRolePermissions(role: string): string[] {
+  switch (role) {
+    case 'administrator':
+      return [
+        'manage_all_users',
+        'manage_all_projects',
+        'view_all_reports',
+        'system_configuration',
+        'audit_access',
+        'approve_travel_requests',
+        'submit_travel_requests',
+      ];
+    case 'manager':
+      return [
+        'approve_travel_requests',
+        'view_team_reports',
+        'manage_team_members',
+        'submit_travel_requests',
+      ];
+    case 'employee':
+    default:
+      return ['submit_travel_requests', 'view_own_requests', 'update_own_profile'];
+  }
+}

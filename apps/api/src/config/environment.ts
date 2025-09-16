@@ -33,7 +33,9 @@ export function getEnvironmentConfig(): EnvironmentConfig {
     COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID || 'local-pool-id',
     COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID || 'local-client-id',
     S3_BUCKET_NAME: getResourceName('rtm-documents', rtmEnvironment),
-    LOCATION_PLACE_INDEX: process.env.PLACE_INDEX_NAME || `rtm-${rtmEnvironment === 'local' ? 'dev' : rtmEnvironment}-places`,
+    LOCATION_PLACE_INDEX:
+      process.env.PLACE_INDEX_NAME ||
+      `rtm-${rtmEnvironment === 'local' ? 'dev' : rtmEnvironment}-places`,
   };
 }
 
