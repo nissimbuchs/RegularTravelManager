@@ -221,12 +221,9 @@ export class LoginComponent implements OnInit {
     // Reset loading state when component initializes
     this.loadingService.resetLoading();
 
-    // Check if already authenticated
-    this.authService.isAuthenticated$.subscribe(isAuth => {
-      if (isAuth) {
-        this.redirectAfterLogin();
-      }
-    });
+    // Only check authentication status - don't auto-redirect
+    // This allows users to navigate to registration without being immediately redirected
+    // The auth guard will handle redirects appropriately for protected routes
 
     // Normalize email input on changes (trim and lowercase)
     this.loginForm.get('email')?.valueChanges.subscribe(value => {

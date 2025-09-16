@@ -1,19 +1,16 @@
-import { HttpInterceptorFn, HttpEventType, HttpResponse } from '@angular/common/http';
-import { map } from 'rxjs/operators';
+import { HttpInterceptorFn, HttpEventType, HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { map, catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 
 /**
  * Response Interceptor
  *
- * Automatically unwraps API responses from the backend which come in the format:
- * {
- *   "success": true,
- *   "data": { ...actual_data... },
- *   "timestamp": "...",
- *   "requestId": "..."
- * }
+ * Automatically unwraps API responses from the backend:
  *
- * This interceptor extracts the 'data' field automatically so services
- * can work with the actual data directly.
+ * Success responses: { "success": true, "data": {...}, "timestamp": "...", "requestId": "..." }
+ * Error responses: { "error": { "code": "...", "message": "...", "timestamp": "...", "requestId": "..." } }
+ *
+ * This interceptor unwraps both success and error responses to provide direct access to data/error content.
  */
 export const responseInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
@@ -22,7 +19,7 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
       if (event.type === HttpEventType.Response) {
         const response = event as HttpResponse<any>;
 
-        // Check if response has the wrapped format
+        // Check if response has the wrapped success format
         if (
           response.body &&
           typeof response.body === 'object' &&
@@ -37,6 +34,29 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       return event;
+    }),
+    catchError((error: HttpErrorResponse) => {
+      // Unwrap error responses that have the wrapped error format
+      if (
+        error.error &&
+        typeof error.error === 'object' &&
+        'error' in error.error &&
+        typeof error.error.error === 'object'
+      ) {
+        // Create a new error with unwrapped error details
+        const unwrappedError = new HttpErrorResponse({
+          error: error.error.error, // Unwrap the nested error object
+          headers: error.headers,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url || undefined,
+        });
+
+        return throwError(() => unwrappedError);
+      }
+
+      // Return original error if not in wrapped format
+      return throwError(() => error);
     })
   );
 };
