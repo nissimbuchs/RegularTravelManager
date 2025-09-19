@@ -46,17 +46,16 @@ export const templateHandler = async (
         400,
         {
           code: 'VALIDATION_ERROR',
-          message: 'name and email are required'
+          message: 'name and email are required',
         },
         context.awsRequestId
       );
     }
 
     // 3. Perform business logic
-    const result = await db.query(
-      'SELECT id, name FROM example_table WHERE user_id = $1',
-      [userId]
-    );
+    const result = await db.query('SELECT id, name FROM example_table WHERE user_id = $1', [
+      userId,
+    ]);
 
     // 4. Build response data
     const responseData: ResponseData = {
@@ -66,7 +65,6 @@ export const templateHandler = async (
 
     // 5. ✅ ALWAYS use formatResponse for success
     return formatResponse(200, responseData, context.awsRequestId);
-
   } catch (error: any) {
     // 6. ✅ ALWAYS use formatResponse for errors with proper type annotation
     console.error('Template handler error:', error);

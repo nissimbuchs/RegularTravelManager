@@ -10,12 +10,13 @@ import { throwError } from 'rxjs';
 /**
  * Response Interceptor
  *
- * Automatically unwraps API responses from the backend:
+ * Transforms API responses from the backend for service compatibility:
  *
- * Success responses: { "success": true, "data": {...}, "timestamp": "...", "requestId": "..." }
+ * Backend format: { "success": true, "data": {...}, "timestamp": "...", "requestId": "..." }
+ * Service format: { "data": {...} }
  * Error responses: { "error": { "code": "...", "message": "...", "timestamp": "...", "requestId": "..." } }
  *
- * This interceptor unwraps both success and error responses to provide direct access to data/error content.
+ * This interceptor preserves the {data: T} wrapper that services expect while removing metadata.
  */
 export const responseInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
@@ -31,9 +32,9 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
           'success' in response.body &&
           'data' in response.body
         ) {
-          // Clone the response and replace body with unwrapped data
+          // Clone the response and preserve {data: T} wrapper for service compatibility
           return response.clone({
-            body: response.body.data,
+            body: { data: response.body.data },
           });
         }
       }

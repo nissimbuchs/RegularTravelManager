@@ -109,6 +109,20 @@ export const routes: Routes = [
         canActivate: [adminGuard], // Admin functions accessible to administrators
         children: [
           {
+            path: 'users',
+            loadComponent: () =>
+              import('./features/admin/components/user-management.component').then(
+                m => m.UserManagementComponent
+              ),
+          },
+          {
+            path: 'users/:id',
+            loadComponent: () =>
+              import('./features/admin/components/user-detail.component').then(
+                m => m.UserDetailComponent
+              ),
+          },
+          {
             path: 'projects',
             loadComponent: () =>
               import('./features/admin/components/projects-list.component').then(

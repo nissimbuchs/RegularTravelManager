@@ -281,6 +281,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       route: '/admin/projects',
       roles: ['admin'],
     },
+    {
+      icon: 'group',
+      label: 'Manage Users',
+      route: '/admin/users',
+      roles: ['admin'],
+    },
   ];
 
   constructor(

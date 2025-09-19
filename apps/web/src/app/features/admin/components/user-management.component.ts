@@ -14,13 +14,14 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { RouterModule } from '@angular/router';
 import { Subject, combineLatest } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged, startWith } from 'rxjs/operators';
 
-import { UserSummary } from '../../../../../../../packages/shared/src/types/api';
+import { UserSummary } from '@rtm/shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { LoadingService } from '../../../core/services/loading.service';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
@@ -45,6 +46,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
     MatSnackBarModule,
     MatTooltipModule,
     MatMenuModule,
+    MatDividerModule,
     MatProgressSpinnerModule,
     MatCardModule,
   ],
@@ -499,8 +501,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     const formValue = this.filterForm.value;
     const filters = {
       search: formValue.search?.trim() || undefined,
-      role: formValue.role || undefined,
-      status: formValue.status || undefined,
+      role: formValue.role as 'employee' | 'manager' | 'administrator' | undefined,
+      status: formValue.status as 'active' | 'inactive' | 'pending' | undefined,
     };
 
     const pagination = {

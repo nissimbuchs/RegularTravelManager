@@ -515,3 +515,4 @@ api-staging   CNAME  xyz.cloudfront.net             # API Gateway custom domain
 
 - always update the readme.md when you update package.json, aws urls or other readme relevant files
 - when you develop software and update existing software, never keep old code or functions for backward compatibility
+- we are working on enterprise software. never use workarounds. always document new pattterns or factory usage. consistently use existing implementation pattterns, never add TODO.

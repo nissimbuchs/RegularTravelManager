@@ -11,7 +11,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { Subject } from 'rxjs';
 import { takeUntil, switchMap } from 'rxjs/operators';
 
-import { UserDetails } from '../../../../../../../packages/shared/src/types/api';
+import { UserDetails } from '@rtm/shared';
 import { AdminService } from '../../../core/services/admin.service';
 
 @Component({

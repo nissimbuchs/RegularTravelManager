@@ -9,7 +9,7 @@ import {
   UserDeletionRequest,
   RoleChangeRequest,
   ManagerAssignmentRequest,
-} from '../../../../../../packages/shared/src/types/api';
+} from '@rtm/shared';
 
 describe('AdminService', () => {
   let service: AdminService;

@@ -67,12 +67,10 @@ export class ProjectService implements OnDestroy {
   }
 
   updateProject(id: string, project: ProjectUpdateRequest): Observable<Project> {
-    return this.http
-      .put<{ data: Project }>(`${this.baseUrl}/${id}`, project)
-      .pipe(
-        map(response => response.data),
-        tap(() => this.refreshProjects())
-      );
+    return this.http.put<{ data: Project }>(`${this.baseUrl}/${id}`, project).pipe(
+      map(response => response.data),
+      tap(() => this.refreshProjects())
+    );
   }
 
   deleteProject(id: string): Observable<void> {
@@ -80,12 +78,10 @@ export class ProjectService implements OnDestroy {
   }
 
   toggleProjectStatus(id: string): Observable<Project> {
-    return this.http
-      .patch<{ data: Project }>(`${this.baseUrl}/${id}/toggle-status`, {})
-      .pipe(
-        map(response => response.data),
-        tap(() => this.refreshProjects())
-      );
+    return this.http.patch<{ data: Project }>(`${this.baseUrl}/${id}/toggle-status`, {}).pipe(
+      map(response => response.data),
+      tap(() => this.refreshProjects())
+    );
   }
 
   // Subproject CRUD Operations
@@ -96,9 +92,9 @@ export class ProjectService implements OnDestroy {
   }
 
   getSubproject(projectId: string, subprojectId: string): Observable<Subproject> {
-    return this.http.get<{ data: Subproject }>(`${this.baseUrl}/${projectId}/subprojects/${subprojectId}`).pipe(
-      map(response => response.data)
-    );
+    return this.http
+      .get<{ data: Subproject }>(`${this.baseUrl}/${projectId}/subprojects/${subprojectId}`)
+      .pipe(map(response => response.data));
   }
 
   createSubproject(subproject: SubprojectCreateRequest): Observable<Subproject> {
@@ -116,7 +112,9 @@ export class ProjectService implements OnDestroy {
     subproject: SubprojectUpdateRequest
   ): Observable<Subproject> {
     return this.http
-      .put<{ data: Subproject }>(`${this.baseUrl}/${projectId}/subprojects/${subprojectId}`, subproject)
+      .put<{
+        data: Subproject;
+      }>(`${this.baseUrl}/${projectId}/subprojects/${subprojectId}`, subproject)
       .pipe(
         map(response => response.data),
         tap(() => this.refreshProjects())
@@ -131,10 +129,9 @@ export class ProjectService implements OnDestroy {
 
   toggleSubprojectStatus(projectId: string, subprojectId: string): Observable<Subproject> {
     return this.http
-      .patch<{ data: Subproject }>(
-        `${this.baseUrl}/${projectId}/subprojects/${subprojectId}/toggle-status`,
-        {}
-      )
+      .patch<{
+        data: Subproject;
+      }>(`${this.baseUrl}/${projectId}/subprojects/${subprojectId}/toggle-status`, {})
       .pipe(
         map(response => response.data),
         tap(() => this.refreshProjects())
@@ -144,9 +141,9 @@ export class ProjectService implements OnDestroy {
   // Geocoding
   geocodeAddress(address: string): Observable<GeocodingResult> {
     const params = new HttpParams().set('address', address);
-    return this.http.get<{ data: GeocodingResult }>(`${this.baseUrl}/geocode`, { params }).pipe(
-      map(response => response.data)
-    );
+    return this.http
+      .get<{ data: GeocodingResult }>(`${this.baseUrl}/geocode`, { params })
+      .pipe(map(response => response.data));
   }
 
   // Utility methods
@@ -171,11 +168,11 @@ export class ProjectService implements OnDestroy {
   checkProjectReferences(
     projectId: string
   ): Observable<{ canDelete: boolean; referencesCount: number }> {
-    return this.http.get<{ data: { canDelete: boolean; referencesCount: number } }>(
-      `${this.baseUrl}/${projectId}/references`
-    ).pipe(
-      map(response => response.data)
-    );
+    return this.http
+      .get<{
+        data: { canDelete: boolean; referencesCount: number };
+      }>(`${this.baseUrl}/${projectId}/references`)
+      .pipe(map(response => response.data));
   }
 
   private refreshProjects(): void {

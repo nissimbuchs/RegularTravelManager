@@ -354,7 +354,7 @@ export const adminUserManagement = errorHandler(async (event, context) => {
   });
 
   // Route based on HTTP method and path
-  if (method === 'GET' && path.includes('/admin/users') && !path.includes('/admin/users/')) {
+  if (method === 'GET' && (path.match(/\/admin\/users$/) || path.includes('/admin/users?'))) {
     console.log('🔄 Routing to listUsersHandler');
     return listUsersHandler(event, context);
   } else if (method === 'GET' && path.match(/\/admin\/users\/[^/]+$/)) {
@@ -363,7 +363,7 @@ export const adminUserManagement = errorHandler(async (event, context) => {
   } else if (method === 'PUT' && path.includes('/status')) {
     console.log('🔄 Routing to updateUserStatusHandler');
     return updateUserStatusHandler(event, context);
-  } else if (method === 'PUT' && path.includes('/manager')) {
+  } else if (method === 'PUT' && path.includes('/manager') && !path.includes('/role')) {
     console.log('🔄 Routing to updateUserManagerHandler');
     return updateUserManagerHandler(event, context);
   } else if (method === 'DELETE' && path.match(/\/admin\/users\/[^/]+$/)) {

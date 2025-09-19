@@ -530,7 +530,7 @@ export const API_ROUTES: RouteGroupConfig[] = [
         functionName: 'admin-project-management',
         description: 'Admin project management',
       },
-      // User Management Routes (Story 5.3)
+      // User Management Routes (Story 5.3) - Complete path-based routing
       {
         path: 'users',
         method: 'GET',

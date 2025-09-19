@@ -13,7 +13,7 @@ import {
   RoleChangeValidation,
   ManagerAssignmentRequest,
   ManagerAssignmentValidation,
-} from '../../../../../packages/shared/src/types/api';
+} from '@rtm/shared';
 
 interface UserFilters {
   search?: string;
@@ -78,10 +78,11 @@ export class AdminService implements OnDestroy {
     if (filters.department) params = params.set('department', filters.department);
     if (filters.managerId) params = params.set('managerId', filters.managerId);
 
-    return this.http.get<{data: AdminUserListing}>('/api/admin/users', { params }).pipe(
+    return this.http.get<{ data: AdminUserListing }>('/api/admin/users', { params }).pipe(
+      map(response => response.data),
       tap(response => {
-        this.usersSubject.next(response.data.users);
-        this.paginationSubject.next(response.data.pagination);
+        this.usersSubject.next(response.users);
+        this.paginationSubject.next(response.pagination);
         this.filtersSubject.next(filters);
         this.loadingSubject.next(false);
       }),
@@ -98,7 +99,7 @@ export class AdminService implements OnDestroy {
    * Get detailed user information
    */
   getUserDetails(userId: string): Observable<UserDetails> {
-    return this.http.get<{data: UserDetails}>(`/api/admin/users/${userId}`).pipe(
+    return this.http.get<{ data: UserDetails }>(`/api/admin/users/${userId}`).pipe(
       map(response => response.data),
       takeUntil(this.destroy$)
     );
@@ -137,7 +138,7 @@ export class AdminService implements OnDestroy {
    */
   validateRoleChange(userId: string, newRole: string): Observable<RoleChangeValidation> {
     return this.http
-      .post<{data: RoleChangeValidation}>(`/api/admin/users/${userId}/role/validate`, {
+      .post<{ data: RoleChangeValidation }>(`/api/admin/users/${userId}/role/validate`, {
         newRole,
       })
       .pipe(
@@ -168,7 +169,7 @@ export class AdminService implements OnDestroy {
     managerId: string
   ): Observable<ManagerAssignmentValidation> {
     return this.http
-      .post<{data: ManagerAssignmentValidation}>(`/api/admin/users/${userId}/manager/validate`, {
+      .post<{ data: ManagerAssignmentValidation }>(`/api/admin/users/${userId}/manager/validate`, {
         managerId,
       })
       .pipe(
@@ -185,7 +186,7 @@ export class AdminService implements OnDestroy {
     deletionRequest: UserDeletionRequest
   ): Observable<UserDeletionSummary> {
     return this.http
-      .delete<{data: UserDeletionSummary}>(`/api/admin/users/${userId}`, {
+      .delete<{ data: UserDeletionSummary }>(`/api/admin/users/${userId}`, {
         body: deletionRequest,
       })
       .pipe(
@@ -204,7 +205,10 @@ export class AdminService implements OnDestroy {
    */
   searchUsers(searchTerm: string): Observable<UserSummary[]> {
     const filters: UserFilters = { search: searchTerm };
-    return this.loadUsers(filters).pipe(takeUntil(this.destroy$));
+    return this.loadUsers(filters).pipe(
+      map(response => response.users),
+      takeUntil(this.destroy$)
+    );
   }
 
   /**
@@ -215,7 +219,10 @@ export class AdminService implements OnDestroy {
       role: 'manager',
       status: 'active',
     };
-    return this.loadUsers(filters, { pageSize: 100 }).pipe(takeUntil(this.destroy$));
+    return this.loadUsers(filters, { pageSize: 100 }).pipe(
+      map(response => response.users),
+      takeUntil(this.destroy$)
+    );
   }
 
   /**
@@ -223,7 +230,10 @@ export class AdminService implements OnDestroy {
    */
   getUsersByRole(role: 'employee' | 'manager' | 'administrator'): Observable<UserSummary[]> {
     const filters: UserFilters = { role };
-    return this.loadUsers(filters).pipe(takeUntil(this.destroy$));
+    return this.loadUsers(filters).pipe(
+      map(response => response.users),
+      takeUntil(this.destroy$)
+    );
   }
 
   /**

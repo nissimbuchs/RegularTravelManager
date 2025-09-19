@@ -16,10 +16,7 @@ import { takeUntil, finalize } from 'rxjs/operators';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoadingService } from '../../../core/services/loading.service';
-import {
-  EmployeeDto,
-  UpdateEmployeeAddressRequest,
-} from '../../../../../../../packages/shared/src/types/api';
+import { EmployeeDto, UpdateEmployeeAddressRequest } from '@rtm/shared';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 
 @Component({

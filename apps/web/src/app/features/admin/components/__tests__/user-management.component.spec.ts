@@ -21,7 +21,7 @@ import { of, throwError, BehaviorSubject } from 'rxjs';
 import { UserManagementComponent } from '../user-management.component';
 import { AdminService } from '../../../../core/services/admin.service';
 import { LoadingService } from '../../../../core/services/loading.service';
-import { UserSummary, AdminUserListing } from '../../../../../../packages/shared/src/types/api';
+import { UserSummary, AdminUserListing } from '@rtm/shared';
 
 describe('UserManagementComponent', () => {
   let component: UserManagementComponent;
