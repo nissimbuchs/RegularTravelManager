@@ -337,7 +337,8 @@ export class InfrastructureStack extends cdk.Stack {
     migrationConfig.properties = {
       Environment: environment,
       DatabaseEndpoint: this.database.instanceEndpoint.hostname,
-      Version: '1.1.0', // Change to force migration re-run
+      Version: '1.6.0', // Force migration re-run with /var/task/migrations path
+      Timestamp: new Date().toISOString(), // Force CloudFormation to see this as a change
     };
 
     this.customResourceBuilder.createCustomResource('migrationRunner', migrationConfig);

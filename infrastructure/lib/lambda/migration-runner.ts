@@ -5,6 +5,8 @@ import {
 } from 'aws-lambda';
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import { Client } from 'pg';
+import { readdirSync, readFileSync } from 'fs';
+import { join } from 'path';
 
 interface DatabaseCredentials {
   username: string;
@@ -23,21 +25,23 @@ export const migrationRunner = async (
 ): Promise<CloudFormationCustomResourceResponse> => {
   const { RequestType, LogicalResourceId, RequestId } = event;
   const environment = process.env.RTM_ENVIRONMENT || 'dev';
+  const version = event.ResourceProperties?.Version || '1.0.0';
 
   console.log('Migration runner invoked', {
     RequestType,
     LogicalResourceId,
     RequestId,
     environment,
+    version,
   });
 
-  // Basic response structure
+  // Basic response structure - include version in PhysicalResourceId to force updates
   let response: CloudFormationCustomResourceResponse = {
     Status: 'SUCCESS',
     RequestId,
     LogicalResourceId,
     StackId: event.StackId,
-    PhysicalResourceId: `migration-runner-${environment}`,
+    PhysicalResourceId: `migration-runner-${environment}-${version}`,
     Data: {},
   };
 
@@ -195,39 +199,45 @@ function calculateChecksum(content: string): string {
 }
 
 function getMigrations(): MigrationFile[] {
-  // Migration files are bundled as part of the Lambda
-  // This will be populated with embedded migration content
-  const migrations: MigrationFile[] = [
-    {
-      version: '004',
-      filename: '004_user_registration_table.sql',
-      content: `-- Migration 004: Create user_registrations table for Story 5.1 - User Registration
--- This table stores email verification tokens for the registration process
+  // Read migration files from the bundled migrations directory
+  const migrationsDir = '/var/task/migrations';
+  const migrations: MigrationFile[] = [];
 
-CREATE TABLE user_registrations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  email VARCHAR(255) NOT NULL UNIQUE,
-  verification_token VARCHAR(255) NOT NULL UNIQUE,
-  expires_at TIMESTAMPTZ NOT NULL,
-  verified_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
+  try {
+    // Get all .sql files from migrations directory
+    const files = readdirSync(migrationsDir)
+      .filter(file => file.endsWith('.sql'))
+      .sort(); // Sort alphabetically to ensure proper order
 
--- Create indexes for performance
-CREATE INDEX idx_user_registrations_email ON user_registrations(email);
-CREATE INDEX idx_user_registrations_token ON user_registrations(verification_token);
-CREATE INDEX idx_user_registrations_expires ON user_registrations(expires_at);
+    for (const filename of files) {
+      // Extract version number from filename (e.g., "021-add-employee-profile-fields.sql" -> "021")
+      const versionMatch = filename.match(/^(\d+)/);
+      if (!versionMatch) {
+        console.log(`Skipping file ${filename} - no version number found`);
+        continue;
+      }
 
--- Add comments for documentation
-COMMENT ON TABLE user_registrations IS 'Stores email verification tokens for user registration process (Story 5.1)';
-COMMENT ON COLUMN user_registrations.email IS 'Email address being verified';
-COMMENT ON COLUMN user_registrations.verification_token IS 'Unique token sent via email for verification';
-COMMENT ON COLUMN user_registrations.expires_at IS 'When the verification token expires (24 hours)';
-COMMENT ON COLUMN user_registrations.verified_at IS 'When the email was verified (NULL if not verified)';`,
-    },
-  ];
+      const version = versionMatch[1];
+      if (!version) {
+        console.log(`Skipping file ${filename} - invalid version format`);
+        continue;
+      }
 
-  // Sort migrations by version to ensure proper execution order
-  return migrations.sort((a, b) => a.version.localeCompare(b.version));
+      const content = readFileSync(join(migrationsDir, filename), 'utf8');
+
+      migrations.push({
+        version,
+        filename,
+        content,
+      });
+
+      console.log(`Loaded migration ${version}: ${filename}`);
+    }
+
+    console.log(`Loaded ${migrations.length} migration files from ${migrationsDir}`);
+    return migrations.sort((a, b) => a.version.localeCompare(b.version));
+  } catch (error) {
+    console.error('Error reading migration files:', error);
+    throw new Error(`Failed to load migration files from ${migrationsDir}: ${error}`);
+  }
 }

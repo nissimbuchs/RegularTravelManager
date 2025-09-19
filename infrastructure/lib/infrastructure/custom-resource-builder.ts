@@ -5,6 +5,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as customResources from 'aws-cdk-lib/custom-resources';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as path from 'path';
 import { Construct } from 'constructs';
 import { PolicyBuilder, PolicyConfig } from './policy-builder';
 import { LogGroupFactory } from './log-group-factory';
@@ -268,6 +269,34 @@ export const CustomResourceSets = {
     bundling: {
       externalModules: ['pg-native'],
       nodeModules: ['pg'],
+      commandHooks: {
+        beforeBundling: (inputDir: string, outputDir: string) => {
+          console.log('beforeBundling called with:', { inputDir, outputDir });
+          return [];
+        },
+        afterBundling: (inputDir: string, outputDir: string) => {
+          console.log('afterBundling called with:', { inputDir, outputDir });
+          // Get project root directory (parent of infrastructure)
+          const projectRoot = path.resolve(__dirname, '../../../');
+          const migrationsDir = path.join(projectRoot, 'migrations');
+
+          console.log('Migration source:', migrationsDir);
+          console.log('Output directory:', outputDir);
+
+          return [
+            `echo "Creating migrations directory..."`,
+            `mkdir -p ${outputDir}/migrations`,
+            `echo "Listing source migrations..."`,
+            `ls -la "${migrationsDir}" || echo "Source directory not found: ${migrationsDir}"`,
+            `echo "Copying migration files..."`,
+            `find "${migrationsDir}" -name "*.sql" -exec cp {} "${outputDir}/migrations/" \\;`,
+            `echo "Verifying copied files..."`,
+            `ls -la "${outputDir}/migrations/" || echo "Output directory not created"`,
+            `echo "Migration bundling complete"`,
+          ];
+        },
+        beforeInstall: () => [],
+      },
     },
     policies: [
       {
@@ -278,7 +307,8 @@ export const CustomResourceSets = {
       },
     ],
     properties: {
-      Version: '1.1.0', // Change to force migration re-run when needed
+      Version: '1.6.0', // Force migration re-run with /var/task/migrations path
+      Timestamp: new Date().toISOString(), // Force CloudFormation to see this as a change
     },
     dependencies: [database],
   }),

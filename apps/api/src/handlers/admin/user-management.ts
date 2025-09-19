@@ -281,7 +281,7 @@ export const getUserDetailsHandler = async (
           employee_id,
           COUNT(*) as total_requests,
           COUNT(CASE WHEN created_at >= DATE_TRUNC('month', CURRENT_DATE) THEN 1 END) as requests_this_month,
-          AVG(calculated_allowance) as average_request_value,
+          AVG(calculated_allowance_chf) as average_request_value,
           MAX(created_at) as last_request_date
         FROM travel_requests
         GROUP BY employee_id
@@ -339,7 +339,7 @@ export const getUserDetailsHandler = async (
         p.name as project_name,
         sp.name as subproject_name,
         tr.status,
-        tr.calculated_allowance,
+        tr.calculated_allowance_chf,
         tr.created_at
       FROM travel_requests tr
       JOIN subprojects sp ON tr.subproject_id = sp.id
@@ -355,7 +355,7 @@ export const getUserDetailsHandler = async (
       projectName: row.project_name,
       subprojectName: row.subproject_name,
       status: row.status,
-      allowanceAmount: parseFloat(row.calculated_allowance),
+      allowanceAmount: parseFloat(row.calculated_allowance_chf),
       requestDate: row.created_at.toISOString(),
     }));
 
