@@ -370,6 +370,10 @@ export const adminUserManagement = errorHandler(async (event, context) => {
   } else if (method === 'PUT' && path.includes('/manager') && !path.includes('/role')) {
     console.log('🔄 Routing to updateUserManagerHandler');
     return updateUserManagerHandler(event, context);
+  } else if (method === 'PUT' && path.match(/\/admin\/users\/[^/]+$/)) {
+    // Admin user profile update - route to the update profile handler
+    console.log('🔄 Routing to updateProfileHandler for admin update');
+    return updateProfileHandler(event, context);
   } else if (method === 'DELETE' && path.match(/\/admin\/users\/[^/]+$/)) {
     console.log('🔄 Routing to deleteUserHandler');
     return deleteUserHandler(event, context);
