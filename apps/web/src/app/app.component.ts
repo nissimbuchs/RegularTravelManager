@@ -1,6 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { MaterialModule } from './material.module';
 import { configureAmplify } from './core/config/amplify.config';
 import { ConfigService } from './core/services/config.service';
 import { AuthService } from './core/services/auth.service';
@@ -14,7 +13,7 @@ declare global {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, MaterialModule],
+  imports: [RouterOutlet],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })

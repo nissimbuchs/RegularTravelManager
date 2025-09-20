@@ -53,7 +53,7 @@ interface NavigationItem {
       >
         <mat-toolbar class="sidenav-header">
           <mat-icon class="app-icon">business</mat-icon>
-          <span class="app-title">RTM</span>
+          <span class="app-title">RTFM</span>
         </mat-toolbar>
 
         <mat-nav-list>
@@ -92,30 +92,40 @@ interface NavigationItem {
             <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
           </button>
 
-          <span class="toolbar-title">{{ getPageTitle() }}</span>
+          <span class="app-title">Regular Travel Form Manager</span>
 
           <span class="toolbar-spacer"></span>
 
-          <button mat-icon-button [matMenuTriggerFor]="userMenu">
+          <span class="page-title">{{ getPageTitle() }}</span>
+
+          <span class="toolbar-spacer"></span>
+
+          <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-trigger">
             <mat-icon>account_circle</mat-icon>
+            <mat-icon>arrow_drop_down</mat-icon>
           </button>
 
           <mat-menu #userMenu="matMenu">
             <div class="user-menu-header" mat-menu-item disabled>
               <div class="user-info">
-                <div class="user-name">{{ (currentUser$ | async)?.name }}</div>
+                <div class="user-full-name">{{ (currentUser$ | async)?.name }}</div>
                 <div class="user-role">{{ (currentUser$ | async)?.role | titlecase }}</div>
               </div>
             </div>
             <mat-divider></mat-divider>
             <button mat-menu-item routerLink="/profile">
-              <mat-icon>account_circle</mat-icon>
+              <mat-icon>person</mat-icon>
               <span>My Profile</span>
+            </button>
+            <button mat-menu-item routerLink="/employee/address">
+              <mat-icon>home</mat-icon>
+              <span>My Address</span>
             </button>
             <button mat-menu-item>
               <mat-icon>settings</mat-icon>
               <span>Settings</span>
             </button>
+            <mat-divider></mat-divider>
             <button mat-menu-item (click)="logout()">
               <mat-icon color="warn">logout</mat-icon>
               <span>Sign Out</span>
@@ -167,13 +177,57 @@ interface NavigationItem {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
-      .toolbar-title {
+      .app-title {
         font-size: 18px;
         font-weight: 500;
+        margin-left: 12px;
+      }
+
+      .page-title {
+        font-size: 16px;
+        font-weight: 400;
+        text-align: center;
       }
 
       .toolbar-spacer {
         flex: 1 1 auto;
+      }
+
+      .user-menu-trigger {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: white;
+      }
+
+      .user-menu-trigger mat-icon {
+        font-size: 24px;
+        height: 24px;
+        width: 24px;
+      }
+
+      .user-menu-header {
+        padding: 16px !important;
+        pointer-events: none;
+      }
+
+      .user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .user-full-name {
+        font-weight: 500;
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.87);
+      }
+
+      .user-role {
+        font-size: 11px;
+        color: rgba(0, 0, 0, 0.54);
+        font-weight: 500;
+        text-transform: uppercase;
       }
 
       .main-content {
@@ -182,25 +236,6 @@ interface NavigationItem {
         background-color: #f5f5f5;
       }
 
-      .user-menu-header {
-        padding: 16px !important;
-      }
-
-      .user-info {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .user-name {
-        font-weight: 500;
-        font-size: 14px;
-      }
-
-      .user-role {
-        font-size: 12px;
-        color: #666;
-        margin-top: 2px;
-      }
 
       .active-nav-item {
         background-color: #e3f2fd;
@@ -225,8 +260,13 @@ interface NavigationItem {
           padding: 12px;
         }
 
-        .toolbar-title {
+        .app-title {
+          display: none;
+        }
+
+        .page-title {
           font-size: 16px;
+          font-weight: 500;
         }
       }
     `,
@@ -338,6 +378,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     if (url.includes('/approvals')) return 'Approvals';
     if (url.includes('/employees')) return 'Employees';
     if (url.includes('/projects')) return 'Projects';
+    if (url.includes('/users')) return 'Users';
 
     return 'RegularTravelManager';
   }
