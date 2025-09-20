@@ -1,0 +1,182 @@
+@import '../../../styles/base/variables';
+@import '../../../styles/base/mixins';
+
+.login-container {
+  @include elca-flex-center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, $elca-coral-red 0%, darken($elca-coral-red, 10%) 100%);
+  padding: $elca-layout-container-padding;
+}
+
+.login-card {
+  @include elca-card;
+  width: 100%;
+  max-width: 400px;
+  padding: 0;
+  border-radius: $elca-border-radius-lg;
+  box-shadow: $elca-shadow-xl;
+
+  // Use desktop-first approach to match main branch behavior
+  @media (max-width: 480px) {
+    max-width: none;
+    margin: $elca-spacing-xs;
+  }
+}
+
+.login-title {
+  display: flex;
+  align-items: center;
+  gap: $elca-spacing-sm;
+  @include elca-heading('lg');
+  color: $elca-coral-red;
+
+  mat-icon {
+    color: $elca-coral-red;
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-base;
+  margin-top: $elca-spacing-base;
+}
+
+.full-width {
+  width: 100%;
+}
+
+mat-form-field {
+  .mat-mdc-form-field {
+    .mdc-text-field {
+      border-radius: $elca-border-radius-base;
+
+      &:not(.mdc-text-field--disabled) {
+        .mdc-text-field__input {
+          color: $elca-text-primary;
+        }
+
+        .mdc-floating-label {
+          color: $elca-text-secondary;
+        }
+      }
+
+      &.mdc-text-field--focused {
+        .mdc-text-field__input {
+          caret-color: $elca-coral-red;
+        }
+
+        .mdc-floating-label {
+          color: $elca-coral-red;
+        }
+
+        .mdc-line-ripple::after {
+          border-bottom-color: $elca-coral-red;
+        }
+
+        .mdc-notched-outline {
+          .mdc-notched-outline__leading,
+          .mdc-notched-outline__notch,
+          .mdc-notched-outline__trailing {
+            border-color: $elca-coral-red;
+            border-width: 2px;
+          }
+        }
+      }
+    }
+  }
+}
+
+.login-button {
+  @include elca-button-primary;
+  @include elca-button-size('lg');
+  margin-top: $elca-spacing-xs;
+  font-weight: $elca-font-weight-medium;
+
+  // High specificity override to ensure ELCA colors always apply
+  &.mat-mdc-raised-button.mat-primary {
+    background-color: $elca-coral-red !important;
+    color: white !important;
+    border-color: $elca-coral-red !important;
+
+    &:hover:not(:disabled) {
+      background-color: $elca-coral-red-hover !important;
+      border-color: $elca-coral-red-hover !important;
+    }
+
+    &:active {
+      background-color: $elca-coral-red-active !important;
+      border-color: $elca-coral-red-active !important;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.login-spinner {
+  margin-right: $elca-spacing-sm;
+
+  ::ng-deep .mdc-circular-progress__determinate-circle,
+  ::ng-deep .mdc-circular-progress__indeterminate-circle-graphic {
+    stroke: white;
+  }
+}
+
+.password-toggle {
+  cursor: pointer;
+  color: $elca-text-secondary;
+
+  &:hover {
+    color: $elca-coral-red;
+  }
+}
+
+.registration-link {
+  text-align: center;
+  margin-top: $elca-spacing-md;
+  color: $elca-text-secondary;
+  font-size: $elca-font-size-sm;
+}
+
+.register-button {
+  @include elca-button-ghost;
+  @include elca-button-size('sm');
+  margin-left: $elca-spacing-xs;
+  text-decoration: none;
+
+  &:hover {
+    background-color: $elca-coral-red-light;
+  }
+}
+
+mat-card-header {
+  padding: $elca-spacing-xl $elca-spacing-xl 0;
+
+  mat-card-subtitle {
+    color: $elca-text-secondary;
+    margin-top: $elca-spacing-sm;
+  }
+}
+
+mat-card-content {
+  padding: 0 $elca-spacing-xl $elca-spacing-xl;
+}
+
+// Responsive design - mobile adjustments
+@media (max-width: 480px) {
+  .login-container {
+    padding: $elca-spacing-md;
+  }
+
+  mat-card-header,
+  mat-card-content {
+    padding-left: $elca-spacing-base;
+    padding-right: $elca-spacing-base;
+  }
+}

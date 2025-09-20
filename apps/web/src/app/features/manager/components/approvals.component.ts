@@ -20,18 +20,6 @@ import { MatIconModule } from '@angular/material/icon';
       </mat-card>
     </div>
   `,
-  styles: [
-    `
-      .approvals-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      mat-card-header mat-icon {
-        background-color: #e8f5e8;
-        color: #2e7d32;
-      }
-    `,
-  ],
+  styleUrls: ['./approvals.component.scss'],
 })
 export class ApprovalsComponent {}

@@ -25,7 +25,7 @@ interface Manager {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MaterialModule],
   templateUrl: './travel-request-form.component.html',
-  styleUrls: ['./travel-request-form.component.css'],
+  styleUrls: ['./travel-request-form.component.scss'],
 })
 export class TravelRequestFormComponent implements OnInit, OnDestroy {
   requestForm: FormGroup;

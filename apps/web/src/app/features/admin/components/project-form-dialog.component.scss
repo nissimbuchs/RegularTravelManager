@@ -1,0 +1,118 @@
+@import '../../../../styles/base/variables';
+@import '../../../../styles/base/mixins';
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $elca-spacing-base;
+
+  h2 {
+    @include elca-heading('base');
+    margin: 0;
+    color: $elca-text-primary;
+  }
+
+  button[mat-icon-button] {
+    color: $elca-text-tertiary;
+
+    &:hover {
+      color: $elca-text-secondary;
+    }
+  }
+}
+
+.project-form {
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-base;
+  min-width: 500px;
+}
+
+.status-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-xs;
+  padding: $elca-spacing-base;
+  background-color: $elca-bg-secondary;
+  border-radius: $elca-border-radius-lg;
+
+  .toggle-label {
+    display: flex;
+    align-items: center;
+    gap: $elca-spacing-xs;
+    font-weight: $elca-font-weight-medium;
+
+    mat-icon {
+      &[color="primary"] {
+        color: $elca-coral-red;
+      }
+
+      &[color="warn"] {
+        color: $elca-error;
+      }
+    }
+  }
+
+  .status-hint {
+    font-size: $elca-font-size-xs;
+    margin: 0;
+    color: $elca-text-tertiary;
+  }
+}
+
+.form-section {
+  margin-top: $elca-spacing-base;
+  padding: $elca-spacing-base;
+  background-color: $elca-bg-tertiary;
+  border-radius: $elca-border-radius-lg;
+
+  h4 {
+    @include elca-heading('xs');
+    margin: 0 0 $elca-spacing-sm 0;
+    color: $elca-text-primary;
+  }
+}
+
+.cost-preview {
+  display: flex;
+  align-items: center;
+  gap: $elca-spacing-xs;
+
+  .cost-display {
+    font-family: $elca-font-family-monospace;
+    font-size: 1.1rem;
+    color: $elca-success;
+    font-weight: $elca-font-weight-medium;
+    padding: $elca-spacing-xs $elca-spacing-sm;
+    background-color: #e8f5e8;
+    border-radius: $elca-border-radius-base;
+  }
+}
+
+// Dialog content and actions styling
+mat-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+mat-dialog-actions {
+  padding: $elca-spacing-base 0;
+  gap: $elca-spacing-xs;
+
+  button {
+    @include elca-button-size('base');
+
+    &[mat-button] {
+      @include elca-button-secondary;
+    }
+
+    &[mat-raised-button][color="primary"] {
+      @include elca-button-primary;
+    }
+
+    mat-icon {
+      margin-right: $elca-spacing-xs;
+    }
+  }
+}

@@ -1,0 +1,379 @@
+// ELCA Mixins and Utilities
+// Reusable SCSS mixins for consistent styling
+
+// Import variables
+@import './variables';
+
+// Media Query Mixins (Mobile-first approach)
+@mixin elca-media-sm {
+  @media (min-width: #{$elca-breakpoint-sm}) {
+    @content;
+  }
+}
+
+@mixin elca-media-md {
+  @media (min-width: #{$elca-breakpoint-md}) {
+    @content;
+  }
+}
+
+@mixin elca-media-lg {
+  @media (min-width: #{$elca-breakpoint-lg}) {
+    @content;
+  }
+}
+
+@mixin elca-media-xl {
+  @media (min-width: #{$elca-breakpoint-xl}) {
+    @content;
+  }
+}
+
+@mixin elca-media-2xl {
+  @media (min-width: #{$elca-breakpoint-2xl}) {
+    @content;
+  }
+}
+
+// Custom media query mixin
+@mixin elca-media($size) {
+  @media (min-width: #{$size}) {
+    @content;
+  }
+}
+
+// Typography Mixins
+@mixin elca-heading($size: 'base') {
+  font-family: $elca-font-family-primary;
+  font-weight: $elca-font-weight-semibold;
+  color: $elca-coral-red;
+  line-height: $elca-line-height-tight;
+
+  @if $size == 'xs' {
+    font-size: $elca-font-size-base;
+  } @else if $size == 'sm' {
+    font-size: $elca-font-size-lg;
+  } @else if $size == 'base' {
+    font-size: $elca-font-size-xl;
+  } @else if $size == 'lg' {
+    font-size: $elca-font-size-2xl;
+  } @else if $size == 'xl' {
+    font-size: $elca-font-size-3xl;
+  }
+}
+
+@mixin elca-body-text($size: 'base') {
+  font-family: $elca-font-family-primary;
+  font-weight: $elca-font-weight-normal;
+  color: $elca-text-primary;
+  line-height: $elca-line-height-base;
+
+  @if $size == 'sm' {
+    font-size: $elca-font-size-sm;
+  } @else if $size == 'base' {
+    font-size: $elca-font-size-base;
+  } @else if $size == 'lg' {
+    font-size: $elca-font-size-lg;
+  }
+}
+
+@mixin elca-text-secondary {
+  color: $elca-text-secondary;
+  font-size: $elca-font-size-sm;
+}
+
+@mixin elca-text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin elca-text-clamp($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Button Mixins
+@mixin elca-button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: $elca-border-radius-base;
+  font-family: $elca-font-family-primary;
+  font-weight: $elca-font-weight-medium;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  user-select: none;
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px $elca-coral-red-light;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@mixin elca-button-primary {
+  @include elca-button-base;
+  background-color: $elca-coral-red;
+  border-color: $elca-coral-red;
+  color: white;
+  box-shadow: $elca-shadow-coral;
+
+  &:hover:not(:disabled) {
+    background-color: $elca-coral-red-hover;
+    border-color: $elca-coral-red-hover;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
+  }
+
+  &:active {
+    background-color: $elca-coral-red-active;
+    border-color: $elca-coral-red-active;
+    transform: translateY(0);
+  }
+}
+
+@mixin elca-button-secondary {
+  @include elca-button-base;
+  background-color: transparent;
+  border-color: $elca-coral-red;
+  color: $elca-coral-red;
+
+  &:hover:not(:disabled) {
+    background-color: $elca-coral-red-light;
+    border-color: $elca-coral-red-hover;
+    color: $elca-coral-red-hover;
+  }
+
+  &:active {
+    background-color: $elca-coral-red-bg;
+    border-color: $elca-coral-red-active;
+    color: $elca-coral-red-active;
+  }
+}
+
+@mixin elca-button-ghost {
+  @include elca-button-base;
+  background-color: transparent;
+  border-color: transparent;
+  color: $elca-coral-red;
+
+  &:hover:not(:disabled) {
+    background-color: $elca-coral-red-light;
+    color: $elca-coral-red-hover;
+  }
+
+  &:active {
+    background-color: $elca-coral-red-bg;
+    color: $elca-coral-red-active;
+  }
+}
+
+@mixin elca-button-size($size: 'base') {
+  @if $size == 'sm' {
+    height: $elca-component-height-sm;
+    padding: 0 $elca-spacing-md;
+    font-size: $elca-font-size-sm;
+  } @else if $size == 'base' {
+    height: $elca-component-height-base;
+    padding: 0 $elca-spacing-base;
+    font-size: $elca-font-size-base;
+  } @else if $size == 'lg' {
+    height: $elca-component-height-lg;
+    padding: 0 $elca-spacing-xl;
+    font-size: $elca-font-size-lg;
+  }
+}
+
+// Form Input Mixins
+@mixin elca-input-base {
+  width: 100%;
+  border: 1px solid $elca-form-input-border;
+  border-radius: $elca-border-radius-base;
+  background-color: $elca-form-input-bg;
+  color: $elca-text-primary;
+  font-family: $elca-font-family-primary;
+  font-size: $elca-font-size-base;
+  line-height: $elca-line-height-base;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &::placeholder {
+    color: $elca-form-input-placeholder;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $elca-form-input-focus-border;
+    box-shadow: 0 0 0 2px $elca-coral-red-light;
+  }
+
+  &:disabled {
+    background-color: $elca-bg-tertiary;
+    color: $elca-text-tertiary;
+    cursor: not-allowed;
+  }
+}
+
+@mixin elca-input-size($size: 'base') {
+  @if $size == 'sm' {
+    height: $elca-component-height-sm;
+    padding: 0 $elca-spacing-md;
+    font-size: $elca-font-size-sm;
+  } @else if $size == 'base' {
+    height: $elca-component-height-base;
+    padding: 0 $elca-spacing-base;
+    font-size: $elca-font-size-base;
+  } @else if $size == 'lg' {
+    height: $elca-component-height-lg;
+    padding: 0 $elca-spacing-base;
+    font-size: $elca-font-size-lg;
+  }
+}
+
+// Card/Container Mixins
+@mixin elca-card {
+  background-color: $elca-bg-primary;
+  border: 1px solid $elca-border-secondary;
+  border-radius: $elca-border-radius-lg;
+  box-shadow: $elca-shadow-sm;
+  overflow: hidden;
+}
+
+@mixin elca-card-hover {
+  transition: box-shadow 0.2s, transform 0.2s;
+
+  &:hover {
+    box-shadow: $elca-shadow-lg;
+    transform: translateY(-2px);
+  }
+}
+
+// Status Badge Mixins
+@mixin elca-status-badge($status) {
+  display: inline-flex;
+  align-items: center;
+  padding: $elca-spacing-xs $elca-spacing-md;
+  border-radius: $elca-border-radius-xl;
+  font-size: $elca-font-size-xs;
+  font-weight: $elca-font-weight-medium;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  @if $status == 'pending' {
+    background-color: rgba($elca-status-pending, 0.1);
+    color: darken($elca-status-pending, 10%);
+    border: 1px solid rgba($elca-status-pending, 0.2);
+  } @else if $status == 'approved' {
+    background-color: rgba($elca-status-approved, 0.1);
+    color: darken($elca-status-approved, 10%);
+    border: 1px solid rgba($elca-status-approved, 0.2);
+  } @else if $status == 'rejected' {
+    background-color: rgba($elca-status-rejected, 0.1);
+    color: darken($elca-status-rejected, 10%);
+    border: 1px solid rgba($elca-status-rejected, 0.2);
+  } @else if $status == 'withdrawn' {
+    background-color: rgba($elca-status-withdrawn, 0.1);
+    color: darken($elca-status-withdrawn, 20%);
+    border: 1px solid rgba($elca-status-withdrawn, 0.2);
+  }
+}
+
+// Currency Display Mixin
+@mixin elca-currency($variant: 'neutral') {
+  font-family: $elca-currency-font-family;
+  font-variant-numeric: tabular-nums;
+  font-weight: $elca-font-weight-medium;
+
+  @if $variant == 'positive' {
+    color: $elca-currency-color-positive;
+  } @else if $variant == 'negative' {
+    color: $elca-currency-color-negative;
+  } @else {
+    color: $elca-currency-color-neutral;
+  }
+
+  &.large {
+    font-size: $elca-font-size-lg;
+    font-weight: $elca-font-weight-semibold;
+  }
+}
+
+// Utility Mixins
+@mixin elca-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin elca-flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin elca-absolute-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@mixin elca-clearfix {
+  &::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+}
+
+// Screen Reader Only Content (Accessibility)
+@mixin elca-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+// Focus Visible Polyfill
+@mixin elca-focus-visible {
+  &:focus-visible {
+    outline: 2px solid $elca-coral-red;
+    outline-offset: 2px;
+  }
+}
+
+// Loading State Mixin
+@mixin elca-loading-skeleton {
+  background: linear-gradient(
+    90deg,
+    $elca-bg-tertiary 25%,
+    $elca-bg-secondary 50%,
+    $elca-bg-tertiary 75%
+  );
+  background-size: 200% 100%;
+  animation: elca-loading 1.5s infinite;
+
+  @keyframes elca-loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+}

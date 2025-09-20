@@ -1,0 +1,79 @@
+@import '../../../styles/base/variables';
+@import '../../../styles/base/mixins';
+
+.dialog-header {
+  margin-bottom: $elca-spacing-base;
+
+  h2 {
+    @include elca-heading('base');
+    display: flex;
+    align-items: center;
+    gap: $elca-spacing-xs;
+    margin: 0;
+    color: $elca-text-primary;
+
+    mat-icon {
+      font-size: 1.2rem;
+
+      &[color="primary"] {
+        color: $elca-coral-red;
+      }
+
+      &[color="accent"] {
+        color: $elca-info;
+      }
+
+      &[color="warn"] {
+        color: $elca-error;
+      }
+    }
+  }
+}
+
+.dialog-message {
+  @include elca-body-text;
+  margin: 0;
+  line-height: 1.6;
+  color: $elca-text-primary;
+}
+
+mat-dialog-content {
+  padding: $elca-spacing-base 0;
+}
+
+mat-dialog-actions {
+  padding: $elca-spacing-base 0;
+  gap: $elca-spacing-xs;
+
+  button {
+    @include elca-button-size('base');
+
+    &[mat-button] {
+      @include elca-button-secondary;
+    }
+
+    &[mat-raised-button] {
+      &[color="primary"] {
+        @include elca-button-primary;
+      }
+
+      &[color="accent"] {
+        background-color: $elca-info;
+        color: white;
+
+        &:hover {
+          background-color: darken($elca-info, 5%);
+        }
+      }
+
+      &[color="warn"] {
+        background-color: $elca-error;
+        color: white;
+
+        &:hover {
+          background-color: darken($elca-error, 5%);
+        }
+      }
+    }
+  }
+}

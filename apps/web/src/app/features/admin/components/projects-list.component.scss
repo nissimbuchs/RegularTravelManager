@@ -1,0 +1,232 @@
+@import '../../../../styles/base/variables';
+@import '../../../../styles/base/mixins';
+
+.projects-container {
+  padding: $elca-spacing-base;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: $elca-spacing-md;
+  }
+}
+
+.search-card {
+  @include elca-card;
+  margin-bottom: $elca-spacing-base;
+  padding: $elca-spacing-lg;
+}
+
+.search-form {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: $elca-spacing-md;
+  align-items: start;
+
+  // Use desktop-first approach to match main branch behavior
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: $elca-spacing-md;
+  justify-content: flex-end;
+  margin-top: $elca-spacing-md;
+
+  button {
+    &.mat-mdc-raised-button.mat-primary {
+      @include elca-button-primary;
+      @include elca-button-size('base');
+    }
+
+    &.mat-mdc-outlined-button {
+      @include elca-button-secondary;
+      @include elca-button-size('base');
+    }
+  }
+
+  @media (max-width: 768px) {
+    justify-content: stretch;
+
+    button {
+      flex: 1;
+    }
+  }
+}
+
+.table-card {
+  @include elca-card;
+  min-height: 400px;
+  padding: $elca-spacing-lg;
+}
+
+.table-container {
+  overflow-x: auto;
+  border-radius: $elca-border-radius-base;
+}
+
+.projects-table {
+  width: 100%;
+  min-width: 800px;
+  background-color: $elca-bg-primary;
+
+  .mat-mdc-header-row {
+    background-color: $elca-bg-tertiary;
+
+    .mat-mdc-header-cell {
+      color: $elca-text-primary;
+      font-weight: $elca-font-weight-semibold;
+      border-bottom: 1px solid $elca-border-primary;
+    }
+  }
+
+  .mat-mdc-row {
+    &:hover {
+      background-color: $elca-coral-red-light;
+    }
+
+    .mat-mdc-cell {
+      color: $elca-text-primary;
+      border-bottom: 1px solid $elca-border-secondary;
+      padding: $elca-spacing-base $elca-spacing-md;
+    }
+  }
+}
+
+.project-name {
+  display: flex;
+  align-items: center;
+  gap: $elca-spacing-sm;
+
+  mat-chip {
+    font-size: $elca-font-size-xs;
+    min-height: 20px;
+    background-color: $elca-coral-red-light;
+    color: $elca-coral-red;
+  }
+}
+
+.description {
+  color: $elca-text-secondary;
+  font-size: $elca-font-size-sm;
+  line-height: $elca-line-height-base;
+}
+
+.cost-rate {
+  font-weight: $elca-font-weight-medium;
+  color: $elca-success;
+  @include elca-currency;
+}
+
+.subprojects-icon {
+  vertical-align: middle;
+  margin-right: $elca-spacing-xs;
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+  color: $elca-text-secondary;
+}
+
+.action-buttons {
+  display: flex;
+  gap: $elca-spacing-xs;
+
+  button {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    min-width: 32px;
+
+    &.mat-mdc-icon-button {
+      border-radius: $elca-border-radius-base;
+
+      &:hover {
+        background-color: $elca-coral-red-light;
+        color: $elca-coral-red;
+      }
+
+      &.mat-primary {
+        color: $elca-coral-red;
+
+        &:hover {
+          background-color: $elca-coral-red;
+          color: white;
+        }
+      }
+
+      &.mat-warn {
+        color: $elca-error;
+
+        &:hover {
+          background-color: $elca-error;
+          color: white;
+        }
+      }
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+// Form field styling
+mat-form-field {
+  .mat-mdc-form-field {
+    .mdc-text-field {
+      border-radius: $elca-border-radius-base;
+
+      &:not(.mdc-text-field--disabled) {
+        .mdc-text-field__input {
+          color: $elca-text-primary;
+        }
+
+        .mdc-floating-label {
+          color: $elca-text-secondary;
+        }
+      }
+
+      &.mdc-text-field--focused {
+        .mdc-floating-label {
+          color: $elca-coral-red;
+        }
+
+        .mdc-line-ripple::after {
+          border-bottom-color: $elca-coral-red;
+        }
+
+        .mdc-notched-outline {
+          .mdc-notched-outline__leading,
+          .mdc-notched-outline__notch,
+          .mdc-notched-outline__trailing {
+            border-color: $elca-coral-red;
+            border-width: 2px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Paginator styling
+mat-paginator {
+  background-color: $elca-bg-primary;
+  border-top: 1px solid $elca-border-secondary;
+  margin-top: $elca-spacing-base;
+
+  .mat-mdc-paginator-range-actions {
+    color: $elca-text-primary;
+  }
+
+  .mat-mdc-icon-button {
+    &:hover {
+      background-color: $elca-coral-red-light;
+      color: $elca-coral-red;
+    }
+  }
+}

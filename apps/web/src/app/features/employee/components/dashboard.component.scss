@@ -1,0 +1,77 @@
+@import '../../../../styles/base/variables';
+@import '../../../../styles/base/mixins';
+
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $elca-layout-container-padding;
+}
+
+.welcome-section {
+  margin-bottom: $elca-spacing-2xl;
+  text-align: center;
+
+  h1 {
+    @include elca-heading('xl');
+    margin: 0 0 $elca-spacing-base;
+    color: $elca-coral-red;
+  }
+
+  p {
+    @include elca-body-text;
+    margin: 0;
+    color: $elca-text-secondary;
+    font-size: $elca-font-size-base;
+  }
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: $elca-layout-card-gap;
+
+  // Use desktop-first approach to match main branch behavior
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-card {
+  @include elca-card;
+  transition: transform 0.2s ease-in-out;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $elca-shadow-lg;
+  }
+
+  mat-card-header {
+    mat-icon {
+      background-color: #e3f2fd;
+      color: #1976d2;
+      border-radius: $elca-border-radius-round;
+    }
+  }
+
+  mat-card-title {
+    @include elca-heading('base');
+    color: $elca-text-primary;
+  }
+
+  mat-card-subtitle {
+    @include elca-body-text;
+    color: $elca-text-secondary;
+  }
+
+  mat-card-actions {
+    button {
+      @include elca-button-primary;
+      @include elca-button-size('base');
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}

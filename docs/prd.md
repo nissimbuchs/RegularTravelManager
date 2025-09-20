@@ -658,6 +658,24 @@ so that **I can maintain accurate team records and support my employees' travel 
 7. Team management actions maintain proper audit trails and respect existing security boundaries
 8. Manager authority validation ensures managers can only access and modify information for their assigned employees
 
+## Epic 6: ELCA Styling Architecture & Implementation
+
+**Epic Goal:** Establish comprehensive ELCA-compliant styling architecture with organized SCSS structure and refactor all existing frontend components to use consistent ELCA branding guidelines. This epic transforms the current basic CSS approach into a professional, maintainable styling system that separates presentation from component logic while ensuring full compliance with ELCA corporate identity standards.
+
+### Story 6.1: ELCA Base Styling Foundation
+
+As a **developer**,
+I want **a structured ELCA-compliant styling architecture with separate SCSS files**,
+so that **all components can consistently use ELCA branding guidelines and maintain separation between styling and component logic**.
+
+#### Acceptance Criteria
+1. Base SCSS Architecture: Create organized SCSS file structure with ELCA variables, mixins, and base styles
+2. ELCA Theme Integration: Implement ELCA coral-red color system with WCAG 2.1 AA compliance
+3. Angular Material Customization: Configure Angular Material theme to use ELCA branding guidelines
+4. Component Style Separation: Refactor existing component CSS files to use SCSS and import base ELCA styles
+5. Build Integration: Ensure SCSS compilation works with Angular build system
+6. Style Documentation: Document ELCA styling architecture and usage patterns for developers
+
 ---
 
 *PRD created using the BMAD-METHOD™ product management framework*

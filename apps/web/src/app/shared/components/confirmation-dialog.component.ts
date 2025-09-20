@@ -40,31 +40,7 @@ export interface ConfirmationDialogData {
       </button>
     </mat-dialog-actions>
   `,
-  styles: [
-    `
-      .dialog-header {
-        margin-bottom: 16px;
-      }
-
-      .dialog-header h2 {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin: 0;
-      }
-
-      .dialog-message {
-        margin: 0;
-        line-height: 1.6;
-        color: rgba(0, 0, 0, 0.87);
-      }
-
-      mat-dialog-actions {
-        padding: 16px 0;
-        gap: 8px;
-      }
-    `,
-  ],
+  styleUrls: ['./confirmation-dialog.component.scss'],
 })
 export class ConfirmationDialogComponent {
   constructor(

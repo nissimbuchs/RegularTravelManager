@@ -31,7 +31,7 @@ import { LoadingService } from '../../core/services/loading.service';
       <mat-card class="login-card">
         <mat-card-header>
           <mat-card-title class="login-title">
-            <mat-icon>business</mat-icon>
+            <div class="elca-logo"></div>
             RegularTravelManager
           </mat-card-title>
           <mat-card-subtitle>Sign in to your account</mat-card-subtitle>
@@ -115,89 +115,7 @@ import { LoadingService } from '../../core/services/loading.service';
       </mat-card>
     </div>
   `,
-  styles: [
-    `
-      .login-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 20px;
-      }
-
-      .login-card {
-        width: 100%;
-        max-width: 400px;
-        padding: 0;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-      }
-
-      .login-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 24px;
-        font-weight: 600;
-        color: #333;
-      }
-
-      .login-form {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        margin-top: 20px;
-      }
-
-      .full-width {
-        width: 100%;
-      }
-
-      .login-button {
-        height: 48px;
-        font-size: 16px;
-        font-weight: 500;
-        margin-top: 10px;
-      }
-
-      .login-spinner {
-        margin-right: 8px;
-      }
-
-      .password-toggle {
-        cursor: pointer;
-      }
-
-      .registration-link {
-        text-align: center;
-        margin-top: 16px;
-        color: #666;
-      }
-
-      .register-button {
-        margin-left: 4px;
-      }
-
-      mat-card-header {
-        padding: 24px 24px 0;
-      }
-
-      mat-card-content {
-        padding: 0 24px 24px;
-      }
-
-      @media (max-width: 480px) {
-        .login-container {
-          padding: 16px;
-        }
-
-        .login-card {
-          max-width: none;
-        }
-      }
-    `,
-  ],
+  styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent implements OnInit {
   loginForm: FormGroup;

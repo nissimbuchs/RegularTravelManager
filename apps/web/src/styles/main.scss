@@ -1,0 +1,390 @@
+// ELCA Main Stylesheet
+// Entry point for all ELCA styling
+
+// Import Google Fonts
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap');
+
+// Angular Material prebuilt theme (temporary)
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+// Base styles (order matters)
+@import 'base/variables';
+@import 'base/mixins';
+@import 'base/reset';
+
+// Angular Material theme (temporarily disabled for initial build)
+// @import 'themes/angular-material';
+
+// Utilities
+@import 'utils/utilities';
+
+// Global ELCA-specific styles
+body {
+  font-family: $elca-font-family-primary;
+  background-color: $elca-bg-secondary;
+  color: $elca-text-primary;
+}
+
+// ELCA Logo styling
+.elca-logo {
+  width: 84px;
+  height: 18px;
+  margin-right: $elca-spacing-sm;
+  vertical-align: middle;
+  background-image: url('/assets/images/elca-logo.svg');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  display: inline-block;
+}
+
+// Application shell styling
+.app-shell {
+  min-height: 100vh;
+  background-color: $elca-bg-secondary;
+}
+
+// Header styling
+.app-header {
+  background-color: $elca-bg-primary;
+  border-bottom: 1px solid $elca-border-secondary;
+  box-shadow: $elca-shadow-sm;
+  position: sticky;
+  top: 0;
+  z-index: $elca-z-sticky;
+
+  .app-title {
+    @include elca-heading('sm');
+    margin: 0;
+  }
+
+  .user-menu {
+    color: $elca-text-primary;
+
+    &:hover {
+      background-color: $elca-coral-red-light;
+      color: $elca-coral-red;
+    }
+  }
+}
+
+// Sidebar styling
+.app-sidebar {
+  background-color: $elca-bg-primary;
+  border-right: 1px solid $elca-border-secondary;
+  height: calc(100vh - 64px);
+  overflow-y: auto;
+}
+
+// Main content area
+.main-content {
+  background-color: $elca-bg-secondary;
+  min-height: calc(100vh - 64px);
+  padding: $elca-spacing-xl;
+
+  .content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+
+// Page titles
+.page-title {
+  @include elca-heading('lg');
+  margin-bottom: $elca-spacing-xl;
+  color: $elca-coral-red;
+}
+
+.page-subtitle {
+  @include elca-text-secondary;
+  margin-bottom: $elca-spacing-lg;
+}
+
+// Form styling
+.form-section {
+  background-color: $elca-bg-primary;
+  border-radius: $elca-border-radius-lg;
+  padding: $elca-spacing-xl;
+  margin-bottom: $elca-spacing-xl;
+  box-shadow: $elca-shadow-sm;
+  border: 1px solid $elca-border-secondary;
+
+  .section-title {
+    @include elca-heading('base');
+    margin-bottom: $elca-spacing-lg;
+    color: $elca-coral-red;
+  }
+}
+
+// Card styling
+.elca-card {
+  @include elca-card;
+  padding: $elca-spacing-xl;
+  margin-bottom: $elca-spacing-lg;
+
+  .card-title {
+    @include elca-heading('base');
+    margin-bottom: $elca-spacing-md;
+    color: $elca-coral-red;
+  }
+
+  .card-subtitle {
+    @include elca-text-secondary;
+    margin-bottom: $elca-spacing-base;
+  }
+
+  &.hoverable {
+    @include elca-card-hover;
+  }
+}
+
+// Button enhancements
+.elca-btn-primary {
+  @include elca-button-primary;
+  @include elca-button-size('base');
+}
+
+.elca-btn-secondary {
+  @include elca-button-secondary;
+  @include elca-button-size('base');
+}
+
+.elca-btn-ghost {
+  @include elca-button-ghost;
+  @include elca-button-size('base');
+}
+
+.elca-btn-sm {
+  @include elca-button-size('sm');
+}
+
+.elca-btn-lg {
+  @include elca-button-size('lg');
+}
+
+// Status indicators
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: $elca-spacing-xs;
+  font-size: $elca-font-size-sm;
+  font-weight: $elca-font-weight-medium;
+
+  .status-icon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  &.pending {
+    color: $elca-status-pending;
+    .status-icon {
+      background-color: $elca-status-pending;
+    }
+  }
+
+  &.approved {
+    color: $elca-status-approved;
+    .status-icon {
+      background-color: $elca-status-approved;
+    }
+  }
+
+  &.rejected {
+    color: $elca-status-rejected;
+    .status-icon {
+      background-color: $elca-status-rejected;
+    }
+  }
+
+  &.withdrawn {
+    color: $elca-status-withdrawn;
+    .status-icon {
+      background-color: $elca-status-withdrawn;
+    }
+  }
+}
+
+// Data table styling
+.data-table {
+  background-color: $elca-bg-primary;
+  border-radius: $elca-border-radius-lg;
+  overflow: hidden;
+  box-shadow: $elca-shadow-sm;
+  border: 1px solid $elca-border-secondary;
+
+  .table-header {
+    background-color: $elca-bg-tertiary;
+    padding: $elca-spacing-base $elca-spacing-xl;
+    border-bottom: 1px solid $elca-border-primary;
+
+    .table-title {
+      @include elca-heading('sm');
+      margin: 0;
+      color: $elca-coral-red;
+    }
+
+    .table-actions {
+      display: flex;
+      gap: $elca-spacing-sm;
+    }
+  }
+
+  .table-body {
+    .table-row {
+      padding: $elca-spacing-base $elca-spacing-xl;
+      border-bottom: 1px solid $elca-border-secondary;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: $elca-coral-red-light;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    .table-cell {
+      &.currency {
+        @include elca-currency;
+      }
+    }
+  }
+}
+
+// Loading states
+.loading-container {
+  @include elca-flex-center;
+  min-height: 200px;
+  color: $elca-text-secondary;
+}
+
+.loading-spinner {
+  border: 2px solid $elca-border-secondary;
+  border-top: 2px solid $elca-coral-red;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  margin-right: $elca-spacing-sm;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Error states
+.error-container {
+  @include elca-flex-center;
+  flex-direction: column;
+  min-height: 200px;
+  color: $elca-error;
+  text-align: center;
+  padding: $elca-spacing-xl;
+
+  .error-icon {
+    font-size: 48px;
+    margin-bottom: $elca-spacing-base;
+    opacity: 0.7;
+  }
+
+  .error-message {
+    @include elca-heading('sm');
+    margin-bottom: $elca-spacing-sm;
+  }
+
+  .error-details {
+    @include elca-text-secondary;
+    margin-bottom: $elca-spacing-lg;
+  }
+}
+
+// Empty states
+.empty-state {
+  @include elca-flex-center;
+  flex-direction: column;
+  min-height: 200px;
+  color: $elca-text-tertiary;
+  text-align: center;
+  padding: $elca-spacing-xl;
+
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: $elca-spacing-base;
+    opacity: 0.5;
+  }
+
+  .empty-message {
+    @include elca-heading('sm');
+    color: $elca-text-secondary;
+    margin-bottom: $elca-spacing-sm;
+  }
+
+  .empty-details {
+    @include elca-text-secondary;
+    margin-bottom: $elca-spacing-lg;
+  }
+}
+
+// Responsive design - Use desktop-first approach consistently
+.main-content {
+  padding: $elca-spacing-2xl;
+}
+
+.form-section,
+.elca-card {
+  padding: $elca-spacing-2xl;
+}
+
+@media (max-width: #{$elca-breakpoint-md - 1px}) {
+  .main-content {
+    padding: $elca-spacing-base;
+  }
+
+  .form-section,
+  .elca-card {
+    padding: $elca-spacing-base;
+  }
+
+  .app-header {
+    .app-title {
+      font-size: $elca-font-size-base;
+    }
+  }
+
+  // Mobile-friendly touch targets
+  .elca-btn-primary,
+  .elca-btn-secondary,
+  .elca-btn-ghost {
+    min-height: 44px;
+    padding: $elca-spacing-md $elca-spacing-base;
+  }
+}
+
+// Print styles
+@media print {
+  .app-header,
+  .app-sidebar,
+  .no-print {
+    display: none !important;
+  }
+
+  .main-content {
+    padding: 0;
+    background: white;
+  }
+
+  .elca-card,
+  .form-section {
+    box-shadow: none;
+    border: 1px solid #ccc;
+    page-break-inside: avoid;
+  }
+
+  .page-title {
+    color: #000;
+  }
+}

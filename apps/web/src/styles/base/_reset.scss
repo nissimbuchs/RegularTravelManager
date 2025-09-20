@@ -1,0 +1,319 @@
+// ELCA CSS Reset and Base Styles
+// Modern CSS reset with ELCA-specific base styles
+
+// Import variables
+@import './variables';
+
+// Modern CSS Reset
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: $elca-font-size-base;
+  line-height: $elca-line-height-base;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: $elca-font-family-primary;
+  font-size: $elca-font-size-base;
+  font-weight: $elca-font-weight-normal;
+  line-height: $elca-line-height-base;
+  color: $elca-text-primary;
+  background-color: $elca-bg-secondary;
+  min-height: 100vh;
+}
+
+// Remove list styles on ul, ol elements with a list role
+ul[role="list"],
+ol[role="list"] {
+  list-style: none;
+}
+
+// Remove default margin and padding from lists
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+
+// Set core body defaults
+body {
+  min-height: 100vh;
+  text-rendering: optimizeSpeed;
+}
+
+// A elements that don't have a class get default styles
+a:not([class]) {
+  text-decoration-skip-ink: auto;
+}
+
+// Make images easier to work with
+img,
+picture,
+svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+// Inherit fonts for inputs and buttons
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+// Remove default button styles
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+// Remove all animations, transitions and smooth scroll for people that prefer not to see them
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// ELCA Base Typography
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: $elca-font-family-primary;
+  font-weight: $elca-font-weight-semibold;
+  line-height: $elca-line-height-tight;
+  color: $elca-coral-red;
+  margin: 0;
+}
+
+h1 {
+  font-size: $elca-font-size-3xl;
+}
+
+h2 {
+  font-size: $elca-font-size-2xl;
+}
+
+h3 {
+  font-size: $elca-font-size-xl;
+}
+
+h4 {
+  font-size: $elca-font-size-lg;
+}
+
+h5 {
+  font-size: $elca-font-size-base;
+}
+
+h6 {
+  font-size: $elca-font-size-sm;
+}
+
+p {
+  margin: 0;
+  line-height: $elca-line-height-base;
+}
+
+// Links
+a {
+  color: $elca-link-primary;
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: $elca-link-hover;
+    text-decoration: underline;
+  }
+
+  &:focus {
+    outline: 2px solid $elca-coral-red;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+// Code elements
+code,
+pre {
+  font-family: $elca-font-family-monospace;
+  font-size: 0.875em;
+}
+
+code {
+  padding: 2px 4px;
+  background-color: $elca-bg-tertiary;
+  border-radius: $elca-border-radius-sm;
+  color: $elca-text-primary;
+}
+
+pre {
+  padding: $elca-spacing-base;
+  background-color: $elca-bg-tertiary;
+  border-radius: $elca-border-radius-base;
+  overflow-x: auto;
+
+  code {
+    padding: 0;
+    background: none;
+  }
+}
+
+// Form elements
+input,
+textarea,
+select {
+  border: 1px solid $elca-border-primary;
+  border-radius: $elca-border-radius-base;
+  padding: $elca-spacing-sm $elca-spacing-md;
+  background-color: $elca-bg-primary;
+  color: $elca-text-primary;
+
+  &:focus {
+    outline: none;
+    border-color: $elca-coral-red;
+    box-shadow: 0 0 0 2px $elca-coral-red-light;
+  }
+}
+
+// Tables
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  text-align: left;
+  padding: $elca-spacing-sm $elca-spacing-md;
+  border-bottom: 1px solid $elca-border-secondary;
+}
+
+th {
+  font-weight: $elca-font-weight-semibold;
+  background-color: $elca-bg-tertiary;
+  color: $elca-text-primary;
+}
+
+// Selection
+::selection {
+  background-color: $elca-coral-red-light;
+  color: $elca-coral-red-active;
+}
+
+::-moz-selection {
+  background-color: $elca-coral-red-light;
+  color: $elca-coral-red-active;
+}
+
+// Scrollbar styling (webkit)
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $elca-bg-tertiary;
+  border-radius: $elca-border-radius-base;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $elca-border-primary;
+  border-radius: $elca-border-radius-base;
+
+  &:hover {
+    background: $elca-text-tertiary;
+  }
+}
+
+// Firefox scrollbar
+* {
+  scrollbar-width: thin;
+  scrollbar-color: $elca-border-primary $elca-bg-tertiary;
+}
+
+// Print styles
+@media print {
+  *,
+  *::before,
+  *::after {
+    background: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a,
+  a:visited {
+    text-decoration: underline;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+  }
+
+  abbr[title]::after {
+    content: " (" attr(title) ")";
+  }
+
+  a[href^="#"]::after,
+  a[href^="javascript:"]::after {
+    content: "";
+  }
+
+  pre {
+    white-space: pre-wrap !important;
+  }
+
+  pre,
+  blockquote {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr,
+  img {
+    page-break-inside: avoid;
+  }
+
+  p,
+  h2,
+  h3 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+}

@@ -1,0 +1,287 @@
+@import '../../../../styles/base/variables';
+@import '../../../../styles/base/mixins';
+
+.user-management-container {
+  padding: $elca-layout-container-padding;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header-card {
+  @include elca-card;
+  margin-bottom: $elca-layout-card-gap;
+
+  mat-card-title {
+    @include elca-heading('lg');
+    display: flex;
+    align-items: center;
+    gap: $elca-spacing-sm;
+    color: $elca-coral-red;
+  }
+}
+
+.filter-form {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: $elca-spacing-base;
+  align-items: start;
+
+  // Use desktop-first approach to match main branch behavior
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.filter-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: $elca-spacing-md;
+
+  button {
+    &.mat-mdc-raised-button.mat-primary {
+      @include elca-button-primary;
+      @include elca-button-size('base');
+    }
+
+    &.mat-mdc-outlined-button {
+      @include elca-button-secondary;
+      @include elca-button-size('base');
+    }
+  }
+
+  @media (max-width: 768px) {
+    justify-content: stretch;
+
+    button {
+      flex: 1;
+    }
+  }
+}
+
+.table-card {
+  @include elca-card;
+  min-height: 400px;
+  padding: $elca-spacing-lg;
+}
+
+.table-container {
+  overflow-x: auto;
+  border-radius: $elca-border-radius-base;
+}
+
+.user-table {
+  width: 100%;
+  min-width: 1000px;
+  background-color: $elca-bg-primary;
+
+  .mat-mdc-header-row {
+    background-color: $elca-bg-tertiary;
+
+    .mat-mdc-header-cell {
+      color: $elca-text-primary;
+      font-weight: $elca-font-weight-semibold;
+      border-bottom: 1px solid $elca-border-primary;
+    }
+  }
+
+  .mat-mdc-row {
+    &:hover {
+      background-color: $elca-coral-red-light;
+    }
+
+    .mat-mdc-cell {
+      color: $elca-text-primary;
+      border-bottom: 1px solid $elca-border-secondary;
+      padding: $elca-spacing-base $elca-spacing-md;
+    }
+  }
+}
+
+.loading-container {
+  @include elca-flex-center;
+  flex-direction: column;
+  padding: $elca-spacing-4xl $elca-spacing-lg;
+  gap: $elca-spacing-base;
+  color: $elca-text-secondary;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-xs;
+}
+
+.user-name {
+  display: flex;
+  align-items: center;
+  gap: $elca-spacing-sm;
+  color: $elca-text-primary;
+  font-weight: $elca-font-weight-medium;
+}
+
+.employee-number {
+  color: $elca-text-secondary;
+  font-size: $elca-font-size-sm;
+}
+
+.user-email {
+  color: $elca-text-secondary;
+  font-size: $elca-font-size-sm;
+}
+
+.no-manager {
+  color: $elca-text-tertiary;
+  font-style: italic;
+  font-size: $elca-font-size-sm;
+}
+
+.activity-info {
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-xs;
+}
+
+.request-count {
+  display: flex;
+  align-items: center;
+  gap: $elca-spacing-xs;
+  font-size: $elca-font-size-sm;
+  color: $elca-text-primary;
+}
+
+.verification-status {
+  display: flex;
+  align-items: center;
+  gap: $elca-spacing-xs;
+  font-size: $elca-font-size-xs;
+  color: $elca-warning;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  gap: $elca-spacing-xs;
+
+  button {
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+    min-width: 36px;
+
+    &.mat-mdc-icon-button {
+      border-radius: $elca-border-radius-base;
+
+      &:hover {
+        background-color: $elca-coral-red-light;
+        color: $elca-coral-red;
+      }
+
+      &.mat-primary {
+        color: $elca-coral-red;
+
+        &:hover {
+          background-color: $elca-coral-red;
+          color: white;
+        }
+      }
+
+      &.danger-action {
+        color: $elca-error !important;
+
+        &:hover {
+          background-color: $elca-error;
+          color: white;
+        }
+      }
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+.no-results {
+  @include elca-flex-center;
+  flex-direction: column;
+  padding: $elca-spacing-4xl $elca-spacing-lg;
+  gap: $elca-spacing-base;
+  color: $elca-text-secondary;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: $elca-text-tertiary;
+    margin-bottom: $elca-spacing-base;
+  }
+
+  h3 {
+    @include elca-heading('base');
+    color: $elca-text-primary;
+    margin: 0;
+  }
+
+  p {
+    @include elca-body-text;
+    color: $elca-text-secondary;
+    text-align: center;
+    margin: 0;
+  }
+}
+
+// Form field styling
+mat-form-field {
+  .mat-mdc-form-field {
+    .mdc-text-field {
+      border-radius: $elca-border-radius-base;
+
+      &:not(.mdc-text-field--disabled) {
+        .mdc-text-field__input {
+          color: $elca-text-primary;
+        }
+
+        .mdc-floating-label {
+          color: $elca-text-secondary;
+        }
+      }
+
+      &.mdc-text-field--focused {
+        .mdc-floating-label {
+          color: $elca-coral-red;
+        }
+
+        .mdc-line-ripple::after {
+          border-bottom-color: $elca-coral-red;
+        }
+
+        .mdc-notched-outline {
+          .mdc-notched-outline__leading,
+          .mdc-notched-outline__notch,
+          .mdc-notched-outline__trailing {
+            border-color: $elca-coral-red;
+            border-width: 2px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .user-management-container {
+    padding: $elca-spacing-md;
+  }
+
+  .user-table {
+    font-size: $elca-font-size-sm;
+  }
+}

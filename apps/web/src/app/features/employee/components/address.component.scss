@@ -1,0 +1,222 @@
+@import '../../../../styles/base/variables';
+@import '../../../../styles/base/mixins';
+
+.address-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: $elca-layout-container-padding;
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-xl;
+}
+
+// Card styling for different address sections
+.current-address-card {
+  @include elca-card;
+
+  mat-card-header mat-icon {
+    border-radius: $elca-border-radius-round;
+    background-color: #e3f2fd;
+    color: #1976d2;
+  }
+}
+
+.address-form-card {
+  @include elca-card;
+
+  mat-card-header mat-icon {
+    border-radius: $elca-border-radius-round;
+    background-color: #e8f5e8;
+    color: #2e7d32;
+  }
+}
+
+.address-history-card {
+  @include elca-card;
+
+  mat-card-header mat-icon {
+    border-radius: $elca-border-radius-round;
+    background-color: #fff3e0;
+    color: #f57c00;
+  }
+}
+
+// Address display styling
+.address-display {
+  display: flex;
+  flex-direction: column;
+  gap: $elca-spacing-base;
+}
+
+.address-info {
+  display: flex;
+  align-items: flex-start;
+  gap: $elca-spacing-sm;
+
+  .address-icon {
+    color: #1976d2;
+    margin-top: 2px;
+  }
+
+  .address-text {
+    flex: 1;
+
+    .street {
+      @include elca-heading('sm');
+      font-weight: $elca-font-weight-medium;
+      margin-bottom: $elca-spacing-xs;
+      color: $elca-text-primary;
+    }
+
+    .city-postal {
+      color: $elca-text-secondary;
+      margin-bottom: $elca-spacing-xs;
+    }
+
+    .country {
+      color: $elca-text-tertiary;
+      font-size: $elca-font-size-sm;
+    }
+  }
+}
+
+.coordinates {
+  display: flex;
+  align-items: center;
+  gap: $elca-spacing-xs;
+  padding: $elca-spacing-xs $elca-spacing-sm;
+  background-color: $elca-bg-secondary;
+  border-radius: $elca-border-radius-base;
+  font-family: $elca-font-family-monospace;
+  font-size: $elca-font-size-sm;
+
+  .coords-icon {
+    color: #4caf50;
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+// No address state
+.no-address {
+  @include elca-flex-center;
+  text-align: center;
+  padding: $elca-spacing-2xl $elca-spacing-xl;
+  color: $elca-text-tertiary;
+
+  mat-icon {
+    font-size: 4rem;
+    width: 4rem;
+    height: 4rem;
+    color: #ccc;
+    margin-bottom: $elca-spacing-base;
+  }
+
+  h3 {
+    @include elca-heading('base');
+    margin: $elca-spacing-base 0 $elca-spacing-xs 0;
+    color: $elca-text-primary;
+  }
+
+  p {
+    @include elca-body-text;
+    color: $elca-text-secondary;
+  }
+}
+
+// Form styling
+.form-row {
+  display: flex;
+  gap: $elca-spacing-base;
+  margin-bottom: $elca-spacing-base;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.city-field {
+  flex: 2;
+}
+
+.postal-field {
+  flex: 1;
+}
+
+.button-spinner {
+  margin-right: $elca-spacing-xs;
+}
+
+// Info grid for address history
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: $elca-spacing-xl;
+  margin-top: $elca-spacing-base;
+}
+
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: $elca-spacing-sm;
+  padding: $elca-spacing-base;
+  background-color: $elca-bg-secondary;
+  border-radius: $elca-border-radius-lg;
+
+  mat-icon {
+    color: $elca-text-tertiary;
+    margin-top: 2px;
+  }
+
+  strong {
+    @include elca-heading('xs');
+    display: block;
+    margin-bottom: $elca-spacing-xs;
+    color: $elca-text-primary;
+  }
+
+  p {
+    @include elca-body-text;
+    margin: 0;
+    color: $elca-text-secondary;
+  }
+}
+
+// Card actions styling
+mat-card-actions {
+  button {
+    @include elca-button-primary;
+    @include elca-button-size('base');
+
+    &[color="primary"] {
+      @include elca-button-primary;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Responsive design - Use desktop-first approach to match main branch behavior
+@media (max-width: 768px) {
+  .address-container {
+    padding: $elca-spacing-md;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: $elca-spacing-xs;
+  }
+
+  .city-field,
+  .postal-field {
+    flex: 1;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}

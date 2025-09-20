@@ -1,0 +1,36 @@
+@import '../../../../styles/base/variables';
+@import '../../../../styles/base/mixins';
+
+.projects-container {
+  @include elca-container;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $elca-layout-container-padding;
+
+  mat-card {
+    @include elca-card;
+  }
+
+  mat-card-header {
+    mat-icon {
+      @include elca-avatar-icon;
+      background-color: $elca-orange-light;
+      color: $elca-orange;
+    }
+  }
+
+  mat-card-title {
+    @include elca-heading('base');
+    color: $elca-text-primary;
+  }
+
+  mat-card-content {
+    padding: $elca-spacing-lg;
+
+    p {
+      @include elca-body-text;
+      color: $elca-text-secondary;
+      font-style: italic;
+    }
+  }
+}

@@ -1,0 +1,324 @@
+// ELCA Utility Classes
+// Utility classes for common styling patterns
+
+// Import variables and mixins
+@import '../base/variables';
+@import '../base/mixins';
+
+// Display utilities
+.elca-block { display: block !important; }
+.elca-inline { display: inline !important; }
+.elca-inline-block { display: inline-block !important; }
+.elca-flex { display: flex !important; }
+.elca-inline-flex { display: inline-flex !important; }
+.elca-grid { display: grid !important; }
+.elca-hidden { display: none !important; }
+
+// Flexbox utilities
+.elca-flex-row { flex-direction: row !important; }
+.elca-flex-column { flex-direction: column !important; }
+.elca-flex-wrap { flex-wrap: wrap !important; }
+.elca-flex-nowrap { flex-wrap: nowrap !important; }
+.elca-flex-center { @include elca-flex-center; }
+.elca-flex-between { @include elca-flex-between; }
+.elca-justify-start { justify-content: flex-start !important; }
+.elca-justify-center { justify-content: center !important; }
+.elca-justify-end { justify-content: flex-end !important; }
+.elca-justify-between { justify-content: space-between !important; }
+.elca-justify-around { justify-content: space-around !important; }
+.elca-items-start { align-items: flex-start !important; }
+.elca-items-center { align-items: center !important; }
+.elca-items-end { align-items: flex-end !important; }
+.elca-items-stretch { align-items: stretch !important; }
+.elca-flex-1 { flex: 1 !important; }
+.elca-flex-none { flex: none !important; }
+.elca-flex-grow { flex-grow: 1 !important; }
+.elca-flex-shrink { flex-shrink: 1 !important; }
+
+// Position utilities
+.elca-relative { position: relative !important; }
+.elca-absolute { position: absolute !important; }
+.elca-fixed { position: fixed !important; }
+.elca-sticky { position: sticky !important; }
+
+// Width utilities
+.elca-w-full { width: 100% !important; }
+.elca-w-auto { width: auto !important; }
+.elca-w-fit { width: fit-content !important; }
+.elca-w-min { width: min-content !important; }
+.elca-w-max { width: max-content !important; }
+
+// Height utilities
+.elca-h-full { height: 100% !important; }
+.elca-h-screen { height: 100vh !important; }
+.elca-h-auto { height: auto !important; }
+.elca-h-fit { height: fit-content !important; }
+
+// Spacing utilities (using ELCA spacing system)
+@each $name, $size in (
+  'xs': $elca-spacing-xs,
+  'sm': $elca-spacing-sm,
+  'md': $elca-spacing-md,
+  'base': $elca-spacing-base,
+  'lg': $elca-spacing-lg,
+  'xl': $elca-spacing-xl,
+  '2xl': $elca-spacing-2xl,
+  '3xl': $elca-spacing-3xl,
+  '4xl': $elca-spacing-4xl
+) {
+  // Margin utilities
+  .elca-m-#{$name} { margin: $size !important; }
+  .elca-mt-#{$name} { margin-top: $size !important; }
+  .elca-mr-#{$name} { margin-right: $size !important; }
+  .elca-mb-#{$name} { margin-bottom: $size !important; }
+  .elca-ml-#{$name} { margin-left: $size !important; }
+  .elca-mx-#{$name} {
+    margin-left: $size !important;
+    margin-right: $size !important;
+  }
+  .elca-my-#{$name} {
+    margin-top: $size !important;
+    margin-bottom: $size !important;
+  }
+
+  // Padding utilities
+  .elca-p-#{$name} { padding: $size !important; }
+  .elca-pt-#{$name} { padding-top: $size !important; }
+  .elca-pr-#{$name} { padding-right: $size !important; }
+  .elca-pb-#{$name} { padding-bottom: $size !important; }
+  .elca-pl-#{$name} { padding-left: $size !important; }
+  .elca-px-#{$name} {
+    padding-left: $size !important;
+    padding-right: $size !important;
+  }
+  .elca-py-#{$name} {
+    padding-top: $size !important;
+    padding-bottom: $size !important;
+  }
+
+  // Gap utilities (for flexbox and grid)
+  .elca-gap-#{$name} { gap: $size !important; }
+  .elca-gap-x-#{$name} { column-gap: $size !important; }
+  .elca-gap-y-#{$name} { row-gap: $size !important; }
+}
+
+// Zero spacing
+.elca-m-0 { margin: 0 !important; }
+.elca-p-0 { padding: 0 !important; }
+
+// Text alignment
+.elca-text-left { text-align: left !important; }
+.elca-text-center { text-align: center !important; }
+.elca-text-right { text-align: right !important; }
+.elca-text-justify { text-align: justify !important; }
+
+// Text utilities
+.elca-text-truncate { @include elca-text-truncate; }
+.elca-text-clamp-2 { @include elca-text-clamp(2); }
+.elca-text-clamp-3 { @include elca-text-clamp(3); }
+
+// Font size utilities
+.elca-text-xs { font-size: $elca-font-size-xs !important; }
+.elca-text-sm { font-size: $elca-font-size-sm !important; }
+.elca-text-base { font-size: $elca-font-size-base !important; }
+.elca-text-lg { font-size: $elca-font-size-lg !important; }
+.elca-text-xl { font-size: $elca-font-size-xl !important; }
+.elca-text-2xl { font-size: $elca-font-size-2xl !important; }
+.elca-text-3xl { font-size: $elca-font-size-3xl !important; }
+
+// Font weight utilities
+.elca-font-light { font-weight: $elca-font-weight-light !important; }
+.elca-font-normal { font-weight: $elca-font-weight-normal !important; }
+.elca-font-medium { font-weight: $elca-font-weight-medium !important; }
+.elca-font-semibold { font-weight: $elca-font-weight-semibold !important; }
+.elca-font-bold { font-weight: $elca-font-weight-bold !important; }
+
+// Color utilities
+.elca-text-primary { color: $elca-text-primary !important; }
+.elca-text-secondary { color: $elca-text-secondary !important; }
+.elca-text-tertiary { color: $elca-text-tertiary !important; }
+.elca-text-coral { color: $elca-coral-red !important; }
+.elca-text-success { color: $elca-success !important; }
+.elca-text-warning { color: $elca-warning !important; }
+.elca-text-error { color: $elca-error !important; }
+.elca-text-info { color: $elca-info !important; }
+
+// Background color utilities
+.elca-bg-primary { background-color: $elca-bg-primary !important; }
+.elca-bg-secondary { background-color: $elca-bg-secondary !important; }
+.elca-bg-tertiary { background-color: $elca-bg-tertiary !important; }
+.elca-bg-coral { background-color: $elca-coral-red !important; }
+.elca-bg-coral-light { background-color: $elca-coral-red-light !important; }
+.elca-bg-success { background-color: $elca-success !important; }
+.elca-bg-warning { background-color: $elca-warning !important; }
+.elca-bg-error { background-color: $elca-error !important; }
+.elca-bg-info { background-color: $elca-info !important; }
+
+// Border utilities
+.elca-border { border: 1px solid $elca-border-primary !important; }
+.elca-border-0 { border: 0 !important; }
+.elca-border-t { border-top: 1px solid $elca-border-primary !important; }
+.elca-border-r { border-right: 1px solid $elca-border-primary !important; }
+.elca-border-b { border-bottom: 1px solid $elca-border-primary !important; }
+.elca-border-l { border-left: 1px solid $elca-border-primary !important; }
+
+// Border color utilities
+.elca-border-primary { border-color: $elca-border-primary !important; }
+.elca-border-secondary { border-color: $elca-border-secondary !important; }
+.elca-border-coral { border-color: $elca-coral-red !important; }
+.elca-border-success { border-color: $elca-success !important; }
+.elca-border-warning { border-color: $elca-warning !important; }
+.elca-border-error { border-color: $elca-error !important; }
+
+// Border radius utilities
+.elca-rounded-none { border-radius: 0 !important; }
+.elca-rounded-sm { border-radius: $elca-border-radius-sm !important; }
+.elca-rounded { border-radius: $elca-border-radius-base !important; }
+.elca-rounded-lg { border-radius: $elca-border-radius-lg !important; }
+.elca-rounded-xl { border-radius: $elca-border-radius-xl !important; }
+.elca-rounded-full { border-radius: $elca-border-radius-round !important; }
+
+// Shadow utilities
+.elca-shadow-none { box-shadow: none !important; }
+.elca-shadow-sm { box-shadow: $elca-shadow-sm !important; }
+.elca-shadow { box-shadow: $elca-shadow-base !important; }
+.elca-shadow-lg { box-shadow: $elca-shadow-lg !important; }
+.elca-shadow-xl { box-shadow: $elca-shadow-xl !important; }
+.elca-shadow-coral { box-shadow: $elca-shadow-coral !important; }
+
+// Cursor utilities
+.elca-cursor-auto { cursor: auto !important; }
+.elca-cursor-default { cursor: default !important; }
+.elca-cursor-pointer { cursor: pointer !important; }
+.elca-cursor-wait { cursor: wait !important; }
+.elca-cursor-text { cursor: text !important; }
+.elca-cursor-move { cursor: move !important; }
+.elca-cursor-help { cursor: help !important; }
+.elca-cursor-not-allowed { cursor: not-allowed !important; }
+
+// User select utilities
+.elca-select-none { user-select: none !important; }
+.elca-select-text { user-select: text !important; }
+.elca-select-all { user-select: all !important; }
+.elca-select-auto { user-select: auto !important; }
+
+// Overflow utilities
+.elca-overflow-auto { overflow: auto !important; }
+.elca-overflow-hidden { overflow: hidden !important; }
+.elca-overflow-visible { overflow: visible !important; }
+.elca-overflow-scroll { overflow: scroll !important; }
+.elca-overflow-x-auto { overflow-x: auto !important; }
+.elca-overflow-x-hidden { overflow-x: hidden !important; }
+.elca-overflow-y-auto { overflow-y: auto !important; }
+.elca-overflow-y-hidden { overflow-y: hidden !important; }
+
+// Opacity utilities
+.elca-opacity-0 { opacity: 0 !important; }
+.elca-opacity-25 { opacity: 0.25 !important; }
+.elca-opacity-50 { opacity: 0.5 !important; }
+.elca-opacity-75 { opacity: 0.75 !important; }
+.elca-opacity-100 { opacity: 1 !important; }
+
+// Z-index utilities
+.elca-z-auto { z-index: auto !important; }
+.elca-z-0 { z-index: 0 !important; }
+.elca-z-dropdown { z-index: $elca-z-dropdown !important; }
+.elca-z-sticky { z-index: $elca-z-sticky !important; }
+.elca-z-fixed { z-index: $elca-z-fixed !important; }
+.elca-z-modal { z-index: $elca-z-modal !important; }
+.elca-z-popover { z-index: $elca-z-popover !important; }
+.elca-z-tooltip { z-index: $elca-z-tooltip !important; }
+
+// Status-specific utility classes
+.elca-status-pending {
+  @include elca-status-badge('pending');
+}
+
+.elca-status-approved {
+  @include elca-status-badge('approved');
+}
+
+.elca-status-rejected {
+  @include elca-status-badge('rejected');
+}
+
+.elca-status-withdrawn {
+  @include elca-status-badge('withdrawn');
+}
+
+// Currency display utilities
+.elca-currency {
+  @include elca-currency('neutral');
+
+  &.positive {
+    @include elca-currency('positive');
+  }
+
+  &.negative {
+    @include elca-currency('negative');
+  }
+
+  &.large {
+    font-size: $elca-font-size-lg;
+    font-weight: $elca-font-weight-semibold;
+  }
+}
+
+// Loading state utilities
+.elca-loading {
+  @include elca-loading-skeleton;
+}
+
+// Screen reader only
+.elca-sr-only {
+  @include elca-sr-only;
+}
+
+// Focus utilities
+.elca-focus-visible {
+  @include elca-focus-visible;
+}
+
+// Responsive visibility utilities
+@include elca-media-sm {
+  .elca-hidden-sm { display: none !important; }
+  .elca-block-sm { display: block !important; }
+  .elca-flex-sm { display: flex !important; }
+}
+
+@include elca-media-md {
+  .elca-hidden-md { display: none !important; }
+  .elca-block-md { display: block !important; }
+  .elca-flex-md { display: flex !important; }
+}
+
+@include elca-media-lg {
+  .elca-hidden-lg { display: none !important; }
+  .elca-block-lg { display: block !important; }
+  .elca-flex-lg { display: flex !important; }
+}
+
+@include elca-media-xl {
+  .elca-hidden-xl { display: none !important; }
+  .elca-block-xl { display: block !important; }
+  .elca-flex-xl { display: flex !important; }
+}
+
+// Mobile-specific utilities (below sm breakpoint)
+@media (max-width: #{$elca-breakpoint-sm - 1px}) {
+  .elca-hidden-mobile { display: none !important; }
+  .elca-block-mobile { display: block !important; }
+  .elca-flex-mobile { display: flex !important; }
+
+  // Touch-friendly spacing for mobile
+  .elca-touch-target {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+}
+
+// Print utilities
+@media print {
+  .elca-print-hidden { display: none !important; }
+  .elca-print-block { display: block !important; }
+}

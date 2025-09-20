@@ -52,7 +52,7 @@ interface NavigationItem {
         [opened]="(isHandset$ | async) === false"
       >
         <mat-toolbar class="sidenav-header">
-          <mat-icon class="app-icon">business</mat-icon>
+          <div class="elca-logo"></div>
           <span class="app-title">RTFM</span>
         </mat-toolbar>
 
@@ -139,138 +139,7 @@ interface NavigationItem {
       </mat-sidenav-content>
     </mat-sidenav-container>
   `,
-  styles: [
-    `
-      .sidenav-container {
-        height: 100vh;
-      }
-
-      .sidenav {
-        width: 250px;
-        background-color: #fafafa;
-        border-right: 1px solid #e0e0e0;
-      }
-
-      .sidenav-header {
-        display: flex;
-        align-items: center;
-        padding: 0 16px;
-        background-color: #1976d2;
-        color: white;
-        min-height: 64px;
-      }
-
-      .app-icon {
-        margin-right: 8px;
-        font-size: 24px;
-      }
-
-      .app-title {
-        font-size: 20px;
-        font-weight: 600;
-      }
-
-      .main-toolbar {
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-
-      .app-title {
-        font-size: 18px;
-        font-weight: 500;
-        margin-left: 12px;
-      }
-
-      .page-title {
-        font-size: 16px;
-        font-weight: 400;
-        text-align: center;
-      }
-
-      .toolbar-spacer {
-        flex: 1 1 auto;
-      }
-
-      .user-menu-trigger {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        color: white;
-      }
-
-      .user-menu-trigger mat-icon {
-        font-size: 24px;
-        height: 24px;
-        width: 24px;
-      }
-
-      .user-menu-header {
-        padding: 16px !important;
-        pointer-events: none;
-      }
-
-      .user-info {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .user-full-name {
-        font-weight: 500;
-        font-size: 14px;
-        color: rgba(0, 0, 0, 0.87);
-      }
-
-      .user-role {
-        font-size: 11px;
-        color: rgba(0, 0, 0, 0.54);
-        font-weight: 500;
-        text-transform: uppercase;
-      }
-
-      .main-content {
-        padding: 20px;
-        min-height: calc(100vh - 64px);
-        background-color: #f5f5f5;
-      }
-
-
-      .active-nav-item {
-        background-color: #e3f2fd;
-        color: #1976d2;
-      }
-
-      .active-nav-item mat-icon {
-        color: #1976d2;
-      }
-
-      .is-mobile .sidenav {
-        width: 100%;
-        max-width: 280px;
-      }
-
-      .is-mobile .main-content {
-        padding: 16px;
-      }
-
-      @media (max-width: 768px) {
-        .main-content {
-          padding: 12px;
-        }
-
-        .app-title {
-          display: none;
-        }
-
-        .page-title {
-          font-size: 16px;
-          font-weight: 500;
-        }
-      }
-    `,
-  ],
+  styleUrls: ['./main-layout.component.scss'],
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
