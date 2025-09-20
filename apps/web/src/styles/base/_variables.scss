@@ -72,6 +72,10 @@ $elca-spacing-2xl: 32px !default;
 $elca-spacing-3xl: 48px !default;
 $elca-spacing-4xl: 64px !default;
 
+// Layout-specific spacing (matches main branch layout exactly)
+$elca-layout-container-padding: 20px !default;  // Main container padding
+$elca-layout-card-gap: 24px !default;           // Gap between cards
+
 // Border Radius
 $elca-border-radius-sm: 2px !default;
 $elca-border-radius-base: 6px !default;

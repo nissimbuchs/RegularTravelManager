@@ -6,7 +6,7 @@
 .manager-dashboard-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: $elca-spacing-xl;
+  padding: $elca-layout-container-padding;
   background-color: $elca-bg-secondary;
   min-height: calc(100vh - 64px);
 }
@@ -105,6 +105,17 @@
 .filter-row button {
   height: 48px;
   margin-bottom: 1.25em;
+
+  &.mat-mdc-raised-button.mat-accent,
+  &.mat-mdc-raised-button.mat-primary {
+    @include elca-button-primary;
+    @include elca-button-size('base');
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
 /* Main Content Layout */
@@ -698,6 +709,7 @@ button:focus,
   outline-offset: 2px;
 }
 
+
 /* Print Styles */
 @media print {
   .employee-panel,
@@ -705,15 +717,15 @@ button:focus,
   .refresh-info {
     display: none;
   }
-  
+
   .main-content {
     flex-direction: column;
   }
-  
+
   .table-container {
     max-width: 100% !important;
   }
-  
+
   .requests-table {
     font-size: 10px;
   }

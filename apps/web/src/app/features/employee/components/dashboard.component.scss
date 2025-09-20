@@ -4,7 +4,7 @@
 .dashboard-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: $elca-spacing-xl;
+  padding: $elca-layout-container-padding;
 }
 
 .welcome-section {
@@ -28,9 +28,10 @@
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: $elca-spacing-xl;
+  gap: $elca-layout-card-gap;
 
-  @include elca-media-md {
+  // Use desktop-first approach to match main branch behavior
+  @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
 }

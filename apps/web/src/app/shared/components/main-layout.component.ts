@@ -53,7 +53,7 @@ interface NavigationItem {
       >
         <mat-toolbar class="sidenav-header">
           <div class="elca-logo"></div>
-          <span class="app-title">RTM</span>
+          <span class="app-title">RTFM</span>
         </mat-toolbar>
 
         <mat-nav-list>

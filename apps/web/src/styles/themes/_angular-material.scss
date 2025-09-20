@@ -128,49 +128,125 @@ $elca-theme: mat.define-light-theme((
 @include mat.all-component-themes($elca-theme);
 
 // Custom component overrides for ELCA styling
-.mat-mdc-button {
-  &.mat-primary {
-    background-color: $elca-coral-red;
-    color: white;
+// Comprehensive Material Button Color Overrides
+button.mat-mdc-raised-button,
+button.mat-mdc-flat-button,
+button.mat-mdc-outlined-button {
+  // Primary color buttons (default Material blue -> ELCA coral-red)
+  &[color="primary"] {
+    background-color: $elca-coral-red !important;
+    color: white !important;
+    border-color: $elca-coral-red !important;
     border-radius: $elca-border-radius-base;
     font-weight: $elca-font-weight-medium;
-    box-shadow: $elca-shadow-coral;
     transition: all 0.2s ease;
 
     &:hover {
-      background-color: $elca-coral-red-hover;
+      background-color: darken($elca-coral-red, 10%) !important;
       transform: translateY(-1px);
       box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
     }
 
     &:active {
-      background-color: $elca-coral-red-active;
+      background-color: darken($elca-coral-red, 15%) !important;
       transform: translateY(0);
     }
 
     &:disabled {
-      background-color: $elca-text-tertiary;
-      color: white;
-      opacity: 0.5;
+      background-color: $elca-text-tertiary !important;
+      color: white !important;
+      opacity: 0.6;
+      cursor: not-allowed;
     }
   }
 
-  &.mat-stroked-button {
-    border-color: $elca-coral-red;
-    color: $elca-coral-red;
+  // Accent color buttons (default Material pink -> ELCA coral-red)
+  &[color="accent"] {
+    background-color: $elca-coral-red !important;
+    color: white !important;
+    border-color: $elca-coral-red !important;
     border-radius: $elca-border-radius-base;
     font-weight: $elca-font-weight-medium;
+    transition: all 0.2s ease;
 
     &:hover {
-      background-color: $elca-coral-red-light;
-      border-color: $elca-coral-red-hover;
-      color: $elca-coral-red-hover;
+      background-color: darken($elca-coral-red, 10%) !important;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
   }
 
-  &.mat-flat-button {
+  // Warn color buttons (keep as ELCA error color)
+  &[color="warn"] {
+    background-color: $elca-error !important;
+    color: white !important;
+    border-color: $elca-error !important;
     border-radius: $elca-border-radius-base;
     font-weight: $elca-font-weight-medium;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: darken($elca-error, 10%) !important;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Stroked/Outlined button overrides
+button.mat-mdc-stroked-button,
+button.mat-mdc-outlined-button {
+  border-radius: $elca-border-radius-base;
+  font-weight: $elca-font-weight-medium;
+  transition: all 0.2s ease;
+
+  &[color="primary"] {
+    border-color: $elca-coral-red !important;
+    color: $elca-coral-red !important;
+
+    &:hover {
+      background-color: $elca-coral-red-light !important;
+      border-color: darken($elca-coral-red, 10%) !important;
+      color: darken($elca-coral-red, 10%) !important;
+    }
+  }
+
+  &[color="accent"] {
+    border-color: $elca-coral-red !important;
+    color: $elca-coral-red !important;
+
+    &:hover {
+      background-color: $elca-coral-red-light !important;
+      border-color: darken($elca-coral-red, 10%) !important;
+      color: darken($elca-coral-red, 10%) !important;
+    }
+  }
+
+  &:not([color]) {
+    @include elca-button-secondary;
+    @include elca-button-size('base');
+  }
+}
+
+// Basic button styles
+button.mat-mdc-button {
+  border-radius: $elca-border-radius-base;
+  font-weight: $elca-font-weight-medium;
+  transition: all 0.2s ease;
+
+  &[color="primary"] {
+    color: $elca-coral-red !important;
+
+    &:hover {
+      background-color: $elca-coral-red-light !important;
+      color: darken($elca-coral-red, 10%) !important;
+    }
   }
 }
 

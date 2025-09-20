@@ -2,7 +2,7 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "../../",
     "outDir": "./dist/out-tsc",
     "strict": true,
     "noImplicitOverride": true,
@@ -19,23 +19,16 @@
     "target": "ES2022",
     "module": "ES2022",
     "useDefineForClassFields": false,
-    "baseUrl": "../../",
     "paths": {
-      "@rtm/shared": ["./packages/shared/src"],
-      "@rtm/travel-allowance": ["./domains/travel-allowance/src"],
-      "@rtm/employee-management": ["./domains/employee-management/src"],
-      "@rtm/project-management": ["./domains/project-management/src"]
+      "@rtm/shared": ["packages/shared/src"],
+      "@rtm/travel-allowance": ["domains/travel-allowance/src"],
+      "@rtm/employee-management": ["domains/employee-management/src"],
+      "@rtm/project-management": ["domains/project-management/src"]
     },
     "lib": [
       "ES2022",
       "dom"
-    ],
-    "paths": {
-      "@rtm/shared": ["../../packages/shared/src"],
-      "@rtm/travel-allowance": ["../../domains/travel-allowance/src"],
-      "@rtm/employee-management": ["../../domains/employee-management/src"],
-      "@rtm/project-management": ["../../domains/project-management/src"]
-    }
+    ]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

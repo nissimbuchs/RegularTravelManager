@@ -53,16 +53,55 @@
   top: 0;
   z-index: 100;
   box-shadow: $elca-shadow-sm;
+  display: flex;
+  align-items: center;
 
-  .toolbar-title {
+  // Override Material primary color with ELCA coral-red
+  &.mat-toolbar.mat-primary {
+    background-color: $elca-coral-red !important;
+    color: white !important;
+  }
+
+  .app-title {
     @include elca-heading('sm');
     font-size: 18px;
     font-weight: $elca-font-weight-medium;
     color: white;
+
+    // Hide app title on mobile, show on desktop
+    @media (max-width: 768px) {
+      display: none !important;
+    }
+  }
+
+  .page-title {
+    font-family: $elca-font-family-primary;
+    font-size: 18px;
+    font-weight: $elca-font-weight-medium;
+    color: white;
+    text-align: center;
+    line-height: normal;
+    margin: 0;
+
+    // Show page title on mobile, hide on desktop
+    @media (min-width: 769px) {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      display: block;
+      text-align: left;
+      flex: 1;
+    }
   }
 
   .toolbar-spacer {
     flex: 1 1 auto;
+
+    // Hide spacers on mobile to allow page title to take full space
+    @media (max-width: 768px) {
+      display: none;
+    }
   }
 
   button[mat-icon-button] {
@@ -75,7 +114,7 @@
 }
 
 .main-content {
-  padding: $elca-spacing-xl;
+  padding: $elca-layout-container-padding;
   min-height: calc(100vh - 64px);
   background-color: $elca-bg-secondary;
   position: relative;
@@ -157,8 +196,8 @@ mat-nav-list {
   }
 }
 
-// Responsive design
-@include elca-media-md {
+// Responsive design - Use desktop-first approach to match main branch behavior
+@media (max-width: 768px) {
   .main-content {
     padding: $elca-spacing-md;
   }
@@ -168,7 +207,7 @@ mat-nav-list {
   }
 }
 
-@include elca-media-sm {
+@media (max-width: 576px) {
   .main-content {
     padding: $elca-spacing-sm;
   }

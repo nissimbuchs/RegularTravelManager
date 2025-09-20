@@ -208,8 +208,8 @@ mat-dialog-actions {
   }
 }
 
-// Responsive design
-@include elca-media-md {
+// Responsive design - Use desktop-first approach to match main branch behavior
+@media (max-width: 768px) {
   .subproject-form {
     min-width: auto;
     max-width: 100%;

@@ -4,7 +4,7 @@
 .address-container {
   max-width: 800px;
   margin: 0 auto;
-  padding: $elca-spacing-xl;
+  padding: $elca-layout-container-padding;
   display: flex;
   flex-direction: column;
   gap: $elca-spacing-xl;
@@ -200,8 +200,8 @@ mat-card-actions {
   }
 }
 
-// Responsive design
-@include elca-media-md {
+// Responsive design - Use desktop-first approach to match main branch behavior
+@media (max-width: 768px) {
   .address-container {
     padding: $elca-spacing-md;
   }

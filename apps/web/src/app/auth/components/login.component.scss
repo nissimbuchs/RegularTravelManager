@@ -5,11 +5,7 @@
   @include elca-flex-center;
   min-height: 100vh;
   background: linear-gradient(135deg, $elca-coral-red 0%, darken($elca-coral-red, 10%) 100%);
-  padding: $elca-spacing-base;
-
-  @include elca-media-sm {
-    padding: $elca-spacing-md;
-  }
+  padding: $elca-layout-container-padding;
 }
 
 .login-card {
@@ -20,7 +16,8 @@
   border-radius: $elca-border-radius-lg;
   box-shadow: $elca-shadow-xl;
 
-  @include elca-media-sm {
+  // Use desktop-first approach to match main branch behavior
+  @media (max-width: 480px) {
     max-width: none;
     margin: $elca-spacing-xs;
   }
@@ -99,6 +96,23 @@ mat-form-field {
   margin-top: $elca-spacing-xs;
   font-weight: $elca-font-weight-medium;
 
+  // High specificity override to ensure ELCA colors always apply
+  &.mat-mdc-raised-button.mat-primary {
+    background-color: $elca-coral-red !important;
+    color: white !important;
+    border-color: $elca-coral-red !important;
+
+    &:hover:not(:disabled) {
+      background-color: $elca-coral-red-hover !important;
+      border-color: $elca-coral-red-hover !important;
+    }
+
+    &:active {
+      background-color: $elca-coral-red-active !important;
+      border-color: $elca-coral-red-active !important;
+    }
+  }
+
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -154,14 +168,10 @@ mat-card-content {
   padding: 0 $elca-spacing-xl $elca-spacing-xl;
 }
 
-// Responsive design
-@include elca-media-sm {
+// Responsive design - mobile adjustments
+@media (max-width: 480px) {
   .login-container {
     padding: $elca-spacing-md;
-  }
-
-  .login-card {
-    max-width: none;
   }
 
   mat-card-header,

@@ -5,7 +5,7 @@
   @include elca-container;
   max-width: 1200px;
   margin: 0 auto;
-  padding: $elca-spacing-xl;
+  padding: $elca-layout-container-padding;
 
   mat-card {
     @include elca-card;

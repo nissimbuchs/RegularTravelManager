@@ -329,16 +329,14 @@ body {
   }
 }
 
-// Responsive design
-@include elca-media-md {
-  .main-content {
-    padding: $elca-spacing-2xl;
-  }
+// Responsive design - Use desktop-first approach consistently
+.main-content {
+  padding: $elca-spacing-2xl;
+}
 
-  .form-section,
-  .elca-card {
-    padding: $elca-spacing-2xl;
-  }
+.form-section,
+.elca-card {
+  padding: $elca-spacing-2xl;
 }
 
 @media (max-width: #{$elca-breakpoint-md - 1px}) {

@@ -211,7 +211,8 @@
   }
 }
 
-@include elca-media-md {
+// Use desktop-first approach to match main branch behavior
+@media (max-width: 768px) {
   .project-detail-container {
     padding: $elca-spacing-md;
   }
@@ -240,3 +241,4 @@
     align-items: stretch;
   }
 }
+
