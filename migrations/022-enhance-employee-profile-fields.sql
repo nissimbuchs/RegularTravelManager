@@ -30,8 +30,16 @@ CREATE INDEX IF NOT EXISTS idx_employees_profile_updated_at ON employees(profile
 CREATE INDEX IF NOT EXISTS idx_employees_email_verified_at ON employees(email_verified_at) WHERE email_verified_at IS NOT NULL;
 
 -- Add check constraints for phone number format (Swiss phone numbers)
+-- Note: PostgreSQL doesn't support IF NOT EXISTS for constraints, so we drop if exists first
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_phone_format') THEN
+        ALTER TABLE employees DROP CONSTRAINT chk_phone_format;
+    END IF;
+END $$;
+
 ALTER TABLE employees
-ADD CONSTRAINT IF NOT EXISTS chk_phone_format
+ADD CONSTRAINT chk_phone_format
 CHECK (phone_number IS NULL OR phone_number ~ '^\+?[0-9\s\-\(\)]+$');
 
 -- Add comment descriptions

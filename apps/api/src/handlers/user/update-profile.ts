@@ -31,27 +31,22 @@ export const updateProfileHandler = validateRequest({
   body: {
     firstName: { required: false, type: 'string', minLength: 1, maxLength: 100 },
     lastName: { required: false, type: 'string', minLength: 1, maxLength: 100 },
-    phoneNumber: { required: false, type: 'string', pattern: '^[+0-9\\s\\-()]+$' },
+    phoneNumber: { required: false, type: 'string', pattern: /^[+0-9\s\-()]+$/ },
     homeAddress: {
       required: false,
       type: 'object',
-      properties: {
-        street: { type: 'string', minLength: 1, maxLength: 255 },
-        city: { type: 'string', minLength: 1, maxLength: 100 },
-        postalCode: { type: 'string', minLength: 1, maxLength: 20 },
-        country: { type: 'string', minLength: 1, maxLength: 100 },
-      },
     },
     notificationPreferences: { required: false, type: 'object' },
     privacySettings: { required: false, type: 'object' },
     // Admin-only fields
-    email: { required: false, type: 'string', format: 'email' },
+    email: { required: false, type: 'string' },
     employeeNumber: { required: false, type: 'string' },
     role: { required: false, type: 'string', enum: ['employee', 'manager', 'administrator'] },
     status: { required: false, type: 'string', enum: ['active', 'inactive', 'pending'] },
   },
 })(async (event: APIGatewayProxyEvent, context: Context): Promise<APIGatewayProxyResult> => {
-  const client = await db.connect();
+  const pool = await db.getPool();
+  const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
@@ -64,7 +59,7 @@ export const updateProfileHandler = validateRequest({
 
     if (isAdminRequest) {
       // Admin updating another user's profile
-      if (userContext.role !== 'administrator') {
+      if (!userContext.isAdmin) {
         await client.query('ROLLBACK');
         return formatResponse(
           403,
@@ -78,7 +73,7 @@ export const updateProfileHandler = validateRequest({
       targetUserId = event.pathParameters?.userId || '';
     } else {
       // User updating their own profile - restrict to non-admin fields
-      targetUserId = userContext.cognitoUserId;
+      targetUserId = userContext.sub;
       if (body.email || body.employeeNumber || body.role || body.status) {
         await client.query('ROLLBACK');
         return formatResponse(
@@ -94,7 +89,7 @@ export const updateProfileHandler = validateRequest({
 
     logger.info('Updating user profile', {
       targetUserId,
-      requestedBy: userContext.cognitoUserId,
+      requestedBy: userContext.sub,
       isAdminRequest,
       fieldsToUpdate: Object.keys(body),
     });
@@ -149,7 +144,7 @@ export const updateProfileHandler = validateRequest({
       const sanitizedAddress = sanitizeObject(body.homeAddress);
       const { street, city, postalCode, country } = sanitizedAddress;
 
-      updateFields.push(`home_address = $${paramIndex++}`);
+      updateFields.push(`home_street = $${paramIndex++}`);
       updateValues.push(street);
       updateFields.push(`home_city = $${paramIndex++}`);
       updateValues.push(city);
@@ -159,7 +154,7 @@ export const updateProfileHandler = validateRequest({
       updateValues.push(country || 'Switzerland');
 
       oldValues.homeAddress = {
-        street: currentUser.home_address,
+        street: currentUser.home_street,
         city: currentUser.home_city,
         postalCode: currentUser.home_postal_code,
         country: currentUser.home_country,
@@ -177,7 +172,7 @@ export const updateProfileHandler = validateRequest({
 
         newCoordinates = geocodeResult;
         updateFields.push(
-          `home_coordinates = ST_SetSRID(ST_MakePoint($${paramIndex++}, $${paramIndex++}), 4326)`
+          `home_location = ST_SetSRID(ST_MakePoint($${paramIndex++}, $${paramIndex++}), 4326)`
         );
         updateValues.push(geocodeResult.longitude, geocodeResult.latitude);
 
@@ -265,8 +260,8 @@ export const updateProfileHandler = validateRequest({
       SET ${updateFields.join(', ')}
       WHERE cognito_user_id = $${paramIndex}
       RETURNING *,
-        ST_X(home_coordinates::geometry) as longitude,
-        ST_Y(home_coordinates::geometry) as latitude
+        ST_X(home_location::geometry) as longitude,
+        ST_Y(home_location::geometry) as latitude
     `;
 
     const updateResult = await client.query(updateQuery, updateValues);
@@ -291,7 +286,7 @@ export const updateProfileHandler = validateRequest({
         JSON.stringify(Object.keys(newValues)),
         JSON.stringify(oldValues),
         JSON.stringify(newValues),
-        userContext.cognitoUserId,
+        userContext.sub,
         event.requestContext.identity?.sourceIp || null,
         event.headers['User-Agent'] || null,
       ]
@@ -311,7 +306,7 @@ export const updateProfileHandler = validateRequest({
           sp.cost_per_km,
           tr.days_per_week,
           ST_Distance(
-            ST_Transform(sp.location_coordinates::geometry, 3857),
+            ST_Transform(sp.location::geometry, 3857),
             ST_Transform(ST_SetSRID(ST_MakePoint($1, $2), 4326), 3857)
           ) / 1000 as new_distance
         FROM travel_requests tr
@@ -369,30 +364,23 @@ export const updateProfileHandler = validateRequest({
       phoneNumber: updatedUser.phone_number,
       employeeNumber: updatedUser.employee_id,
       role: updatedUser.role,
-      status: updatedUser.status,
+      status: updatedUser.is_active ? 'active' : 'inactive',
       homeAddress: {
-        street: updatedUser.home_address,
+        street: updatedUser.home_street,
         city: updatedUser.home_city,
         postalCode: updatedUser.home_postal_code,
         country: updatedUser.home_country || 'Switzerland',
       },
-      homeCoordinates:
-        updatedUser.latitude && updatedUser.longitude
-          ? {
-              latitude: parseFloat(updatedUser.latitude),
-              longitude: parseFloat(updatedUser.longitude),
-            }
-          : undefined,
+      ...(updatedUser.latitude && updatedUser.longitude && {
+        homeCoordinates: {
+          latitude: parseFloat(updatedUser.latitude),
+          longitude: parseFloat(updatedUser.longitude),
+        },
+      }),
       notificationPreferences: updatedUser.notification_preferences,
       privacySettings: updatedUser.privacy_settings,
       lastUpdatedAt: updatedUser.updated_at,
       profileUpdatedAt: updatedUser.profile_updated_at,
-    };
-
-    const response: ProfileUpdateResponse = {
-      success: true,
-      profile,
-      addressChangeImpact,
     };
 
     logger.info('User profile updated successfully', {
@@ -402,13 +390,26 @@ export const updateProfileHandler = validateRequest({
       hasImpact: !!addressChangeImpact,
     });
 
+    // Return just the profile for user's own update endpoint
+    // Frontend expects data to be the UserProfile directly
+    if (!isAdminRequest) {
+      return formatResponse(200, profile, context.awsRequestId);
+    }
+
+    // For admin requests, include additional impact information
+    const response: ProfileUpdateResponse = {
+      success: true,
+      profile,
+      ...(addressChangeImpact && { addressChangeImpact }),
+    };
+
     return formatResponse(200, response, context.awsRequestId);
   } catch (error) {
     await client.query('ROLLBACK');
 
     logger.error('Failed to update user profile', {
-      error: error.message,
-      stack: error.stack,
+      error: (error as Error).message,
+      stack: (error as Error).stack,
       requestId: context.awsRequestId,
     });
 

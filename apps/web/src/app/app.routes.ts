@@ -44,6 +44,11 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
       {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/components/profile.component').then(m => m.ProfileComponent),
+      },
+      {
         path: 'employee',
         canActivate: [employeeGuard],
         children: [

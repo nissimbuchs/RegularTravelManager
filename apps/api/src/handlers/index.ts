@@ -38,6 +38,10 @@ import {
   updateEmployeeAddress as updateEmployeeAddressHandler,
   getManagers as getManagersHandler,
 } from './employees/profile';
+
+// User Profile handlers
+import { getProfileHandler } from './user/get-profile';
+import { updateProfileHandler } from './user/update-profile';
 import {
   calculatePreview as calculatePreviewHandler,
   createTravelRequest as createTravelRequestHandler,
@@ -475,4 +479,15 @@ export const resendVerification = errorHandler(async (event, context) => {
 export const registrationStatus = errorHandler(async (event, context) => {
   await ensureDatabaseInitialized();
   return registrationStatusHandler(event);
+});
+
+// User Profile handlers
+export const userGetProfile = errorHandler(async (event, context) => {
+  await ensureDatabaseInitialized();
+  return getProfileHandler(event, context);
+});
+
+export const userUpdateProfile = errorHandler(async (event, context) => {
+  await ensureDatabaseInitialized();
+  return updateProfileHandler(event, context);
 });

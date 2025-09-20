@@ -284,6 +284,23 @@ export const LAMBDA_FUNCTIONS: Record<string, LambdaFunctionConfig> = {
     environmentConfig: EnvironmentConfigs.admin,
   },
 
+  // User Profile Functions
+  userGetProfile: {
+    id: 'UserGetProfileFunction',
+    name: 'UserGetProfile',
+    handler: 'index.userGetProfile',
+    description: 'Get user profile information',
+    environmentConfig: EnvironmentConfigs.cognitoAndLocation,
+  },
+
+  userUpdateProfile: {
+    id: 'UserUpdateProfileFunction',
+    name: 'UserUpdateProfile',
+    handler: 'index.userUpdateProfile',
+    description: 'Update user profile information with address geocoding',
+    environmentConfig: EnvironmentConfigs.cognitoAndLocation,
+  },
+
   // Manager Functions
   managersDashboard: {
     id: 'ManagersDashboardFunction',

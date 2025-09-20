@@ -22,7 +22,7 @@ export const getProfileHandler = async (
 
     if (isAdminRequest) {
       // Admin accessing another user's profile
-      if (userContext.role !== 'administrator') {
+      if (!userContext.isAdmin) {
         return formatResponse(
           403,
           {
@@ -35,12 +35,12 @@ export const getProfileHandler = async (
       targetUserId = event.pathParameters?.userId || '';
     } else {
       // User accessing their own profile
-      targetUserId = userContext.cognitoUserId;
+      targetUserId = userContext.sub;
     }
 
     logger.info('Fetching user profile', {
       targetUserId,
-      requestedBy: userContext.cognitoUserId,
+      requestedBy: userContext.sub,
       isAdminRequest,
     });
 
@@ -55,13 +55,13 @@ export const getProfileHandler = async (
         e.employee_id as employee_number,
         e.phone_number,
         e.role,
-        e.status,
-        e.home_address,
+        e.is_active,
+        e.home_street,
         e.home_city,
         e.home_postal_code,
         e.home_country,
-        ST_X(e.home_coordinates::geometry) as longitude,
-        ST_Y(e.home_coordinates::geometry) as latitude,
+        ST_X(e.home_location::geometry) as longitude,
+        ST_Y(e.home_location::geometry) as latitude,
         e.notification_preferences,
         e.privacy_settings,
         e.profile_updated_at,
@@ -89,9 +89,9 @@ export const getProfileHandler = async (
       phoneNumber: row.phone_number,
       employeeNumber: row.employee_number,
       role: row.role,
-      status: row.status,
+      status: row.is_active ? 'active' : 'inactive',
       homeAddress: {
-        street: row.home_address,
+        street: row.home_street,
         city: row.home_city,
         postalCode: row.home_postal_code,
         country: row.home_country || 'Switzerland',
@@ -124,7 +124,7 @@ export const getProfileHandler = async (
 
     logger.info('User profile fetched successfully', {
       userId: targetUserId,
-      hasAddress: !!row.home_address,
+      hasAddress: !!row.home_street,
       hasCoordinates: !!(row.latitude && row.longitude),
     });
 

@@ -208,6 +208,26 @@ export const API_ROUTES: RouteGroupConfig[] = [
     ],
   },
   {
+    basePath: 'api/user',
+    description: 'User profile endpoints (Story 5.2)',
+    routes: [
+      {
+        path: 'profile',
+        method: 'GET',
+        functionName: 'user-get-profile',
+        requiresAuth: true,
+        description: 'Get current user profile',
+      },
+      {
+        path: 'profile',
+        method: 'PUT',
+        functionName: 'user-update-profile',
+        requiresAuth: true,
+        description: 'Update current user profile',
+      },
+    ],
+  },
+  {
     basePath: 'api/projects',
     description: 'Project management endpoints',
     routes: [

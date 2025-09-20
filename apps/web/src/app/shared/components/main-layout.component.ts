@@ -108,6 +108,10 @@ interface NavigationItem {
               </div>
             </div>
             <mat-divider></mat-divider>
+            <button mat-menu-item routerLink="/profile">
+              <mat-icon>account_circle</mat-icon>
+              <span>My Profile</span>
+            </button>
             <button mat-menu-item>
               <mat-icon>settings</mat-icon>
               <span>Settings</span>
@@ -246,6 +250,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       roles: ['employee', 'manager'],
     },
     {
+      icon: 'account_circle',
+      label: 'Profile',
+      route: '/profile',
+      roles: ['employee', 'manager', 'admin'],
+    },
+    {
       icon: 'home',
       label: 'Address',
       route: (role: string) => (role === 'manager' ? '/employee/address' : '/employee/address'), // Both use employee address for now
@@ -322,6 +332,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     const url = this.router.url;
 
     if (url.includes('/dashboard')) return 'Dashboard';
+    if (url.includes('/profile')) return 'My Profile';
     if (url.includes('/address')) return 'My Address';
     if (url.includes('/request')) return 'Travel Request';
     if (url.includes('/approvals')) return 'Approvals';

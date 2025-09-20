@@ -15,6 +15,8 @@ import {
   ManagerAssignmentValidation,
   AdminUserProfileUpdateRequest,
   ProfileUpdateResponse,
+  UserProfile,
+  UserProfileUpdateRequest,
 } from '@rtm/shared';
 
 interface UserFilters {
@@ -293,6 +295,32 @@ export class AdminService implements OnDestroy {
         }
       },
     });
+  }
+
+  /**
+   * Get current user's profile
+   */
+  getUserProfile(): Observable<UserProfile> {
+    return this.http.get<{ data: UserProfile }>('/api/user/profile').pipe(
+      map(response => response.data),
+      catchError(error => {
+        console.error('Failed to get user profile:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Update current user's own profile
+   */
+  updateCurrentUserProfile(profileUpdate: UserProfileUpdateRequest): Observable<UserProfile> {
+    return this.http.put<{ data: UserProfile }>('/api/user/profile', profileUpdate).pipe(
+      map(response => response.data),
+      catchError(error => {
+        console.error('Failed to update user profile:', error);
+        throw error;
+      })
+    );
   }
 
   /**

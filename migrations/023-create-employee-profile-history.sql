@@ -11,10 +11,15 @@ CREATE TABLE IF NOT EXISTS employee_profile_history (
     new_values JSONB,
     change_reason TEXT,
     changed_by UUID NOT NULL, -- Cognito User ID of person making change
-    changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ip_address INET,
-    user_agent TEXT
+    changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Add ip_address and user_agent columns if they don't exist
+ALTER TABLE employee_profile_history
+ADD COLUMN IF NOT EXISTS ip_address INET;
+
+ALTER TABLE employee_profile_history
+ADD COLUMN IF NOT EXISTS user_agent TEXT;
 
 -- Create indexes for efficient querying
 CREATE INDEX IF NOT EXISTS idx_profile_history_employee_id ON employee_profile_history(employee_id);

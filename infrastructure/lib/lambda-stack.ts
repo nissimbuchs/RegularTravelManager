@@ -92,6 +92,12 @@ export class LambdaStack extends cdk.Stack {
   public get adminRoleManagementFunction() {
     return this.functions.adminRoleManagement;
   }
+  public get userGetProfileFunction() {
+    return this.functions.userGetProfile;
+  }
+  public get userUpdateProfileFunction() {
+    return this.functions.userUpdateProfile;
+  }
   public get authUtilsFunction() {
     return this.functions.authUtils;
   }
