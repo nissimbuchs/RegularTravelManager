@@ -145,10 +145,7 @@ export const getManagerDashboard = async (
     const userContext = getUserContextFromEvent(event);
     const managerId = userContext.sub;
     if (!managerId) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Unauthorized' }),
-      };
+      return formatResponse(401, { error: 'Unauthorized' }, context.awsRequestId);
     }
 
     // Look up manager's employee UUID using cognito ID
@@ -352,10 +349,7 @@ export const getManagerDashboard = async (
     return formatResponse(200, dashboard, context.awsRequestId);
   } catch (error) {
     console.error('Error fetching manager dashboard:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' }),
-    };
+    return formatResponse(500, { error: 'Internal server error' }, context.awsRequestId);
   }
 };
 
@@ -368,18 +362,12 @@ export const getEmployeeContext = async (
     const userContext = getUserContextFromEvent(event);
     const managerId = userContext.sub;
     if (!managerId) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Unauthorized' }),
-      };
+      return formatResponse(401, { error: 'Unauthorized' }, context.awsRequestId);
     }
 
     const employeeId = event.pathParameters?.employeeId;
     if (!employeeId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Employee ID is required' }),
-      };
+      return formatResponse(400, { error: 'Employee ID is required' }, context.awsRequestId);
     }
 
     // Convert manager cognito ID to database UUID
@@ -387,10 +375,7 @@ export const getEmployeeContext = async (
     try {
       managerEmployeeId = await getManagerEmployeeId(managerId);
     } catch (error) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Manager not found' }),
-      };
+      return formatResponse(404, { error: 'Manager not found' }, context.awsRequestId);
     }
 
     // Get employee details - look up by email (which is passed as employeeId parameter)
@@ -408,10 +393,7 @@ export const getEmployeeContext = async (
     const employeeResult = await db.query(employeeQuery, [employeeId]);
 
     if (employeeResult.rows.length === 0) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Employee not found' }),
-      };
+      return formatResponse(404, { error: 'Employee not found' }, context.awsRequestId);
     }
 
     const employee = employeeResult.rows[0];
@@ -472,10 +454,7 @@ export const getEmployeeContext = async (
     return formatResponse(200, employeeContext, context.awsRequestId);
   } catch (error) {
     console.error('Error fetching employee context:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' }),
-    };
+    return formatResponse(500, { error: 'Internal server error' }, context.awsRequestId);
   }
 };
 
@@ -487,10 +466,7 @@ export const approveRequest = async (
     const userContext = getUserContextFromEvent(event);
     const managerCognitoId = userContext.sub;
     if (!managerCognitoId) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Unauthorized' }),
-      };
+      return formatResponse(401, { error: 'Unauthorized' }, context.awsRequestId);
     }
 
     // Convert cognito_user_id to UUID for database queries
@@ -498,10 +474,7 @@ export const approveRequest = async (
 
     const requestId = event.pathParameters?.id;
     if (!requestId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Request ID is required' }),
-      };
+      return formatResponse(400, { error: 'Request ID is required' }, context.awsRequestId);
     }
 
     // Begin transaction using direct db.query (note: this is a simplified approach)
@@ -519,10 +492,11 @@ export const approveRequest = async (
     const updateResult = await db.query(updateQuery, [managerEmployeeId, requestId]);
 
     if (updateResult.rows.length === 0) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Request not found or already processed' }),
-      };
+      return formatResponse(
+        404,
+        { error: 'Request not found or already processed' },
+        context.awsRequestId
+      );
     }
 
     const request = updateResult.rows[0];
@@ -535,22 +509,20 @@ export const approveRequest = async (
 
     await db.query(historyQuery, [requestId, managerEmployeeId]);
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
+    return formatResponse(
+      200,
+      {
         data: {
           id: request.id,
           status: 'approved',
           message: 'Request approved successfully',
         },
-      }),
-    };
+      },
+      context.awsRequestId
+    );
   } catch (error) {
     console.error('Error approving request:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' }),
-    };
+    return formatResponse(500, { error: 'Internal server error' }, context.awsRequestId);
   }
 };
 
@@ -562,10 +534,7 @@ export const rejectRequest = async (
     const userContext = getUserContextFromEvent(event);
     const managerCognitoId = userContext.sub;
     if (!managerCognitoId) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Unauthorized' }),
-      };
+      return formatResponse(401, { error: 'Unauthorized' }, context.awsRequestId);
     }
 
     // Convert cognito_user_id to UUID for database queries
@@ -573,20 +542,18 @@ export const rejectRequest = async (
 
     const requestId = event.pathParameters?.id;
     if (!requestId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Request ID is required' }),
-      };
+      return formatResponse(400, { error: 'Request ID is required' }, context.awsRequestId);
     }
 
     const body = JSON.parse(event.body || '{}');
     const rejectionReason = body.reason;
 
     if (!rejectionReason || rejectionReason.trim().length < 10) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Rejection reason is required (minimum 10 characters)' }),
-      };
+      return formatResponse(
+        400,
+        { error: 'Rejection reason is required (minimum 10 characters)' },
+        context.awsRequestId
+      );
     }
 
     // Update request status
@@ -608,10 +575,11 @@ export const rejectRequest = async (
     ]);
 
     if (updateResult.rows.length === 0) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Request not found or already processed' }),
-      };
+      return formatResponse(
+        404,
+        { error: 'Request not found or already processed' },
+        context.awsRequestId
+      );
     }
 
     const request = updateResult.rows[0];
@@ -624,21 +592,19 @@ export const rejectRequest = async (
 
     await db.query(historyQuery, [requestId, rejectionReason, managerEmployeeId]);
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
+    return formatResponse(
+      200,
+      {
         data: {
           id: request.id,
           status: 'rejected',
           message: 'Request rejected successfully',
         },
-      }),
-    };
+      },
+      context.awsRequestId
+    );
   } catch (error) {
     console.error('Error rejecting request:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' }),
-    };
+    return formatResponse(500, { error: 'Internal server error' }, context.awsRequestId);
   }
 };

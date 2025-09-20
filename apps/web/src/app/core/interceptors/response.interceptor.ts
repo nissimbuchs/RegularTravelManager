@@ -1,19 +1,22 @@
-import { HttpInterceptorFn, HttpEventType, HttpResponse } from '@angular/common/http';
-import { map } from 'rxjs/operators';
+import {
+  HttpInterceptorFn,
+  HttpEventType,
+  HttpResponse,
+  HttpErrorResponse,
+} from '@angular/common/http';
+import { map, catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 
 /**
  * Response Interceptor
  *
- * Automatically unwraps API responses from the backend which come in the format:
- * {
- *   "success": true,
- *   "data": { ...actual_data... },
- *   "timestamp": "...",
- *   "requestId": "..."
- * }
+ * Transforms API responses from the backend for service compatibility:
  *
- * This interceptor extracts the 'data' field automatically so services
- * can work with the actual data directly.
+ * Backend format: { "success": true, "data": {...}, "timestamp": "...", "requestId": "..." }
+ * Service format: { "data": {...} }
+ * Error responses: { "error": { "code": "...", "message": "...", "timestamp": "...", "requestId": "..." } }
+ *
+ * This interceptor preserves the {data: T} wrapper that services expect while removing metadata.
  */
 export const responseInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
@@ -22,21 +25,44 @@ export const responseInterceptor: HttpInterceptorFn = (req, next) => {
       if (event.type === HttpEventType.Response) {
         const response = event as HttpResponse<any>;
 
-        // Check if response has the wrapped format
+        // Check if response has the wrapped success format
         if (
           response.body &&
           typeof response.body === 'object' &&
           'success' in response.body &&
           'data' in response.body
         ) {
-          // Clone the response and replace body with unwrapped data
+          // Clone the response and preserve {data: T} wrapper for service compatibility
           return response.clone({
-            body: response.body.data,
+            body: { data: response.body.data },
           });
         }
       }
 
       return event;
+    }),
+    catchError((error: HttpErrorResponse) => {
+      // Unwrap error responses that have the wrapped error format
+      if (
+        error.error &&
+        typeof error.error === 'object' &&
+        'error' in error.error &&
+        typeof error.error.error === 'object'
+      ) {
+        // Create a new error with unwrapped error details
+        const unwrappedError = new HttpErrorResponse({
+          error: error.error.error, // Unwrap the nested error object
+          headers: error.headers,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url || undefined,
+        });
+
+        return throwError(() => unwrappedError);
+      }
+
+      // Return original error if not in wrapped format
+      return throwError(() => error);
     })
   );
 };

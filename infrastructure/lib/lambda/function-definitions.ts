@@ -1,4 +1,5 @@
 import { InfrastructureStack } from '../infrastructure-stack';
+import { getEnvironmentConfig } from '../config/environment-config';
 
 /**
  * Lambda function configuration interface
@@ -73,6 +74,21 @@ export const EnvironmentConfigs = {
     COGNITO_CLIENT_ID: infra.userPoolClient.userPoolClientId,
     API_VERSION: '1.0.0',
   }),
+
+  /** Email service configuration for registration functions */
+  emailService: (environment: string, infra: InfrastructureStack): Record<string, string> => {
+    const config = getEnvironmentConfig(environment);
+    return {
+      COGNITO_USER_POOL_ID: infra.userPool.userPoolId,
+      FROM_EMAIL_ADDRESS: 'nissim@buchs.be',
+      SUPPORT_EMAIL: 'nissim@buchs.be',
+      STAGING_ADMIN_EMAIL: 'nissim@buchs.be',
+      FRONTEND_BASE_URL: config.web.domainName
+        ? `https://${config.web.domainName}`
+        : 'https://dz57qvo83kxos.cloudfront.net',
+      API_VERSION: '1.0.0',
+    };
+  },
 };
 
 /**
@@ -188,7 +204,7 @@ export const LAMBDA_FUNCTIONS: Record<string, LambdaFunctionConfig> = {
     id: 'ProjectsManagementFunction',
     name: 'ProjectsManagement',
     handler: 'index.projectsManagement',
-    description: 'Project management operations for all user roles',
+    description: 'Project management operations for all user roles (updated with geocoding)',
     environmentConfig: EnvironmentConfigs.cognitoAndLocation,
   },
 
@@ -260,6 +276,31 @@ export const LAMBDA_FUNCTIONS: Record<string, LambdaFunctionConfig> = {
     environmentConfig: EnvironmentConfigs.admin,
   },
 
+  adminRoleManagement: {
+    id: 'AdminRoleManagementFunction',
+    name: 'AdminRoleManagement',
+    handler: 'index.adminRoleManagement',
+    description: 'Admin role management (change roles, assign managers, validate operations)',
+    environmentConfig: EnvironmentConfigs.admin,
+  },
+
+  // User Profile Functions
+  userGetProfile: {
+    id: 'UserGetProfileFunction',
+    name: 'UserGetProfile',
+    handler: 'index.userGetProfile',
+    description: 'Get user profile information',
+    environmentConfig: EnvironmentConfigs.cognitoAndLocation,
+  },
+
+  userUpdateProfile: {
+    id: 'UserUpdateProfileFunction',
+    name: 'UserUpdateProfile',
+    handler: 'index.userUpdateProfile',
+    description: 'Update user profile information with address geocoding',
+    environmentConfig: EnvironmentConfigs.cognitoAndLocation,
+  },
+
   // Manager Functions
   managersDashboard: {
     id: 'ManagersDashboardFunction',
@@ -284,19 +325,8 @@ export const LAMBDA_FUNCTIONS: Record<string, LambdaFunctionConfig> = {
     name: 'RegisterUser',
     handler: 'index.registerUser',
     description: 'User registration with email verification for RTM',
-    timeout: 60, // Longer timeout for user creation process
-    environmentConfig: (environment: string, infra: InfrastructureStack) => ({
-      COGNITO_USER_POOL_ID: infra.userPool.userPoolId,
-      FROM_EMAIL_ADDRESS: 'nissim@buchs.be',
-      SUPPORT_EMAIL: 'nissim@buchs.be',
-      FRONTEND_BASE_URL:
-        environment === 'production'
-          ? 'https://rtfm.buchs.be'
-          : environment === 'staging'
-            ? 'https://rtm-staging.buchs.be'
-            : 'https://dz57qvo83kxos.cloudfront.net',
-      API_VERSION: '1.0.0',
-    }),
+    timeout: 60,
+    environmentConfig: EnvironmentConfigs.emailService,
   },
 
   verifyEmail: {
@@ -304,18 +334,7 @@ export const LAMBDA_FUNCTIONS: Record<string, LambdaFunctionConfig> = {
     name: 'VerifyEmail',
     handler: 'index.verifyEmail',
     description: 'Email verification for user registration',
-    environmentConfig: (environment: string, infra: InfrastructureStack) => ({
-      COGNITO_USER_POOL_ID: infra.userPool.userPoolId,
-      FROM_EMAIL_ADDRESS: 'nissim@buchs.be',
-      SUPPORT_EMAIL: 'nissim@buchs.be',
-      FRONTEND_BASE_URL:
-        environment === 'production'
-          ? 'https://rtfm.buchs.be'
-          : environment === 'staging'
-            ? 'https://rtfm-staging.buchs.be'
-            : 'https://rtfm-dev.buchs.be',
-      API_VERSION: '1.0.0',
-    }),
+    environmentConfig: EnvironmentConfigs.emailService,
   },
 
   resendVerification: {
@@ -323,18 +342,7 @@ export const LAMBDA_FUNCTIONS: Record<string, LambdaFunctionConfig> = {
     name: 'ResendVerification',
     handler: 'index.resendVerification',
     description: 'Resend verification email for user registration',
-    environmentConfig: (environment: string, infra: InfrastructureStack) => ({
-      COGNITO_USER_POOL_ID: infra.userPool.userPoolId,
-      FROM_EMAIL_ADDRESS: 'nissim@buchs.be',
-      SUPPORT_EMAIL: 'nissim@buchs.be',
-      FRONTEND_BASE_URL:
-        environment === 'production'
-          ? 'https://rtfm.buchs.be'
-          : environment === 'staging'
-            ? 'https://rtm-staging.buchs.be'
-            : 'https://dz57qvo83kxos.cloudfront.net',
-      API_VERSION: '1.0.0',
-    }),
+    environmentConfig: EnvironmentConfigs.emailService,
   },
 
   registrationStatus: {

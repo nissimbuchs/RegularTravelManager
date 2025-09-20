@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { logger } from '../../middleware/logger';
-import { DatabaseConnection } from '../../database/connection';
-import { withCors } from '../../middleware/cors';
+import { db } from '../../database/connection';
+import { formatResponse } from '../../middleware/response-formatter';
 
 interface AdminContext {
   sub: string;
@@ -90,9 +90,6 @@ export const listProjectsHandler = async (
   try {
     validateAdminAccess(event);
 
-    const db = new DatabaseConnection();
-    await db.connect();
-
     const query = `
       SELECT 
         p.id,
@@ -121,26 +118,20 @@ export const listProjectsHandler = async (
       subprojectCount: parseInt(row.subproject_count, 10),
     }));
 
-    await db.disconnect();
-
     logger.info('Admin list projects completed', {
       requestId: context.awsRequestId,
       projectCount: projects.length,
     });
 
-    return withCors({
-      statusCode: 200,
-      body: JSON.stringify({
-        success: true,
-        data: {
-          projects: projects,
-          total: projects.length,
-        },
-        timestamp: new Date().toISOString(),
-        requestId: context.awsRequestId,
-      }),
-    });
-  } catch (error) {
+    return formatResponse(
+      200,
+      {
+        projects: projects,
+        total: projects.length,
+      },
+      context.awsRequestId
+    );
+  } catch (error: any) {
     logger.error('Admin list projects error', {
       error: error.message,
       stack: error.stack,
@@ -151,18 +142,14 @@ export const listProjectsHandler = async (
     const errorMessage =
       error instanceof AdminAccessError ? error.message : 'Internal server error';
 
-    return withCors({
+    return formatResponse(
       statusCode,
-      body: JSON.stringify({
-        success: false,
-        error: {
-          code: error.name,
-          message: errorMessage,
-          timestamp: new Date().toISOString(),
-          requestId: context.awsRequestId,
-        },
-      }),
-    });
+      {
+        code: error.name,
+        message: errorMessage,
+      },
+      context.awsRequestId
+    );
   }
 };
 
@@ -185,54 +172,39 @@ export const createProjectHandler = async (
     try {
       requestBody = JSON.parse(event.body || '{}');
     } catch {
-      return withCors({
-        statusCode: 400,
-        body: JSON.stringify({
-          success: false,
-          error: {
-            code: 'INVALID_JSON',
-            message: 'Invalid JSON in request body',
-            timestamp: new Date().toISOString(),
-            requestId: context.awsRequestId,
-          },
-        }),
-      });
+      return formatResponse(
+        400,
+        {
+          code: 'INVALID_JSON',
+          message: 'Invalid JSON in request body',
+        },
+        context.awsRequestId
+      );
     }
 
     // Validate required fields
     if (!requestBody.name || !requestBody.description || !requestBody.defaultCostPerKm) {
-      return withCors({
-        statusCode: 400,
-        body: JSON.stringify({
-          success: false,
-          error: {
-            code: 'MISSING_REQUIRED_FIELDS',
-            message: 'name, description, and defaultCostPerKm are required',
-            timestamp: new Date().toISOString(),
-            requestId: context.awsRequestId,
-          },
-        }),
-      });
+      return formatResponse(
+        400,
+        {
+          code: 'MISSING_REQUIRED_FIELDS',
+          message: 'name, description, and defaultCostPerKm are required',
+        },
+        context.awsRequestId
+      );
     }
 
     // Validate cost per km is positive
     if (requestBody.defaultCostPerKm <= 0) {
-      return withCors({
-        statusCode: 400,
-        body: JSON.stringify({
-          success: false,
-          error: {
-            code: 'INVALID_COST_RATE',
-            message: 'defaultCostPerKm must be greater than 0',
-            timestamp: new Date().toISOString(),
-            requestId: context.awsRequestId,
-          },
-        }),
-      });
+      return formatResponse(
+        400,
+        {
+          code: 'INVALID_COST_RATE',
+          message: 'defaultCostPerKm must be greater than 0',
+        },
+        context.awsRequestId
+      );
     }
-
-    const db = new DatabaseConnection();
-    await db.connect();
 
     // Create project
     const insertResult = await db.query(
@@ -257,8 +229,6 @@ export const createProjectHandler = async (
       projectName: newProject.name,
     });
 
-    await db.disconnect();
-
     const projectDto: ProjectDto = {
       id: newProject.id,
       name: newProject.name,
@@ -270,16 +240,8 @@ export const createProjectHandler = async (
       subprojectCount: 0,
     };
 
-    return withCors({
-      statusCode: 201,
-      body: JSON.stringify({
-        success: true,
-        data: projectDto,
-        timestamp: new Date().toISOString(),
-        requestId: context.awsRequestId,
-      }),
-    });
-  } catch (error) {
+    return formatResponse(201, projectDto, context.awsRequestId);
+  } catch (error: any) {
     logger.error('Admin create project error', {
       error: error.message,
       stack: error.stack,
@@ -290,18 +252,14 @@ export const createProjectHandler = async (
     const errorMessage =
       error instanceof AdminAccessError ? error.message : 'Internal server error';
 
-    return withCors({
+    return formatResponse(
       statusCode,
-      body: JSON.stringify({
-        success: false,
-        error: {
-          code: error.name,
-          message: errorMessage,
-          timestamp: new Date().toISOString(),
-          requestId: context.awsRequestId,
-        },
-      }),
-    });
+      {
+        code: error.name,
+        message: errorMessage,
+      },
+      context.awsRequestId
+    );
   }
 };
 
@@ -323,40 +281,28 @@ export const listSubprojectsHandler = async (
 
     const projectId = event.pathParameters?.projectId;
     if (!projectId) {
-      return withCors({
-        statusCode: 400,
-        body: JSON.stringify({
-          success: false,
-          error: {
-            code: 'MISSING_PROJECT_ID',
-            message: 'Project ID is required in path parameters',
-            timestamp: new Date().toISOString(),
-            requestId: context.awsRequestId,
-          },
-        }),
-      });
+      return formatResponse(
+        400,
+        {
+          code: 'MISSING_PROJECT_ID',
+          message: 'Project ID is required in path parameters',
+        },
+        context.awsRequestId
+      );
     }
-
-    const db = new DatabaseConnection();
-    await db.connect();
 
     // Verify project exists
     const projectCheck = await db.query('SELECT id, name FROM projects WHERE id = $1', [projectId]);
 
     if (projectCheck.rows.length === 0) {
-      await db.disconnect();
-      return withCors({
-        statusCode: 404,
-        body: JSON.stringify({
-          success: false,
-          error: {
-            code: 'PROJECT_NOT_FOUND',
-            message: 'Project not found',
-            timestamp: new Date().toISOString(),
-            requestId: context.awsRequestId,
-          },
-        }),
-      });
+      return formatResponse(
+        404,
+        {
+          code: 'PROJECT_NOT_FOUND',
+          message: 'Project not found',
+        },
+        context.awsRequestId
+      );
     }
 
     const query = `
@@ -398,29 +344,23 @@ export const listSubprojectsHandler = async (
       updatedAt: row.updated_at.toISOString(),
     }));
 
-    await db.disconnect();
-
     logger.info('Admin list subprojects completed', {
       requestId: context.awsRequestId,
       projectId: projectId,
       subprojectCount: subprojects.length,
     });
 
-    return withCors({
-      statusCode: 200,
-      body: JSON.stringify({
-        success: true,
-        data: {
-          projectId: projectId,
-          projectName: projectCheck.rows[0].name,
-          subprojects: subprojects,
-          total: subprojects.length,
-        },
-        timestamp: new Date().toISOString(),
-        requestId: context.awsRequestId,
-      }),
-    });
-  } catch (error) {
+    return formatResponse(
+      200,
+      {
+        projectId: projectId,
+        projectName: projectCheck.rows[0].name,
+        subprojects: subprojects,
+        total: subprojects.length,
+      },
+      context.awsRequestId
+    );
+  } catch (error: any) {
     logger.error('Admin list subprojects error', {
       error: error.message,
       stack: error.stack,
@@ -431,18 +371,14 @@ export const listSubprojectsHandler = async (
     const errorMessage =
       error instanceof AdminAccessError ? error.message : 'Internal server error';
 
-    return withCors({
+    return formatResponse(
       statusCode,
-      body: JSON.stringify({
-        success: false,
-        error: {
-          code: error.name,
-          message: errorMessage,
-          timestamp: new Date().toISOString(),
-          requestId: context.awsRequestId,
-        },
-      }),
-    });
+      {
+        code: error.name,
+        message: errorMessage,
+      },
+      context.awsRequestId
+    );
   }
 };
 
@@ -465,18 +401,14 @@ export const createSubprojectHandler = async (
     try {
       requestBody = JSON.parse(event.body || '{}');
     } catch {
-      return withCors({
-        statusCode: 400,
-        body: JSON.stringify({
-          success: false,
-          error: {
-            code: 'INVALID_JSON',
-            message: 'Invalid JSON in request body',
-            timestamp: new Date().toISOString(),
-            requestId: context.awsRequestId,
-          },
-        }),
-      });
+      return formatResponse(
+        400,
+        {
+          code: 'INVALID_JSON',
+          message: 'Invalid JSON in request body',
+        },
+        context.awsRequestId
+      );
     }
 
     // Validate required fields
@@ -495,68 +427,49 @@ export const createSubprojectHandler = async (
     );
 
     if (missingFields.length > 0) {
-      return withCors({
-        statusCode: 400,
-        body: JSON.stringify({
-          success: false,
-          error: {
-            code: 'MISSING_REQUIRED_FIELDS',
-            message: `Missing required fields: ${missingFields.join(', ')}`,
-            timestamp: new Date().toISOString(),
-            requestId: context.awsRequestId,
-          },
-        }),
-      });
+      return formatResponse(
+        400,
+        {
+          code: 'MISSING_REQUIRED_FIELDS',
+          message: `Missing required fields: ${missingFields.join(', ')}`,
+        },
+        context.awsRequestId
+      );
     }
 
     // Validate coordinates and cost rate
     if (requestBody.latitude < -90 || requestBody.latitude > 90) {
-      return withCors({
-        statusCode: 400,
-        body: JSON.stringify({
-          success: false,
-          error: {
-            code: 'INVALID_LATITUDE',
-            message: 'Latitude must be between -90 and 90',
-            timestamp: new Date().toISOString(),
-            requestId: context.awsRequestId,
-          },
-        }),
-      });
+      return formatResponse(
+        400,
+        {
+          code: 'INVALID_LATITUDE',
+          message: 'Latitude must be between -90 and 90',
+        },
+        context.awsRequestId
+      );
     }
 
     if (requestBody.longitude < -180 || requestBody.longitude > 180) {
-      return withCors({
-        statusCode: 400,
-        body: JSON.stringify({
-          success: false,
-          error: {
-            code: 'INVALID_LONGITUDE',
-            message: 'Longitude must be between -180 and 180',
-            timestamp: new Date().toISOString(),
-            requestId: context.awsRequestId,
-          },
-        }),
-      });
+      return formatResponse(
+        400,
+        {
+          code: 'INVALID_LONGITUDE',
+          message: 'Longitude must be between -180 and 180',
+        },
+        context.awsRequestId
+      );
     }
 
     if (requestBody.costPerKm <= 0) {
-      return withCors({
-        statusCode: 400,
-        body: JSON.stringify({
-          success: false,
-          error: {
-            code: 'INVALID_COST_RATE',
-            message: 'costPerKm must be greater than 0',
-            timestamp: new Date().toISOString(),
-            requestId: context.awsRequestId,
-          },
-        }),
-      });
+      return formatResponse(
+        400,
+        {
+          code: 'INVALID_COST_RATE',
+          message: 'costPerKm must be greater than 0',
+        },
+        context.awsRequestId
+      );
     }
-
-    const db = new DatabaseConnection();
-    await db.connect();
 
     // Verify project exists
     const projectCheck = await db.query('SELECT id, name FROM projects WHERE id = $1', [
@@ -564,19 +477,14 @@ export const createSubprojectHandler = async (
     ]);
 
     if (projectCheck.rows.length === 0) {
-      await db.disconnect();
-      return withCors({
-        statusCode: 400,
-        body: JSON.stringify({
-          success: false,
-          error: {
-            code: 'PROJECT_NOT_FOUND',
-            message: 'Project not found',
-            timestamp: new Date().toISOString(),
-            requestId: context.awsRequestId,
-          },
-        }),
-      });
+      return formatResponse(
+        400,
+        {
+          code: 'PROJECT_NOT_FOUND',
+          message: 'Project not found',
+        },
+        context.awsRequestId
+      );
     }
 
     // Create subproject
@@ -611,8 +519,6 @@ export const createSubprojectHandler = async (
       subprojectName: newSubproject.name,
     });
 
-    await db.disconnect();
-
     const subprojectDto: SubprojectDto = {
       id: newSubproject.id,
       projectId: newSubproject.project_id,
@@ -631,16 +537,8 @@ export const createSubprojectHandler = async (
       updatedAt: newSubproject.updated_at.toISOString(),
     };
 
-    return withCors({
-      statusCode: 201,
-      body: JSON.stringify({
-        success: true,
-        data: subprojectDto,
-        timestamp: new Date().toISOString(),
-        requestId: context.awsRequestId,
-      }),
-    });
-  } catch (error) {
+    return formatResponse(201, subprojectDto, context.awsRequestId);
+  } catch (error: any) {
     logger.error('Admin create subproject error', {
       error: error.message,
       stack: error.stack,
@@ -651,17 +549,13 @@ export const createSubprojectHandler = async (
     const errorMessage =
       error instanceof AdminAccessError ? error.message : 'Internal server error';
 
-    return withCors({
+    return formatResponse(
       statusCode,
-      body: JSON.stringify({
-        success: false,
-        error: {
-          code: error.name,
-          message: errorMessage,
-          timestamp: new Date().toISOString(),
-          requestId: context.awsRequestId,
-        },
-      }),
-    });
+      {
+        code: error.name,
+        message: errorMessage,
+      },
+      context.awsRequestId
+    );
   }
 };

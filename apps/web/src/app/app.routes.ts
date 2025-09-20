@@ -44,6 +44,11 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
       {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/components/profile.component').then(m => m.ProfileComponent),
+      },
+      {
         path: 'employee',
         canActivate: [employeeGuard],
         children: [
@@ -108,6 +113,20 @@ export const routes: Routes = [
         path: 'admin',
         canActivate: [adminGuard], // Admin functions accessible to administrators
         children: [
+          {
+            path: 'users',
+            loadComponent: () =>
+              import('./features/admin/components/user-management.component').then(
+                m => m.UserManagementComponent
+              ),
+          },
+          {
+            path: 'users/:id',
+            loadComponent: () =>
+              import('./features/admin/components/user-detail.component').then(
+                m => m.UserDetailComponent
+              ),
+          },
           {
             path: 'projects',
             loadComponent: () =>

@@ -398,10 +398,13 @@ export class SubprojectFormDialogComponent implements OnInit, OnDestroy {
     if (!this.canGeocode() || this.isGeocoding) return;
 
     const form = this.subprojectForm.value;
+    // Format address for AWS Location Service: "Street, PostalCode City, Country"
+    // AWS Location Service expects postal code before city without comma separation
     const addressParts = [
       form.locationStreet?.trim(),
-      form.locationCity?.trim(),
-      form.locationPostalCode?.trim(),
+      form.locationPostalCode?.trim() && form.locationCity?.trim()
+        ? `${form.locationPostalCode.trim()} ${form.locationCity.trim()}`
+        : form.locationCity?.trim() || form.locationPostalCode?.trim(),
       'Switzerland',
     ].filter(Boolean);
 

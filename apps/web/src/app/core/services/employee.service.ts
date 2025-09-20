@@ -3,10 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ConfigService } from './config.service';
-import {
-  EmployeeDto,
-  UpdateEmployeeAddressRequest,
-} from '../../../../../../packages/shared/src/types/api';
+import { EmployeeDto, UpdateEmployeeAddressRequest } from '@rtm/shared';
 
 interface Manager {
   id: string;
@@ -48,7 +45,7 @@ export class EmployeeService {
       );
     }
 
-    return this.http.get<EmployeeDto>(url);
+    return this.http.get<{ data: EmployeeDto }>(url).pipe(map(response => response.data));
   }
 
   // Update employee address (expects cognitoUserId, which is a UUID)
@@ -69,7 +66,9 @@ export class EmployeeService {
       );
     }
 
-    return this.http.put<EmployeeDto>(`${this.baseUrl}/${cognitoUserId}/address`, addressData);
+    return this.http
+      .put<{ data: EmployeeDto }>(`${this.baseUrl}/${cognitoUserId}/address`, addressData)
+      .pipe(map(response => response.data));
   }
 
   // Validation helper for Swiss postal codes
@@ -93,7 +92,7 @@ export class EmployeeService {
   // Get all managers for dropdown selection
   getManagers(): Observable<Manager[]> {
     return this.http
-      .get<{ managers: Manager[] }>(`${this.baseUrl}/managers`)
-      .pipe(map(response => response.managers));
+      .get<{ data: { managers: Manager[] } }>(`${this.baseUrl}/managers`)
+      .pipe(map(response => response.data.managers));
   }
 }

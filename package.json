@@ -58,7 +58,8 @@
     "clean:build": "rm -rf packages/*/dist domains/*/dist apps/*/dist infrastructure/cdk.out apps/web/.angular && find . -name '*.tsbuildinfo' -delete",
     "clean:cache": "rm -rf node_modules/.cache ~/.npm/_cacache .eslintcache .prettiercache 2>/dev/null || true",
 
-    "start:local": "RTM_ENVIRONMENT=local npm-run-all --parallel start:local:api start:local:web",
+    "start:local": "RTM_ENVIRONMENT=local npm-run-all --parallel start:local:gateway start:local:web",
+    "start:local:gateway": "RTM_ENVIRONMENT=local npm run dev:local --workspace=apps/api",
     "start:local:api": "RTM_ENVIRONMENT=local npm run dev --workspace=apps/api",
     "start:local:web": "RTM_ENVIRONMENT=local npm run dev --workspace=apps/web",
 

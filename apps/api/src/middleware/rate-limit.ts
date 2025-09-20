@@ -129,7 +129,7 @@ function cleanupExpiredEntries(now: number): void {
 export const RateLimitConfigs = {
   REGISTRATION: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: isLocalDevelopment() ? 100 : 5, // 100 for local, 5 for production
+    maxRequests: isLocalDevelopment() ? 100 : 25, // 100 for local, 25 for production/staging
     keyGenerator: ipRateLimitKey,
   },
   EMAIL_VERIFICATION: {

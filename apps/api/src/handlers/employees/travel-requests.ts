@@ -1,6 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { db } from '../../database/connection';
 import { getUserContextFromEvent } from '../auth/auth-utils';
+import { formatResponse } from '../../middleware/response-formatter';
 
 interface CalculationPreviewRequest {
   subprojectId: string;
@@ -29,42 +30,38 @@ export const calculatePreview = async (
     const userContext = getUserContextFromEvent(event);
     const employeeCognitoId = userContext.sub;
     if (!employeeCognitoId) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Unauthorized' }),
-      };
+      return formatResponse(401, { error: 'Unauthorized' }, 'travel-preview-request');
     }
 
     const body: CalculationPreviewRequest = JSON.parse(event.body || '{}');
     if (!body.subprojectId || !body.daysPerWeek) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'subprojectId and daysPerWeek are required' }),
-      };
+      return formatResponse(
+        400,
+        { error: 'subprojectId and daysPerWeek are required' },
+        'travel-preview-request'
+      );
     }
 
     // Get employee home location
     const employeeQuery = `
-      SELECT home_location 
-      FROM employees 
+      SELECT home_location
+      FROM employees
       WHERE cognito_user_id = $1 AND is_active = true
     `;
 
     const employeeResult = await db.query(employeeQuery, [employeeCognitoId]);
 
     if (employeeResult.rows.length === 0) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Employee not found' }),
-      };
+      return formatResponse(404, { error: 'Employee not found' }, 'travel-preview-request');
     }
 
     const employee = employeeResult.rows[0];
     if (!employee.home_location) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Employee home address not set' }),
-      };
+      return formatResponse(
+        400,
+        { error: 'Employee home address not set' },
+        'travel-preview-request'
+      );
     }
 
     // Get subproject location and cost per km
@@ -78,10 +75,11 @@ export const calculatePreview = async (
     const subprojectResult = await db.query(subprojectQuery, [body.subprojectId]);
 
     if (subprojectResult.rows.length === 0) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Subproject not found or inactive' }),
-      };
+      return formatResponse(
+        404,
+        { error: 'Subproject not found or inactive' },
+        'travel-preview-request'
+      );
     }
 
     const subproject = subprojectResult.rows[0];
@@ -109,16 +107,10 @@ export const calculatePreview = async (
       weeklyAllowance: Math.round(weeklyAllowance * 100) / 100,
     };
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ data: preview }),
-    };
+    return formatResponse(200, { data: preview }, 'travel-preview-request');
   } catch (error) {
     console.error('Error calculating travel preview:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' }),
-    };
+    return formatResponse(500, { error: 'Internal server error' }, 'travel-preview-request');
   }
 };
 
@@ -131,38 +123,33 @@ export const createTravelRequest = async (
     const userContext = getUserContextFromEvent(event);
     const employeeCognitoId = userContext.sub;
     if (!employeeCognitoId) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Unauthorized' }),
-      };
+      return formatResponse(401, { error: 'Unauthorized' }, 'create-travel-request');
     }
 
     const body: CreateTravelRequestBody = JSON.parse(event.body || '{}');
     const { subprojectId, daysPerWeek, justification, managerId } = body; // ✅ Fixed: Use camelCase
 
     if (!subprojectId || !daysPerWeek || !justification || !managerId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({
-          error: 'subprojectId, daysPerWeek, justification, and managerId are required', // ✅ Fixed: Use camelCase in error message
-        }),
-      };
+      return formatResponse(
+        400,
+        {
+          error: 'subprojectId, daysPerWeek, justification, and managerId are required',
+        },
+        'create-travel-request'
+      );
     }
 
     // Get employee details
     const employeeQuery = `
       SELECT id, home_location
-      FROM employees 
+      FROM employees
       WHERE cognito_user_id = $1 AND is_active = true
     `;
 
     const employeeResult = await db.query(employeeQuery, [employeeCognitoId]);
 
     if (employeeResult.rows.length === 0) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Employee not found' }),
-      };
+      return formatResponse(404, { error: 'Employee not found' }, 'create-travel-request');
     }
 
     const employee = employeeResult.rows[0];
@@ -177,19 +164,21 @@ export const createTravelRequest = async (
     const managerResult = await db.query(managerQuery, [managerId]); // ✅ Fixed: Use camelCase variable
 
     if (managerResult.rows.length === 0) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Invalid or inactive manager selected' }),
-      };
+      return formatResponse(
+        400,
+        { error: 'Invalid or inactive manager selected' },
+        'create-travel-request'
+      );
     }
 
     const selectedManager = managerResult.rows[0];
 
     if (!employee.home_location) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Employee home address not set' }),
-      };
+      return formatResponse(
+        400,
+        { error: 'Employee home address not set' },
+        'create-travel-request'
+      );
     }
 
     // Get subproject and project details
@@ -203,10 +192,11 @@ export const createTravelRequest = async (
     const subprojectResult = await db.query(subprojectQuery, [subprojectId]); // ✅ Fixed: Use camelCase variable
 
     if (subprojectResult.rows.length === 0) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Subproject not found or inactive' }),
-      };
+      return formatResponse(
+        404,
+        { error: 'Subproject not found or inactive' },
+        'create-travel-request'
+      );
     }
 
     const subproject = subprojectResult.rows[0];
@@ -263,23 +253,21 @@ export const createTravelRequest = async (
 
     await db.query(historyQuery, [newRequest.id, employee.id]);
 
-    return {
-      statusCode: 201,
-      body: JSON.stringify({
+    return formatResponse(
+      201,
+      {
         data: {
           id: newRequest.id,
           submittedAt: newRequest.submitted_at, // Convert to camelCase for API response
           status: 'pending',
           message: 'Travel request submitted successfully',
         },
-      }),
-    };
+      },
+      'create-travel-request'
+    );
   } catch (error) {
     console.error('Error creating travel request:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' }),
-    };
+    return formatResponse(500, { error: 'Internal server error' }, 'create-travel-request');
   }
 };
 
@@ -291,10 +279,7 @@ export const getTravelRequests = async (
     const userContext = getUserContextFromEvent(event);
     const employeeCognitoId = userContext.sub;
     if (!employeeCognitoId) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Unauthorized' }),
-      };
+      return formatResponse(401, { error: 'Unauthorized' }, 'get-travel-requests');
     }
 
     // Get employee ID
@@ -305,10 +290,7 @@ export const getTravelRequests = async (
     const employeeResult = await db.query(employeeQuery, [employeeCognitoId]);
 
     if (employeeResult.rows.length === 0) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Employee not found' }),
-      };
+      return formatResponse(404, { error: 'Employee not found' }, 'get-travel-requests');
     }
 
     const employeeId = employeeResult.rows[0].id;
@@ -355,16 +337,10 @@ export const getTravelRequests = async (
       managerName: row.manager_name,
     }));
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ data: travelRequests }),
-    };
+    return formatResponse(200, { data: travelRequests }, 'get-travel-requests');
   } catch (error) {
     console.error('Error getting travel requests:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' }),
-    };
+    return formatResponse(500, { error: 'Internal server error' }, 'get-travel-requests');
   }
 };
 
@@ -386,8 +362,9 @@ export const employeesTravelRequests = async (
     }
   }
 
-  return {
-    statusCode: 405,
-    body: JSON.stringify({ error: `Method ${method} not allowed` }),
-  };
+  return formatResponse(
+    405,
+    { error: `Method ${method} not allowed` },
+    'employees-travel-requests-router'
+  );
 };

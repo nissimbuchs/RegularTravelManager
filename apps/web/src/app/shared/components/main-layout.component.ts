@@ -92,26 +92,40 @@ interface NavigationItem {
             <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
           </button>
 
-          <span class="toolbar-title">{{ getPageTitle() }}</span>
+          <span class="app-title">Regular Travel Form Manager</span>
 
           <span class="toolbar-spacer"></span>
 
-          <button mat-icon-button [matMenuTriggerFor]="userMenu">
+          <span class="page-title">{{ getPageTitle() }}</span>
+
+          <span class="toolbar-spacer"></span>
+
+          <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-trigger">
             <mat-icon>account_circle</mat-icon>
+            <mat-icon>arrow_drop_down</mat-icon>
           </button>
 
           <mat-menu #userMenu="matMenu">
             <div class="user-menu-header" mat-menu-item disabled>
               <div class="user-info">
-                <div class="user-name">{{ (currentUser$ | async)?.name }}</div>
+                <div class="user-full-name">{{ (currentUser$ | async)?.name }}</div>
                 <div class="user-role">{{ (currentUser$ | async)?.role | titlecase }}</div>
               </div>
             </div>
             <mat-divider></mat-divider>
+            <button mat-menu-item routerLink="/profile">
+              <mat-icon>person</mat-icon>
+              <span>My Profile</span>
+            </button>
+            <button mat-menu-item routerLink="/employee/address">
+              <mat-icon>home</mat-icon>
+              <span>My Address</span>
+            </button>
             <button mat-menu-item>
               <mat-icon>settings</mat-icon>
               <span>Settings</span>
             </button>
+            <mat-divider></mat-divider>
             <button mat-menu-item (click)="logout()">
               <mat-icon color="warn">logout</mat-icon>
               <span>Sign Out</span>
@@ -143,6 +157,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       label: 'Dashboard',
       route: (role: string) => (role === 'manager' ? '/manager/dashboard' : '/employee/dashboard'),
       roles: ['employee', 'manager'],
+    },
+    {
+      icon: 'account_circle',
+      label: 'Profile',
+      route: '/profile',
+      roles: ['employee', 'manager', 'admin'],
     },
     {
       icon: 'home',
@@ -180,6 +200,12 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       route: '/admin/projects',
       roles: ['admin'],
     },
+    {
+      icon: 'group',
+      label: 'Manage Users',
+      route: '/admin/users',
+      roles: ['admin'],
+    },
   ];
 
   constructor(
@@ -215,11 +241,13 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     const url = this.router.url;
 
     if (url.includes('/dashboard')) return 'Dashboard';
+    if (url.includes('/profile')) return 'My Profile';
     if (url.includes('/address')) return 'My Address';
     if (url.includes('/request')) return 'Travel Request';
     if (url.includes('/approvals')) return 'Approvals';
     if (url.includes('/employees')) return 'Employees';
     if (url.includes('/projects')) return 'Projects';
+    if (url.includes('/users')) return 'Users';
 
     return 'RegularTravelManager';
   }

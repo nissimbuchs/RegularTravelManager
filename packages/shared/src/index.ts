@@ -4,5 +4,6 @@
 export * from './types';
 export * from './types/api';
 export * from './types/auth';
+export * from './types/user-profile';
 export * from './utils';
 export * from './constants';

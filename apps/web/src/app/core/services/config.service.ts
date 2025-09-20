@@ -30,12 +30,16 @@ export class ConfigService {
    */
   async loadConfig(): Promise<void> {
     try {
-      console.log('🔧 Loading runtime configuration...');
-
       // Try to load environment-specific config first
-      console.log('🌐 Fetching config from /assets/config/config.json...');
       const config = await firstValueFrom(this.http.get<AppConfig>('/assets/config/config.json'));
-      console.log('📄 Raw configuration loaded:', config);
+
+      const isDevelopment = config?.environment === 'dev' || config?.cognito?.useMockAuth;
+
+      if (isDevelopment) {
+        console.log('🔧 Loading runtime configuration...');
+        console.log('🌐 Fetching config from /assets/config/config.json...');
+        console.log('📄 Raw configuration loaded:', config);
+      }
 
       // Validate the loaded configuration
       if (!config.cognito) {
@@ -53,14 +57,16 @@ export class ConfigService {
       this._config = config;
       this.configSubject.next(config);
 
-      console.log('✅ Runtime configuration loaded and validated:', {
-        apiUrl: config.apiUrl,
-        userPoolId: config.cognito.userPoolId,
-        userPoolClientId: config.cognito.userPoolClientId,
-        region: config.cognito.region,
-        useMockAuth: config.cognito.useMockAuth,
-        environment: config.environment,
-      });
+      if (isDevelopment) {
+        console.log('✅ Runtime configuration loaded and validated:', {
+          apiUrl: config.apiUrl,
+          userPoolId: config.cognito.userPoolId,
+          userPoolClientId: config.cognito.userPoolClientId,
+          region: config.cognito.region,
+          useMockAuth: config.cognito.useMockAuth,
+          environment: config.environment,
+        });
+      }
     } catch (error: any) {
       console.error('❌ Failed to load runtime configuration:', error);
       console.error('❌ Error details:', {

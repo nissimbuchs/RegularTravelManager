@@ -3,42 +3,47 @@
 import express from 'express';
 import cors from 'cors';
 import { getEnvironmentConfig } from './config/environment';
-import { getDynamoClient, getS3Client } from './services/aws-factory';
 import { initializeDatabase, testDatabaseConnection } from './database/connection';
 
-// Import real Lambda handlers
+// Import unified Lambda handlers from index.ts
 import {
+  // Project management - unified routing function
+  projectsManagement,
   getActiveProjects,
   getAllProjects,
   getProjectById,
   createProject,
   createSubproject,
-  updateProject,
-  updateSubproject,
-  deleteSubproject,
-  toggleProjectStatus,
-  checkProjectReferences,
-  deleteProject,
   getSubprojectsForProject,
   getSubprojectById,
   searchProjects,
-  geocodeAddress,
-} from './handlers/projects/management';
-import {
+  checkProjectReferences,
+
+  // Employee management
   getEmployeeProfile,
   updateEmployeeAddress,
   getManagers,
-} from './handlers/employees/profile';
-import { calculatePreview, createTravelRequest } from './handlers/employees/travel-requests';
-import {
-  getManagerDashboard,
-  getEmployeeContext,
-  approveRequest,
-  rejectRequest,
-} from './handlers/managers/dashboard';
 
-// Import registration handlers (Story 5.1)
-import {
+  // Travel requests - unified routing function
+  employeesTravelRequests,
+
+  // Manager dashboard - unified routing function
+  managersDashboard,
+
+  // Admin functions - unified routing functions
+  adminUserManagement,
+  adminRoleManagement,
+  adminProjectManagement,
+
+  // Calculation engine
+  calculateDistance,
+  calculateAllowance,
+  calculateTravelCost,
+  getCalculationAudit,
+  invalidateCalculationCache,
+  cleanupExpiredCache,
+
+  // Registration handlers (Story 5.1)
   registerUser,
   verifyEmail,
   resendVerification,
@@ -131,8 +136,8 @@ function lambdaToExpress(lambdaHandler) {
   };
 }
 
-// Health endpoint with service checks
-app.get('/health', async (req, res) => {
+// Health endpoint with service checks (match API Gateway: /api/health)
+app.get('/api/health', async (req, res) => {
   const config = getEnvironmentConfig();
 
   try {
@@ -151,13 +156,47 @@ app.get('/health', async (req, res) => {
       console.error('Database health check failed:', error.message);
     }
 
-    // Check LocalStack DynamoDB connection
+    res.json({
+      status: 'ok',
+      environment: config.NODE_ENV,
+      timestamp: new Date().toISOString(),
+      service: 'RegularTravelManager API',
+      services,
+      config: {
+        awsRegion: config.AWS_REGION,
+        awsEndpoint: config.AWS_ENDPOINT_URL,
+        databaseUrl: config.DATABASE_URL ? 'configured' : 'missing',
+        localStackMode: !!config.AWS_ENDPOINT_URL,
+      },
+    });
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(503).json({
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// Legacy health endpoint for backward compatibility
+app.get('/health', async (req, res) => {
+  const config = getEnvironmentConfig();
+
+  try {
+    const services = {
+      database: 'unknown',
+      localstack: 'unknown',
+      redis: 'unknown',
+    };
+
+    // Check database connection
     try {
-      const dynamoClient = getDynamoClient();
-      await dynamoClient.send({ input: {} }); // Simple connection test
-      services.localstack = 'ready';
+      await testDatabaseConnection();
+      services.database = 'connected';
     } catch (error) {
-      services.localstack = 'error';
+      services.database = 'error';
+      console.error('Database health check failed:', error.message);
     }
 
     res.json({
@@ -184,42 +223,89 @@ app.get('/health', async (req, res) => {
 });
 
 // Projects endpoints - using real database handlers (specific routes first)
-app.get('/projects/active', lambdaToExpress(getActiveProjects));
-app.get('/projects/search', lambdaToExpress(searchProjects));
-app.get('/projects/geocode', lambdaToExpress(geocodeAddress));
-app.get('/projects/:projectId/subprojects/:subprojectId', lambdaToExpress(getSubprojectById));
-app.get('/projects/:projectId/subprojects', lambdaToExpress(getSubprojectsForProject));
-app.get('/projects/:id/references', lambdaToExpress(checkProjectReferences));
-app.patch('/projects/:id/toggle-status', lambdaToExpress(toggleProjectStatus));
-app.get('/projects/:id', lambdaToExpress(getProjectById));
-app.get('/projects', lambdaToExpress(getAllProjects)); // General projects endpoint for admin (all projects)
-app.post('/projects', lambdaToExpress(createProject));
-app.post('/projects/:projectId/subprojects', lambdaToExpress(createSubproject));
-app.put('/projects/:projectId/subprojects/:subprojectId', lambdaToExpress(updateSubproject));
-app.delete('/projects/:projectId/subprojects/:subprojectId', lambdaToExpress(deleteSubproject));
-app.put('/projects/:id', lambdaToExpress(updateProject));
-app.delete('/projects/:id', lambdaToExpress(deleteProject));
+app.get('/api/projects/active', lambdaToExpress(getActiveProjects));
+app.get('/api/projects/search', lambdaToExpress(searchProjects));
+app.get('/api/projects/geocode', lambdaToExpress(projectsManagement)); // Unified routing
+app.get('/api/projects/:projectId/subprojects/:subprojectId', lambdaToExpress(getSubprojectById));
+app.get('/api/projects/:projectId/subprojects', lambdaToExpress(getSubprojectsForProject));
+app.get('/api/projects/:id/references', lambdaToExpress(checkProjectReferences));
+app.patch('/api/projects/:id/toggle-status', lambdaToExpress(projectsManagement)); // Unified routing
+app.get('/api/projects/:id', lambdaToExpress(getProjectById));
+app.get('/api/projects', lambdaToExpress(getAllProjects)); // General projects endpoint for admin (all projects)
+app.post('/api/projects', lambdaToExpress(createProject));
+app.post('/api/projects/:projectId/subprojects', lambdaToExpress(createSubproject));
+app.put('/api/projects/:projectId/subprojects/:subprojectId', lambdaToExpress(projectsManagement)); // Unified routing
+app.delete(
+  '/api/projects/:projectId/subprojects/:subprojectId',
+  lambdaToExpress(projectsManagement)
+); // Unified routing
+app.put('/api/projects/:id', lambdaToExpress(projectsManagement)); // Unified routing
+app.delete('/api/projects/:id', lambdaToExpress(projectsManagement)); // Unified routing
 
 // Employee endpoints - using real database handlers
-app.get('/managers', lambdaToExpress(getManagers));
-app.get('/employees/:id', lambdaToExpress(getEmployeeProfile));
-app.put('/employees/:id/address', lambdaToExpress(updateEmployeeAddress));
+app.get('/api/employees/managers', lambdaToExpress(getManagers));
+app.get('/api/employees/:cognitoUserId', lambdaToExpress(getEmployeeProfile));
+app.put('/api/employees/:cognitoUserId/address', lambdaToExpress(updateEmployeeAddress));
+app.get('/api/employees/:cognitoUserId/address/history', lambdaToExpress(getEmployeeProfile));
 
-// Travel Request endpoints - using real database handlers
-app.post('/api/employees/travel-requests/preview', lambdaToExpress(calculatePreview));
-app.post('/api/employees/travel-requests', lambdaToExpress(createTravelRequest));
+// Travel Request endpoints - using unified routing function
+app.post('/api/employees/travel-requests/preview', lambdaToExpress(employeesTravelRequests));
+app.post('/api/employees/travel-requests', lambdaToExpress(employeesTravelRequests));
+app.get('/api/employees/travel-requests', lambdaToExpress(employeesTravelRequests));
 
-// Manager Dashboard endpoints - using real database handlers
-app.get('/api/manager/dashboard', lambdaToExpress(getManagerDashboard));
-app.get('/api/manager/employee-context/:employeeId', lambdaToExpress(getEmployeeContext));
-app.put('/api/manager/requests/:requestId/approve', lambdaToExpress(approveRequest));
-app.put('/api/manager/requests/:requestId/reject', lambdaToExpress(rejectRequest));
+// Additional travel request endpoints
+app.post('/api/travel-requests/preview', lambdaToExpress(employeesTravelRequests));
+app.post('/api/travel-requests', lambdaToExpress(employeesTravelRequests));
+app.get('/api/travel-requests', lambdaToExpress(employeesTravelRequests));
+
+// Manager Dashboard endpoints - using unified routing function
+app.get('/api/manager/dashboard', lambdaToExpress(managersDashboard));
+app.get('/api/manager/requests', lambdaToExpress(managersDashboard));
+app.get('/api/manager/employee-context/:employeeId', lambdaToExpress(managersDashboard));
+app.get('/api/manager/requests/:id/context', lambdaToExpress(managersDashboard));
+app.put('/api/manager/requests/:id/approve', lambdaToExpress(managersDashboard));
+app.put('/api/manager/requests/:id/reject', lambdaToExpress(managersDashboard));
+
+// Admin endpoints - require admin authentication
+app.get('/api/admin/users', lambdaToExpress(adminUserManagement));
+app.get('/api/admin/users/:userId', lambdaToExpress(adminUserManagement));
+app.put('/api/admin/users/:userId/status', lambdaToExpress(adminUserManagement));
+app.put('/api/admin/users/:userId/manager', lambdaToExpress(adminUserManagement));
+app.delete('/api/admin/users/:userId', lambdaToExpress(adminUserManagement));
+app.put('/api/admin/users/:userId/role', lambdaToExpress(adminRoleManagement));
+app.post('/api/admin/users/:userId/role/validate', lambdaToExpress(adminRoleManagement));
+app.post('/api/admin/users/:userId/manager/validate', lambdaToExpress(adminRoleManagement));
+app.get('/api/admin/projects', lambdaToExpress(adminProjectManagement));
+
+// Calculation engine endpoints
+app.post('/api/calculations/distance', lambdaToExpress(calculateDistance));
+app.post('/api/calculations/allowance', lambdaToExpress(calculateAllowance));
+app.post('/api/calculations/preview', lambdaToExpress(calculateTravelCost));
+app.get('/api/calculations/audit/:requestId', lambdaToExpress(getCalculationAudit));
+app.post('/api/calculations/cache/invalidate', lambdaToExpress(invalidateCalculationCache));
+app.delete('/api/calculations/cache/expired', lambdaToExpress(cleanupExpiredCache));
+
+// Separate managers endpoint for backward compatibility
+app.get('/api/managers', lambdaToExpress(getManagers));
+
+// Subproject direct endpoints
+app.post('/api/subprojects', lambdaToExpress(createSubproject));
+app.get('/api/subprojects/:id', lambdaToExpress(getSubprojectById));
+app.put('/api/subprojects/:id', lambdaToExpress(projectsManagement));
+app.delete('/api/subprojects/:id', lambdaToExpress(projectsManagement));
+
+// Geocoding endpoints
+app.post('/api/geocoding/address', lambdaToExpress(updateEmployeeAddress));
 
 // Registration endpoints (Story 5.1) - Public endpoints, no auth required
-app.post('/auth/register', lambdaToExpress(registerUser));
-app.post('/auth/verify-email', lambdaToExpress(verifyEmail));
-app.post('/auth/resend-verification', lambdaToExpress(resendVerification));
-app.get('/auth/registration-status', lambdaToExpress(registrationStatus));
+app.post('/api/auth/register', lambdaToExpress(registerUser));
+app.options('/api/auth/register', lambdaToExpress(registerUser)); // CORS preflight
+app.post('/api/auth/verify-email', lambdaToExpress(verifyEmail));
+app.options('/api/auth/verify-email', lambdaToExpress(verifyEmail)); // CORS preflight
+app.post('/api/auth/resend-verification', lambdaToExpress(resendVerification));
+app.options('/api/auth/resend-verification', lambdaToExpress(resendVerification)); // CORS preflight
+app.get('/api/auth/registration-status', lambdaToExpress(registrationStatus));
+app.options('/api/auth/registration-status', lambdaToExpress(registrationStatus)); // CORS preflight
 
 // Initialize database and start server
 async function startServer() {
@@ -231,8 +317,8 @@ async function startServer() {
     app.listen(PORT, () => {
       console.log(`🚀 Development API server running at http://localhost:${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
-      console.log(`📦 Projects API: http://localhost:${PORT}/projects/active`);
-      console.log(`👤 Employees API: http://localhost:${PORT}/employees`);
+      console.log(`📦 Projects API: http://localhost:${PORT}/api/projects/active`);
+      console.log(`👤 Employees API: http://localhost:${PORT}/api/employees`);
       console.log(`💼 Manager API: http://localhost:${PORT}/api/manager/dashboard`);
       console.log(`🧪 Using REAL PostgreSQL database (no mocks!)`);
     });

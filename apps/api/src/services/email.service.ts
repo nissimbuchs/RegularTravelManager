@@ -1,12 +1,13 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { logger } from '../middleware/logger';
-import { isLocalDevelopment } from '../config/environment';
+import { isLocalDevelopment, isStaging } from '../config/environment';
 
 export interface EmailConfig {
   fromAddress: string;
   replyToAddress: string;
   supportEmail: string;
   baseUrl: string;
+  stagingAdminEmail?: string;
 }
 
 export class EmailService {
@@ -19,12 +20,13 @@ export class EmailService {
     });
 
     this.config = {
-      fromAddress: process.env.FROM_EMAIL_ADDRESS || 'noreply@regulartravelmanager.com',
-      replyToAddress: process.env.REPLY_TO_EMAIL || 'support@regulartravelmanager.com',
-      supportEmail: process.env.SUPPORT_EMAIL || 'support@regulartravelmanager.com',
+      fromAddress: process.env.FROM_EMAIL_ADDRESS || 'nissim@buchs.be',
+      replyToAddress: process.env.REPLY_TO_EMAIL || 'nissim@buchs.be',
+      supportEmail: process.env.SUPPORT_EMAIL || 'nissim@buchs.be',
       baseUrl: isLocalDevelopment()
         ? 'http://localhost:4200'
         : process.env.FRONTEND_BASE_URL || 'https://dz57qvo83kxos.cloudfront.net',
+      stagingAdminEmail: process.env.STAGING_ADMIN_EMAIL || 'nissim@buchs.be',
     };
   }
 
@@ -56,6 +58,50 @@ export class EmailService {
         console.log(verificationUrl);
         console.log('⏰ TOKEN EXPIRES: 24 hours');
         console.log('='.repeat(80) + '\n');
+
+        return true;
+      }
+
+      // Staging email redirection - send to admin instead of user
+      if (isStaging()) {
+        const emailContent = this.generateStagingVerificationEmailContent(
+          firstName,
+          email,
+          verificationUrl
+        );
+
+        const command = new SendEmailCommand({
+          Source: this.config.fromAddress,
+          ReplyToAddresses: [this.config.replyToAddress],
+          Destination: {
+            ToAddresses: [this.config.stagingAdminEmail!],
+          },
+          Message: {
+            Subject: {
+              Data: `[STAGING] Registration Verification for ${email}`,
+              Charset: 'UTF-8',
+            },
+            Body: {
+              Html: {
+                Data: emailContent.html,
+                Charset: 'UTF-8',
+              },
+              Text: {
+                Data: emailContent.text,
+                Charset: 'UTF-8',
+              },
+            },
+          },
+        });
+
+        const result = await this.sesClient.send(command);
+
+        logger.info('Staging verification email sent to admin', {
+          originalEmail: email,
+          adminEmail: this.config.stagingAdminEmail,
+          messageId: result.MessageId,
+          verificationUrl: verificationUrl.replace(verificationToken, '***'), // Don't log full token
+        });
 
         return true;
       }
@@ -446,6 +492,163 @@ export class EmailService {
       The RegularTravelManager Team
       
       Need help? Contact us at ${this.config.supportEmail}
+      RegularTravelManager - Swiss Employee Travel Management
+    `;
+
+    return { html, text };
+  }
+
+  /**
+   * Generate staging verification email content for admin
+   */
+  private generateStagingVerificationEmailContent(
+    firstName: string,
+    originalEmail: string,
+    verificationUrl: string
+  ) {
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>[STAGING] Registration Verification - RegularTravelManager</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            background-color: #ff9800;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+          }
+          .content {
+            background-color: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+          }
+          .verify-button {
+            display: inline-block;
+            background-color: #1976d2;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: bold;
+          }
+          .user-details {
+            background-color: #fff3e0;
+            border: 1px solid #ff9800;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+          }
+          .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 14px;
+          }
+          .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border: 1px solid #ffeaa7;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🧪 STAGING ENVIRONMENT</h1>
+          <p>Registration Verification Required</p>
+        </div>
+
+        <div class="content">
+          <h2>Hello Admin!</h2>
+
+          <p>A new user has registered in the staging environment and requires account verification.</p>
+
+          <div class="user-details">
+            <h3>User Registration Details:</h3>
+            <ul>
+              <li><strong>Name:</strong> ${firstName}</li>
+              <li><strong>Email:</strong> ${originalEmail}</li>
+              <li><strong>Environment:</strong> Staging</li>
+            </ul>
+          </div>
+
+          <p><strong>Action Required:</strong> Click the verification button below to activate this user's account on their behalf.</p>
+
+          <div style="text-align: center;">
+            <a href="${verificationUrl}" class="verify-button">✅ Verify User Account</a>
+          </div>
+
+          <div class="warning">
+            <strong>⚠️ Staging Notice:</strong> This email was redirected to you because we're in staging environment. The user expects their account to be verified and will not receive this email directly.
+          </div>
+
+          <p>After verification, the user will be able to log in with:</p>
+          <ul>
+            <li><strong>Email:</strong> ${originalEmail}</li>
+            <li><strong>Password:</strong> [The password they created during registration]</li>
+          </ul>
+
+          <p>If you can't click the button above, you can copy and paste this link into your browser:</p>
+          <p style="word-break: break-all; background-color: #fff; padding: 10px; border-radius: 4px; font-family: monospace;">${verificationUrl}</p>
+
+          <p>Best regards,<br>
+          The RegularTravelManager System</p>
+        </div>
+
+        <div class="footer">
+          <p>This is an automated staging environment notification</p>
+          <p>RegularTravelManager - Swiss Employee Travel Management</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+      [STAGING ENVIRONMENT] Registration Verification Required
+
+      Hello Admin!
+
+      A new user has registered in the staging environment and requires account verification.
+
+      USER REGISTRATION DETAILS:
+      - Name: ${firstName}
+      - Email: ${originalEmail}
+      - Environment: Staging
+
+      ACTION REQUIRED:
+      Visit the following link to activate this user's account on their behalf:
+
+      ${verificationUrl}
+
+      ⚠️ STAGING NOTICE:
+      This email was redirected to you because we're in staging environment.
+      The user expects their account to be verified and will not receive this email directly.
+
+      After verification, the user will be able to log in with:
+      - Email: ${originalEmail}
+      - Password: [The password they created during registration]
+
+      Best regards,
+      The RegularTravelManager System
+
+      This is an automated staging environment notification
       RegularTravelManager - Swiss Employee Travel Management
     `;
 

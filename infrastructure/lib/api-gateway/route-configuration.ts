@@ -208,6 +208,26 @@ export const API_ROUTES: RouteGroupConfig[] = [
     ],
   },
   {
+    basePath: 'api/user',
+    description: 'User profile endpoints (Story 5.2)',
+    routes: [
+      {
+        path: 'profile',
+        method: 'GET',
+        functionName: 'user-get-profile',
+        requiresAuth: true,
+        description: 'Get current user profile',
+      },
+      {
+        path: 'profile',
+        method: 'PUT',
+        functionName: 'user-update-profile',
+        requiresAuth: true,
+        description: 'Update current user profile',
+      },
+    ],
+  },
+  {
     basePath: 'api/projects',
     description: 'Project management endpoints',
     routes: [
@@ -238,8 +258,9 @@ export const API_ROUTES: RouteGroupConfig[] = [
       {
         path: 'geocode',
         method: 'GET',
-        functionName: 'update-employee-address',
-        description: 'Geocoding compatibility',
+        functionName: 'projects-management',
+        requiresAuth: false,
+        description: 'Geocode address for projects and subprojects',
       },
       {
         path: '{id}',
@@ -528,6 +549,62 @@ export const API_ROUTES: RouteGroupConfig[] = [
         method: 'GET',
         functionName: 'admin-project-management',
         description: 'Admin project management',
+      },
+      // User Management Routes (Story 5.3) - Complete path-based routing
+      {
+        path: 'users',
+        method: 'GET',
+        functionName: 'admin-user-management',
+        description: 'List all users with pagination and filtering',
+      },
+      {
+        path: 'users/{userId}',
+        method: 'GET',
+        functionName: 'admin-user-management',
+        description: 'Get detailed user information',
+      },
+      {
+        path: 'users/{userId}/status',
+        method: 'PUT',
+        functionName: 'admin-user-management',
+        description: 'Update user active status',
+      },
+      {
+        path: 'users/{userId}/manager',
+        method: 'PUT',
+        functionName: 'admin-user-management',
+        description: 'Update user manager assignment',
+      },
+      {
+        path: 'users/{userId}',
+        method: 'PUT',
+        functionName: 'admin-user-management',
+        description: 'Update user profile (admin)',
+      },
+      {
+        path: 'users/{userId}',
+        method: 'DELETE',
+        functionName: 'admin-user-management',
+        description: 'Delete user with comprehensive cleanup',
+      },
+      // Role Management Routes (Story 5.3)
+      {
+        path: 'users/{userId}/role',
+        method: 'PUT',
+        functionName: 'admin-role-management',
+        description: 'Update user role with validation',
+      },
+      {
+        path: 'users/{userId}/role/validate',
+        method: 'POST',
+        functionName: 'admin-role-management',
+        description: 'Validate role change before execution',
+      },
+      {
+        path: 'users/{userId}/manager/validate',
+        method: 'POST',
+        functionName: 'admin-role-management',
+        description: 'Validate manager assignment before execution',
       },
     ],
   },
