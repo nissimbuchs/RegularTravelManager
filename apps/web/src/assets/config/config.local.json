@@ -1,8 +1,8 @@
 {
-  "apiUrl": "http://localhost:3000",
+  "apiUrl": "http://localhost:4000",
   "cognito": {
     "userPoolId": "local",
-    "userPoolClientId": "local", 
+    "userPoolClientId": "local",
     "region": "eu-central-1",
     "useMockAuth": true
   },

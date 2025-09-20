@@ -1,5 +1,5 @@
 import { Client } from 'pg';
-import { readFileSync } from 'fs';
+import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 interface MigrationRecord {
@@ -52,7 +52,7 @@ export class MigrationRunner {
   }
 
   async executeMigration(version: string, filename: string): Promise<void> {
-    const migrationPath = join(__dirname, 'migrations', filename);
+    const migrationPath = join(__dirname, '..', '..', '..', '..', 'migrations', filename);
     const migrationContent = readFileSync(migrationPath, 'utf8');
     const checksum = this.calculateChecksum(migrationContent);
 
@@ -115,7 +115,7 @@ export class MigrationRunner {
       migrationVersion = version;
     }
 
-    const rollbackPath = join(__dirname, 'migrations', rollbackFilename);
+    const rollbackPath = join(__dirname, '..', '..', '..', '..', 'migrations', rollbackFilename);
 
     try {
       const rollbackContent = readFileSync(rollbackPath, 'utf8');
@@ -141,13 +141,48 @@ export class MigrationRunner {
     }
   }
 
+  private getMigrations(): Array<{ version: string; filename: string }> {
+    // Path to consolidated migrations directory
+    const migrationsDir = join(__dirname, '..', '..', '..', '..', 'migrations');
+    const migrations: Array<{ version: string; filename: string }> = [];
+
+    try {
+      // Get all .sql files from migrations directory (excluding rollback files)
+      const files = readdirSync(migrationsDir)
+        .filter(file => file.endsWith('.sql') && !file.includes('rollback'))
+        .sort(); // Sort alphabetically to ensure proper order
+
+      for (const filename of files) {
+        // Extract version number from filename (e.g., "021-add-employee-profile-fields.sql" -> "021")
+        const versionMatch = filename.match(/^(\d+)/);
+        if (!versionMatch) {
+          console.log(`Skipping file ${filename} - no version number found`);
+          continue;
+        }
+
+        const version = versionMatch[1];
+        if (!version) {
+          console.log(`Skipping file ${filename} - invalid version format`);
+          continue;
+        }
+
+        migrations.push({
+          version,
+          filename,
+        });
+        console.log(`Found migration ${version}: ${filename}`);
+      }
+
+      console.log(`Discovered ${migrations.length} migration files from ${migrationsDir}`);
+      return migrations.sort((a, b) => a.version.localeCompare(b.version));
+    } catch (error) {
+      console.error('Error reading migration files:', error);
+      throw new Error(`Failed to load migration files from ${migrationsDir}: ${error}`);
+    }
+  }
+
   async runAllMigrations(): Promise<void> {
-    const migrations = [
-      { version: '001', filename: '001_initial_schema.sql' },
-      { version: '002', filename: '002_add_cognito_fields.sql' },
-      { version: '003', filename: '003_distance_calculation_functions.sql' },
-      { version: '004', filename: '004_user_registration_table.sql' },
-    ];
+    const migrations = this.getMigrations();
 
     for (const migration of migrations) {
       await this.executeMigration(migration.version, migration.filename);
