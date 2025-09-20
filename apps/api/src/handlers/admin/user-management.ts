@@ -912,3 +912,58 @@ export const deleteUserHandler = async (
     );
   }
 };
+
+/**
+ * PUT /admin/users/{userId}/profile - Update user profile details (admin only)
+ * Allows admins to update any user's profile including restricted fields
+ */
+export const updateUserProfileHandler = async (
+  event: APIGatewayProxyEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> => {
+  logger.info('Admin update user profile request', {
+    requestId: context.awsRequestId,
+    path: event.path,
+    pathParameters: event.pathParameters,
+  });
+
+  try {
+    validateAdminAccess(event);
+
+    const userId = event.pathParameters?.userId;
+    if (!userId) {
+      return formatResponse(
+        400,
+        {
+          code: 'MISSING_USER_ID',
+          message: 'User ID is required in path parameters',
+        },
+        context.awsRequestId
+      );
+    }
+
+    // Delegate to the shared profile update handler
+    // The handler will check for admin context and allow additional fields
+    const { updateProfileHandler } = await import('../user/update-profile');
+    return await updateProfileHandler(event, context);
+  } catch (error) {
+    logger.error('Failed to update user profile', {
+      error: error.message,
+      stack: error.stack,
+      requestId: context.awsRequestId,
+    });
+
+    const statusCode = error instanceof AdminAccessError ? 403 : 500;
+    const errorMessage =
+      error instanceof AdminAccessError ? error.message : 'Internal server error';
+
+    return formatResponse(
+      statusCode,
+      {
+        code: error.name,
+        message: errorMessage,
+      },
+      context.awsRequestId
+    );
+  }
+};

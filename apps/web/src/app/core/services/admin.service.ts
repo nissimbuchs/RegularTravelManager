@@ -13,6 +13,8 @@ import {
   RoleChangeValidation,
   ManagerAssignmentRequest,
   ManagerAssignmentValidation,
+  AdminUserProfileUpdateRequest,
+  ProfileUpdateResponse,
 } from '@rtm/shared';
 
 interface UserFilters {
@@ -103,6 +105,26 @@ export class AdminService implements OnDestroy {
       map(response => response.data),
       takeUntil(this.destroy$)
     );
+  }
+
+  /**
+   * Update user profile (admin)
+   */
+  updateUserProfile(
+    userId: string,
+    profileUpdate: AdminUserProfileUpdateRequest
+  ): Observable<ProfileUpdateResponse> {
+    return this.http
+      .put<{ data: ProfileUpdateResponse }>(`/api/admin/users/${userId}`, profileUpdate)
+      .pipe(
+        map(response => response.data),
+        tap(() => {
+          // Refresh current user list
+          const currentFilters = this.filtersSubject.value;
+          this.refreshUsers(currentFilters);
+        }),
+        takeUntil(this.destroy$)
+      );
   }
 
   /**

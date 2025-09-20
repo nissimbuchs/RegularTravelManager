@@ -8,11 +8,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
 import { takeUntil, switchMap } from 'rxjs/operators';
 
 import { UserDetails } from '@rtm/shared';
 import { AdminService } from '../../../core/services/admin.service';
+import { UserProfileDialogComponent } from './user-profile-dialog.component';
 
 @Component({
   selector: 'app-user-detail',
@@ -27,6 +30,8 @@ import { AdminService } from '../../../core/services/admin.service';
     MatChipsModule,
     MatDividerModule,
     MatTabsModule,
+    MatDialogModule,
+    MatSnackBarModule,
   ],
   template: `
     <div class="user-detail-container">
@@ -55,7 +60,7 @@ import { AdminService } from '../../../core/services/admin.service';
               <mat-icon>arrow_back</mat-icon>
               Back to Users
             </button>
-            <button mat-raised-button color="primary">
+            <button mat-raised-button color="primary" (click)="editUser()">
               <mat-icon>edit</mat-icon>
               Edit User
             </button>
@@ -419,7 +424,9 @@ export class UserDetailComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private adminService: AdminService
+    private adminService: AdminService,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
@@ -450,6 +457,44 @@ export class UserDetailComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     this.router.navigate(['/admin/users']);
+  }
+
+  editUser(): void {
+    if (!this.user) return;
+
+    const dialogRef = this.dialog.open(UserProfileDialogComponent, {
+      width: '800px',
+      data: {
+        title: 'Edit User Profile',
+        user: this.user,
+        isAdminEdit: true,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        // Reload user details to show updated data
+        this.route.params
+          .pipe(
+            switchMap(params => {
+              const userId = params['id'];
+              return this.adminService.getUserDetails(userId);
+            }),
+            takeUntil(this.destroy$)
+          )
+          .subscribe({
+            next: user => {
+              this.user = user;
+              this.snackBar.open('User profile updated successfully', 'Close', {
+                duration: 3000,
+              });
+            },
+            error: error => {
+              console.error('Failed to reload user details:', error);
+            },
+          });
+      }
+    });
   }
 
   getRoleColor(role: string): 'primary' | 'accent' | 'warn' | undefined {

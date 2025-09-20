@@ -557,6 +557,12 @@ export const API_ROUTES: RouteGroupConfig[] = [
       },
       {
         path: 'users/{userId}',
+        method: 'PUT',
+        functionName: 'admin-user-management',
+        description: 'Update user profile (admin)',
+      },
+      {
+        path: 'users/{userId}',
         method: 'DELETE',
         functionName: 'admin-user-management',
         description: 'Delete user with comprehensive cleanup',

@@ -6,6 +6,7 @@ import {
   updateUserStatusHandler,
   updateUserManagerHandler,
   deleteUserHandler,
+  updateUserProfileHandler,
 } from '../handlers/admin/user-management';
 
 /**
@@ -44,6 +45,12 @@ export const handler = async (
     // Update user manager (PUT /admin/users/{userId}/manager)
     if (path.includes('/manager') && method === 'PUT') {
       return await updateUserManagerHandler(event, context);
+    }
+
+    // Update user profile (PUT /admin/users/{userId})
+    // Must check before DELETE since both match the same pattern
+    if (path.match(/\/users\/[^\/]+$/) && method === 'PUT') {
+      return await updateUserProfileHandler(event, context);
     }
 
     // Delete user (DELETE /admin/users/{userId})
