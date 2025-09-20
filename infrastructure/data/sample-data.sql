@@ -24,7 +24,7 @@ INSERT INTO employees (
     manager_id, is_active
 ) VALUES (
     '11111111-1111-1111-1111-111111111111',
-    'admin1@company.ch',
+    '11111111-1111-1111-1111-111111111111',
     'ADM-0001',
     'admin1@company.ch',
     'Hans',
@@ -45,7 +45,7 @@ INSERT INTO employees (
     manager_id, is_active
 ) VALUES (
     '22222222-2222-2222-2222-222222222222',
-    'admin2@company.ch',
+    '22222222-2222-2222-2222-222222222222',
     'ADM-0002',
     'admin2@company.ch',
     'Maria',
@@ -66,7 +66,7 @@ INSERT INTO employees (
     manager_id, is_active
 ) VALUES (
     '33333333-3333-3333-3333-333333333333',
-    'manager1@company.ch',
+    '33333333-3333-3333-3333-333333333333',
     'MGR-0001',
     'manager1@company.ch',
     'Thomas',
@@ -87,7 +87,7 @@ INSERT INTO employees (
     manager_id, is_active
 ) VALUES (
     '44444444-4444-4444-4444-444444444444',
-    'manager2@company.ch',
+    '44444444-4444-4444-4444-444444444444',
     'MGR-0002',
     'manager2@company.ch',
     'Sophie',
@@ -109,7 +109,7 @@ INSERT INTO employees (
     manager_id, is_active
 ) VALUES (
     '55555555-5555-5555-5555-555555555555',
-    'employee1@company.ch',
+    '55555555-5555-5555-5555-555555555555',
     'EMP-0001',
     'employee1@company.ch',
     'Anna',
@@ -130,7 +130,7 @@ INSERT INTO employees (
     manager_id, is_active
 ) VALUES (
     '66666666-6666-6666-6666-666666666666',
-    'employee2@company.ch',
+    '66666666-6666-6666-6666-666666666666',
     'EMP-0002',
     'employee2@company.ch',
     'Marco',
@@ -151,7 +151,7 @@ INSERT INTO employees (
     manager_id, is_active
 ) VALUES (
     '77777777-7777-7777-7777-777777777777',
-    'employee3@company.ch',
+    '77777777-7777-7777-7777-777777777777',
     'EMP-0003',
     'employee3@company.ch',
     'Lisa',
@@ -172,7 +172,7 @@ INSERT INTO employees (
     manager_id, is_active
 ) VALUES (
     '88888888-8888-8888-8888-888888888888',
-    'employee4@company.ch',
+    '88888888-8888-8888-8888-888888888888',
     'EMP-0004',
     'employee4@company.ch',
     'Pierre',
@@ -193,7 +193,7 @@ INSERT INTO employees (
     manager_id, is_active
 ) VALUES (
     '99999999-9999-9999-9999-999999999999',
-    'employee5@company.ch',
+    '99999999-9999-9999-9999-999999999999',
     'EMP-0005',
     'employee5@company.ch',
     'Julia',
@@ -213,8 +213,8 @@ INSERT INTO employees (
     home_street, home_city, home_postal_code, home_country, home_location,
     manager_id, is_active
 ) VALUES (
-    '10101010-1010-1010-1010-101010101010',
-    'employee6@company.ch',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     'EMP-0006',
     'employee6@company.ch',
     'Michael',

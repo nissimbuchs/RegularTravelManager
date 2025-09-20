@@ -27,7 +27,8 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   next();
@@ -68,7 +69,7 @@ app.use('/', localAuthorizerMiddleware);
  * Transform Express request to Lambda event format
  */
 function transformToLambdaEvent(req: express.Request, routeConfig: any): any {
-  const authContext = req['requestContext']?.authorizer || {};
+  const authContext = (req as any).requestContext?.authorizer || {};
 
   return {
     httpMethod: req.method,
@@ -78,7 +79,7 @@ function transformToLambdaEvent(req: express.Request, routeConfig: any): any {
     headers: req.headers,
     body: req.body ? JSON.stringify(req.body) : null,
     requestContext: {
-      requestId: req['requestContext']?.requestId || `gateway-${Date.now()}`,
+      requestId: (req as any).requestContext?.requestId || `gateway-${Date.now()}`,
       identity: {
         sourceIp: req.ip || req.connection?.remoteAddress || '127.0.0.1',
         userAgent: req.headers['user-agent'],
@@ -109,9 +110,11 @@ function extractPathParameters(actualPath: string, routePattern: string): Record
     const patternPart = patternParts[i];
     const actualPart = actualParts[i];
 
-    if (patternPart.startsWith('{') && patternPart.endsWith('}')) {
+    if (patternPart && patternPart.startsWith('{') && patternPart.endsWith('}')) {
       const paramName = patternPart.slice(1, -1);
-      params[paramName] = actualPart;
+      if (actualPart) {
+        params[paramName] = actualPart;
+      }
     } else if (patternPart !== actualPart) {
       return null;
     }
@@ -224,6 +227,14 @@ app.use('/', async (req, res, next) => {
 
     if (!routeConfig) {
       console.log(`⚠️ [GATEWAY] No route found for ${req.method} ${req.path}`);
+      console.log(`🔍 [GATEWAY] Available routes:`);
+      API_ROUTES.forEach(group => {
+        const basePath = group.basePath.replace(/^api\//, '');
+        group.routes.forEach(route => {
+          const fullPath = basePath + (route.path ? '/' + route.path : '');
+          console.log(`  ${route.method} /${fullPath} -> ${route.functionName}`);
+        });
+      });
       return res.status(404).json({
         error: 'Not Found',
         message: `No route configured for ${req.method} ${req.path}`,
@@ -239,6 +250,11 @@ app.use('/', async (req, res, next) => {
 
     // Transform request to Lambda event format
     const lambdaEvent = transformToLambdaEvent(req, routeConfig);
+
+    // Add path parameters if they were extracted during route matching
+    if (routeConfig.pathParameters) {
+      lambdaEvent.pathParameters = routeConfig.pathParameters;
+    }
 
     // Call Lambda simulator
     const lambdaResponse = await proxyToLambda(lambdaEvent, routeConfig.functionName);
