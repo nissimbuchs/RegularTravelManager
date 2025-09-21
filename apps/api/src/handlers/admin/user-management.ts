@@ -93,6 +93,12 @@ export const listUsersHandler = async (
       paramIndex++;
     }
 
+    if (role) {
+      whereConditions.push(`COALESCE(e.role, 'employee') = $${paramIndex}`);
+      queryParams.push(role);
+      paramIndex++;
+    }
+
     // Build ORDER BY clause
     let orderByClause = 'e.created_at DESC';
     switch (sortBy) {
@@ -129,6 +135,7 @@ export const listUsersHandler = async (
         e.email,
         e.first_name,
         e.last_name,
+        COALESCE(e.role, 'employee') as role,
         e.manager_id,
         m.first_name || ' ' || m.last_name as manager_name,
         e.is_active,

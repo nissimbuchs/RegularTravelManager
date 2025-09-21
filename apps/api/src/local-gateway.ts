@@ -23,7 +23,10 @@ const app = express();
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'http://localhost:4200');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-mock-user, x-user-id, x-user-email, x-user-groups');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, x-mock-user, x-user-id, x-user-email, x-user-groups'
+  );
   res.header('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') {
@@ -92,7 +95,10 @@ function transformToLambdaEvent(req: express.Request, routeConfig: any): any {
 /**
  * Extract path parameters from URL
  */
-function extractPathParameters(actualPath: string, routePattern: string): Record<string, string> | null {
+function extractPathParameters(
+  actualPath: string,
+  routePattern: string
+): Record<string, string> | null {
   const params: Record<string, string> = {};
 
   // Remove leading slash for matching
@@ -168,16 +174,12 @@ async function proxyToLambda(
     console.log(`🚀 [GATEWAY] Invoking Lambda function: ${functionName}`);
 
     // Call Lambda simulator with the specific function endpoint
-    const response = await axios.post(
-      `${LAMBDA_SERVER_URL}/invoke/${functionName}`,
-      lambdaEvent,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        timeout: 30000, // 30 second timeout
-      }
-    );
+    const response = await axios.post(`${LAMBDA_SERVER_URL}/invoke/${functionName}`, lambdaEvent, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      timeout: 30000, // 30 second timeout
+    });
 
     return response.data;
   } catch (error) {
@@ -269,9 +271,10 @@ app.use('/', async (req, res, next) => {
     }
 
     // Parse body if it's a string (Lambda returns stringified JSON)
-    const responseBody = typeof lambdaResponse.body === 'string'
-      ? JSON.parse(lambdaResponse.body)
-      : lambdaResponse.body;
+    const responseBody =
+      typeof lambdaResponse.body === 'string'
+        ? JSON.parse(lambdaResponse.body)
+        : lambdaResponse.body;
 
     res.json(responseBody);
   } catch (error) {

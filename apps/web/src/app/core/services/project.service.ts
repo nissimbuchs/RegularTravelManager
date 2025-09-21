@@ -53,9 +53,9 @@ export class ProjectService implements OnDestroy {
     );
   }
 
-  getProject(id: string): Observable<Project> {
+  getProject(projectId: string): Observable<Project> {
     return this.http
-      .get<{ data: { project: Project } }>(`${this.baseUrl}/${id}`)
+      .get<{ data: { project: Project } }>(`${this.baseUrl}/${projectId}`)
       .pipe(map(response => response.data.project));
   }
 
@@ -66,22 +66,26 @@ export class ProjectService implements OnDestroy {
     );
   }
 
-  updateProject(id: string, project: ProjectUpdateRequest): Observable<Project> {
-    return this.http.put<{ data: Project }>(`${this.baseUrl}/${id}`, project).pipe(
+  updateProject(projectId: string, project: ProjectUpdateRequest): Observable<Project> {
+    return this.http.put<{ data: Project }>(`${this.baseUrl}/${projectId}`, project).pipe(
       map(response => response.data),
       tap(() => this.refreshProjects())
     );
   }
 
-  deleteProject(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(tap(() => this.refreshProjects()));
+  deleteProject(projectId: string): Observable<void> {
+    return this.http
+      .delete<void>(`${this.baseUrl}/${projectId}`)
+      .pipe(tap(() => this.refreshProjects()));
   }
 
-  toggleProjectStatus(id: string): Observable<Project> {
-    return this.http.patch<{ data: Project }>(`${this.baseUrl}/${id}/toggle-status`, {}).pipe(
-      map(response => response.data),
-      tap(() => this.refreshProjects())
-    );
+  toggleProjectStatus(projectId: string): Observable<Project> {
+    return this.http
+      .patch<{ data: Project }>(`${this.baseUrl}/${projectId}/toggle-status`, {})
+      .pipe(
+        map(response => response.data),
+        tap(() => this.refreshProjects())
+      );
   }
 
   // Subproject CRUD Operations

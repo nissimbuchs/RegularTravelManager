@@ -76,12 +76,18 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
                     <mat-label>Email</mat-label>
                     <input matInput formControlName="email" readonly />
                     <mat-icon matPrefix>email</mat-icon>
-                    <mat-hint>Email cannot be changed directly. Contact admin for changes.</mat-hint>
+                    <mat-hint
+                      >Email cannot be changed directly. Contact admin for changes.</mat-hint
+                    >
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="form-field-full">
                     <mat-label>Phone Number</mat-label>
-                    <input matInput formControlName="phoneNumber" placeholder="e.g., +41 79 123 45 67, +1 555 123 4567" />
+                    <input
+                      matInput
+                      formControlName="phoneNumber"
+                      placeholder="e.g., +41 79 123 45 67, +1 555 123 4567"
+                    />
                     <mat-icon matPrefix>phone</mat-icon>
                     <mat-error *ngIf="personalForm.get('phoneNumber')?.hasError('pattern')">
                       Please enter a valid phone number (10-15 digits, optional + prefix)
@@ -89,7 +95,12 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
                   </mat-form-field>
 
                   <div class="form-actions">
-                    <button mat-button type="button" (click)="resetPersonalForm()" [disabled]="loading">
+                    <button
+                      mat-button
+                      type="button"
+                      (click)="resetPersonalForm()"
+                      [disabled]="loading"
+                    >
                       Reset
                     </button>
                     <button
@@ -126,14 +137,19 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
                     <h4>Current Address:</h4>
                     <div class="address-display">
                       <div>{{ profile!.homeAddress!.street }}</div>
-                      <div>{{ profile!.homeAddress!.postalCode }} {{ profile!.homeAddress!.city }}</div>
+                      <div>
+                        {{ profile!.homeAddress!.postalCode }} {{ profile!.homeAddress!.city }}
+                      </div>
                       <div>{{ profile!.homeAddress!.country }}</div>
                     </div>
                   </div>
 
                   <div class="no-address" *ngIf="!profile?.homeAddress">
                     <mat-icon>location_off</mat-icon>
-                    <p>No address set. Please add your home address to enable travel distance calculations.</p>
+                    <p>
+                      No address set. Please add your home address to enable travel distance
+                      calculations.
+                    </p>
                   </div>
 
                   <button
@@ -222,7 +238,7 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
                   </div>
                   <div class="info-row">
                     <span class="info-label">Last Login:</span>
-                    <span class="info-value">{{ profile?.lastLoginAt | date : 'medium' }}</span>
+                    <span class="info-value">{{ profile?.lastLoginAt | date: 'medium' }}</span>
                   </div>
                   <div class="info-row">
                     <span class="info-label">Email Verified:</span>
@@ -230,9 +246,7 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
                       <mat-icon *ngIf="profile?.emailVerifiedAt" color="primary"
                         >check_circle</mat-icon
                       >
-                      <mat-icon *ngIf="!profile?.emailVerifiedAt" color="warn"
-                        >cancel</mat-icon
-                      >
+                      <mat-icon *ngIf="!profile?.emailVerifiedAt" color="warn">cancel</mat-icon>
                     </span>
                   </div>
                   <div class="button-group">
@@ -301,15 +315,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   loadProfile(): void {
     this.loading = true;
-    this.adminService.getUserProfile()
+    this.adminService
+      .getUserProfile()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (profile) => {
+        next: profile => {
           this.profile = profile;
           this.populateForms(profile);
           this.loading = false;
         },
-        error: (error) => {
+        error: error => {
           console.error('Failed to load profile:', error);
           this.snackBar.open('Failed to load profile', 'Close', { duration: 3000 });
           this.loading = false;
@@ -356,10 +371,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   private updateProfile(updates: UserProfileUpdateRequest, updateType: string): void {
     this.loading = true;
-    this.adminService.updateCurrentUserProfile(updates)
+    this.adminService
+      .updateCurrentUserProfile(updates)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (updatedProfile) => {
+        next: updatedProfile => {
           this.profile = updatedProfile;
           this.populateForms(updatedProfile);
           this.snackBar.open(`${updateType} updated successfully`, 'Close', { duration: 3000 });
@@ -369,9 +385,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
           this.personalForm.markAsPristine();
           this.notificationForm.markAsPristine();
         },
-        error: (error) => {
+        error: error => {
           console.error('Failed to update profile:', error);
-          this.snackBar.open(`Failed to update ${updateType.toLowerCase()}`, 'Close', { duration: 3000 });
+          this.snackBar.open(`Failed to update ${updateType.toLowerCase()}`, 'Close', {
+            duration: 3000,
+          });
           this.loading = false;
         },
       });

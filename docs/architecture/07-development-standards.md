@@ -166,7 +166,7 @@ export class FeatureComponent implements OnInit, OnDestroy {
 </div>
 ```
 
-### Naming Conventions
+### Naming Conventions1
 
 **Frontend:** PascalCase components/services, camelCase directives
 **Backend:** kebab-case API routes, snake_case database tables/columns

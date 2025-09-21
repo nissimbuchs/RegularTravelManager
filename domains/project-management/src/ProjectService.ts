@@ -2,61 +2,70 @@ export interface Project {
   id: string;
   name: string;
   description?: string;
-  default_cost_per_km: number;
-  is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
+  defaultCostPerKm: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Subproject {
   id: string;
-  project_id: string;
+  projectId: string;
   name: string;
-  street_address?: string;
+  streetAddress?: string;
   city?: string;
-  postal_code?: string;
+  postalCode?: string;
   country?: string;
-  location_coordinates?: { latitude: number; longitude: number };
-  cost_per_km?: number;
-  is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
+  locationCoordinates?: { latitude: number; longitude: number };
+  costPerKm?: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateProjectCommand {
   name: string;
   description?: string;
-  default_cost_per_km: number;
+  defaultCostPerKm: number;
 }
 
 export interface CreateSubprojectCommand {
-  project_id: string;
+  projectId: string;
   name: string;
-  street_address?: string;
+  streetAddress?: string;
   city?: string;
-  postal_code?: string;
+  postalCode?: string;
   country?: string;
-  cost_per_km?: number;
+  costPerKm?: number;
 }
 
 export interface UpdateProjectCommand {
   id: string;
   name?: string;
   description?: string;
-  default_cost_per_km?: number;
-  is_active?: boolean;
+  defaultCostPerKm?: number;
+  isActive?: boolean;
 }
 
 export interface UpdateSubprojectCommand {
   id: string;
-  project_id: string;
+  projectId: string;
   name?: string;
-  street_address?: string;
+  streetAddress?: string;
   city?: string;
-  postal_code?: string;
+  postalCode?: string;
   country?: string;
-  cost_per_km?: number;
-  is_active?: boolean;
+  costPerKm?: number;
+  isActive?: boolean;
+}
+
+export interface ProjectSearchFilters {
+  search?: string;
+  isActive?: boolean;
+  minCostPerKm?: number;
+  maxCostPerKm?: number;
+  createdAfter?: string;
+  createdBefore?: string;
 }
 
 export interface ProjectService {
@@ -99,6 +108,16 @@ export interface ProjectService {
    * Search projects by name
    */
   searchProjects(searchTerm: string): Promise<Project[]>;
+
+  /**
+   * Get all projects (including inactive)
+   */
+  getAllProjects(): Promise<Project[]>;
+
+  /**
+   * Get projects with filters applied
+   */
+  getProjectsWithFilters(filters: ProjectSearchFilters): Promise<Project[]>;
 
   /**
    * Update an existing subproject

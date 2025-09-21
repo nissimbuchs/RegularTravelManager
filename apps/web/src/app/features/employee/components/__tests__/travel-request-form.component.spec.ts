@@ -136,7 +136,7 @@ describe('TravelRequestFormComponent', () => {
         id: 'subproj-1',
         projectId: 'proj-1',
         name: 'Test Subproject',
-        locationCity: 'Zurich',
+        city: 'Zurich',
         isActive: true,
         createdAt: '2025-01-01',
         updatedAt: '2025-01-01',
@@ -540,11 +540,11 @@ describe('TravelRequestFormComponent', () => {
       const mockSubprojects = [
         {
           id: 'sub-1',
-          project_id: 'proj-1',
+          projectId: 'proj-1',
           name: 'Subproject 1',
-          is_active: true,
-          created_at: '2025-01-01',
-          updated_at: '2025-01-01',
+          isActive: true,
+          createdAt: '2025-01-01',
+          updatedAt: '2025-01-01',
         },
       ];
 

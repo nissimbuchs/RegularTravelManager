@@ -150,9 +150,9 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                   <div class="address" *ngIf="hasAddress(subproject); else noAddress">
                     <mat-icon class="address-icon">place</mat-icon>
                     <div class="address-text">
-                      <div>{{ subproject.locationStreet }}</div>
+                      <div>{{ subproject.streetAddress }}</div>
                       <div class="city-postal">
-                        {{ subproject.locationCity }} {{ subproject.locationPostalCode }}
+                        {{ subproject.city }} {{ subproject.postalCode }}
                       </div>
                     </div>
                   </div>
@@ -464,9 +464,9 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
 
   hasAddress(subproject: Subproject): boolean {
     return !!(
-      subproject.locationStreet ||
-      subproject.locationCity ||
-      subproject.locationPostalCode
+      subproject.streetAddress ||
+      subproject.city ||
+      subproject.postalCode
     );
   }
 

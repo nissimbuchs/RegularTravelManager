@@ -371,12 +371,13 @@ export const updateProfileHandler = validateRequest({
         postalCode: updatedUser.home_postal_code,
         country: updatedUser.home_country || 'Switzerland',
       },
-      ...(updatedUser.latitude && updatedUser.longitude && {
-        homeCoordinates: {
-          latitude: parseFloat(updatedUser.latitude),
-          longitude: parseFloat(updatedUser.longitude),
-        },
-      }),
+      ...(updatedUser.latitude &&
+        updatedUser.longitude && {
+          homeCoordinates: {
+            latitude: parseFloat(updatedUser.latitude),
+            longitude: parseFloat(updatedUser.longitude),
+          },
+        }),
       notificationPreferences: updatedUser.notification_preferences,
       privacySettings: updatedUser.privacy_settings,
       lastUpdatedAt: updatedUser.updated_at,

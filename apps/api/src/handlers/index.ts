@@ -160,10 +160,17 @@ export const getSubprojectById = errorHandler(async (event, context) => {
   return getSubprojectByIdHandler(event, context);
 });
 
+export const toggleSubprojectStatus = errorHandler(async (event, context) => {
+  await ensureDatabaseInitialized();
+  return toggleSubprojectStatusHandler(event, context);
+});
+
 // Unified project management handler for routing PUT/DELETE operations
 import {
   updateSubproject as updateSubprojectHandler,
   deleteSubproject as deleteSubprojectHandler,
+  toggleSubprojectStatus as toggleSubprojectStatusHandler,
+  toggleProjectStatus as toggleProjectStatusHandler,
 } from './projects/management';
 
 export const projectsManagement = errorHandler(async (event, context) => {
@@ -185,6 +192,12 @@ export const projectsManagement = errorHandler(async (event, context) => {
   } else if (method === 'DELETE' && path.includes('/subprojects/')) {
     console.log('🔄 Routing to deleteSubprojectHandler');
     return deleteSubprojectHandler(event, context);
+  } else if (method === 'PATCH' && path.includes('/subprojects/') && path.includes('/toggle-status')) {
+    console.log('🔄 Routing to toggleSubprojectStatusHandler');
+    return toggleSubprojectStatusHandler(event, context);
+  } else if (method === 'PATCH' && path.includes('/projects/') && path.includes('/toggle-status') && !path.includes('/subprojects/')) {
+    console.log('🔄 Routing to toggleProjectStatusHandler');
+    return toggleProjectStatusHandler(event, context);
   } else if (method === 'PUT' && path.includes('/projects/')) {
     console.log('🔄 Routing to updateProjectHandler');
     const result = await updateProjectHandler(event, context);

@@ -20,16 +20,16 @@ export interface AuthContext {
 
 // Mock user mappings for local development
 const MOCK_USER_MAPPINGS = {
-  'admin1': { employeeId: 'ADM-0001', groups: ['administrators', 'managers', 'employees'] },
-  'admin2': { employeeId: 'ADM-0002', groups: ['administrators', 'managers', 'employees'] },
-  'manager1': { employeeId: 'MGR-0001', groups: ['managers', 'employees'] },
-  'manager2': { employeeId: 'MGR-0002', groups: ['managers', 'employees'] },
-  'employee1': { employeeId: 'EMP-0001', groups: ['employees'] },
-  'employee2': { employeeId: 'EMP-0002', groups: ['employees'] },
-  'employee3': { employeeId: 'EMP-0003', groups: ['employees'] },
-  'employee4': { employeeId: 'EMP-0004', groups: ['employees'] },
-  'employee5': { employeeId: 'EMP-0005', groups: ['employees'] },
-  'employee6': { employeeId: 'EMP-0006', groups: ['employees'] },
+  admin1: { employeeId: 'ADM-0001', groups: ['administrators', 'managers', 'employees'] },
+  admin2: { employeeId: 'ADM-0002', groups: ['administrators', 'managers', 'employees'] },
+  manager1: { employeeId: 'MGR-0001', groups: ['managers', 'employees'] },
+  manager2: { employeeId: 'MGR-0002', groups: ['managers', 'employees'] },
+  employee1: { employeeId: 'EMP-0001', groups: ['employees'] },
+  employee2: { employeeId: 'EMP-0002', groups: ['employees'] },
+  employee3: { employeeId: 'EMP-0003', groups: ['employees'] },
+  employee4: { employeeId: 'EMP-0004', groups: ['employees'] },
+  employee5: { employeeId: 'EMP-0005', groups: ['employees'] },
+  employee6: { employeeId: 'EMP-0006', groups: ['employees'] },
 };
 
 /**
@@ -131,16 +131,16 @@ function createFallbackContext(mockUser: string): AuthContext {
 
   // Generate consistent UUID for mock user
   const uuidMap = {
-    'admin1': '11111111-1111-1111-1111-111111111111',
-    'admin2': '22222222-2222-2222-2222-222222222222',
-    'manager1': '33333333-3333-3333-3333-333333333333',
-    'manager2': '44444444-4444-4444-4444-444444444444',
-    'employee1': '55555555-5555-5555-5555-555555555555',
-    'employee2': '66666666-6666-6666-6666-666666666666',
-    'employee3': '77777777-7777-7777-7777-777777777777',
-    'employee4': '88888888-8888-8888-8888-888888888888',
-    'employee5': '99999999-9999-9999-9999-999999999999',
-    'employee6': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    admin1: '11111111-1111-1111-1111-111111111111',
+    admin2: '22222222-2222-2222-2222-222222222222',
+    manager1: '33333333-3333-3333-3333-333333333333',
+    manager2: '44444444-4444-4444-4444-444444444444',
+    employee1: '55555555-5555-5555-5555-555555555555',
+    employee2: '66666666-6666-6666-6666-666666666666',
+    employee3: '77777777-7777-7777-7777-777777777777',
+    employee4: '88888888-8888-8888-8888-888888888888',
+    employee5: '99999999-9999-9999-9999-999999999999',
+    employee6: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
   };
 
   return {

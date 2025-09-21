@@ -45,51 +45,51 @@ function getLambdaHandler(functionName: string): any {
   // Map function names to handlers
   const handlerMap: Record<string, any> = {
     // Health
-    'health': handlers.health,
+    health: handlers.health,
 
     // Projects
-    'getActiveProjects': handlers.getActiveProjects,
-    'getAllProjects': handlers.getAllProjects,
-    'getProjectById': handlers.getProjectById,
-    'createProject': handlers.createProject,
-    'createSubproject': handlers.createSubproject,
-    'getSubprojectsForProject': handlers.getSubprojectsForProject,
-    'getSubprojectById': handlers.getSubprojectById,
-    'searchProjects': handlers.searchProjects,
-    'checkProjectReferences': handlers.checkProjectReferences,
-    'projectsManagement': handlers.projectsManagement,
+    getActiveProjects: handlers.getActiveProjects,
+    getAllProjects: handlers.getAllProjects,
+    getProjectById: handlers.getProjectById,
+    createProject: handlers.createProject,
+    createSubproject: handlers.createSubproject,
+    getSubprojectsForProject: handlers.getSubprojectsForProject,
+    getSubprojectById: handlers.getSubprojectById,
+    searchProjects: handlers.searchProjects,
+    checkProjectReferences: handlers.checkProjectReferences,
+    projectsManagement: handlers.projectsManagement,
 
     // Employees
-    'getEmployeeProfile': handlers.getEmployeeProfile,
-    'updateEmployeeAddress': handlers.updateEmployeeAddress,
-    'getManagers': handlers.getManagers,
-    'employeesTravelRequests': handlers.employeesTravelRequests,
+    getEmployeeProfile: handlers.getEmployeeProfile,
+    updateEmployeeAddress: handlers.updateEmployeeAddress,
+    getManagers: handlers.getManagers,
+    employeesTravelRequests: handlers.employeesTravelRequests,
 
     // Managers
-    'managersDashboard': handlers.managersDashboard,
+    managersDashboard: handlers.managersDashboard,
 
     // Admin
-    'adminUserManagement': handlers.adminUserManagement,
-    'adminRoleManagement': handlers.adminRoleManagement,
-    'adminProjectManagement': handlers.adminProjectManagement,
+    adminUserManagement: handlers.adminUserManagement,
+    adminRoleManagement: handlers.adminRoleManagement,
+    adminProjectManagement: handlers.adminProjectManagement,
 
     // Calculations
-    'calculateDistance': handlers.calculateDistance,
-    'calculateAllowance': handlers.calculateAllowance,
-    'calculateTravelCost': handlers.calculateTravelCost,
-    'getCalculationAudit': handlers.getCalculationAudit,
-    'invalidateCalculationCache': handlers.invalidateCalculationCache,
-    'cleanupExpiredCache': handlers.cleanupExpiredCache,
+    calculateDistance: handlers.calculateDistance,
+    calculateAllowance: handlers.calculateAllowance,
+    calculateTravelCost: handlers.calculateTravelCost,
+    getCalculationAudit: handlers.getCalculationAudit,
+    invalidateCalculationCache: handlers.invalidateCalculationCache,
+    cleanupExpiredCache: handlers.cleanupExpiredCache,
 
     // User Profile
-    'userGetProfile': handlers.userGetProfile,
-    'userUpdateProfile': handlers.userUpdateProfile,
+    userGetProfile: handlers.userGetProfile,
+    userUpdateProfile: handlers.userUpdateProfile,
 
     // Registration
-    'registerUser': handlers.registerUser,
-    'verifyEmail': handlers.verifyEmail,
-    'resendVerification': handlers.resendVerification,
-    'registrationStatus': handlers.registrationStatus,
+    registerUser: handlers.registerUser,
+    verifyEmail: handlers.verifyEmail,
+    resendVerification: handlers.resendVerification,
+    registrationStatus: handlers.registrationStatus,
   };
 
   return handlerMap[handlerName] || null;

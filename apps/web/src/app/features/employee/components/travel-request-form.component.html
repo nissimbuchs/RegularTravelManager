@@ -28,7 +28,7 @@
             <mat-option value="">Select a subproject</mat-option>
             <mat-option *ngFor="let subproject of subprojects" [value]="subproject.id">
               {{ subproject.name }}
-              <span *ngIf="subproject.locationCity"> - {{ subproject.locationCity }}</span>
+              <span *ngIf="subproject.city"> - {{ subproject.city }}</span>
             </mat-option>
           </mat-select>
           <mat-error *ngIf="requestForm.get('subProjectId')?.hasError('required')">

@@ -107,7 +107,7 @@ export interface SubprojectFormDialogData {
             <mat-label>Street Address</mat-label>
             <input
               matInput
-              formControlName="locationStreet"
+              formControlName="streetAddress"
               placeholder="Bahnhofstrasse 1"
               maxlength="255"
             />
@@ -117,19 +117,19 @@ export interface SubprojectFormDialogData {
           <div class="address-row">
             <mat-form-field appearance="outline">
               <mat-label>City</mat-label>
-              <input matInput formControlName="locationCity" placeholder="Zurich" maxlength="100" />
+              <input matInput formControlName="city" placeholder="Zurich" maxlength="100" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Postal Code</mat-label>
               <input
                 matInput
-                formControlName="locationPostalCode"
+                formControlName="postalCode"
                 placeholder="8001"
                 maxlength="20"
                 pattern="[0-9]{4,5}"
               />
-              <mat-error *ngIf="subprojectForm.get('locationPostalCode')?.hasError('pattern')">
+              <mat-error *ngIf="subprojectForm.get('postalCode')?.hasError('pattern')">
                 Please enter a valid Swiss postal code (4-5 digits)
               </mat-error>
             </mat-form-field>
@@ -333,9 +333,9 @@ export class SubprojectFormDialogComponent implements OnInit, OnDestroy {
       const subproject = this.data.subproject;
       this.subprojectForm.patchValue({
         name: subproject.name,
-        locationStreet: subproject.locationStreet || '',
-        locationCity: subproject.locationCity || '',
-        locationPostalCode: subproject.locationPostalCode || '',
+        streetAddress: subproject.streetAddress || '',
+        city: subproject.city || '',
+        postalCode: subproject.postalCode || '',
         costPerKm: subproject.costPerKm || '',
         isActive: subproject.isActive,
       });
@@ -356,9 +356,9 @@ export class SubprojectFormDialogComponent implements OnInit, OnDestroy {
         debounceTime(1000),
         distinctUntilChanged(
           (prev, curr) =>
-            prev.locationStreet === curr.locationStreet &&
-            prev.locationCity === curr.locationCity &&
-            prev.locationPostalCode === curr.locationPostalCode
+            prev.streetAddress === curr.streetAddress &&
+            prev.city === curr.city &&
+            prev.postalCode === curr.postalCode
         )
       )
       .subscribe(() => {
@@ -376,9 +376,9 @@ export class SubprojectFormDialogComponent implements OnInit, OnDestroy {
   private createForm(): FormGroup {
     return this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(255)]],
-      locationStreet: ['', [Validators.maxLength(255)]],
-      locationCity: ['', [Validators.maxLength(100)]],
-      locationPostalCode: ['', [Validators.maxLength(20), Validators.pattern(/^\d{4,5}$/)]],
+      streetAddress: ['', [Validators.maxLength(255)]],
+      city: ['', [Validators.maxLength(100)]],
+      postalCode: ['', [Validators.maxLength(20), Validators.pattern(/^\d{4,5}$/)]],
       costPerKm: ['', [Validators.min(0.01), Validators.max(999.99)]],
       isActive: [true],
       manualLatitude: ['', [Validators.min(45.818), Validators.max(47.808)]],
@@ -389,8 +389,8 @@ export class SubprojectFormDialogComponent implements OnInit, OnDestroy {
   canGeocode(): boolean {
     const form = this.subprojectForm.value;
     return !!(
-      form.locationStreet?.trim() ||
-      (form.locationCity?.trim() && form.locationPostalCode?.trim())
+      form.streetAddress?.trim() ||
+      (form.city?.trim() && form.postalCode?.trim())
     );
   }
 
@@ -401,10 +401,10 @@ export class SubprojectFormDialogComponent implements OnInit, OnDestroy {
     // Format address for AWS Location Service: "Street, PostalCode City, Country"
     // AWS Location Service expects postal code before city without comma separation
     const addressParts = [
-      form.locationStreet?.trim(),
-      form.locationPostalCode?.trim() && form.locationCity?.trim()
-        ? `${form.locationPostalCode.trim()} ${form.locationCity.trim()}`
-        : form.locationCity?.trim() || form.locationPostalCode?.trim(),
+      form.streetAddress?.trim(),
+      form.postalCode?.trim() && form.city?.trim()
+        ? `${form.postalCode.trim()} ${form.city.trim()}`
+        : form.city?.trim() || form.postalCode?.trim(),
       'Switzerland',
     ].filter(Boolean);
 
@@ -495,9 +495,9 @@ export class SubprojectFormDialogComponent implements OnInit, OnDestroy {
 
       const subprojectData: SubprojectCreateRequest | SubprojectUpdateRequest = {
         name: formValue.name.trim(),
-        locationStreet: formValue.locationStreet?.trim() || undefined,
-        locationCity: formValue.locationCity?.trim() || undefined,
-        locationPostalCode: formValue.locationPostalCode?.trim() || undefined,
+        streetAddress: formValue.streetAddress?.trim() || undefined,
+        city: formValue.city?.trim() || undefined,
+        postalCode: formValue.postalCode?.trim() || undefined,
         costPerKm: formValue.costPerKm ? parseFloat(formValue.costPerKm) : undefined,
         isActive: formValue.isActive,
       };

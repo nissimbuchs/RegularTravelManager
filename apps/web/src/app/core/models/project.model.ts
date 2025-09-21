@@ -14,9 +14,10 @@ export interface Subproject {
   id: string;
   projectId: string;
   name: string;
-  locationStreet?: string;
-  locationCity?: string;
-  locationPostalCode?: string;
+  streetAddress?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
   locationCoordinates?: {
     latitude: number;
     longitude: number;
@@ -24,6 +25,7 @@ export interface Subproject {
   costPerKm?: number;
   isActive: boolean;
   createdAt: string;
+  updatedAt?: string;
   project?: Project;
 }
 
@@ -44,18 +46,20 @@ export interface ProjectUpdateRequest {
 export interface SubprojectCreateRequest {
   projectId: string;
   name: string;
-  locationStreet?: string;
-  locationCity?: string;
-  locationPostalCode?: string;
+  streetAddress?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
   costPerKm?: number;
   isActive?: boolean;
 }
 
 export interface SubprojectUpdateRequest {
   name?: string;
-  locationStreet?: string;
-  locationCity?: string;
-  locationPostalCode?: string;
+  streetAddress?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
   costPerKm?: number;
   isActive?: boolean;
 }

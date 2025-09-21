@@ -51,7 +51,7 @@ import {
 } from './handlers/index';
 
 const app = express();
-const PORT = 3000;
+const PORT = 4000;
 
 // Middleware
 app.use(cors());
@@ -228,9 +228,9 @@ app.get('/api/projects/search', lambdaToExpress(searchProjects));
 app.get('/api/projects/geocode', lambdaToExpress(projectsManagement)); // Unified routing
 app.get('/api/projects/:projectId/subprojects/:subprojectId', lambdaToExpress(getSubprojectById));
 app.get('/api/projects/:projectId/subprojects', lambdaToExpress(getSubprojectsForProject));
-app.get('/api/projects/:id/references', lambdaToExpress(checkProjectReferences));
-app.patch('/api/projects/:id/toggle-status', lambdaToExpress(projectsManagement)); // Unified routing
-app.get('/api/projects/:id', lambdaToExpress(getProjectById));
+app.get('/api/projects/:projectId/references', lambdaToExpress(checkProjectReferences));
+app.patch('/api/projects/:projectId/toggle-status', lambdaToExpress(projectsManagement)); // Unified routing
+app.get('/api/projects/:projectId', lambdaToExpress(getProjectById));
 app.get('/api/projects', lambdaToExpress(getAllProjects)); // General projects endpoint for admin (all projects)
 app.post('/api/projects', lambdaToExpress(createProject));
 app.post('/api/projects/:projectId/subprojects', lambdaToExpress(createSubproject));
@@ -239,8 +239,12 @@ app.delete(
   '/api/projects/:projectId/subprojects/:subprojectId',
   lambdaToExpress(projectsManagement)
 ); // Unified routing
-app.put('/api/projects/:id', lambdaToExpress(projectsManagement)); // Unified routing
-app.delete('/api/projects/:id', lambdaToExpress(projectsManagement)); // Unified routing
+app.patch(
+  '/api/projects/:projectId/subprojects/:subprojectId/toggle-status',
+  lambdaToExpress(projectsManagement)
+); // Unified routing
+app.put('/api/projects/:projectId', lambdaToExpress(projectsManagement)); // Unified routing
+app.delete('/api/projects/:projectId', lambdaToExpress(projectsManagement)); // Unified routing
 
 // Employee endpoints - using real database handlers
 app.get('/api/employees/managers', lambdaToExpress(getManagers));
@@ -288,11 +292,7 @@ app.delete('/api/calculations/cache/expired', lambdaToExpress(cleanupExpiredCach
 // Separate managers endpoint for backward compatibility
 app.get('/api/managers', lambdaToExpress(getManagers));
 
-// Subproject direct endpoints
-app.post('/api/subprojects', lambdaToExpress(createSubproject));
-app.get('/api/subprojects/:id', lambdaToExpress(getSubprojectById));
-app.put('/api/subprojects/:id', lambdaToExpress(projectsManagement));
-app.delete('/api/subprojects/:id', lambdaToExpress(projectsManagement));
+// Note: Direct subproject endpoints removed - frontend only uses nested endpoints (/api/projects/:projectId/subprojects/)
 
 // Geocoding endpoints
 app.post('/api/geocoding/address', lambdaToExpress(updateEmployeeAddress));

@@ -1,7 +1,8 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { takeUntil, tap, catchError, map } from 'rxjs/operators';
+import { ConfigService } from './config.service';
 import {
   UserSummary,
   UserDetails,
@@ -38,6 +39,7 @@ interface PaginationParams {
   providedIn: 'root',
 })
 export class AdminService implements OnDestroy {
+  private configService = inject(ConfigService);
   private destroy$ = new Subject<void>();
 
   // State management for user listing
@@ -55,6 +57,10 @@ export class AdminService implements OnDestroy {
   public error$ = this.errorSubject.asObservable();
 
   constructor(private http: HttpClient) {}
+
+  private get apiUrl(): string {
+    return this.configService.apiUrl;
+  }
 
   /**
    * Load users with pagination and filtering
@@ -82,7 +88,7 @@ export class AdminService implements OnDestroy {
     if (filters.department) params = params.set('department', filters.department);
     if (filters.managerId) params = params.set('managerId', filters.managerId);
 
-    return this.http.get<{ data: AdminUserListing }>('/api/admin/users', { params }).pipe(
+    return this.http.get<{ data: AdminUserListing }>(`${this.apiUrl}/admin/users`, { params }).pipe(
       map(response => response.data),
       tap(response => {
         this.usersSubject.next(response.users);
@@ -103,7 +109,7 @@ export class AdminService implements OnDestroy {
    * Get detailed user information
    */
   getUserDetails(userId: string): Observable<UserDetails> {
-    return this.http.get<{ data: UserDetails }>(`/api/admin/users/${userId}`).pipe(
+    return this.http.get<{ data: UserDetails }>(`${this.apiUrl}/admin/users/${userId}`).pipe(
       map(response => response.data),
       takeUntil(this.destroy$)
     );
@@ -117,7 +123,7 @@ export class AdminService implements OnDestroy {
     profileUpdate: AdminUserProfileUpdateRequest
   ): Observable<ProfileUpdateResponse> {
     return this.http
-      .put<{ data: ProfileUpdateResponse }>(`/api/admin/users/${userId}`, profileUpdate)
+      .put<{ data: ProfileUpdateResponse }>(`${this.apiUrl}/admin/users/${userId}`, profileUpdate)
       .pipe(
         map(response => response.data),
         tap(() => {
@@ -133,7 +139,7 @@ export class AdminService implements OnDestroy {
    * Update user status (activate/deactivate)
    */
   updateUserStatus(userId: string, statusUpdate: UserStatusUpdateRequest): Observable<any> {
-    return this.http.put(`/api/admin/users/${userId}/status`, statusUpdate).pipe(
+    return this.http.put(`${this.apiUrl}/admin/users/${userId}/status`, statusUpdate).pipe(
       tap(() => {
         // Refresh current user list
         const currentFilters = this.filtersSubject.value;
@@ -147,7 +153,7 @@ export class AdminService implements OnDestroy {
    * Update user role with validation
    */
   updateUserRole(userId: string, roleChange: RoleChangeRequest): Observable<any> {
-    return this.http.put(`/api/admin/users/${userId}/role`, roleChange).pipe(
+    return this.http.put(`${this.apiUrl}/admin/users/${userId}/role`, roleChange).pipe(
       tap(() => {
         // Refresh current user list
         const currentFilters = this.filtersSubject.value;
@@ -162,7 +168,7 @@ export class AdminService implements OnDestroy {
    */
   validateRoleChange(userId: string, newRole: string): Observable<RoleChangeValidation> {
     return this.http
-      .post<{ data: RoleChangeValidation }>(`/api/admin/users/${userId}/role/validate`, {
+      .post<{ data: RoleChangeValidation }>(`${this.apiUrl}/admin/users/${userId}/role/validate`, {
         newRole,
       })
       .pipe(
@@ -175,7 +181,7 @@ export class AdminService implements OnDestroy {
    * Update user manager assignment
    */
   updateUserManager(userId: string, managerAssignment: ManagerAssignmentRequest): Observable<any> {
-    return this.http.put(`/api/admin/users/${userId}/manager`, managerAssignment).pipe(
+    return this.http.put(`${this.apiUrl}/admin/users/${userId}/manager`, managerAssignment).pipe(
       tap(() => {
         // Refresh current user list
         const currentFilters = this.filtersSubject.value;
@@ -193,9 +199,12 @@ export class AdminService implements OnDestroy {
     managerId: string
   ): Observable<ManagerAssignmentValidation> {
     return this.http
-      .post<{ data: ManagerAssignmentValidation }>(`/api/admin/users/${userId}/manager/validate`, {
-        managerId,
-      })
+      .post<{ data: ManagerAssignmentValidation }>(
+        `${this.apiUrl}/admin/users/${userId}/manager/validate`,
+        {
+          managerId,
+        }
+      )
       .pipe(
         map(response => response.data),
         takeUntil(this.destroy$)
@@ -210,7 +219,7 @@ export class AdminService implements OnDestroy {
     deletionRequest: UserDeletionRequest
   ): Observable<UserDeletionSummary> {
     return this.http
-      .delete<{ data: UserDeletionSummary }>(`/api/admin/users/${userId}`, {
+      .delete<{ data: UserDeletionSummary }>(`${this.apiUrl}/admin/users/${userId}`, {
         body: deletionRequest,
       })
       .pipe(
@@ -301,7 +310,7 @@ export class AdminService implements OnDestroy {
    * Get current user's profile
    */
   getUserProfile(): Observable<UserProfile> {
-    return this.http.get<{ data: UserProfile }>('/api/user/profile').pipe(
+    return this.http.get<{ data: UserProfile }>(`${this.apiUrl}/user/profile`).pipe(
       map(response => response.data),
       catchError(error => {
         console.error('Failed to get user profile:', error);
@@ -314,7 +323,7 @@ export class AdminService implements OnDestroy {
    * Update current user's own profile
    */
   updateCurrentUserProfile(profileUpdate: UserProfileUpdateRequest): Observable<UserProfile> {
-    return this.http.put<{ data: UserProfile }>('/api/user/profile', profileUpdate).pipe(
+    return this.http.put<{ data: UserProfile }>(`${this.apiUrl}/user/profile`, profileUpdate).pipe(
       map(response => response.data),
       catchError(error => {
         console.error('Failed to update user profile:', error);
