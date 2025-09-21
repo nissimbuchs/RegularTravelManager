@@ -204,6 +204,10 @@ function getMigrations(): MigrationFile[] {
   const migrations: MigrationFile[] = [];
 
   try {
+    // TEMPORARY: Only run migration 029 to fix admin_delete_user function SQL syntax
+    const targetMigrations = ['029'];
+    console.log(`TEMPORARY: Only running migrations: ${targetMigrations.join(', ')}`);
+
     // Get all .sql files from migrations directory
     const files = readdirSync(migrationsDir)
       .filter(file => file.endsWith('.sql'))
@@ -220,6 +224,12 @@ function getMigrations(): MigrationFile[] {
       const version = versionMatch[1];
       if (!version) {
         console.log(`Skipping file ${filename} - invalid version format`);
+        continue;
+      }
+
+      // TEMPORARY: Only include migration 028
+      if (!targetMigrations.includes(version)) {
+        console.log(`Skipping migration ${version} - not in target list`);
         continue;
       }
 

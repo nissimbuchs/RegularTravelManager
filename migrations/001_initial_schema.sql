@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Employees table with home address and coordinates
-CREATE TABLE employees (
+CREATE TABLE IF NOT EXISTS employees (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) NOT NULL UNIQUE,
     first_name VARCHAR(100) NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE employees (
 );
 
 -- Projects table for organizing work locations
-CREATE TABLE projects (
+CREATE TABLE IF NOT EXISTS projects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -35,8 +35,8 @@ CREATE TABLE projects (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Subprojects table for specific work locations  
-CREATE TABLE subprojects (
+-- Subprojects table for specific work locations
+CREATE TABLE IF NOT EXISTS subprojects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     project_id UUID NOT NULL REFERENCES projects(id),
     name VARCHAR(255) NOT NULL,
@@ -52,7 +52,7 @@ CREATE TABLE subprojects (
 );
 
 -- Travel requests table (main aggregate)
-CREATE TABLE travel_requests (
+CREATE TABLE IF NOT EXISTS travel_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     employee_id UUID NOT NULL REFERENCES employees(id),
     manager_id UUID NOT NULL REFERENCES employees(id),
@@ -72,7 +72,7 @@ CREATE TABLE travel_requests (
 );
 
 -- Employee address history for audit trail
-CREATE TABLE employee_address_history (
+CREATE TABLE IF NOT EXISTS employee_address_history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     employee_id UUID NOT NULL REFERENCES employees(id),
     previous_street VARCHAR(255) NOT NULL,
@@ -90,8 +90,8 @@ CREATE TABLE employee_address_history (
     changed_by UUID NOT NULL REFERENCES employees(id)
 );
 
--- Request status history for audit trail  
-CREATE TABLE request_status_history (
+-- Request status history for audit trail
+CREATE TABLE IF NOT EXISTS request_status_history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     travel_request_id UUID NOT NULL REFERENCES travel_requests(id),
     previous_status VARCHAR(20),
@@ -102,18 +102,18 @@ CREATE TABLE request_status_history (
 );
 
 -- Database indexes for performance
-CREATE INDEX idx_employees_manager_id ON employees(manager_id);
-CREATE INDEX idx_employees_location ON employees USING GIST (home_location);
-CREATE INDEX idx_projects_is_active ON projects(is_active);
-CREATE INDEX idx_subprojects_project_id ON subprojects(project_id);
-CREATE INDEX idx_subprojects_location ON subprojects USING GIST (location);
-CREATE INDEX idx_subprojects_is_active ON subprojects(is_active);
-CREATE INDEX idx_travel_requests_employee_id ON travel_requests(employee_id);
-CREATE INDEX idx_travel_requests_manager_id ON travel_requests(manager_id);
-CREATE INDEX idx_travel_requests_status ON travel_requests(status);
-CREATE INDEX idx_travel_requests_submitted_at ON travel_requests(submitted_at);
-CREATE INDEX idx_employee_address_history_employee_id ON employee_address_history(employee_id);
-CREATE INDEX idx_request_status_history_travel_request_id ON request_status_history(travel_request_id);
+CREATE INDEX IF NOT EXISTS idx_employees_manager_id ON employees(manager_id);
+CREATE INDEX IF NOT EXISTS idx_employees_location ON employees USING GIST (home_location);
+CREATE INDEX IF NOT EXISTS idx_projects_is_active ON projects(is_active);
+CREATE INDEX IF NOT EXISTS idx_subprojects_project_id ON subprojects(project_id);
+CREATE INDEX IF NOT EXISTS idx_subprojects_location ON subprojects USING GIST (location);
+CREATE INDEX IF NOT EXISTS idx_subprojects_is_active ON subprojects(is_active);
+CREATE INDEX IF NOT EXISTS idx_travel_requests_employee_id ON travel_requests(employee_id);
+CREATE INDEX IF NOT EXISTS idx_travel_requests_manager_id ON travel_requests(manager_id);
+CREATE INDEX IF NOT EXISTS idx_travel_requests_status ON travel_requests(status);
+CREATE INDEX IF NOT EXISTS idx_travel_requests_submitted_at ON travel_requests(submitted_at);
+CREATE INDEX IF NOT EXISTS idx_employee_address_history_employee_id ON employee_address_history(employee_id);
+CREATE INDEX IF NOT EXISTS idx_request_status_history_travel_request_id ON request_status_history(travel_request_id);
 
 -- Function to calculate distance using PostGIS
 CREATE OR REPLACE FUNCTION calculate_travel_distance(

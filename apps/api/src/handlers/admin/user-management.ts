@@ -1,7 +1,10 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
+import { AdminDeleteUserCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { logger } from '../../middleware/logger';
 import { db } from '../../database/connection';
 import { formatResponse } from '../../middleware/response-formatter';
+import { getCognitoClient } from '../../services/aws-factory';
+import { getEnvironmentConfig } from '../../config/environment';
 import {
   UserSummary,
   UserDetails,
@@ -68,6 +71,9 @@ export const listUsersHandler = async (
     const whereConditions: string[] = [];
     const queryParams: any[] = [];
     let paramIndex = 1;
+
+    // Always exclude soft-deleted users
+    whereConditions.push('e.deleted_at IS NULL');
 
     if (search) {
       whereConditions.push(`(
@@ -293,7 +299,7 @@ export const getUserDetailsHandler = async (
         FROM travel_requests
         GROUP BY employee_id
       ) tr_summary ON e.id = tr_summary.employee_id
-      WHERE e.id = $1
+      WHERE e.id = $1 AND e.deleted_at IS NULL
     `;
 
     const userResult = await db.query(userQuery, [userId]);
@@ -321,7 +327,7 @@ export const getUserDetailsHandler = async (
         is_active,
         created_at
       FROM employees
-      WHERE manager_id = $1
+      WHERE manager_id = $1 AND deleted_at IS NULL
       ORDER BY first_name, last_name
     `;
 
@@ -485,7 +491,7 @@ export const updateUserStatusHandler = async (
 
     // Check if user exists
     const userCheck = await db.query(
-      'SELECT id, first_name, last_name, is_active FROM employees WHERE id = $1',
+      'SELECT id, first_name, last_name, is_active FROM employees WHERE id = $1 AND deleted_at IS NULL',
       [userId]
     );
 
@@ -631,7 +637,7 @@ export const updateUserManagerHandler = async (
 
     // Validate user exists
     const userCheck = await db.query(
-      'SELECT id, first_name, last_name, manager_id FROM employees WHERE id = $1',
+      'SELECT id, first_name, last_name, manager_id FROM employees WHERE id = $1 AND deleted_at IS NULL',
       [userId]
     );
 
@@ -649,7 +655,7 @@ export const updateUserManagerHandler = async (
     // Validate manager exists (if provided)
     if (managerId) {
       const managerCheck = await db.query(
-        'SELECT id, first_name, last_name FROM employees WHERE id = $1 AND is_active = true',
+        'SELECT id, first_name, last_name FROM employees WHERE id = $1 AND is_active = true AND deleted_at IS NULL',
         [managerId]
       );
 
@@ -695,7 +701,7 @@ export const updateUserManagerHandler = async (
     let managerName = null;
     if (updatedUser.manager_id) {
       const managerResult = await db.query(
-        'SELECT first_name, last_name FROM employees WHERE id = $1',
+        'SELECT first_name, last_name FROM employees WHERE id = $1 AND deleted_at IS NULL',
         [updatedUser.manager_id]
       );
       if (managerResult.rows.length > 0) {
@@ -713,8 +719,6 @@ export const updateUserManagerHandler = async (
       newManagerId: managerId || null,
       newManagerName: managerName,
     });
-
-    await db.disconnect();
 
     return formatResponse(
       200,
@@ -806,7 +810,7 @@ export const deleteUserHandler = async (
 
     // Check if user exists
     const userCheck = await db.query(
-      'SELECT id, first_name, last_name, email, is_active FROM employees WHERE id = $1',
+      'SELECT id, first_name, last_name, email, cognito_user_id, is_active FROM employees WHERE id = $1',
       [userId]
     );
 
@@ -827,7 +831,7 @@ export const deleteUserHandler = async (
     // Validate reassignment target if provided
     if (reassignRequestsTo) {
       const reassignTargetCheck = await db.query(
-        'SELECT id, first_name, last_name FROM employees WHERE id = $1 AND is_active = true',
+        'SELECT id, first_name, last_name FROM employees WHERE id = $1 AND is_active = true AND deleted_at IS NULL',
         [reassignRequestsTo]
       );
 
@@ -873,6 +877,42 @@ export const deleteUserHandler = async (
 
       await db.query('COMMIT');
 
+      // Delete user from Cognito User Pool (if not in local development)
+      const config = getEnvironmentConfig();
+      let cognitoDeleted = false;
+      if (user.cognito_user_id && !config.AWS_ENDPOINT_URL) {
+        try {
+          const cognitoClient = getCognitoClient();
+          await cognitoClient.send(
+            new AdminDeleteUserCommand({
+              UserPoolId: config.COGNITO_USER_POOL_ID,
+              Username: user.cognito_user_id,
+            })
+          );
+          cognitoDeleted = true;
+          logger.info('User deleted from Cognito', {
+            requestId: context.awsRequestId,
+            userId: userId,
+            cognitoUserId: user.cognito_user_id,
+          });
+        } catch (cognitoError: any) {
+          logger.error('Failed to delete user from Cognito', {
+            error: cognitoError.message,
+            requestId: context.awsRequestId,
+            userId: userId,
+            cognitoUserId: user.cognito_user_id,
+          });
+          // Continue with response even if Cognito deletion fails
+        }
+      } else {
+        logger.info('Skipping Cognito deletion (local development or no cognito_user_id)', {
+          requestId: context.awsRequestId,
+          userId: userId,
+          isLocal: !!config.AWS_ENDPOINT_URL,
+          hasCognitoId: !!user.cognito_user_id,
+        });
+      }
+
       const deletionSummary: UserDeletionSummary = {
         userId: cleanupSummary.user_id,
         travelRequestsArchived: cleanupSummary.travel_requests_archived,
@@ -890,6 +930,7 @@ export const deleteUserHandler = async (
         userEmail: user.email,
         reason: reason,
         reassignedTo: reassignRequestsTo,
+        cognitoDeleted: cognitoDeleted,
         cleanupSummary: deletionSummary,
       });
 

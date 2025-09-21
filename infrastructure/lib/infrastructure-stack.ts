@@ -337,7 +337,7 @@ export class InfrastructureStack extends cdk.Stack {
     migrationConfig.properties = {
       Environment: environment,
       DatabaseEndpoint: this.database.instanceEndpoint.hostname,
-      Version: '1.6.0', // Force migration re-run with /var/task/migrations path
+      Version: '2.4.0', // TEMPORARY: Run migration 029 to fix admin_delete_user SQL syntax
       Timestamp: new Date().toISOString(), // Force CloudFormation to see this as a change
     };
 

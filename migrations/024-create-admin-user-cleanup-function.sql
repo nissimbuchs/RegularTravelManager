@@ -1,7 +1,24 @@
 -- Migration: Create comprehensive user deletion cleanup function
 -- Story: 5.3 Administrator User Management
+-- Consolidated migration including all admin user deletion functionality
 
--- Create comprehensive user deletion function as specified in story documentation
+-- Add columns for soft deletion tracking
+ALTER TABLE employees
+ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP,
+ADD COLUMN IF NOT EXISTS deleted_by UUID,
+ADD COLUMN IF NOT EXISTS deletion_reason TEXT;
+
+-- Add columns for travel request archiving and employee notes
+ALTER TABLE travel_requests
+ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP,
+ADD COLUMN IF NOT EXISTS archived_by UUID,
+ADD COLUMN IF NOT EXISTS employee_note TEXT;
+
+-- Add column for employee profile history archiving
+ALTER TABLE employee_profile_history
+ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP;
+
+-- Create comprehensive user deletion function with correct syntax
 CREATE OR REPLACE FUNCTION admin_delete_user(
   user_id UUID,
   admin_id UUID,
@@ -51,7 +68,7 @@ BEGIN
   SET is_active = FALSE,
       deleted_at = CURRENT_TIMESTAMP,
       deleted_by = admin_id,
-      deletion_reason = deletion_reason
+      deletion_reason = admin_delete_user.deletion_reason
   WHERE id = user_id;
 
   -- Create cleanup summary
@@ -67,25 +84,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Add columns for soft deletion tracking
-ALTER TABLE employees
-ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP,
-ADD COLUMN IF NOT EXISTS deleted_by UUID,
-ADD COLUMN IF NOT EXISTS deletion_reason TEXT;
-
--- Add columns for travel request archiving
-ALTER TABLE travel_requests
-ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP,
-ADD COLUMN IF NOT EXISTS archived_by UUID;
-
--- Add column for employee profile history archiving
-ALTER TABLE employee_profile_history
-ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP;
-
 -- Create indexes for admin queries
 CREATE INDEX IF NOT EXISTS idx_employees_deleted_at ON employees(deleted_at) WHERE deleted_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_travel_requests_archived ON travel_requests(archived_at) WHERE archived_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_profile_history_archived ON employee_profile_history(archived_at) WHERE archived_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_travel_requests_employee_note ON travel_requests(employee_note) WHERE employee_note IS NOT NULL;
 
 -- Create index for admin user status filtering
 CREATE INDEX IF NOT EXISTS idx_employees_admin_status ON employees(is_active, deleted_at);

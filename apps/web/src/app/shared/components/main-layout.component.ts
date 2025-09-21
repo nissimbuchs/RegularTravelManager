@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, Router, RouterModule } from '@angular/router';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { RouterOutlet, Router, RouterModule, NavigationEnd } from '@angular/router';
+import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,7 +12,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { BreakpointObserver, Breakpoints, LayoutModule } from '@angular/cdk/layout';
 import { Observable, Subject } from 'rxjs';
-import { map, shareReplay, takeUntil } from 'rxjs/operators';
+import { map, shareReplay, takeUntil, filter } from 'rxjs/operators';
 import { AuthService, User } from '../../core/services/auth.service';
 import { LoadingService } from '../../core/services/loading.service';
 
@@ -144,6 +144,8 @@ interface NavigationItem {
 export class MainLayoutComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
+  @ViewChild('drawer') drawer!: MatSidenav;
+
   isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset).pipe(
     map(result => result.matches),
     shareReplay()
@@ -222,6 +224,20 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         this.router.navigate(['/login']);
       }
     });
+
+    // Close sidenav on navigation for mobile devices
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.isHandset$.pipe(takeUntil(this.destroy$)).subscribe(isHandset => {
+          if (isHandset && this.drawer) {
+            this.drawer.close();
+          }
+        });
+      });
   }
 
   ngOnDestroy(): void {
