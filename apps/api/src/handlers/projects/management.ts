@@ -14,664 +14,83 @@ import {
 } from '@rtm/project-management';
 import { GeocodingService, GeocodeResult, GeocodeRequest } from '../../services/geocoding-service';
 import { getUserContextFromEvent, requireManager } from '../auth/auth-utils';
+import { ProjectDomainService } from '../../domain/project-management/ProjectDomainService';
+import { SubprojectDomainService } from '../../domain/project-management/SubprojectDomainService';
 
 class ProjectServiceImpl implements ProjectService {
   private geocodingService: GeocodingService;
+  public projectDomainService: ProjectDomainService;
+  public subprojectDomainService: SubprojectDomainService;
 
   constructor() {
     this.geocodingService = new GeocodingService();
+    this.projectDomainService = new ProjectDomainService();
+    this.subprojectDomainService = new SubprojectDomainService();
   }
 
   async createProject(command: CreateProjectCommand) {
-    logger.info('Creating project', { name: command.name });
-
-    const result = await db.query(
-      `
-      INSERT INTO projects (name, description, default_cost_per_km, is_active)
-      VALUES ($1, $2, $3, true)
-      RETURNING *
-    `,
-      [command.name, command.description || null, command.defaultCostPerKm]
-    );
-
-    const row = result.rows[0];
-    return {
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      defaultCostPerKm: parseFloat(row.default_cost_per_km),
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
+    return await this.projectDomainService.createProject(command);
   }
 
   async createSubproject(command: CreateSubprojectCommand) {
-    logger.info('Creating subproject', {
-      name: command.name,
-      projectId: command.projectId,
-    });
-
-    // Verify parent project exists
-    const projectResult = await db.query(
-      'SELECT id, default_cost_per_km FROM projects WHERE id = $1 AND is_active = true',
-      [command.projectId]
-    );
-
-    if (projectResult.rows.length === 0) {
-      throw new NotFoundError('Parent project');
-    }
-
-    const parentProject = projectResult.rows[0];
-    let coordinates: GeocodeResult | null = null;
-
-    // Geocode location if address is provided
-    if (command.streetAddress && command.city && command.postalCode) {
-      try {
-        coordinates = await this.geocodingService.geocodeAddress({
-          street: command.streetAddress,
-          city: command.city,
-          postalCode: command.postalCode,
-          country: command.country || 'Switzerland',
-        });
-
-        logger.info('Subproject geocoding successful', {
-          name: command.name,
-          coordinates,
-        });
-      } catch (error) {
-        logger.warn('Subproject geocoding failed, using default coordinates', {
-          error: error.message,
-          name: command.name,
-        });
-        coordinates = { latitude: 46.947974, longitude: 7.447447 }; // Default to Bern
-      }
-    }
-
-    // Use subproject cost rate or inherit from parent project
-    const costPerKm = command.costPerKm || parentProject.default_cost_per_km;
-
-    const result = await db.query(
-      `
-      INSERT INTO subprojects (
-        project_id, 
-        name, 
-        street_address,
-        city,
-        postal_code,
-        country,
-        location,
-        cost_per_km,
-        is_active
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
-      RETURNING *
-    `,
-      [
-        command.projectId,
-        command.name,
-        command.streetAddress || null,
-        command.city || null,
-        command.postalCode || null,
-        command.country || 'Switzerland',
-        coordinates ? `POINT(${coordinates.longitude} ${coordinates.latitude})` : null,
-        costPerKm,
-      ]
-    );
-
-    const row = result.rows[0];
-
-    // Transform to camelCase for domain interface compatibility
-    return {
-      id: row.id,
-      projectId: row.project_id,
-      name: row.name,
-      streetAddress: row.street_address,
-      city: row.city,
-      postalCode: row.postal_code,
-      country: row.country,
-      locationCoordinates: coordinates
-        ? {
-            latitude: coordinates.latitude,
-            longitude: coordinates.longitude,
-          }
-        : undefined,
-      costPerKm: parseFloat(row.cost_per_km),
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
+    return await this.subprojectDomainService.createSubproject(command);
   }
 
   async updateProject(command: UpdateProjectCommand) {
-    logger.info('Updating project', { id: command.id });
-
-    const setClauses = [];
-    const values = [];
-    let paramIndex = 1;
-
-    if (command.name !== undefined) {
-      setClauses.push(`name = $${paramIndex++}`);
-      values.push(command.name);
-    }
-    if (command.description !== undefined) {
-      setClauses.push(`description = $${paramIndex++}`);
-      values.push(command.description);
-    }
-    if (command.defaultCostPerKm !== undefined) {
-      setClauses.push(`default_cost_per_km = $${paramIndex++}`);
-      values.push(command.defaultCostPerKm);
-    }
-    if (command.isActive !== undefined) {
-      setClauses.push(`is_active = $${paramIndex++}`);
-      values.push(command.isActive);
-    }
-
-    if (setClauses.length === 0) {
-      throw new ValidationError('No fields to update');
-    }
-
-    setClauses.push(`updated_at = CURRENT_TIMESTAMP`);
-    values.push(command.id);
-
-    const result = await db.query(
-      `
-      UPDATE projects 
-      SET ${setClauses.join(', ')}
-      WHERE id = $${paramIndex}
-      RETURNING *
-    `,
-      values
-    );
-
-    if (result.rows.length === 0) {
-      throw new NotFoundError('Project');
-    }
-
-    const row = result.rows[0];
-    return {
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      defaultCostPerKm: parseFloat(row.default_cost_per_km),
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
+    return await this.projectDomainService.updateProject(command);
   }
 
   async getProject(id: string) {
-    const result = await db.query('SELECT * FROM projects WHERE id = $1', [id]);
-
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    const row = result.rows[0];
-    return {
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      defaultCostPerKm: parseFloat(row.default_cost_per_km),
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
+    return await this.projectDomainService.getProject(id);
   }
 
   async getSubproject(id: string) {
-    const result = await db.query(
-      `
-      SELECT 
-        s.*,
-        ST_X(s.location) as longitude,
-        ST_Y(s.location) as latitude,
-        p.name as project_name
-      FROM subprojects s
-      LEFT JOIN projects p ON s.project_id = p.id
-      WHERE s.id = $1
-    `,
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return null;
-    }
-
-    const row = result.rows[0];
-    return {
-      id: row.id,
-      projectId: row.project_id,
-      name: row.name,
-      streetAddress: row.street_address,
-      city: row.city,
-      postalCode: row.postal_code,
-      country: row.country,
-      locationCoordinates:
-        row.longitude && row.latitude
-          ? {
-              latitude: row.latitude,
-              longitude: row.longitude,
-            }
-          : undefined,
-      costPerKm: parseFloat(row.cost_per_km),
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
+    return await this.subprojectDomainService.getSubproject(id);
   }
 
   async getActiveProjects() {
-    const result = await db.query(`
-      SELECT 
-        p.*,
-        COUNT(s.id) as subproject_count
-      FROM projects p
-      LEFT JOIN subprojects s ON p.id = s.project_id AND s.is_active = true
-      WHERE p.is_active = true
-      GROUP BY p.id
-      ORDER BY p.name
-    `);
-
-    // Transform to camelCase for frontend compatibility
-    return result.rows.map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      defaultCostPerKm: parseFloat(row.default_cost_per_km),
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      subprojectCount: parseInt(row.subproject_count) || 0,
-    }));
+    return await this.projectDomainService.getActiveProjects();
   }
 
   async getAllProjects() {
-    const result = await db.query(`
-      SELECT 
-        p.*,
-        COUNT(s.id) as subproject_count
-      FROM projects p
-      LEFT JOIN subprojects s ON p.id = s.project_id AND s.is_active = true
-      GROUP BY p.id
-      ORDER BY p.name
-    `);
-
-    // Transform to camelCase for frontend compatibility
-    return result.rows.map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      defaultCostPerKm: parseFloat(row.default_cost_per_km),
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      subprojectCount: parseInt(row.subproject_count) || 0,
-    }));
+    return await this.projectDomainService.getAllProjects();
   }
 
   async getProjectsWithFilters(filters: ProjectSearchFilters) {
-    let query = `
-      SELECT
-        p.*,
-        COUNT(s.id) as subproject_count
-      FROM projects p
-      LEFT JOIN subprojects s ON p.id = s.project_id AND s.is_active = true
-    `;
-
-    const conditions: string[] = [];
-    const params: any[] = [];
-    let paramIndex = 1;
-
-    // Apply filters
-    if (filters.search) {
-      conditions.push(`(p.name ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex})`);
-      params.push(`%${filters.search}%`);
-      paramIndex++;
-    }
-
-    if (filters.isActive !== undefined) {
-      conditions.push(`p.is_active = $${paramIndex}`);
-      params.push(filters.isActive);
-      paramIndex++;
-    }
-
-    if (filters.minCostPerKm !== undefined) {
-      conditions.push(`p.default_cost_per_km >= $${paramIndex}`);
-      params.push(filters.minCostPerKm);
-      paramIndex++;
-    }
-
-    if (filters.maxCostPerKm !== undefined) {
-      conditions.push(`p.default_cost_per_km <= $${paramIndex}`);
-      params.push(filters.maxCostPerKm);
-      paramIndex++;
-    }
-
-    if (filters.createdAfter) {
-      conditions.push(`p.created_at >= $${paramIndex}`);
-      params.push(filters.createdAfter);
-      paramIndex++;
-    }
-
-    if (filters.createdBefore) {
-      conditions.push(`p.created_at <= $${paramIndex}`);
-      params.push(filters.createdBefore);
-      paramIndex++;
-    }
-
-    // Add WHERE clause if we have conditions
-    if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(' AND ')}`;
-    }
-
-    query += `
-      GROUP BY p.id
-      ORDER BY p.name
-    `;
-
-    const result = await db.query(query, params);
-
-    // Transform to camelCase for frontend compatibility
-    return result.rows.map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      defaultCostPerKm: parseFloat(row.default_cost_per_km),
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      subprojectCount: parseInt(row.subproject_count) || 0,
-    }));
+    return await this.projectDomainService.getProjectsWithFilters(filters);
   }
 
   async getSubprojectsForProject(projectId: string) {
-    const result = await db.query(
-      `
-      SELECT 
-        s.*,
-        ST_X(s.location) as longitude,
-        ST_Y(s.location) as latitude
-      FROM subprojects s
-      WHERE s.project_id = $1 AND s.is_active = true
-      ORDER BY s.name
-    `,
-      [projectId]
-    );
-
-    return result.rows.map((row: any) => ({
-      id: row.id,
-      projectId: row.project_id,
-      name: row.name,
-      streetAddress: row.street_address,
-      city: row.city,
-      postalCode: row.postal_code,
-      locationCoordinates:
-        row.longitude && row.latitude
-          ? {
-              latitude: row.latitude,
-              longitude: row.longitude,
-            }
-          : null,
-      costPerKm: parseFloat(row.cost_per_km),
-      isActive: row.is_active,
-      createdAt: row.created_at,
-    }));
+    return await this.subprojectDomainService.getSubprojectsForProject(projectId);
   }
 
   async searchProjects(searchTerm: string) {
-    const result = await db.query(
-      `
-      SELECT 
-        p.*,
-        COUNT(s.id) as subproject_count
-      FROM projects p
-      LEFT JOIN subprojects s ON p.id = s.project_id AND s.is_active = true
-      WHERE (
-        p.name ILIKE $1 
-        OR p.description ILIKE $1
-      ) AND p.is_active = true
-      GROUP BY p.id
-      ORDER BY p.name
-      LIMIT 50
-    `,
-      [`%${searchTerm}%`]
-    );
-
-    // Transform to camelCase for frontend compatibility
-    return result.rows.map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      defaultCostPerKm: parseFloat(row.default_cost_per_km),
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      subprojectCount: parseInt(row.subproject_count) || 0,
-    }));
+    return await this.projectDomainService.searchProjects(searchTerm);
   }
 
   async updateSubproject(command: UpdateSubprojectCommand) {
-    logger.info('Updating subproject', {
-      id: command.id,
-      projectId: command.projectId,
-      name: command.name,
-    });
-
-    // Verify subproject exists and belongs to the project
-    const existingResult = await db.query(
-      'SELECT * FROM subprojects WHERE id = $1 AND project_id = $2',
-      [command.id, command.projectId]
-    );
-
-    if (existingResult.rows.length === 0) {
-      throw new NotFoundError('Subproject');
-    }
-
-    const existing = existingResult.rows[0];
-    let coordinates: GeocodeResult | null = null;
-
-    // Check if location has changed and geocode if needed
-    const hasLocationChanged =
-      command.streetAddress !== existing.street_address ||
-      command.city !== existing.city ||
-      command.postalCode !== existing.postal_code;
-
-    if (hasLocationChanged && command.streetAddress && command.city && command.postalCode) {
-      try {
-        coordinates = await this.geocodingService.geocodeAddress({
-          street: command.streetAddress,
-          city: command.city,
-          postalCode: command.postalCode,
-          country: command.country || 'Switzerland',
-        });
-
-        logger.info('Subproject geocoding successful', {
-          id: command.id,
-          coordinates,
-        });
-      } catch (error) {
-        logger.warn('Subproject geocoding failed, keeping existing coordinates', {
-          error: error.message,
-          id: command.id,
-        });
-      }
-    }
-
-    // Build update query dynamically based on provided fields
-    const updateFields: string[] = [];
-    const values: any[] = [];
-    let paramCount = 1;
-
-    if (command.name !== undefined) {
-      updateFields.push(`name = $${paramCount++}`);
-      values.push(command.name);
-    }
-
-    if (command.streetAddress !== undefined) {
-      updateFields.push(`street_address = $${paramCount++}`);
-      values.push(command.streetAddress);
-    }
-
-    if (command.city !== undefined) {
-      updateFields.push(`city = $${paramCount++}`);
-      values.push(command.city);
-    }
-
-    if (command.postalCode !== undefined) {
-      updateFields.push(`postal_code = $${paramCount++}`);
-      values.push(command.postalCode);
-    }
-
-    if (command.country !== undefined) {
-      updateFields.push(`country = $${paramCount++}`);
-      values.push(command.country);
-    }
-
-    if (command.costPerKm !== undefined) {
-      updateFields.push(`cost_per_km = $${paramCount++}`);
-      values.push(command.costPerKm);
-    }
-
-    if (command.isActive !== undefined) {
-      updateFields.push(`is_active = $${paramCount++}`);
-      values.push(command.isActive);
-    }
-
-    if (coordinates) {
-      updateFields.push(
-        `location = ST_SetSRID(ST_MakePoint($${paramCount++}, $${paramCount++}), 4326)`
-      );
-      values.push(coordinates.longitude, coordinates.latitude);
-    }
-
-    if (updateFields.length === 0) {
-      // No updates needed, return existing subproject in proper format
-      const coordsResult = await db.query(
-        'SELECT ST_X(location) as longitude, ST_Y(location) as latitude FROM subprojects WHERE id = $1',
-        [existing.id]
-      );
-      const coords = coordsResult.rows[0];
-
-      return {
-        id: existing.id,
-        projectId: existing.project_id,
-        name: existing.name,
-        streetAddress: existing.street_address,
-        city: existing.city,
-        postalCode: existing.postal_code,
-        country: existing.country,
-        locationCoordinates:
-          coords.longitude && coords.latitude
-            ? {
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-              }
-            : undefined,
-        costPerKm: parseFloat(existing.cost_per_km),
-        isActive: existing.is_active,
-        createdAt: existing.created_at,
-        updatedAt: existing.updated_at,
-      };
-    }
-
-    updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
-    values.push(command.id, command.projectId); // Add WHERE clause parameters
-
-    const query = `
-      UPDATE subprojects 
-      SET ${updateFields.join(', ')}
-      WHERE id = $${paramCount++} AND project_id = $${paramCount}
-      RETURNING *
-    `;
-
-    const result = await db.query(query, values);
-    const row = result.rows[0];
-
-    // Get coordinates for response
-    const coordsResult = await db.query(
-      'SELECT ST_X(location) as longitude, ST_Y(location) as latitude FROM subprojects WHERE id = $1',
-      [row.id]
-    );
-
-    const coords = coordsResult.rows[0];
-
-    return {
-      id: row.id,
-      projectId: row.project_id,
-      name: row.name,
-      streetAddress: row.street_address,
-      city: row.city,
-      postalCode: row.postal_code,
-      country: row.country,
-      locationCoordinates:
-        coords.longitude && coords.latitude
-          ? {
-              latitude: coords.latitude,
-              longitude: coords.longitude,
-            }
-          : undefined,
-      costPerKm: parseFloat(row.cost_per_km),
-      isActive: row.is_active,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
+    return await this.subprojectDomainService.updateSubproject(command);
   }
 
   async deleteSubproject(projectId: string, subprojectId: string) {
-    logger.info('Deleting subproject', {
-      projectId,
-      subprojectId,
-    });
-
-    // Check if subproject exists and belongs to the project
-    const existingResult = await db.query(
-      'SELECT * FROM subprojects WHERE id = $1 AND project_id = $2',
-      [subprojectId, projectId]
-    );
-
-    if (existingResult.rows.length === 0) {
-      throw new NotFoundError('Subproject');
-    }
-
-    // Check for active travel requests referencing this subproject
-    const requestsResult = await db.query(
-      'SELECT COUNT(*) as count FROM travel_requests WHERE subproject_id = $1 AND status IN ($2, $3)',
-      [subprojectId, 'pending', 'approved']
-    );
-
-    const activeRequestCount = parseInt(requestsResult.rows[0].count);
-    if (activeRequestCount > 0) {
-      throw new ValidationError(
-        `Cannot delete subproject: ${activeRequestCount} active travel requests are referencing this location`
-      );
-    }
-
-    // Soft delete by marking as inactive instead of hard delete
-    await db.query(
-      'UPDATE subprojects SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND project_id = $2',
-      [subprojectId, projectId]
-    );
-
-    logger.info('Subproject deleted successfully', {
-      projectId,
-      subprojectId,
-    });
+    return await this.subprojectDomainService.deleteSubproject(projectId, subprojectId);
   }
 
   async canDeleteProject(projectId: string) {
-    // Check for active travel requests referencing this project's subprojects
-    const result = await db.query(
-      `
-      SELECT COUNT(*) as count
-      FROM travel_requests tr
-      JOIN subprojects s ON tr.subproject_id = s.id
-      WHERE s.project_id = $1 AND tr.status != 'completed'
-    `,
-      [projectId]
-    );
+    return await this.projectDomainService.canDeleteProject(projectId);
+  }
 
-    return parseInt(result.rows[0].count) === 0;
+  // Additional methods for admin functionality
+  async getActiveProjectsWithCounts() {
+    return await this.projectDomainService.getActiveProjectsWithCounts();
+  }
+
+  async getAllProjectsWithCounts() {
+    return await this.projectDomainService.getProjectsWithCounts();
+  }
+
+  async searchProjectsWithCounts(searchTerm: string) {
+    return await this.projectDomainService.searchProjectsWithCounts(searchTerm);
   }
 }
 
@@ -783,7 +202,7 @@ export const getActiveProjects = async (
     requestId: context.awsRequestId,
   });
 
-  const projects = await projectService.getActiveProjects();
+  const projects = await projectService.getActiveProjectsWithCounts();
 
   return formatResponse(200, { projects }, context.awsRequestId);
 };
@@ -839,11 +258,11 @@ export const getAllProjects = async (
     filters,
   });
 
-  // Use filtered query if filters are present, otherwise get all projects
+  // Use filtered query if filters are present, otherwise get all projects with counts
   const hasFilters = Object.keys(filters).length > 0;
   const projects = hasFilters
     ? await projectService.getProjectsWithFilters(filters)
-    : await projectService.getAllProjects();
+    : await projectService.getAllProjectsWithCounts();
 
   return formatResponse(200, { projects }, context.awsRequestId);
 };
@@ -900,13 +319,14 @@ export const getSubprojectsForProject = validateRequest({
     requestId: context.awsRequestId,
   });
 
-  // Verify project exists
+  // Get subprojects (this already verifies project exists in domain service)
+  const subprojects = await projectService.getSubprojectsForProject(projectId!);
+
+  // Get project info for response
   const project = await projectService.getProject(projectId!);
   if (!project) {
     throw new NotFoundError('Project');
   }
-
-  const subprojects = await projectService.getSubprojectsForProject(projectId!);
 
   return formatResponse(
     200,
@@ -933,7 +353,7 @@ export const searchProjects = validateRequest({
     requestId: context.awsRequestId,
   });
 
-  const projects = await projectService.searchProjects(searchTerm!);
+  const projects = await projectService.searchProjectsWithCounts(searchTerm!);
 
   return formatResponse(
     200,
@@ -1169,31 +589,11 @@ export const deleteProject = validateRequest({
     requestId: context.awsRequestId,
   });
 
-  // Check if project can be deleted
-  const canDelete = await projectService.canDeleteProject(projectId!);
-  if (!canDelete) {
-    throw new ValidationError('Cannot delete project with active travel request references');
-  }
-
-  // Verify project exists
-  const project = await projectService.getProject(projectId!);
-  if (!project) {
-    throw new NotFoundError('Project');
-  }
-
-  // Delete associated subprojects first (cascade)
-  await db.query('DELETE FROM subprojects WHERE project_id = $1', [projectId]);
-
-  // Delete the project
-  const result = await db.query('DELETE FROM projects WHERE id = $1 RETURNING *', [projectId]);
-
-  if (result.rows.length === 0) {
-    throw new NotFoundError('Project');
-  }
+  // Use domain service to delete project (includes all validation)
+  await projectService.projectDomainService.deleteProject(projectId!);
 
   logger.info('Project deleted successfully', {
     projectId,
-    name: project.name,
     requestId: context.awsRequestId,
   });
 
