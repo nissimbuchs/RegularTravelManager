@@ -6,5 +6,5 @@ export * from './services';
 export {
   TravelRequestService,
   CreateTravelRequestCommand,
-  UpdateTravelRequestCommand
+  UpdateTravelRequestCommand,
 } from './TravelRequestService';

@@ -5,5 +5,5 @@ export * from './types';
 export {
   EmployeeService,
   CreateEmployeeCommand,
-  UpdateEmployeeAddressCommand
+  UpdateEmployeeAddressCommand,
 } from './EmployeeService';
