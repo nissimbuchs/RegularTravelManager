@@ -25,6 +25,7 @@ export interface TravelRequestSummary {
   submittedDate: Date;
   urgencyLevel: 'low' | 'medium' | 'high';
   daysSinceSubmission: number;
+  justification: string;
 }
 
 export interface EmployeeContext {

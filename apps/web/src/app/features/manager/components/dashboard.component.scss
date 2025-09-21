@@ -1,13 +1,29 @@
 @import '../../../../styles/base/variables';
 @import '../../../../styles/base/mixins';
 
-.manager-dashboard-container {
+.dashboard-container {
   padding: $elca-layout-container-padding;
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: $elca-layout-card-gap;
+}
+
+.welcome-section {
+  @include elca-card;
+  padding: $elca-spacing-lg;
+
+  h1 {
+    @include elca-heading('xl');
+    color: $elca-coral-red;
+    margin: 0 0 $elca-spacing-sm 0;
+  }
+
+  p {
+    color: $elca-text-secondary;
+    margin: 0;
+  }
 }
 
 .dashboard-header {
@@ -248,21 +264,22 @@
   gap: $elca-spacing-base;
   color: $elca-text-secondary;
 
-  button {
-    @include elca-button-primary;
-    @include elca-button-size('base');
-    justify-content: flex-start;
+  mat-spinner {
+    // Keep default Material spinner size (40px diameter)
+    // No custom sizing to maintain standard appearance
+  }
 
-    mat-icon {
-      margin-right: $elca-spacing-sm;
-    }
+  p {
+    @include elca-body-text;
+    margin: 0;
+    text-align: center;
   }
 }
 
 
 // Use desktop-first approach to match main branch behavior
 @media (max-width: 768px) {
-  .manager-dashboard-container {
+  .dashboard-container {
     padding: $elca-spacing-md;
   }
 

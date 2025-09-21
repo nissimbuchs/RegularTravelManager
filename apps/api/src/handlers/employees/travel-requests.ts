@@ -107,7 +107,7 @@ export const calculatePreview = async (
       weeklyAllowance: Math.round(weeklyAllowance * 100) / 100,
     };
 
-    return formatResponse(200, { data: preview }, 'travel-preview-request');
+    return formatResponse(200, preview, 'travel-preview-request');
   } catch (error) {
     console.error('Error calculating travel preview:', error);
     return formatResponse(500, { error: 'Internal server error' }, 'travel-preview-request');

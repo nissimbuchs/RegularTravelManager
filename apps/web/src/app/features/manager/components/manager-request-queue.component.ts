@@ -407,12 +407,15 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
   }
 
   viewRequestDetails(request: TravelRequestSummary): void {
-    // Navigate to detailed view or show expanded information
-    // For now, just show a snackbar with details
+    // Show the employee's justification for the travel request
     this.snackBar.open(
-      `Request Details: ${request.projectName} - ${request.subProjectName} (${request.daysPerWeek} days/week)`,
+      `Justification: ${request.justification}`,
       'Close',
-      { duration: 6000 }
+      {
+        duration: 8000,
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom'
+      }
     );
   }
 

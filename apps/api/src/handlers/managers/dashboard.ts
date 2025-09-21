@@ -35,6 +35,7 @@ interface TravelRequestSummary {
   projectName: string;
   subProjectName: string;
   daysPerWeek: number;
+  justification: string;
   calculatedAllowance: number;
   submittedDate: Date;
   urgencyLevel: 'low' | 'medium' | 'high';
@@ -218,13 +219,14 @@ export const getManagerDashboard = async (
 
     // Build the base query
     let query = `
-      SELECT 
+      SELECT
         tr.id,
         CONCAT(e.first_name, ' ', e.last_name) as employee_name,
         e.email as employee_email,
         p.name as project_name,
         sp.name as subproject_name,
         tr.days_per_week,
+        tr.justification,
         tr.calculated_allowance_chf as calculated_allowance,
         tr.submitted_at as submitted_date,
         EXTRACT(EPOCH FROM (NOW() - tr.submitted_at))/86400 as days_since_submission
@@ -317,6 +319,7 @@ export const getManagerDashboard = async (
         projectName: row.project_name,
         subProjectName: row.subproject_name,
         daysPerWeek: row.days_per_week,
+        justification: row.justification,
         calculatedAllowance: parseFloat(row.calculated_allowance),
         submittedDate: new Date(row.submitted_date),
         urgencyLevel,

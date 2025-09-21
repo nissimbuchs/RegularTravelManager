@@ -135,7 +135,7 @@
         <mat-spinner *ngIf="isSubmitting" diameter="20" class="submit-spinner"></mat-spinner>
         {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
       </button>
-      <button mat-button type="button" class="cancel-button">
+      <button mat-button type="button" class="cancel-button" (click)="onCancel()">
         Cancel
       </button>
     </mat-card-actions>

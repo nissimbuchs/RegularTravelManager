@@ -176,7 +176,8 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
         debounceTime(300),
         distinctUntilChanged(),
         tap(() => (this.isCalculating = true)),
-        switchMap(() => this.calculatePreview())
+        switchMap(() => this.calculatePreview()),
+        takeUntil(this.destroy$)
       )
       .subscribe({
         next: preview => {
@@ -296,6 +297,11 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
           },
         });
     }
+  }
+
+  onCancel(): void {
+    this.clearDraft();
+    this.router.navigate(['/employee']);
   }
 
   private showConfirmationDialog(requestId: string, formData: TravelRequestFormData): void {
