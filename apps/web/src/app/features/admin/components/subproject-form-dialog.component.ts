@@ -388,10 +388,7 @@ export class SubprojectFormDialogComponent implements OnInit, OnDestroy {
 
   canGeocode(): boolean {
     const form = this.subprojectForm.value;
-    return !!(
-      form.streetAddress?.trim() ||
-      (form.city?.trim() && form.postalCode?.trim())
-    );
+    return !!(form.streetAddress?.trim() || (form.city?.trim() && form.postalCode?.trim()));
   }
 
   geocodeAddress(): void {

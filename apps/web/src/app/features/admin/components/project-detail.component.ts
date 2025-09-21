@@ -463,11 +463,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   }
 
   hasAddress(subproject: Subproject): boolean {
-    return !!(
-      subproject.streetAddress ||
-      subproject.city ||
-      subproject.postalCode
-    );
+    return !!(subproject.streetAddress || subproject.city || subproject.postalCode);
   }
 
   formatCurrency(amount: number): string {

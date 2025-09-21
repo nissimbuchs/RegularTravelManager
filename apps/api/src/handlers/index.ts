@@ -192,10 +192,19 @@ export const projectsManagement = errorHandler(async (event, context) => {
   } else if (method === 'DELETE' && path.includes('/subprojects/')) {
     console.log('🔄 Routing to deleteSubprojectHandler');
     return deleteSubprojectHandler(event, context);
-  } else if (method === 'PATCH' && path.includes('/subprojects/') && path.includes('/toggle-status')) {
+  } else if (
+    method === 'PATCH' &&
+    path.includes('/subprojects/') &&
+    path.includes('/toggle-status')
+  ) {
     console.log('🔄 Routing to toggleSubprojectStatusHandler');
     return toggleSubprojectStatusHandler(event, context);
-  } else if (method === 'PATCH' && path.includes('/projects/') && path.includes('/toggle-status') && !path.includes('/subprojects/')) {
+  } else if (
+    method === 'PATCH' &&
+    path.includes('/projects/') &&
+    path.includes('/toggle-status') &&
+    !path.includes('/subprojects/')
+  ) {
     console.log('🔄 Routing to toggleProjectStatusHandler');
     return toggleProjectStatusHandler(event, context);
   } else if (method === 'PUT' && path.includes('/projects/')) {
