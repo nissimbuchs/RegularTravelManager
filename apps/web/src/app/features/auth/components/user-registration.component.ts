@@ -35,7 +35,7 @@ function passwordStrengthValidator(control: AbstractControl): { [key: string]: a
   const hasLowerCase = /[a-z]/.test(value);
   const hasNumeric = /[0-9]/.test(value);
   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-  const isLongEnough = value.length >= 8;
+  const isLongEnough = value.length >= 12;
 
   const passwordValid =
     hasUpperCase && hasLowerCase && hasNumeric && hasSpecialChar && isLongEnough;
@@ -165,14 +165,14 @@ interface RegistrationState {
                 <mat-label>Password</mat-label>
                 <input matInput type="password" formControlName="password" required />
                 <mat-hint
-                  >Minimum 8 characters with uppercase, lowercase, number, and special
+                  >Minimum 12 characters with uppercase, lowercase, number, and special
                   character</mat-hint
                 >
                 <mat-error *ngIf="registrationForm.get('password')?.hasError('required')">
                   Password is required
                 </mat-error>
                 <mat-error *ngIf="registrationForm.get('password')?.hasError('minlength')">
-                  Password must be at least 8 characters long
+                  Password must be at least 12 characters long
                 </mat-error>
                 <mat-error *ngIf="registrationForm.get('password')?.hasError('passwordStrength')">
                   Password must contain uppercase, lowercase, number, and special character
@@ -372,7 +372,7 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
         firstName: ['', [Validators.required, Validators.maxLength(50)]],
         lastName: ['', [Validators.required, Validators.maxLength(50)]],
         email: ['', [Validators.required, Validators.email]],
-        password: ['', [Validators.required, Validators.minLength(8), passwordStrengthValidator]],
+        password: ['', [Validators.required, Validators.minLength(12), passwordStrengthValidator]],
         confirmPassword: ['', Validators.required],
         homeAddress: this.formBuilder.group({
           street: ['', [Validators.required, Validators.maxLength(100)]],
