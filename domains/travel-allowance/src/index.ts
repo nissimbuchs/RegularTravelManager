@@ -3,3 +3,8 @@
 
 export * from './types';
 export * from './services';
+export {
+  TravelRequestService,
+  CreateTravelRequestCommand,
+  UpdateTravelRequestCommand
+} from './TravelRequestService';

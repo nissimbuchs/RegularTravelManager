@@ -13,7 +13,7 @@ import {
   CalculationAuditRecord,
   GeographicCoordinates,
   CacheInvalidationRequest,
-} from '../../../../domains/calculation-engine/CalculationService';
+} from '@rtm/calculation-engine';
 import { getUserContextFromEvent } from '../auth/auth-utils';
 
 class CalculationServiceImpl implements CalculationService {

@@ -22,6 +22,7 @@
     { "path": "../../packages/shared" },
     { "path": "../../domains/travel-allowance" },
     { "path": "../../domains/employee-management" },
-    { "path": "../../domains/project-management" }
+    { "path": "../../domains/project-management" },
+    { "path": "../../domains/calculation-engine" }
   ]
 }

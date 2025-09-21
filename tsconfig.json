@@ -28,7 +28,8 @@
       "@rtm/shared": ["./packages/shared/src"],
       "@rtm/travel-allowance": ["./domains/travel-allowance/src"],
       "@rtm/employee-management": ["./domains/employee-management/src"],
-      "@rtm/project-management": ["./domains/project-management/src"]
+      "@rtm/project-management": ["./domains/project-management/src"],
+      "@rtm/calculation-engine": ["./domains/calculation-engine/src"]
     },
     "baseUrl": ".",
     "resolveJsonModule": true
@@ -46,6 +47,7 @@
     { "path": "./domains/travel-allowance" },
     { "path": "./domains/employee-management" },
     { "path": "./domains/project-management" },
+    { "path": "./domains/calculation-engine" },
     { "path": "./apps/api" },
     { "path": "./apps/web" },
     { "path": "./infrastructure" }
