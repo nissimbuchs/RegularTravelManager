@@ -308,7 +308,6 @@ export const CustomResourceSets = {
     ],
     properties: {
       Version: '1.6.0', // Force migration re-run with /var/task/migrations path
-      Timestamp: new Date().toISOString(), // Force CloudFormation to see this as a change
     },
     dependencies: [database],
   }),

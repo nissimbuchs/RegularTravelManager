@@ -299,7 +299,6 @@ export class InfrastructureStack extends cdk.Stack {
         : '',
       DatabaseSecretArn: this.database.secret?.secretArn || '',
       Environment: environment,
-      Timestamp: Date.now().toString(),
     };
 
     this.customResourceBuilder.createCustomResource('userCreator', userCreatorConfig);
@@ -338,7 +337,6 @@ export class InfrastructureStack extends cdk.Stack {
       Environment: environment,
       DatabaseEndpoint: this.database.instanceEndpoint.hostname,
       Version: '2.4.0', // TEMPORARY: Run migration 029 to fix admin_delete_user SQL syntax
-      Timestamp: new Date().toISOString(), // Force CloudFormation to see this as a change
     };
 
     this.customResourceBuilder.createCustomResource('migrationRunner', migrationConfig);

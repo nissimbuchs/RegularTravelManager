@@ -6,6 +6,8 @@ import { LambdaStack } from './lambda-stack';
 import { ApiGatewayStack } from './api-gateway-stack';
 import { WebStack } from './web-stack';
 import { CertificateStack } from './certificate-stack';
+import { GlobalStack } from './global-stack';
+import { getEnvironmentConfig } from './config/environment-config';
 
 const app = new cdk.App();
 
@@ -79,24 +81,29 @@ const apiGatewayStack = new ApiGatewayStack(app, apiGatewayStackName, {
   },
 });
 
-// Create the Certificate stack (CloudFront SSL certificates in us-east-1)
-const certificateStackName = `rtm-${config.environment}-certificate`;
-const certificateStack = new CertificateStack(app, certificateStackName, {
-  environment: config.environment,
-  env: {
-    account: config.account,
-    region: 'us-east-1', // CloudFront requires certificates in us-east-1
-  },
-  crossRegionReferences: true, // Enable cross-region references
-  description: `RegularTravelManager SSL certificates for ${config.environment} environment (CloudFront)`,
-  tags: {
-    Project: 'RegularTravelManager',
-    Environment: config.environment,
-    ManagedBy: 'CDK',
-  },
-});
+// Create the Certificate stack (CloudFront SSL certificates in us-east-1) - only if custom domains enabled
+const envConfig = getEnvironmentConfig(config.environment);
+let certificateStack: CertificateStack | undefined;
 
-// Create the Web stack (frontend hosting)
+if (envConfig.web.customDomainEnabled && envConfig.api.customDomainEnabled) {
+  const certificateStackName = `rtm-${config.environment}-certificate`;
+  certificateStack = new CertificateStack(app, certificateStackName, {
+    environment: config.environment,
+    env: {
+      account: config.account,
+      region: 'us-east-1', // CloudFront requires certificates in us-east-1
+    },
+    crossRegionReferences: true, // Enable cross-region references
+    description: `RegularTravelManager SSL certificates for ${config.environment} environment (CloudFront)`,
+    tags: {
+      Project: 'RegularTravelManager',
+      Environment: config.environment,
+      ManagedBy: 'CDK',
+    },
+  });
+}
+
+// Create the Web stack (frontend hosting - S3 only, no CloudFront)
 const webStackName = `rtm-${config.environment}-web`;
 const webStack = new WebStack(app, webStackName, {
   environment: config.environment,
@@ -114,12 +121,34 @@ const webStack = new WebStack(app, webStackName, {
   },
 });
 
-// Set up proper dependencies: Infrastructure → Lambda → API Gateway → Certificate → Web
+// Create the Global stack (persistent CloudFront distribution for stable CNAME records)
+const globalStackName = `rtm-${config.environment}-global`;
+const globalStack = new GlobalStack(app, globalStackName, {
+  environment: config.environment,
+  certificateStack: certificateStack, // Use existing certificate from us-east-1
+  env: {
+    account: config.account,
+    region: config.region, // Deploy in same region as other stacks for easier SSM access
+  },
+  crossRegionReferences: true, // Enable cross-region certificate access
+  description: `RegularTravelManager Global CloudFront for ${config.environment} environment`,
+  tags: {
+    Project: 'RegularTravelManager',
+    Environment: config.environment,
+    ManagedBy: 'CDK',
+    StackType: 'Global',
+  },
+});
+
+// Set up proper dependencies: Infrastructure → Lambda → API Gateway → Web
+// NOTE: Global stack has NO dependencies - it uses SSM lookups with fallbacks
 lambdaStack.addDependency(infrastructureStack);
 apiGatewayStack.addDependency(lambdaStack);
 webStack.addDependency(apiGatewayStack);
 webStack.addDependency(infrastructureStack); // WebStack needs cognito exports from infrastructure
-webStack.addDependency(certificateStack); // WebStack needs certificate from us-east-1
+
+// IMPORTANT: Global stack has NO dependencies to allow API Gateway and Web stacks to be deleted freely
+// Global stack will use SSM parameter lookups with fallback defaults when origins are missing
 
 // Synthesize all stacks
 app.synth();

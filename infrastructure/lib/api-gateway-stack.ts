@@ -133,34 +133,39 @@ export class ApiGatewayStack extends cdk.Stack {
     // Configure API routes using the new route builder system
     this.configureRoutes(environment, functions, authorizer);
 
-    // Setup custom domain and SSL certificate if enabled
-    if (config.api.customDomainEnabled && config.api.domainName) {
-      this.setupApiCustomDomain(environment, config.api.domainName);
-    }
-
-    // Store API configuration in SSM for reference
+    // Store API configuration in SSM for global CloudFront distribution
     new ssm.StringParameter(this, 'ApiGatewayId', {
       parameterName: `/rtm/${environment}/api/gateway-id`,
       stringValue: this.restApi.restApiId,
     });
 
-    // Store API URL (custom domain if configured, otherwise default API Gateway URL)
-    const apiUrl =
-      config.api.customDomainEnabled && config.api.domainName && this.customDomain
-        ? `https://${config.api.domainName}/`
-        : this.restApi.url;
-
+    // Store API Gateway URL (always use default domain for global distribution)
     new ssm.StringParameter(this, 'ApiGatewayUrl', {
       parameterName: `/rtm/${environment}/api/gateway-url`,
-      stringValue: apiUrl,
+      stringValue: this.restApi.url,
+    });
+
+    // Store API Gateway domain (without https://) for global CloudFront origin
+    // Use CloudFormation intrinsic functions to extract domain from URL at deployment time
+    const apiGatewayDomain = cdk.Fn.select(2, cdk.Fn.split('/', this.restApi.url));
+    new ssm.StringParameter(this, 'ApiGatewayDomain', {
+      parameterName: `/rtm/${environment}/api/gateway-domain`,
+      stringValue: apiGatewayDomain,
+      description: `API Gateway domain for CloudFront origin`,
     });
 
     // Output API Gateway URL
     new cdk.CfnOutput(this, 'ApiGatewayUrlOutput', {
-      value: apiUrl,
-      description: 'API Gateway URL',
+      value: this.restApi.url,
+      description: 'API Gateway URL (used as origin for global CloudFront)',
       exportName: `rtm-${environment}-api-url`,
     });
+
+    console.log(`✅ API Gateway configured for global distribution:`);
+    console.log(`   API URL: ${this.restApi.url}`);
+    console.log(`   API Domain: ${apiGatewayDomain}`);
+    console.log(`   SSM Parameter: /rtm/${environment}/api/gateway-domain`);
+    console.log(`ℹ️ No custom domain - will be handled by global CloudFront distribution`);
   }
 
   private configureRoutes(
@@ -186,67 +191,4 @@ export class ApiGatewayStack extends cdk.Stack {
     );
   }
 
-  private setupApiCustomDomain(environment: string, domainName: string) {
-    // Extract the root domain from the subdomain (e.g., 'buchs.be' from 'api-staging.buchs.be')
-    const domainParts = domainName.split('.');
-    const rootDomain = domainParts.slice(-2).join('.'); // Get the last two parts (domain.tld)
-
-    console.log(`Setting up API custom domain: ${domainName} for root domain: ${rootDomain}`);
-    console.log(`ℹ️ Using external DNS validation - no Route53 hosted zone needed`);
-
-    // Display comprehensive certificate validation instructions
-    CertificateValidationHelper.logValidationInstructions(domainName);
-
-    // Create certificate with external DNS validation (no hosted zone required)
-    this.certificate = new acm.Certificate(this, 'ApiCertificate', {
-      domainName: domainName,
-      certificateName: `rtm-${environment}-api-cert`,
-      validation: acm.CertificateValidation.fromDns(), // External DNS validation
-    });
-
-    // Log post-creation status
-    CertificateValidationHelper.logPostCreation(domainName, this.certificate.certificateArn);
-
-    // Create helper to display validation records in CloudFormation outputs
-    new CertificateValidationHelper(this, 'CertValidationHelper', {
-      certificateArn: this.certificate.certificateArn,
-      domainName: domainName,
-      environment: environment,
-    });
-
-    // Create API Gateway custom domain
-    this.customDomain = new apigateway.DomainName(this, 'ApiCustomDomain', {
-      domainName: domainName,
-      certificate: this.certificate,
-    });
-
-    // Add base path mapping to route root path to the staging stage
-    this.customDomain.addBasePathMapping(this.restApi, {
-      basePath: undefined, // Maps root path (/) to the API
-      stage: this.restApi.deploymentStage,
-    });
-
-    // Store custom domain configuration in SSM
-    new ssm.StringParameter(this, 'ApiCustomDomainCertificateArn', {
-      parameterName: `/rtm/${environment}/api/certificate-arn`,
-      stringValue: this.certificate.certificateArn,
-    });
-
-    new ssm.StringParameter(this, 'ApiCustomDomainName', {
-      parameterName: `/rtm/${environment}/api/custom-domain`,
-      stringValue: domainName,
-    });
-
-    new ssm.StringParameter(this, 'ApiCustomDomainTarget', {
-      parameterName: `/rtm/${environment}/api/custom-domain-target`,
-      stringValue: this.customDomain.domainNameAliasDomainName,
-    });
-
-    console.log(`✅ API custom domain configured: ${domainName}`);
-    console.log(`✅ CNAME target: ${this.customDomain.domainNameAliasDomainName}`);
-    console.log(
-      `ℹ️ Manual DNS setup required: Add CNAME record ${domainName.split('.')[0]} -> ${this.customDomain.domainNameAliasDomainName}`
-    );
-    console.log(`✅ API custom domain setup completed for ${domainName}`);
-  }
 }

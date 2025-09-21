@@ -34,7 +34,7 @@ export class CertificateValidationHelper extends Construct {
             CertificateArn: certificateArn,
           },
           physicalResourceId: customResources.PhysicalResourceId.of(
-            `cert-validation-${environment}-${Date.now()}`
+            `cert-validation-${environment}`
           ),
         },
         policy: customResources.AwsCustomResourcePolicy.fromSdkCalls({

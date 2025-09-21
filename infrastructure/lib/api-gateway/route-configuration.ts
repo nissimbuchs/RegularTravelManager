@@ -115,16 +115,47 @@ export class ApiRouteBuilder {
     let currentResource = baseResource;
 
     for (const segment of segments) {
-      // Try to find existing child resource first
-      const existingChild = (currentResource as any).children?.[segment];
-      if (existingChild) {
-        currentResource = existingChild;
+      // Check if this is a path parameter (has curly braces)
+      const isPathParameter = segment.startsWith('{') && segment.endsWith('}');
+
+      if (isPathParameter) {
+        // For path parameters, look for any existing path parameter resource
+        // API Gateway only allows one path parameter per level
+        const existingPathParam = this.findExistingPathParameter(currentResource);
+        if (existingPathParam) {
+          currentResource = existingPathParam;
+        } else {
+          // Create new path parameter resource
+          currentResource = currentResource.addResource(segment);
+        }
       } else {
-        currentResource = currentResource.addResource(segment);
+        // For static segments, try to find existing child resource first
+        const existingChild = (currentResource as any).children?.[segment];
+        if (existingChild) {
+          currentResource = existingChild;
+        } else {
+          currentResource = currentResource.addResource(segment);
+        }
       }
     }
 
     return currentResource;
+  }
+
+  /**
+   * Find existing path parameter resource at current level
+   */
+  private findExistingPathParameter(resource: apigateway.IResource): apigateway.IResource | null {
+    const children = (resource as any).children;
+    if (!children) return null;
+
+    // Look for any child that is a path parameter (starts and ends with curly braces)
+    for (const [name, child] of Object.entries(children)) {
+      if (name.startsWith('{') && name.endsWith('}')) {
+        return child as apigateway.IResource;
+      }
+    }
+    return null;
   }
 }
 

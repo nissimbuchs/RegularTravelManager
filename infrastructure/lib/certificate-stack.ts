@@ -30,22 +30,25 @@ export class CertificateStack extends cdk.Stack {
       console.warn('   CloudFront requires certificates to be in us-east-1 region');
     }
 
-    // Only create certificate if custom domain is enabled
-    if (!config.web.customDomainEnabled || !config.web.domainName) {
+    // Only create certificate if custom domains are enabled
+    if (!config.web.customDomainEnabled || !config.web.domainName ||
+        !config.api.customDomainEnabled || !config.api.domainName) {
       throw new Error(
-        `Custom domain must be enabled for certificate creation. Environment: ${environment}`
+        `Both web and API custom domains must be enabled for certificate creation. Environment: ${environment}`
       );
     }
 
-    const domainName = config.web.domainName;
+    const webDomainName = config.web.domainName;
+    const apiDomainName = config.api.domainName;
 
-    console.log(`🔐 Creating CloudFront certificate in us-east-1 for ${domainName}`);
+    console.log(`🔐 Creating CloudFront certificate in us-east-1 for ${webDomainName} and ${apiDomainName}`);
     console.log(`📍 Stack region: ${this.region} (must be us-east-1 for CloudFront)`);
 
-    // Create SSL certificate for the web subdomain with external DNS validation
+    // Create SSL certificate for both web and API subdomains with external DNS validation
     this.certificate = new acm.Certificate(this, 'WebCertificate', {
-      domainName: domainName,
-      certificateName: `rtm-${environment}-web-cert-cloudfront`,
+      domainName: webDomainName,
+      subjectAlternativeNames: [apiDomainName],
+      certificateName: `rtm-${environment}-cloudfront-cert`,
       validation: acm.CertificateValidation.fromDns(),
     });
 
@@ -53,7 +56,7 @@ export class CertificateStack extends cdk.Stack {
     const certificateArnParameter = new ssm.StringParameter(this, 'WebCertificateArnParameter', {
       parameterName: `/rtm/${environment}/web/certificate-arn-us-east-1`,
       stringValue: this.certificate.certificateArn,
-      description: `CloudFront SSL certificate ARN for ${domainName} (us-east-1)`,
+      description: `CloudFront SSL certificate ARN for ${webDomainName} and ${apiDomainName} (us-east-1)`,
     });
 
     // Store certificate ARN in SSM in the target region for web stack access
@@ -61,29 +64,29 @@ export class CertificateStack extends cdk.Stack {
     new ssm.StringParameter(this, 'WebCertificateArnGlobal', {
       parameterName: `/rtm/${environment}/web/cloudfront-certificate-arn`,
       stringValue: this.certificate.certificateArn,
-      description: `Global reference to CloudFront SSL certificate ARN for ${domainName}`,
+      description: `Global reference to CloudFront SSL certificate ARN for ${webDomainName} and ${apiDomainName}`,
     });
 
-    // Add certificate validation helper for DNS setup instructions
+    // Add certificate validation helper for DNS setup instructions (primary domain)
     const validationHelper = new CertificateValidationHelper(this, 'CertValidationHelper', {
       certificateArn: this.certificate.certificateArn,
-      domainName: domainName,
+      domainName: `${webDomainName} (includes ${apiDomainName})`,
       environment: environment,
     });
 
     // Log certificate validation instructions
-    CertificateValidationHelper.logValidationInstructions(domainName);
+    CertificateValidationHelper.logValidationInstructions(`${webDomainName} and ${apiDomainName}`);
 
     // Export certificate ARN for cross-region access
     new cdk.CfnOutput(this, 'CertificateArn', {
       value: this.certificate.certificateArn,
-      description: `SSL Certificate ARN for ${domainName} (CloudFront compatible)`,
+      description: `SSL Certificate ARN for ${webDomainName} and ${apiDomainName} (CloudFront compatible)`,
       exportName: `rtm-${environment}-web-certificate-arn`,
     });
 
     new cdk.CfnOutput(this, 'CertificateDomain', {
-      value: domainName,
-      description: 'Domain name for the SSL certificate',
+      value: `${webDomainName}, ${apiDomainName}`,
+      description: 'Domain names covered by the SSL certificate',
       exportName: `rtm-${environment}-web-certificate-domain`,
     });
 
@@ -94,9 +97,9 @@ export class CertificateStack extends cdk.Stack {
     });
 
     // Log completion
-    CertificateValidationHelper.logPostCreation(domainName, this.certificate.certificateArn);
+    CertificateValidationHelper.logPostCreation(`${webDomainName} and ${apiDomainName}`, this.certificate.certificateArn);
 
-    console.log(`✅ Certificate stack configured for ${domainName}`);
+    console.log(`✅ Certificate stack configured for ${webDomainName} and ${apiDomainName}`);
     console.log(`📄 Certificate ARN will be available after deployment`);
     console.log(`🔗 Cross-region reference: rtm-${environment}-web-certificate-arn`);
 
