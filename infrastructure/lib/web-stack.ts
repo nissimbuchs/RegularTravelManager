@@ -184,8 +184,6 @@ export class WebStack extends cdk.Stack {
     console.log(`Configured web config generation for ${environment} environment`);
   }
 
-
-
   private setupResourceTags(environment: string) {
     const tags = {
       Project: 'RegularTravelManager',

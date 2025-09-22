@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -25,10 +25,26 @@ import { UserSummary } from '@rtm/shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { LoadingService } from '../../../core/services/loading.service';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
+import {
+  RoleChangeDialogComponent,
+  RoleChangeDialogData,
+  RoleChangeResult,
+} from './role-change-dialog.component';
+import {
+  ManagerAssignmentDialogComponent,
+  ManagerAssignmentDialogData,
+  ManagerAssignmentResult,
+} from './manager-assignment-dialog.component';
+import {
+  UserDeletionDialogComponent,
+  UserDeletionDialogData,
+  UserDeletionResult,
+} from './user-deletion-dialog.component';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -297,13 +313,17 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     private adminService: AdminService,
     private loadingService: LoadingService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.setupFilterWatchers();
     this.setupUserDataSubscription();
-    this.loadUsers();
+    this.setupFilterWatchers();
+    // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.loadUsers();
+    });
   }
 
   ngOnDestroy(): void {
@@ -337,6 +357,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
           this.pageSize = pagination.pageSize;
           this.currentPage = pagination.currentPage;
         }
+        // Trigger change detection for OnPush strategy
+        this.cdr.markForCheck();
       });
   }
 
@@ -378,13 +400,78 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   }
 
   changeUserRole(user: UserSummary): void {
-    // TODO: Implement role change dialog
-    this.snackBar.open('Role change dialog coming soon', 'Close', { duration: 2000 });
+    const dialogData: RoleChangeDialogData = { user };
+
+    const dialogRef = this.dialog.open(RoleChangeDialogComponent, {
+      data: dialogData,
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      disableClose: false,
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((result: RoleChangeResult) => {
+        if (result) {
+          this.adminService
+            .updateUserRole(user.id, {
+              userId: user.id,
+              newRole: result.newRole as any,
+              reason: result.reason,
+            })
+            .subscribe({
+              next: () => {
+                this.snackBar.open(`User role changed to ${result.newRole} successfully`, 'Close', {
+                  duration: 3000,
+                });
+                // User list will be refreshed automatically by the admin service
+              },
+              error: error => {
+                console.error('Failed to change user role:', error);
+                this.snackBar.open('Failed to change user role', 'Close', { duration: 3000 });
+              },
+            });
+        }
+      });
   }
 
   assignManager(user: UserSummary): void {
-    // TODO: Implement manager assignment dialog
-    this.snackBar.open('Manager assignment dialog coming soon', 'Close', { duration: 2000 });
+    const dialogData: ManagerAssignmentDialogData = { user };
+
+    const dialogRef = this.dialog.open(ManagerAssignmentDialogComponent, {
+      data: dialogData,
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      disableClose: false,
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((result: ManagerAssignmentResult) => {
+        if (result) {
+          this.adminService
+            .updateUserManager(user.id, {
+              userId: user.id,
+              managerId: result.managerId,
+              reason: result.reason,
+            })
+            .subscribe({
+              next: () => {
+                const action = result.managerId ? 'assigned' : 'removed';
+                this.snackBar.open(`Manager ${action} successfully`, 'Close', { duration: 3000 });
+                // User list will be refreshed automatically by the admin service
+              },
+              error: error => {
+                console.error('Failed to update manager assignment:', error);
+                this.snackBar.open('Failed to update manager assignment', 'Close', {
+                  duration: 3000,
+                });
+              },
+            });
+        }
+      });
   }
 
   toggleUserStatus(user: UserSummary): void {
@@ -426,28 +513,29 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   }
 
   deleteUser(user: UserSummary): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-      data: {
-        title: 'Delete User',
-        message: `Are you sure you want to delete ${user.firstName} ${user.lastName}? This action cannot be undone and will archive all associated data.`,
-        confirmText: 'Delete',
-        confirmColor: 'warn',
-      },
+    const dialogData: UserDeletionDialogData = { user };
+
+    const dialogRef = this.dialog.open(UserDeletionDialogComponent, {
+      data: dialogData,
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      disableClose: true, // Prevent accidental closure
     });
 
     dialogRef
       .afterClosed()
       .pipe(takeUntil(this.destroy$))
-      .subscribe(confirmed => {
-        if (confirmed) {
-          // TODO: Implement proper deletion dialog with reason
-          const reason = 'User deleted by administrator';
-          this.adminService.deleteUser(user.id, { reason }).subscribe({
+      .subscribe((result: UserDeletionResult) => {
+        if (result && result.confirmed) {
+          this.adminService.deleteUser(user.id, { reason: result.reason }).subscribe({
             next: summary => {
-              this.snackBar.open('User deleted successfully', 'Close', {
-                duration: 3000,
-              });
+              this.snackBar.open(
+                `User ${user.firstName} ${user.lastName} deleted successfully`,
+                'Close',
+                { duration: 3000 }
+              );
               console.log('Deletion summary:', summary);
+              // User list will be refreshed automatically by the admin service
             },
             error: error => {
               console.error('Failed to delete user:', error);

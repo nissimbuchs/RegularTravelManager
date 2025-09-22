@@ -190,5 +190,4 @@ export class ApiGatewayStack extends cdk.Stack {
       `✅ Permissions granted to ${permissionManager.getGrantedFunctions().length} functions`
     );
   }
-
 }

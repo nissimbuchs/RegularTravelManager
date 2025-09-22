@@ -408,15 +408,11 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
 
   viewRequestDetails(request: TravelRequestSummary): void {
     // Show the employee's justification for the travel request
-    this.snackBar.open(
-      `Justification: ${request.justification}`,
-      'Close',
-      {
-        duration: 8000,
-        horizontalPosition: 'center',
-        verticalPosition: 'bottom'
-      }
-    );
+    this.snackBar.open(`Justification: ${request.justification}`, 'Close', {
+      duration: 8000,
+      horizontalPosition: 'center',
+      verticalPosition: 'bottom',
+    });
   }
 
   private removeRequestFromTable(requestId: string): void {

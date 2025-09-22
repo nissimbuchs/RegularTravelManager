@@ -4,6 +4,193 @@
 // Import the complete ELCA styling system
 @import 'styles/main';
 
+// ELCA Angular Material Button Color Overrides
+// Override default Material theme colors with ELCA coral red branding
+
+// Primary raised buttons (mat-raised-button color="primary")
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-raised-button[color="primary"] {
+  --mdc-filled-button-container-color: #e74c3c !important;
+  --mdc-filled-button-label-text-color: white !important;
+  background-color: #e74c3c !important;
+  color: white !important;
+
+  &:hover {
+    --mdc-filled-button-container-color: #c0392b !important;
+    background-color: #c0392b !important;
+    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3) !important;
+  }
+
+  &:active {
+    --mdc-filled-button-container-color: #a93226 !important;
+    background-color: #a93226 !important;
+  }
+
+  &[disabled] {
+    --mdc-filled-button-container-color: #e0e0e0 !important;
+    --mdc-filled-button-label-text-color: #9e9e9e !important;
+    background-color: #e0e0e0 !important;
+    color: #9e9e9e !important;
+  }
+}
+
+// Accent raised buttons (mat-raised-button color="accent") - also use ELCA red
+.mat-mdc-raised-button.mat-accent,
+.mat-mdc-raised-button[color="accent"] {
+  --mdc-filled-button-container-color: #e74c3c !important;
+  --mdc-filled-button-label-text-color: white !important;
+  background-color: #e74c3c !important;
+  color: white !important;
+
+  &:hover {
+    --mdc-filled-button-container-color: #c0392b !important;
+    background-color: #c0392b !important;
+    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3) !important;
+  }
+
+  &:active {
+    --mdc-filled-button-container-color: #a93226 !important;
+    background-color: #a93226 !important;
+  }
+}
+
+// Warn raised buttons (mat-raised-button color="warn") - keep red for destructive actions
+.mat-mdc-raised-button.mat-warn,
+.mat-mdc-raised-button[color="warn"] {
+  --mdc-filled-button-container-color: #e74c3c !important;
+  --mdc-filled-button-label-text-color: white !important;
+  background-color: #e74c3c !important;
+  color: white !important;
+
+  &:hover {
+    --mdc-filled-button-container-color: #c0392b !important;
+    background-color: #c0392b !important;
+  }
+}
+
+// Text buttons (mat-button color="primary")
+.mat-mdc-button.mat-primary,
+.mat-mdc-button[color="primary"] {
+  --mdc-text-button-label-text-color: #e74c3c !important;
+  color: #e74c3c !important;
+
+  &:hover {
+    --mdc-text-button-hover-state-layer-color: #e74c3c !important;
+    --mdc-text-button-hover-state-layer-opacity: 0.08 !important;
+    background-color: rgba(231, 76, 60, 0.08) !important;
+  }
+}
+
+// Text buttons (mat-button color="accent")
+.mat-mdc-button.mat-accent,
+.mat-mdc-button[color="accent"] {
+  --mdc-text-button-label-text-color: #e74c3c !important;
+  color: #e74c3c !important;
+
+  &:hover {
+    --mdc-text-button-hover-state-layer-color: #e74c3c !important;
+    --mdc-text-button-hover-state-layer-opacity: 0.08 !important;
+    background-color: rgba(231, 76, 60, 0.08) !important;
+  }
+}
+
+// Dialog-specific styling for better ELCA branding
+.mat-mdc-dialog-actions {
+  .mat-mdc-raised-button {
+    &.mat-primary,
+    &.mat-accent,
+    &.mat-warn,
+    &[color="primary"],
+    &[color="accent"],
+    &[color="warn"] {
+      font-weight: 500 !important;
+      letter-spacing: 0.5px !important;
+      background-color: #e74c3c !important;
+      color: white !important;
+
+      &:hover {
+        background-color: #c0392b !important;
+      }
+
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+// Global override for all Material buttons (maximum specificity)
+body .mat-mdc-raised-button {
+  &.mat-primary,
+  &[color="primary"] {
+    background-color: #e74c3c !important;
+    color: white !important;
+    --mdc-filled-button-container-color: #e74c3c !important;
+    --mdc-filled-button-label-text-color: white !important;
+
+    &:hover:not([disabled]) {
+      background-color: #c0392b !important;
+      --mdc-filled-button-container-color: #c0392b !important;
+    }
+
+    &[disabled],
+    &:disabled {
+      background-color: #e0e0e0 !important;
+      color: #9e9e9e !important;
+      --mdc-filled-button-container-color: #e0e0e0 !important;
+      --mdc-filled-button-label-text-color: #9e9e9e !important;
+      opacity: 1 !important;
+      cursor: not-allowed !important;
+    }
+  }
+
+  &.mat-accent,
+  &[color="accent"] {
+    background-color: #e74c3c !important;
+    color: white !important;
+    --mdc-filled-button-container-color: #e74c3c !important;
+    --mdc-filled-button-label-text-color: white !important;
+
+    &:hover:not([disabled]) {
+      background-color: #c0392b !important;
+      --mdc-filled-button-container-color: #c0392b !important;
+    }
+
+    &[disabled],
+    &:disabled {
+      background-color: #e0e0e0 !important;
+      color: #9e9e9e !important;
+      --mdc-filled-button-container-color: #e0e0e0 !important;
+      --mdc-filled-button-label-text-color: #9e9e9e !important;
+      opacity: 1 !important;
+      cursor: not-allowed !important;
+    }
+  }
+
+  &.mat-warn,
+  &[color="warn"] {
+    background-color: #e74c3c !important;
+    color: white !important;
+    --mdc-filled-button-container-color: #e74c3c !important;
+    --mdc-filled-button-label-text-color: white !important;
+
+    &:hover:not([disabled]) {
+      background-color: #c0392b !important;
+      --mdc-filled-button-container-color: #c0392b !important;
+    }
+
+    &[disabled],
+    &:disabled {
+      background-color: #e0e0e0 !important;
+      color: #9e9e9e !important;
+      --mdc-filled-button-container-color: #e0e0e0 !important;
+      --mdc-filled-button-label-text-color: #9e9e9e !important;
+      opacity: 1 !important;
+      cursor: not-allowed !important;
+    }
+  }
+}
+
 // Legacy compatibility: Preserve existing utility classes for backward compatibility
 .full-width {
   width: 100% !important;

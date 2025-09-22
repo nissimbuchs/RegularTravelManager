@@ -245,26 +245,24 @@ export class AdminService implements OnDestroy {
   }
 
   /**
-   * Get available managers for assignment
+   * Get available managers for assignment (without affecting global filter state)
    */
   getAvailableManagers(): Observable<UserSummary[]> {
-    const filters: UserFilters = {
-      role: 'manager',
-      status: 'active',
-    };
-    return this.loadUsers(filters, { pageSize: 100 }).pipe(
-      map(response => response.users),
-      takeUntil(this.destroy$)
-    );
+    return this.getUsersByRole('manager');
   }
 
   /**
-   * Get users by role
+   * Get users by role (without affecting global filter state)
    */
   getUsersByRole(role: 'employee' | 'manager' | 'administrator'): Observable<UserSummary[]> {
-    const filters: UserFilters = { role };
-    return this.loadUsers(filters).pipe(
-      map(response => response.users),
+    // Build query parameters
+    let params = new HttpParams();
+    params = params.set('role', role);
+    params = params.set('pageSize', '100'); // Get more results for selection lists
+    params = params.set('status', 'active'); // Only active users for assignments
+
+    return this.http.get<{ data: AdminUserListing }>(`${this.apiUrl}/admin/users`, { params }).pipe(
+      map(response => response.data.users),
       takeUntil(this.destroy$)
     );
   }

@@ -1,0 +1,257 @@
+.user-deletion-dialog {
+  width: 700px;
+  max-width: 90vw;
+
+  .dialog-header {
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      color: #d32f2f;
+    }
+  }
+
+  mat-dialog-content {
+    padding: 16px 24px;
+  }
+
+  .warning-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background-color: #fff3e0;
+    border: 2px solid #ff9800;
+    border-radius: 8px;
+    margin-bottom: 24px;
+
+    mat-icon {
+      color: #ff9800;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .warning-content {
+      flex: 1;
+
+      h3 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #e65100;
+      }
+
+      p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.4;
+        color: #bf360c;
+      }
+    }
+  }
+
+  .user-info {
+    margin-bottom: 20px;
+
+    h3 {
+      margin: 0 0 12px 0;
+      color: rgba(0, 0, 0, 0.6);
+      font-weight: 500;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .user-card {
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 8px;
+      padding: 16px;
+      background-color: #fafafa;
+
+      .user-primary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+
+        strong {
+          font-size: 18px;
+          font-weight: 600;
+        }
+
+        mat-chip {
+          font-size: 12px;
+        }
+      }
+
+      .user-secondary {
+        display: grid;
+        gap: 8px;
+
+        p {
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 14px;
+          color: rgba(0, 0, 0, 0.7);
+
+          mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+            color: rgba(0, 0, 0, 0.5);
+          }
+        }
+      }
+    }
+  }
+
+  .impact-section {
+    margin: 20px 0;
+
+    h3 {
+      margin: 0 0 16px 0;
+      color: rgba(0, 0, 0, 0.6);
+      font-weight: 500;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .impact-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .impact-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px;
+        background-color: #f5f5f5;
+        border-radius: 6px;
+
+        mat-icon {
+          margin-top: 2px;
+          flex-shrink: 0;
+        }
+
+        .impact-content {
+          flex: 1;
+
+          strong {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 4px;
+            font-size: 14px;
+          }
+
+          p {
+            margin: 0;
+            font-size: 13px;
+            color: rgba(0, 0, 0, 0.7);
+            line-height: 1.4;
+          }
+        }
+      }
+    }
+  }
+
+  .deletion-form {
+    margin: 20px 0;
+
+    mat-form-field {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .confirmation-checkbox {
+      margin-bottom: 16px;
+
+      .confirmation-text {
+        font-size: 14px;
+        line-height: 1.4;
+
+        strong {
+          color: #d32f2f;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  .safety-check {
+    background-color: #e8f5e8;
+    border: 1px solid #c8e6c9;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 20px 0;
+
+    .safety-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 14px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      mat-icon {
+        flex-shrink: 0;
+      }
+
+      span {
+        color: rgba(0, 0, 0, 0.8);
+      }
+    }
+  }
+
+  mat-dialog-actions {
+    padding: 8px 24px 24px 24px;
+    gap: 8px;
+
+    button {
+      mat-icon {
+        margin-right: 4px;
+      }
+
+      &[color="warn"] {
+        &:disabled {
+          background-color: rgba(0, 0, 0, 0.12);
+          color: rgba(0, 0, 0, 0.26);
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 700px) {
+  .user-deletion-dialog {
+    width: 100%;
+
+    .user-info .user-card .user-primary {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .impact-section .impact-list .impact-item {
+      flex-direction: column;
+      gap: 8px;
+
+      mat-icon {
+        align-self: flex-start;
+      }
+    }
+  }
+}

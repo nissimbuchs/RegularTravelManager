@@ -31,8 +31,12 @@ export class CertificateStack extends cdk.Stack {
     }
 
     // Only create certificate if custom domains are enabled
-    if (!config.web.customDomainEnabled || !config.web.domainName ||
-        !config.api.customDomainEnabled || !config.api.domainName) {
+    if (
+      !config.web.customDomainEnabled ||
+      !config.web.domainName ||
+      !config.api.customDomainEnabled ||
+      !config.api.domainName
+    ) {
       throw new Error(
         `Both web and API custom domains must be enabled for certificate creation. Environment: ${environment}`
       );
@@ -41,7 +45,9 @@ export class CertificateStack extends cdk.Stack {
     const webDomainName = config.web.domainName;
     const apiDomainName = config.api.domainName;
 
-    console.log(`🔐 Creating CloudFront certificate in us-east-1 for ${webDomainName} and ${apiDomainName}`);
+    console.log(
+      `🔐 Creating CloudFront certificate in us-east-1 for ${webDomainName} and ${apiDomainName}`
+    );
     console.log(`📍 Stack region: ${this.region} (must be us-east-1 for CloudFront)`);
 
     // Create SSL certificate for both web and API subdomains with external DNS validation
@@ -97,7 +103,10 @@ export class CertificateStack extends cdk.Stack {
     });
 
     // Log completion
-    CertificateValidationHelper.logPostCreation(`${webDomainName} and ${apiDomainName}`, this.certificate.certificateArn);
+    CertificateValidationHelper.logPostCreation(
+      `${webDomainName} and ${apiDomainName}`,
+      this.certificate.certificateArn
+    );
 
     console.log(`✅ Certificate stack configured for ${webDomainName} and ${apiDomainName}`);
     console.log(`📄 Certificate ARN will be available after deployment`);

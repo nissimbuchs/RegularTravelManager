@@ -91,18 +91,18 @@ if docker exec rtm-postgres psql -U nissim -d travel_manager_dev -c "SELECT vers
     print_success "Database already initialized, skipping migrations"
 else
     print_status "Running database migrations..."
-    npm run db:migrate
+    npm run db:migrate:local
     print_success "Database migrations completed"
 fi
 
 # Step 3: Load comprehensive sample data
 print_status "Step 3: Loading comprehensive sample data..."
-npm run db:seed
+npm run db:seed:local
 print_success "Sample data loaded successfully"
 
 # Step 4: Initialize AWS services in LocalStack
 print_status "Step 4: Initializing AWS services..."
-npm run localstack:init
+npm run aws:local:init
 print_success "AWS services initialized"
 
 # Step 5: Verify complete setup

@@ -49,8 +49,12 @@ export class GlobalStack extends cdk.Stack {
     this.storeGlobalConfiguration(environment);
   }
 
-
-  private createGlobalDistribution(environment: string, config: any, webOriginDomain?: string, apiOriginDomain?: string) {
+  private createGlobalDistribution(
+    environment: string,
+    config: any,
+    webOriginDomain?: string,
+    apiOriginDomain?: string
+  ) {
     // Use provided origins or create SSM parameter references
     // Since CloudFront needs actual domain names, we use CloudFormation references
     // that get resolved at runtime rather than synthesis-time lookups
@@ -85,7 +89,7 @@ export class GlobalStack extends cdk.Stack {
     console.log(`🌍 Creating global distribution with origins:`);
     console.log(`   Web: ${webBucketDomain}`);
     console.log(`   API: ${apiGatewayDomain}`);
-    console.log(`💡 Origins will be resolved from SSM parameters at runtime`)
+    console.log(`💡 Origins will be resolved from SSM parameters at runtime`);
 
     // Create CloudFront function for SPA routing
     const spaRoutingFunction = new cloudfront.Function(this, 'SPARoutingFunction', {
@@ -140,9 +144,10 @@ export class GlobalStack extends cdk.Stack {
         },
       },
       defaultRootObject: 'index.html',
-      priceClass: environment === 'production'
-        ? cloudfront.PriceClass.PRICE_CLASS_ALL
-        : cloudfront.PriceClass.PRICE_CLASS_100,
+      priceClass:
+        environment === 'production'
+          ? cloudfront.PriceClass.PRICE_CLASS_ALL
+          : cloudfront.PriceClass.PRICE_CLASS_100,
       comment: `RTM ${environment} Global Distribution - Persistent CNAME targets`,
     };
 
@@ -161,14 +166,24 @@ export class GlobalStack extends cdk.Stack {
     console.log(`✅ Persistent CloudFront domain: ${this.distribution.distributionDomainName}`);
 
     if (config.web.customDomainEnabled && config.api.customDomainEnabled) {
-      console.log(`🔗 Web domain: ${config.web.domainName} → ${this.distribution.distributionDomainName}`);
-      console.log(`🔗 API domain: ${config.api.domainName} → ${this.distribution.distributionDomainName}`);
+      console.log(
+        `🔗 Web domain: ${config.web.domainName} → ${this.distribution.distributionDomainName}`
+      );
+      console.log(
+        `🔗 API domain: ${config.api.domainName} → ${this.distribution.distributionDomainName}`
+      );
       console.log('');
       console.log('📋 DNS Configuration (ONE TIME SETUP):');
-      console.log(`   ${config.web.domainName.split('.')[0]} CNAME ${this.distribution.distributionDomainName}`);
-      console.log(`   ${config.api.domainName.split('.')[0]} CNAME ${this.distribution.distributionDomainName}`);
+      console.log(
+        `   ${config.web.domainName.split('.')[0]} CNAME ${this.distribution.distributionDomainName}`
+      );
+      console.log(
+        `   ${config.api.domainName.split('.')[0]} CNAME ${this.distribution.distributionDomainName}`
+      );
       console.log('');
-      console.log('✨ After this setup, you can destroy/redeploy API Gateway and Web stacks freely!');
+      console.log(
+        '✨ After this setup, you can destroy/redeploy API Gateway and Web stacks freely!'
+      );
     }
   }
 

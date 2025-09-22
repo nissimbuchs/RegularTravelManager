@@ -254,7 +254,7 @@ export interface RoleChangeValidation {
 
 export interface ManagerAssignmentRequest {
   userId: string;
-  managerId: string;
+  managerId: string | null;
   reason: string;
   effectiveDate?: string;
 }
