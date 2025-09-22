@@ -87,8 +87,7 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
   dashboard: EmployeeDashboard | null = null;
   selectedRequest: EmployeeRequestSummary | null = null;
   isLoading = false;
-  showRequestDetails = false;
-  expandedRequestId: string | null = null;
+  showDetailsPanel = false;
 
   filterForm: FormGroup;
 
@@ -254,26 +253,25 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
     this.loadDashboardData();
   }
 
-  onSortChange(sort: MatSort): void {
+  onSortChange(sort: any): void {
     this.sortConfig.active = sort.active;
     this.sortConfig.direction = sort.direction === '' ? 'asc' : sort.direction;
     this.pagination.pageIndex = 0; // Reset to first page on sort
     this.loadDashboardData();
   }
 
-  toggleRequestDetails(request: EmployeeRequestSummary): void {
-    if (this.expandedRequestId === request.id) {
-      this.expandedRequestId = null;
-      this.selectedRequest = null;
-    } else {
-      this.expandedRequestId = request.id;
-      this.selectedRequest = request;
-      this.loadRequestDetails(request.id);
-    }
+  selectRequest(request: EmployeeRequestSummary): void {
+    this.selectedRequest = request;
+    this.loadRequestDetails(request.id);
+    this.showDetailsPanel = true;
+  }
+
+  closeDetailsPanel(): void {
+    this.showDetailsPanel = false;
+    this.selectedRequest = null;
   }
 
   private loadRequestDetails(requestId: string): void {
-    // Load detailed request information
     this.employeeDashboardService
       .getRequestDetails(requestId)
       .pipe(takeUntil(this.destroy$))
@@ -366,9 +364,6 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
     }).format(dateObj);
   }
 
-  isRequestExpanded(requestId: string): boolean {
-    return this.expandedRequestId === requestId;
-  }
 
   canWithdrawRequest(status: string): boolean {
     return status === 'pending';

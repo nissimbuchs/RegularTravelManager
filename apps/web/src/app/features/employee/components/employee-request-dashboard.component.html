@@ -137,233 +137,254 @@
   <p>Loading your travel requests...</p>
 </div>
 
-<!-- Requests Table -->
-<mat-card class="table-card" *ngIf="!isLoading">
-  <mat-card-content>
-    <div class="table-header">
-      <h2 class="table-title">Travel Requests</h2>
-      <div class="table-actions">
-        <span class="total-count" *ngIf="dashboard">
-          Showing {{ dataSource.data.length }} of {{ dashboard.totalRequests }} requests
-        </span>
-      </div>
-    </div>
+<div class="main-content">
+  <!-- Requests Table -->
+  <div class="table-container" [class.with-panel]="showDetailsPanel">
+    <mat-card class="table-card" *ngIf="!isLoading">
+      <mat-card-header>
+        <mat-card-title>My Travel Requests</mat-card-title>
+        <mat-card-subtitle>Click on a request to view details</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="table-header">
+          <div class="table-actions">
+            <span class="total-count" *ngIf="dashboard">
+              Showing {{ dataSource.data.length }} of {{ dashboard.totalRequests }} requests
+            </span>
+          </div>
+        </div>
 
-    <div class="table-container">
-      <table mat-table [dataSource]="dataSource" matSort (matSortChange)="onSortChange($event)" class="requests-table">
+        <div class="table-wrapper">
+          <table mat-table [dataSource]="dataSource" matSort (matSortChange)="onSortChange($event)" class="requests-table">
 
-        <!-- Status Column -->
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let request">
-            <mat-chip-listbox>
-              <mat-chip-option
-                [style]="getStatusChipClass(request.status)"
-                [disabled]="true">
-                <mat-icon matChipAvatar>{{ getStatusIcon(request.status) }}</mat-icon>
-                {{ request.status | titlecase }}
-              </mat-chip-option>
-            </mat-chip-listbox>
-          </td>
-        </ng-container>
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let request">
+                <mat-chip-listbox>
+                  <mat-chip-option
+                    [style]="getStatusChipClass(request.status)"
+                    [disabled]="true">
+                    <mat-icon matChipAvatar>{{ getStatusIcon(request.status) }}</mat-icon>
+                    {{ request.status | titlecase }}
+                  </mat-chip-option>
+                </mat-chip-listbox>
+              </td>
+            </ng-container>
 
-        <!-- Project Name Column -->
-        <ng-container matColumnDef="projectName">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Project</th>
-          <td mat-cell *matCellDef="let request">
-            <div class="project-info">
-              <span class="project-name">{{ request.projectName }}</span>
-              <span class="project-code" *ngIf="request.projectCode">({{ request.projectCode }})</span>
+            <!-- Project Name Column -->
+            <ng-container matColumnDef="projectName">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Project</th>
+              <td mat-cell *matCellDef="let request">
+                <div class="project-info">
+                  <span class="project-name">{{ request.projectName }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Subproject Name Column -->
+            <ng-container matColumnDef="subProjectName">
+              <th mat-header-cell *matHeaderCellDef>Location</th>
+              <td mat-cell *matCellDef="let request">
+                <div class="subproject-info">
+                  <mat-icon class="location-icon">location_on</mat-icon>
+                  <span>{{ request.subProjectName }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Days Per Week Column -->
+            <ng-container matColumnDef="daysPerWeek">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Days/Week</th>
+              <td mat-cell *matCellDef="let request">
+                <div class="days-display">
+                  <mat-icon>event</mat-icon>
+                  <span>{{ request.daysPerWeek }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Daily Allowance Column -->
+            <ng-container matColumnDef="dailyAllowance">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Daily Allowance</th>
+              <td mat-cell *matCellDef="let request">
+                <div class="allowance-display">
+                  <span class="amount">{{ formatCurrency(request.dailyAllowance) }}</span>
+                  <span class="unit">per day</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Weekly Allowance Column -->
+            <ng-container matColumnDef="weeklyAllowance">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Weekly Total</th>
+              <td mat-cell *matCellDef="let request">
+                <div class="allowance-display highlighted">
+                  <span class="amount">{{ formatCurrency(request.weeklyAllowance) }}</span>
+                  <span class="unit">per week</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Submitted Date Column -->
+            <ng-container matColumnDef="submittedDate">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Submitted</th>
+              <td mat-cell *matCellDef="let request">
+                <div class="date-display">
+                  <mat-icon>schedule</mat-icon>
+                  <span>{{ formatDate(request.submittedDate) }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Processed Date Column -->
+            <ng-container matColumnDef="processedDate">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Processed</th>
+              <td mat-cell *matCellDef="let request">
+                <div class="date-display" *ngIf="request.processedDate">
+                  <mat-icon>done</mat-icon>
+                  <span>{{ formatDate(request.processedDate) }}</span>
+                </div>
+                <span class="no-date" *ngIf="!request.processedDate">—</span>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let request">
+                <div class="action-buttons">
+                  <button
+                    mat-icon-button
+                    (click)="selectRequest(request)"
+                    matTooltip="View details"
+                    class="details-button">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    (click)="withdrawRequest(request)"
+                    matTooltip="Withdraw request"
+                    *ngIf="canWithdrawRequest(request.status)"
+                    class="withdraw-button">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                [class.selected-row]="selectedRequest?.id === row.id"
+                (click)="selectRequest(row)"></tr>
+          </table>
+
+          <!-- No Data Message -->
+          <div class="no-data" *ngIf="dataSource.data.length === 0 && !isLoading">
+            <mat-icon class="no-data-icon">assignment</mat-icon>
+            <h3>No travel requests found</h3>
+            <p>You haven't submitted any travel requests yet, or they don't match your current filters.</p>
+            <button mat-raised-button color="primary" routerLink="/employee/request">
+              <mat-icon>add</mat-icon>
+              Submit Your First Request
+            </button>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <mat-paginator
+          [length]="pagination.totalCount"
+          [pageSize]="pagination.pageSize"
+          [pageSizeOptions]="[10, 25, 50, 100]"
+          [pageIndex]="pagination.pageIndex"
+          (page)="onPageChange($event)"
+          showFirstLastButtons
+          class="dashboard-paginator">
+        </mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Request Details Panel -->
+  <div class="details-panel" [@slideInOut]="showDetailsPanel ? 'in' : 'out'" *ngIf="showDetailsPanel">
+    <mat-card class="details-card">
+      <mat-card-header>
+        <mat-card-title>
+          Request Details
+          <button mat-icon-button (click)="closeDetailsPanel()" class="close-button">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div *ngIf="selectedRequest" class="request-details">
+          <div class="request-header">
+            <h3>{{ selectedRequest.projectName }}</h3>
+            <p>{{ selectedRequest.subProjectName }}</p>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="request-detail-grid">
+            <div class="detail-item">
+              <strong>Status:</strong>
+              <mat-chip-listbox>
+                <mat-chip-option
+                  [style]="getStatusChipClass(selectedRequest.status)"
+                  [disabled]="true">
+                  <mat-icon matChipAvatar>{{ getStatusIcon(selectedRequest.status) }}</mat-icon>
+                  {{ selectedRequest.status | titlecase }}
+                </mat-chip-option>
+              </mat-chip-listbox>
             </div>
-          </td>
-        </ng-container>
-
-        <!-- Subproject Name Column -->
-        <ng-container matColumnDef="subProjectName">
-          <th mat-header-cell *matHeaderCellDef>Location</th>
-          <td mat-cell *matCellDef="let request">
-            <div class="subproject-info">
-              <mat-icon class="location-icon">location_on</mat-icon>
-              <span>{{ request.subProjectName }}</span>
+            <div class="detail-item">
+              <strong>Days per Week:</strong>
+              <span>{{ selectedRequest.daysPerWeek }}</span>
             </div>
-          </td>
-        </ng-container>
-
-        <!-- Days Per Week Column -->
-        <ng-container matColumnDef="daysPerWeek">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Days/Week</th>
-          <td mat-cell *matCellDef="let request">
-            <div class="days-display">
-              <mat-icon>event</mat-icon>
-              <span>{{ request.daysPerWeek }}</span>
+            <div class="detail-item">
+              <strong>Daily Allowance:</strong>
+              <span>{{ formatCurrency(selectedRequest.dailyAllowance) }}</span>
             </div>
-          </td>
-        </ng-container>
-
-        <!-- Daily Allowance Column -->
-        <ng-container matColumnDef="dailyAllowance">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Daily Allowance</th>
-          <td mat-cell *matCellDef="let request">
-            <div class="allowance-display">
-              <span class="amount">{{ formatCurrency(request.dailyAllowance) }}</span>
-              <span class="unit">per day</span>
+            <div class="detail-item">
+              <strong>Weekly Allowance:</strong>
+              <span>{{ formatCurrency(selectedRequest.weeklyAllowance) }}</span>
             </div>
-          </td>
-        </ng-container>
-
-        <!-- Weekly Allowance Column -->
-        <ng-container matColumnDef="weeklyAllowance">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Weekly Total</th>
-          <td mat-cell *matCellDef="let request">
-            <div class="allowance-display highlighted">
-              <span class="amount">{{ formatCurrency(request.weeklyAllowance) }}</span>
-              <span class="unit">per week</span>
+            <div class="detail-item">
+              <strong>Submitted:</strong>
+              <span>{{ formatDate(selectedRequest.submittedDate) }}</span>
             </div>
-          </td>
-        </ng-container>
-
-        <!-- Submitted Date Column -->
-        <ng-container matColumnDef="submittedDate">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Submitted</th>
-          <td mat-cell *matCellDef="let request">
-            <div class="date-display">
-              <mat-icon>schedule</mat-icon>
-              <span>{{ formatDate(request.submittedDate) }}</span>
+            <div class="detail-item" *ngIf="selectedRequest.processedDate">
+              <strong>Processed:</strong>
+              <span>{{ formatDate(selectedRequest.processedDate) }}</span>
             </div>
-          </td>
-        </ng-container>
-
-        <!-- Processed Date Column -->
-        <ng-container matColumnDef="processedDate">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Processed</th>
-          <td mat-cell *matCellDef="let request">
-            <div class="date-display" *ngIf="request.processedDate">
-              <mat-icon>done</mat-icon>
-              <span>{{ formatDate(request.processedDate) }}</span>
+            <div class="detail-item" *ngIf="selectedRequest.managerName">
+              <strong>Manager:</strong>
+              <span>{{ selectedRequest.managerName }}</span>
             </div>
-            <span class="no-date" *ngIf="!request.processedDate">—</span>
-          </td>
-        </ng-container>
-
-        <!-- Actions Column -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef>Actions</th>
-          <td mat-cell *matCellDef="let request">
-            <div class="action-buttons">
-              <button
-                mat-icon-button
-                (click)="toggleRequestDetails(request)"
-                [matTooltip]="isRequestExpanded(request.id) ? 'Hide details' : 'Show details'"
-                class="details-button">
-                <mat-icon>{{ isRequestExpanded(request.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
-              </button>
-
-              <button
-                mat-icon-button
-                color="warn"
-                (click)="withdrawRequest(request)"
-                matTooltip="Withdraw request"
-                *ngIf="canWithdrawRequest(request.status)"
-                class="withdraw-button">
-                <mat-icon>cancel</mat-icon>
-              </button>
+            <div class="detail-item" *ngIf="selectedRequest.calculatedDistance">
+              <strong>Distance:</strong>
+              <span>{{ selectedRequest.calculatedDistance | number:'1.1-1' }} km</span>
             </div>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-            [class.expanded-row]="isRequestExpanded(row.id)"></tr>
-
-        <!-- Expandable Row for Request Details -->
-        <tr class="detail-row" *ngIf="selectedRequest && isRequestExpanded(selectedRequest.id)" @slideInOut>
-          <td [attr.colspan]="displayedColumns.length">
-            <div class="request-details-container">
-              <mat-card class="details-card">
-                <mat-card-header>
-                  <mat-icon mat-card-avatar>info</mat-icon>
-                  <mat-card-title>Request Details</mat-card-title>
-                  <mat-card-subtitle>{{ selectedRequest.projectName }} - {{ selectedRequest.subProjectName }}</mat-card-subtitle>
-                </mat-card-header>
-
-                <mat-card-content>
-                  <div class="details-grid">
-                    <!-- Justification -->
-                    <div class="detail-section">
-                      <h4><mat-icon>description</mat-icon> Justification</h4>
-                      <p class="justification-text">{{ selectedRequest.justification || 'No justification provided' }}</p>
-                    </div>
-
-                    <!-- Manager Information -->
-                    <div class="detail-section" *ngIf="selectedRequest.managerName">
-                      <h4><mat-icon>supervisor_account</mat-icon> Assigned Manager</h4>
-                      <div class="manager-info">
-                        <p><strong>{{ selectedRequest.managerName }}</strong></p>
-                        <p *ngIf="selectedRequest.managerEmail">{{ selectedRequest.managerEmail }}</p>
-                      </div>
-                    </div>
-
-                    <!-- Distance Calculation -->
-                    <div class="detail-section" *ngIf="selectedRequest.calculatedDistance">
-                      <h4><mat-icon>straighten</mat-icon> Distance Calculation</h4>
-                      <div class="distance-info">
-                        <p><strong>Distance:</strong> {{ selectedRequest.calculatedDistance | number:'1.1-1' }} km</p>
-                        <p><strong>Cost per km:</strong> {{ formatCurrency(selectedRequest.costPerKm || 0) }}</p>
-                        <p><strong>Calculation:</strong> {{ selectedRequest.calculatedDistance | number:'1.1-1' }} km × {{ formatCurrency(selectedRequest.costPerKm || 0) }} = {{ formatCurrency(selectedRequest.dailyAllowance) }}</p>
-                      </div>
-                    </div>
-
-                    <!-- Status History -->
-                    <div class="detail-section full-width" *ngIf="selectedRequest.statusHistory?.length">
-                      <h4><mat-icon>history</mat-icon> Status History</h4>
-                      <div class="status-timeline">
-                        <div
-                          class="timeline-item"
-                          *ngFor="let historyItem of selectedRequest.statusHistory"
-                          [class]="'status-' + historyItem.status">
-                          <div class="timeline-icon">
-                            <mat-icon>{{ getStatusIcon(historyItem.status) }}</mat-icon>
-                          </div>
-                          <div class="timeline-content">
-                            <div class="timeline-header">
-                              <span class="status-text">{{ historyItem.status | titlecase }}</span>
-                              <span class="timeline-date">{{ formatDate(historyItem.timestamp) }}</span>
-                            </div>
-                            <p class="timeline-note" *ngIf="historyItem.note">{{ historyItem.note }}</p>
-                            <p class="timeline-user" *ngIf="historyItem.processedBy">Processed by: {{ historyItem.processedBy }}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </mat-card-content>
-              </mat-card>
+            <div class="detail-item justification" *ngIf="selectedRequest.justification">
+              <strong>Justification:</strong>
+              <span class="justification-text">{{ selectedRequest.justification }}</span>
             </div>
-          </td>
-        </tr>
-      </table>
+          </div>
 
-      <!-- No Data Message -->
-      <div class="no-data" *ngIf="dataSource.data.length === 0 && !isLoading">
-        <mat-icon class="no-data-icon">assignment</mat-icon>
-        <h3>No travel requests found</h3>
-        <p>You haven't submitted any travel requests yet, or they don't match your current filters.</p>
-        <button mat-raised-button color="primary" routerLink="/employee/request">
-          <mat-icon>add</mat-icon>
-          Submit Your First Request
-        </button>
-      </div>
-    </div>
-
-    <!-- Pagination -->
-    <mat-paginator
-      [length]="pagination.totalCount"
-      [pageSize]="pagination.pageSize"
-      [pageSizeOptions]="[10, 25, 50, 100]"
-      [pageIndex]="pagination.pageIndex"
-      (page)="onPageChange($event)"
-      showFirstLastButtons
-      class="dashboard-paginator">
-    </mat-paginator>
-  </mat-card-content>
-</mat-card>
+          <!-- Action Buttons -->
+          <div class="action-buttons" *ngIf="canWithdrawRequest(selectedRequest.status)">
+            <button mat-raised-button color="warn"
+                    (click)="withdrawRequest(selectedRequest)"
+                    matTooltip="Withdraw this travel request">
+              <mat-icon>cancel</mat-icon>
+              Withdraw Request
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

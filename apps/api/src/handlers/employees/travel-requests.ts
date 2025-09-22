@@ -284,7 +284,7 @@ export const getTravelRequests = async (
 
     // Get employee ID
     const employeeQuery = `
-      SELECT id FROM employees 
+      SELECT id FROM employees
       WHERE cognito_user_id = $1 AND is_active = true
     `;
     const employeeResult = await db.query(employeeQuery, [employeeCognitoId]);
@@ -295,9 +295,67 @@ export const getTravelRequests = async (
 
     const employeeId = employeeResult.rows[0].id;
 
-    // Get all travel requests for this employee
+    // Extract pagination and filtering parameters from query string
+    const queryParams = event.queryStringParameters || {};
+    const pageIndex = parseInt(queryParams.pageIndex || '0');
+    const pageSize = parseInt(queryParams.pageSize || '25');
+    const sortActive = queryParams.sortActive || 'submittedDate';
+    const sortDirection = queryParams.sortDirection || 'desc';
+    const statusFilter = queryParams.status;
+    const projectNameFilter = queryParams.projectName;
+
+    // Build WHERE clause for filters
+    let whereConditions = ['tr.employee_id = $1'];
+    const queryValues = [employeeId];
+    let paramIndex = 2;
+
+    if (statusFilter) {
+      whereConditions.push(`tr.status = $${paramIndex}`);
+      queryValues.push(statusFilter);
+      paramIndex++;
+    }
+
+    if (projectNameFilter) {
+      whereConditions.push(`p.name ILIKE $${paramIndex}`);
+      queryValues.push(`%${projectNameFilter}%`);
+      paramIndex++;
+    }
+
+    // Handle date range filtering if provided
+    if (queryParams.dateRangeStart && queryParams.dateRangeEnd) {
+      whereConditions.push(`tr.submitted_at BETWEEN $${paramIndex} AND $${paramIndex + 1}`);
+      queryValues.push(new Date(queryParams.dateRangeStart));
+      queryValues.push(new Date(queryParams.dateRangeEnd));
+      paramIndex += 2;
+    }
+
+    const whereClause = whereConditions.join(' AND ');
+
+    // Build ORDER BY clause
+    const sortMap: Record<string, string> = {
+      submittedDate: 'tr.submitted_at',
+      projectName: 'p.name',
+      status: 'tr.status',
+      processedDate: 'tr.processed_at'
+    };
+    const sortColumn = sortMap[sortActive] || 'tr.submitted_at';
+    const orderBy = `${sortColumn} ${sortDirection.toUpperCase()}`;
+
+    // Get total count for pagination
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM travel_requests tr
+      JOIN subprojects sp ON tr.subproject_id = sp.id
+      JOIN projects p ON tr.project_id = p.id
+      WHERE ${whereClause}
+    `;
+
+    const countResult = await db.query(countQuery, queryValues);
+    const totalRequests = parseInt(countResult.rows[0].total);
+
+    // Get paginated travel requests with all required data
     const travelRequestsQuery = `
-      SELECT 
+      SELECT
         tr.id,
         tr.status,
         tr.days_per_week,
@@ -305,60 +363,322 @@ export const getTravelRequests = async (
         tr.calculated_distance_km,
         tr.calculated_allowance_chf,
         tr.submitted_at,
-        tr.approved_at,
-        tr.rejected_at,
+        tr.processed_at,
+        tr.rejection_reason,
         p.name as project_name,
         sp.name as subproject_name,
         sp.location as subproject_location,
-        m.first_name || ' ' || m.last_name as manager_name
+        sp.cost_per_km,
+        p.default_cost_per_km,
+        m.first_name || ' ' || m.last_name as manager_name,
+        m.email as manager_email
       FROM travel_requests tr
       JOIN subprojects sp ON tr.subproject_id = sp.id
       JOIN projects p ON tr.project_id = p.id
       JOIN employees m ON tr.manager_id = m.id
-      WHERE tr.employee_id = $1
-      ORDER BY tr.submitted_at DESC
+      WHERE ${whereClause}
+      ORDER BY ${orderBy}
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
 
-    const result = await db.query(travelRequestsQuery, [employeeId]);
+    queryValues.push(pageSize, pageIndex * pageSize);
+    const result = await db.query(travelRequestsQuery, queryValues);
 
-    const travelRequests = result.rows.map(row => ({
-      id: row.id,
-      status: row.status,
-      daysPerWeek: row.days_per_week,
-      justification: row.justification,
-      calculatedDistanceKm: row.calculated_distance_km,
-      calculatedAllowanceChf: row.calculated_allowance_chf,
-      submittedAt: row.submitted_at?.toISOString(),
-      approvedAt: row.approved_at?.toISOString(),
-      rejectedAt: row.rejected_at?.toISOString(),
-      projectName: row.project_name,
-      subprojectName: row.subproject_name,
-      subprojectLocation: row.subproject_location,
-      managerName: row.manager_name,
-    }));
+    // Calculate summary counts
+    const summaryQuery = `
+      SELECT
+        status,
+        COUNT(*) as count,
+        COALESCE(SUM(CASE WHEN status = 'approved' THEN calculated_allowance_chf ELSE 0 END), 0) as total_approved_allowance
+      FROM travel_requests tr
+      JOIN subprojects sp ON tr.subproject_id = sp.id
+      JOIN projects p ON tr.project_id = p.id
+      WHERE ${whereClause}
+      GROUP BY status
+    `;
 
-    return formatResponse(200, { data: travelRequests }, 'get-travel-requests');
+    const summaryResult = await db.query(summaryQuery, queryValues.slice(0, -2));
+
+    // Initialize counts
+    let pendingCount = 0;
+    let approvedCount = 0;
+    let rejectedCount = 0;
+    let withdrawnCount = 0;
+    let totalApprovedAllowance = 0;
+
+    summaryResult.rows.forEach((row: any) => {
+      switch (row.status) {
+        case 'pending':
+          pendingCount = parseInt(row.count);
+          break;
+        case 'approved':
+          approvedCount = parseInt(row.count);
+          totalApprovedAllowance = parseFloat(row.total_approved_allowance);
+          break;
+        case 'rejected':
+          rejectedCount = parseInt(row.count);
+          break;
+        case 'withdrawn':
+          withdrawnCount = parseInt(row.count);
+          break;
+      }
+    });
+
+    // Transform requests to match frontend model
+    const requests = result.rows.map((row: any) => {
+      const costPerKm = parseFloat(row.cost_per_km || row.default_cost_per_km || 0.68);
+      const dailyAllowance = parseFloat(row.calculated_allowance_chf || 0) / parseInt(row.days_per_week || 1);
+      const weeklyAllowance = parseFloat(row.calculated_allowance_chf || 0);
+
+      return {
+        id: row.id,
+        projectName: row.project_name,
+        subProjectName: row.subproject_name,
+        status: row.status,
+        submittedDate: row.submitted_at, // Will be converted to Date in frontend
+        processedDate: row.processed_at, // Will be converted to Date in frontend
+        dailyAllowance: parseFloat(dailyAllowance.toFixed(2)),
+        weeklyAllowance: parseFloat(weeklyAllowance.toFixed(2)),
+        daysPerWeek: row.days_per_week,
+        justification: row.justification,
+        managerName: row.manager_name,
+        managerEmail: row.manager_email,
+        calculatedDistance: row.calculated_distance_km,
+        costPerKm: costPerKm,
+        statusHistory: [] // Will be populated if needed in details view
+      };
+    });
+
+    // Build dashboard response matching EmployeeDashboard interface
+    const dashboardData = {
+      requests,
+      totalRequests,
+      pendingCount,
+      approvedCount,
+      rejectedCount,
+      withdrawnCount,
+      totalApprovedAllowance: parseFloat(totalApprovedAllowance.toFixed(2))
+    };
+
+    return formatResponse(200, dashboardData, 'get-travel-requests');
   } catch (error) {
     console.error('Error getting travel requests:', error);
     return formatResponse(500, { error: 'Internal server error' }, 'get-travel-requests');
   }
 };
 
-// Router function to handle both GET and POST requests
+export const getRequestDetails = async (
+  event: APIGatewayProxyEvent,
+  _context: Context
+): Promise<APIGatewayProxyResult> => {
+  try {
+    // Extract request ID from path parameters
+    const requestId = event.pathParameters?.requestId;
+    if (!requestId) {
+      return formatResponse(400, { error: 'Request ID is required' }, 'get-request-details');
+    }
+
+    // Get authenticated user
+    const authContext = event.requestContext?.authorizer;
+    if (!authContext?.sub) {
+      return formatResponse(401, { error: 'Unauthorized' }, 'get-request-details');
+    }
+
+    const cognitoUserId = authContext.sub;
+
+    // Get employee ID from cognito_user_id
+    const employeeQuery = `
+      SELECT id FROM employees
+      WHERE cognito_user_id = $1
+    `;
+
+    const employeeResult = await db.query(employeeQuery, [cognitoUserId]);
+
+    if (employeeResult.rows.length === 0) {
+      return formatResponse(404, { error: 'Employee not found' }, 'get-request-details');
+    }
+
+    const employeeId = employeeResult.rows[0].id;
+
+    // Get detailed request information including cost calculation
+    const requestQuery = `
+      SELECT
+        tr.id,
+        tr.status,
+        tr.days_per_week,
+        tr.justification,
+        tr.calculated_distance_km,
+        tr.calculated_allowance_chf,
+        tr.submitted_at,
+        tr.processed_at,
+        tr.rejection_reason,
+        p.name as project_name,
+        sp.name as subproject_name,
+        sp.cost_per_km,
+        p.default_cost_per_km,
+        ST_AsText(sp.location) as subproject_address,
+        m.first_name || ' ' || m.last_name as manager_name,
+        m.email as manager_email,
+        e.home_street || ', ' || e.home_city || ' ' || e.home_postal_code || ', ' || e.home_country as employee_address
+      FROM travel_requests tr
+      JOIN subprojects sp ON tr.subproject_id = sp.id
+      JOIN projects p ON tr.project_id = p.id
+      JOIN employees m ON tr.manager_id = m.id
+      JOIN employees e ON tr.employee_id = e.id
+      WHERE tr.id = $1 AND tr.employee_id = $2 AND tr.archived_at IS NULL
+    `;
+
+    const result = await db.query(requestQuery, [requestId, employeeId]);
+
+    if (result.rows.length === 0) {
+      return formatResponse(404, { error: 'Request not found' }, 'get-request-details');
+    }
+
+    const request = result.rows[0];
+
+    // Calculate all required allowance values
+    const costPerKm = parseFloat(request.cost_per_km || request.default_cost_per_km || 0.68);
+    const calculatedDistance = parseFloat(request.calculated_distance_km || 0);
+    const weeklyAllowance = parseFloat(request.calculated_allowance_chf || 0);
+    const dailyAllowance = weeklyAllowance / parseInt(request.days_per_week || 1);
+    const monthlyEstimate = weeklyAllowance * 4.33; // Average weeks per month
+
+    const requestDetails = {
+      id: request.id,
+      projectName: request.project_name,
+      subProjectName: request.subproject_name,
+      justification: request.justification || '',
+      managerName: request.manager_name,
+      managerEmail: request.manager_email,
+      calculatedDistance,
+      costPerKm,
+      dailyAllowance: parseFloat(dailyAllowance.toFixed(2)),
+      weeklyAllowance: parseFloat(weeklyAllowance.toFixed(2)),
+      monthlyEstimate: parseFloat(monthlyEstimate.toFixed(2)),
+      daysPerWeek: parseInt(request.days_per_week || 0),
+      status: request.status,
+      submittedDate: request.submitted_at, // Will be converted to Date in frontend
+      processedDate: request.processed_at, // Will be converted to Date in frontend
+      statusHistory: [], // TODO: Add status history query if needed
+      employeeAddress: request.employee_address,
+      subprojectAddress: request.subproject_address
+    };
+
+    return formatResponse(200, requestDetails, 'get-request-details');
+  } catch (error) {
+    console.error('Error getting request details:', error);
+    return formatResponse(500, { error: 'Internal server error' }, 'get-request-details');
+  }
+};
+
+export const withdrawRequest = async (
+  event: APIGatewayProxyEvent,
+  _context: Context
+): Promise<APIGatewayProxyResult> => {
+  try {
+    // Extract request ID from path parameters
+    const requestId = event.pathParameters?.requestId;
+    if (!requestId) {
+      return formatResponse(400, { error: 'Request ID is required' }, 'withdraw-request');
+    }
+
+    // Get authenticated user
+    const authContext = event.requestContext?.authorizer;
+    if (!authContext?.sub) {
+      return formatResponse(401, { error: 'Unauthorized' }, 'withdraw-request');
+    }
+
+    const cognitoUserId = authContext.sub;
+
+    // Get employee ID from cognito_user_id
+    const employeeQuery = `
+      SELECT id FROM employees
+      WHERE cognito_user_id = $1
+    `;
+
+    const employeeResult = await db.query(employeeQuery, [cognitoUserId]);
+
+    if (employeeResult.rows.length === 0) {
+      return formatResponse(404, { error: 'Employee not found' }, 'withdraw-request');
+    }
+
+    const employeeId = employeeResult.rows[0].id;
+
+    // Check if request exists and belongs to the employee
+    const checkQuery = `
+      SELECT id, status FROM travel_requests
+      WHERE id = $1 AND employee_id = $2 AND archived_at IS NULL
+    `;
+
+    const checkResult = await db.query(checkQuery, [requestId, employeeId]);
+
+    if (checkResult.rows.length === 0) {
+      return formatResponse(404, { error: 'Request not found' }, 'withdraw-request');
+    }
+
+    const currentStatus = checkResult.rows[0].status;
+
+    // Only pending requests can be withdrawn
+    if (currentStatus !== 'pending') {
+      return formatResponse(400, {
+        error: `Cannot withdraw request with status: ${currentStatus}`
+      }, 'withdraw-request');
+    }
+
+    // Update request status to withdrawn
+    const withdrawQuery = `
+      UPDATE travel_requests
+      SET status = 'withdrawn',
+          processed_at = CURRENT_TIMESTAMP,
+          processed_by = $1,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2 AND employee_id = $3
+      RETURNING id, status, processed_at
+    `;
+
+    const result = await db.query(withdrawQuery, [employeeId, requestId, employeeId]);
+
+    if (result.rows.length === 0) {
+      return formatResponse(500, { error: 'Failed to withdraw request' }, 'withdraw-request');
+    }
+
+    const updatedRequest = result.rows[0];
+
+    return formatResponse(200, {
+      id: updatedRequest.id,
+      status: updatedRequest.status,
+      processedAt: updatedRequest.processed_at?.toISOString()
+    }, 'withdraw-request');
+  } catch (error) {
+    console.error('Error withdrawing request:', error);
+    return formatResponse(500, { error: 'Internal server error' }, 'withdraw-request');
+  }
+};
+
+// Router function to handle GET, POST, and PUT requests
 export const employeesTravelRequests = async (
   event: APIGatewayProxyEvent,
   context: Context
 ): Promise<APIGatewayProxyResult> => {
   const method = event.httpMethod;
+  const path = event.path;
 
   if (method === 'GET') {
+    // Check for specific request details endpoint
+    if (path.match(/\/employees\/requests\/[^\/]+\/details$/)) {
+      return getRequestDetails(event, context);
+    }
+    // Default to dashboard requests
     return getTravelRequests(event, context);
   } else if (method === 'POST') {
-    const path = event.path;
     if (path.endsWith('/preview')) {
       return calculatePreview(event, context);
     } else {
       return createTravelRequest(event, context);
+    }
+  } else if (method === 'PUT') {
+    if (path.match(/\/employees\/requests\/[^\/]+\/withdraw$/)) {
+      return withdrawRequest(event, context);
     }
   }
 

@@ -109,7 +109,7 @@ export class EmployeeDashboardService implements OnDestroy {
             ...details,
             submittedDate: new Date(details.submittedDate),
             processedDate: details.processedDate ? new Date(details.processedDate) : undefined,
-            statusHistory: details.statusHistory.map(history => ({
+            statusHistory: (details.statusHistory || []).map(history => ({
               ...history,
               timestamp: new Date(history.timestamp),
             })),

@@ -203,6 +203,12 @@ export const API_ROUTES: RouteGroupConfig[] = [
         description: 'Get managers list',
       },
       {
+        path: 'dashboard/requests',
+        method: 'GET',
+        functionName: 'employees-travel-requests',
+        description: 'Get employee dashboard requests with filtering and pagination',
+      },
+      {
         path: 'travel-requests',
         method: 'POST',
         functionName: 'employees-travel-requests',
@@ -219,6 +225,18 @@ export const API_ROUTES: RouteGroupConfig[] = [
         method: 'POST',
         functionName: 'employees-travel-requests',
         description: 'Preview travel request',
+      },
+      {
+        path: 'requests/{requestId}/details',
+        method: 'GET',
+        functionName: 'employees-travel-requests',
+        description: 'Get request details',
+      },
+      {
+        path: 'requests/{requestId}/withdraw',
+        method: 'PUT',
+        functionName: 'employees-travel-requests',
+        description: 'Withdraw travel request',
       },
       {
         path: '{cognitoUserId}',
