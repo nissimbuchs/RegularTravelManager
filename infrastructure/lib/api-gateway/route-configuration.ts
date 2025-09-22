@@ -408,6 +408,25 @@ export const API_ROUTES: RouteGroupConfig[] = [
         functionName: 'employees-travel-requests',
         description: 'Preview travel request',
       },
+      // Employee Dashboard endpoints (Story 2.5)
+      {
+        path: 'dashboard/requests',
+        method: 'GET',
+        functionName: 'employees-dashboard',
+        description: 'Get employee dashboard with travel requests',
+      },
+      {
+        path: 'requests/{id}/details',
+        method: 'GET',
+        functionName: 'employees-dashboard',
+        description: 'Get detailed request information',
+      },
+      {
+        path: 'requests/{id}/withdraw',
+        method: 'PUT',
+        functionName: 'employees-dashboard',
+        description: 'Withdraw a pending travel request',
+      },
     ],
   },
   {

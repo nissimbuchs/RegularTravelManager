@@ -78,6 +78,45 @@ export const employeesTravelRequests = errorHandler(async (event, context) => {
   return employeesTravelRequestsHandler(event, context);
 });
 
+// Router function for all employee dashboard endpoints (Story 2.5)
+export const employeesDashboard = errorHandler(async (event, context) => {
+  await ensureDatabaseInitialized();
+  const method = event.httpMethod;
+  const path = event.path;
+
+  console.log('🔄 EmployeesDashboard router:', {
+    method,
+    path,
+    requestId: context.awsRequestId,
+  });
+
+  // Import dashboard handlers
+  const {
+    getEmployeeDashboard,
+    getRequestDetails,
+    withdrawRequest,
+  } = require('./employees/dashboard');
+
+  // Route based on HTTP method and path
+  if (method === 'GET' && path.includes('/dashboard/requests')) {
+    console.log('🔄 Routing to getEmployeeDashboard');
+    return getEmployeeDashboard(event, context);
+  } else if (method === 'GET' && path.includes('/requests/') && path.includes('/details')) {
+    console.log('🔄 Routing to getRequestDetails');
+    return getRequestDetails(event, context);
+  } else if (method === 'PUT' && path.includes('/requests/') && path.includes('/withdraw')) {
+    console.log('🔄 Routing to withdrawRequest');
+    return withdrawRequest(event, context);
+  } else {
+    console.log('❌ No route found for employees dashboard', { method, path });
+    return formatResponse(
+      404,
+      { error: 'Route not found', method, path },
+      context.awsRequestId
+    );
+  }
+});
+
 // Project management handlers (require auth)
 import {
   createProject as createProjectHandler,

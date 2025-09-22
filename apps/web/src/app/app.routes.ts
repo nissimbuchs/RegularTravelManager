@@ -73,6 +73,13 @@ export const routes: Routes = [
                 m => m.TravelRequestFormComponent
               ),
           },
+          {
+            path: 'requests',
+            loadComponent: () =>
+              import('./features/employee/components/employee-request-dashboard.component').then(
+                m => m.EmployeeRequestDashboardComponent
+              ),
+          },
         ],
       },
       {

@@ -310,6 +310,15 @@ export const LAMBDA_FUNCTIONS: Record<string, LambdaFunctionConfig> = {
     environmentConfig: EnvironmentConfigs.cognito,
   },
 
+  // Employee Dashboard Functions
+  employeesDashboard: {
+    id: 'EmployeesDashboardFunction',
+    name: 'EmployeesDashboard',
+    handler: 'index.employeesDashboard',
+    description: 'Employee dashboard for viewing and managing travel requests',
+    environmentConfig: EnvironmentConfigs.cognito,
+  },
+
   // Employee Travel Request Functions
   employeesTravelRequests: {
     id: 'EmployeesTravelRequestsFunction',

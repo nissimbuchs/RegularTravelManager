@@ -46,11 +46,13 @@ import { RouterModule } from '@angular/router';
         <mat-card class="dashboard-card">
           <mat-card-header>
             <mat-icon mat-card-avatar>history</mat-icon>
-            <mat-card-title>Request History</mat-card-title>
-            <mat-card-subtitle>View your past travel requests</mat-card-subtitle>
+            <mat-card-title>My Requests</mat-card-title>
+            <mat-card-subtitle>View and track your travel requests</mat-card-subtitle>
           </mat-card-header>
           <mat-card-actions>
-            <button mat-raised-button color="primary" disabled>Coming Soon</button>
+            <button mat-raised-button color="primary" routerLink="/employee/requests">
+              View Requests
+            </button>
           </mat-card-actions>
         </mat-card>
       </div>
