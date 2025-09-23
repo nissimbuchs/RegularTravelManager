@@ -301,7 +301,7 @@ export const updateProfileHandler = validateRequest({
         SELECT
           tr.id as request_id,
           tr.calculated_distance_km as old_distance,
-          tr.calculated_allowance as old_allowance,
+          tr.calculated_allowance_chf as old_allowance,
           p.name as project_name,
           sp.cost_per_km,
           tr.days_per_week,

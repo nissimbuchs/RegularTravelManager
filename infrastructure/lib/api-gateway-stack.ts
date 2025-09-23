@@ -79,6 +79,7 @@ export class ApiGatewayStack extends cdk.Stack {
       'user-get-profile',
       'user-update-profile',
       'managers-dashboard',
+      'employees-dashboard',
       'register-user',
       'verify-email',
       'resend-verification',

@@ -156,8 +156,8 @@ export const getEmployeeDashboard = async (
       submittedDate: 'tr.submitted_at',
       processedDate: 'tr.processed_at',
       projectName: 'p.name',
-      dailyAllowance: 'tr.calculated_allowance',
-      weeklyAllowance: '(tr.calculated_allowance * tr.days_per_week)',
+      dailyAllowance: 'tr.calculated_allowance_chf',
+      weeklyAllowance: '(tr.calculated_allowance_chf * tr.days_per_week)',
       status: 'tr.status'
     };
 
@@ -181,16 +181,16 @@ export const getEmployeeDashboard = async (
       SELECT
         tr.id,
         p.name as project_name,
-        p.code as project_code,
+        p.id as project_id,
         sp.name as subproject_name,
         tr.status,
         tr.submitted_at as submitted_date,
         tr.processed_at as processed_date,
-        tr.calculated_allowance as daily_allowance,
-        (tr.calculated_allowance * tr.days_per_week) as weekly_allowance,
+        tr.calculated_allowance_chf as daily_allowance,
+        (tr.calculated_allowance_chf * tr.days_per_week) as weekly_allowance,
         tr.days_per_week,
         tr.justification,
-        tr.calculated_distance,
+        tr.calculated_distance_km,
         sp.cost_per_km,
         manager.first_name || ' ' || manager.last_name as manager_name,
         manager.email as manager_email
@@ -212,7 +212,7 @@ export const getEmployeeDashboard = async (
       SELECT
         tr.status,
         COUNT(*) as count,
-        COALESCE(SUM(CASE WHEN tr.status = 'approved' THEN (tr.calculated_allowance * tr.days_per_week * 4.33) END), 0) as monthly_allowance
+        COALESCE(SUM(CASE WHEN tr.status = 'approved' THEN (tr.calculated_allowance_chf * tr.days_per_week * 4.33) END), 0) as monthly_allowance
       FROM travel_requests tr
       WHERE tr.employee_id = $1
       GROUP BY tr.status
@@ -249,7 +249,7 @@ export const getEmployeeDashboard = async (
     const requests: EmployeeRequestSummary[] = requestsResult.rows.map(row => ({
       id: row.id,
       projectName: row.project_name,
-      projectCode: row.project_code,
+      projectCode: row.project_id,
       subProjectName: row.subproject_name,
       status: row.status,
       submittedDate: row.submitted_date,
@@ -260,7 +260,7 @@ export const getEmployeeDashboard = async (
       justification: row.justification,
       managerName: row.manager_name,
       managerEmail: row.manager_email,
-      calculatedDistance: parseFloat(row.calculated_distance || '0'),
+      calculatedDistance: parseFloat(row.calculated_distance_km || '0'),
       costPerKm: parseFloat(row.cost_per_km || '0'),
     }));
 
@@ -319,17 +319,17 @@ export const getRequestDetails = async (
         tr.justification,
         manager.first_name || ' ' || manager.last_name as manager_name,
         manager.email as manager_email,
-        tr.calculated_distance,
+        tr.calculated_distance_km,
         sp.cost_per_km,
-        tr.calculated_allowance as daily_allowance,
-        (tr.calculated_allowance * tr.days_per_week) as weekly_allowance,
-        (tr.calculated_allowance * tr.days_per_week * 4.33) as monthly_estimate,
+        tr.calculated_allowance_chf as daily_allowance,
+        (tr.calculated_allowance_chf * tr.days_per_week) as weekly_allowance,
+        (tr.calculated_allowance_chf * tr.days_per_week * 4.33) as monthly_estimate,
         tr.days_per_week,
         tr.status,
         tr.submitted_at as submitted_date,
         tr.processed_at as processed_date,
-        employee.formatted_address as employee_address,
-        sp.formatted_address as subproject_address
+        CONCAT(employee.home_street, ', ', employee.home_city, ' ', employee.home_postal_code, ', ', employee.home_country) as employee_address,
+        CONCAT(sp.street_address, ', ', sp.city, ' ', sp.postal_code, ', ', sp.country) as subproject_address
       FROM travel_requests tr
       JOIN subprojects sp ON tr.subproject_id = sp.id
       JOIN projects p ON sp.project_id = p.id
@@ -349,13 +349,13 @@ export const getRequestDetails = async (
     // Get status history
     const historyQuery = `
       SELECT
-        status,
-        created_at as timestamp,
-        processed_by_name as processed_by,
-        notes as note
-      FROM travel_request_status_history
+        new_status as status,
+        changed_at as timestamp,
+        changed_by as processed_by,
+        comment as note
+      FROM request_status_history
       WHERE travel_request_id = $1
-      ORDER BY created_at ASC
+      ORDER BY changed_at ASC
     `;
 
     const historyResult = await db.query(historyQuery, [requestId]);
@@ -367,7 +367,7 @@ export const getRequestDetails = async (
       justification: request.justification || '',
       managerName: request.manager_name || '',
       managerEmail: request.manager_email,
-      calculatedDistance: parseFloat(request.calculated_distance || '0'),
+      calculatedDistance: parseFloat(request.calculated_distance_km || '0'),
       costPerKm: parseFloat(request.cost_per_km || '0'),
       dailyAllowance: parseFloat(request.daily_allowance),
       weeklyAllowance: parseFloat(request.weekly_allowance),
@@ -451,17 +451,12 @@ export const withdrawRequest = async (
 
       // Add status history record
       const historyQuery = `
-        INSERT INTO travel_request_status_history
-        (travel_request_id, status, processed_by_name, notes, created_at)
+        INSERT INTO request_status_history
+        (travel_request_id, new_status, changed_by, comment, changed_at)
         VALUES ($1, 'withdrawn', $2, 'Request withdrawn by employee', CURRENT_TIMESTAMP)
       `;
 
-      // Get employee name for history
-      const employeeQuery = `SELECT first_name || ' ' || last_name as full_name FROM employees WHERE id = $1`;
-      const employeeResult = await db.query(employeeQuery, [employeeId]);
-      const employeeName = employeeResult.rows[0]?.full_name || 'Employee';
-
-      await db.query(historyQuery, [requestId, employeeName]);
+      await db.query(historyQuery, [requestId, employeeId]);
 
       await db.query('COMMIT');
 
