@@ -36,38 +36,48 @@ export class TranslationLoaderService {
       });
     }
 
-    console.log(`Loading translations for language: ${language}`);
+    const url = `${this.BASE_PATH}/${language}.json`;
 
-    return this.http
-      .get<Record<string, any>>(`${this.BASE_PATH}/${language}.json`, {
-        headers: {
-          'Cache-Control': 'public, max-age=3600', // 1 hour browser cache
-        },
-      })
-      .pipe(
-        map(translations => ({
-          language,
-          translations,
-          loadTime: Date.now() - startTime,
-        })),
-        tap(result => {
+    return new Observable<TranslationLoadResult>(observer => {
+      fetch(url)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(translations => {
+          const result: TranslationLoadResult = {
+            language,
+            translations,
+            loadTime: Date.now() - startTime,
+          };
+
           // Cache the successful result
           this.cache.set(language, {
             data: result.translations,
             timestamp: Date.now(),
           });
+
           console.log(`Translations loaded for ${language} in ${result.loadTime}ms`);
-        }),
-        catchError(error => {
+
+          observer.next(result);
+          observer.complete();
+        })
+        .catch(error => {
           console.error(`Failed to load translations for ${language}:`, error);
+
           // Return empty translations object as fallback
-          return of({
+          const fallbackResult: TranslationLoadResult = {
             language,
             translations: {},
             loadTime: Date.now() - startTime,
-          });
-        })
-      );
+          };
+
+          observer.next(fallbackResult);
+          observer.complete();
+        });
+    });
   }
 
   /**
@@ -77,7 +87,9 @@ export class TranslationLoaderService {
    */
   preloadTranslations(languages: SupportedLanguage[]): Observable<TranslationLoadResult[]> {
     const loadPromises = languages.map(lang =>
-      this.loadTranslations(lang).toPromise().then(result => result!)
+      this.loadTranslations(lang)
+        .toPromise()
+        .then(result => result!)
     );
 
     return new Observable(observer => {

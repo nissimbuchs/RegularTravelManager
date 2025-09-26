@@ -9,11 +9,27 @@ import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { responseInterceptor } from './core/interceptors/response.interceptor';
 import { ConfigService } from './core/services/config.service';
+import { TranslationService } from './core/services/translation.service';
 
 // Factory function for APP_INITIALIZER
 export function initializeApp(configService: ConfigService) {
   return (): Promise<void> => {
     return configService.loadConfig();
+  };
+}
+
+// Factory function for translation initialization
+export function initializeTranslations(translationService: TranslationService) {
+  return (): Promise<void> => {
+    // Trigger initial translation loading but don't block app startup
+    try {
+      translationService.getCurrentLanguage(); // This triggers initialization
+    } catch (error) {
+      console.warn('Translation service initialization error:', error);
+    }
+
+    // Always resolve immediately to prevent blocking
+    return Promise.resolve();
   };
 }
 
@@ -29,6 +45,13 @@ export const appConfig: ApplicationConfig = {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
       deps: [ConfigService],
+      multi: true,
+    },
+    // Initialize translations before app starts
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeTranslations,
+      deps: [TranslationService],
       multi: true,
     },
   ],

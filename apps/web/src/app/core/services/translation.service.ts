@@ -35,10 +35,21 @@ export class TranslationService {
    * @returns Translated string or fallback
    */
   translateSync(key: string, params?: TranslationParameters): string {
+    // If translations are not loaded yet, trigger loading but don't wait
+    if (Object.keys(this.translations).length === 0) {
+      const currentLanguage = this.languageService.getCurrentLanguage();
+      if (!this.loadingSubject.value) {
+        this.loadTranslationsForLanguage(currentLanguage);
+      }
+    }
+
     const translation = this.getNestedTranslation(key);
 
     if (!translation) {
-      console.warn(`Translation key not found: ${key}`);
+      // Only log missing keys if translations are actually loaded
+      if (Object.keys(this.translations).length > 0) {
+        console.warn(`Translation key not found: ${key}`);
+      }
       return key; // Fallback to key
     }
 
@@ -105,7 +116,6 @@ export class TranslationService {
       next: result => {
         this.translations = result.translations;
         this.loadingSubject.next(false);
-        console.log(`Translations loaded for ${result.language} in ${result.loadTime}ms`);
       },
       error: error => {
         console.error('Failed to load translations:', error);

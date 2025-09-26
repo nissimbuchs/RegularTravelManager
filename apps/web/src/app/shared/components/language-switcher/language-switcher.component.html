@@ -52,12 +52,12 @@
       role="option"
       [class.selected]="lang.key === currentLanguage"
       [attr.aria-selected]="lang.key === currentLanguage"
-      (click)="selectLanguage(lang.key)"
-      (keydown)="onLanguageKeyDown($event, lang.key)">
+      (click)="selectLanguage(asLanguage(lang.key))"
+      (keydown)="onLanguageKeyDown($event, asLanguage(lang.key))">
 
       <!-- Language Flag -->
       <img
-        [src]="getFlagPath(lang.key)"
+        [src]="getFlagPath(asLanguage(lang.key))"
         [alt]="lang.value.name"
         class="flag-icon"
         width="20"

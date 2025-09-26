@@ -37,8 +37,8 @@ export const TRANSLATION_CONFIG: TranslationConfig = {
 };
 
 export const LANGUAGE_INFO: Record<SupportedLanguage, LanguageInfo> = {
-  de: { code: 'de', name: 'Deutsch', flag: 'ch-de' },
-  fr: { code: 'fr', name: 'Français', flag: 'ch-fr' },
-  it: { code: 'it', name: 'Italiano', flag: 'ch-it' },
-  en: { code: 'en', name: 'English', flag: 'ch-en' },
+  de: { code: 'de', name: 'Deutsch', flag: 'de' },
+  fr: { code: 'fr', name: 'Français', flag: 'fr' },
+  it: { code: 'it', name: 'Italiano', flag: 'it' },
+  en: { code: 'en', name: 'English', flag: 'gb' },
 };

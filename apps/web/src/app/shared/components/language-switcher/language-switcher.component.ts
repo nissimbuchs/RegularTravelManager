@@ -122,6 +122,16 @@ export class LanguageSwitcherComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Helper method to cast string to SupportedLanguage type
+   * Used in template for keyvalue pipe results
+   * @param key String key from keyvalue pipe
+   * @returns SupportedLanguage type
+   */
+  asLanguage(key: string): SupportedLanguage {
+    return key as SupportedLanguage;
+  }
+
+  /**
    * Focus next language in dropdown (for keyboard navigation)
    */
   private focusNextLanguage(): void {

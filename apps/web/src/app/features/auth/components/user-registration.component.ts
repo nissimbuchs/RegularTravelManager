@@ -22,6 +22,7 @@ import { Subject, BehaviorSubject, Observable, of } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged, timeout, catchError } from 'rxjs/operators';
 import { RegistrationService } from '../../../core/services/registration.service';
 import { ConfigService } from '../../../core/services/config.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import { RegisterRequest } from '@rtm/shared';
 
 // Custom validators
@@ -107,11 +108,11 @@ interface RegistrationState {
           <div *ngIf="isStaging" class="staging-notice">
             <mat-icon class="notice-icon">info</mat-icon>
             <div class="notice-content">
-              <strong>Staging Environment Notice</strong>
+              <strong>{{
+                translationService.translateSync('auth.registration.staging_notice_title')
+              }}</strong>
               <p>
-                This is a test environment. Your verification email will be sent to our admin
-                (nissim&#64;buchs.be) who will verify your account on your behalf. You'll receive a
-                confirmation once your account is activated.
+                {{ translationService.translateSync('auth.registration.staging_notice_message') }}
               </p>
             </div>
           </div>
@@ -119,138 +120,183 @@ interface RegistrationState {
           <!-- Submitting Step -->
           <div *ngIf="state.step === 'submitting'" class="success-step">
             <mat-spinner diameter="64"></mat-spinner>
-            <h2>Creating Your Account...</h2>
-            <p>Please wait while we process your registration.</p>
+            <h2>{{ translationService.translateSync('auth.registration.creating_account') }}</h2>
+            <p>
+              {{ translationService.translateSync('auth.registration.creating_account_message') }}
+            </p>
           </div>
 
           <!-- Form Step -->
           <div *ngIf="state.step === 'form'">
             <div class="registration-header">
               <div class="elca-logo"></div>
-              <h2>Create Your Account</h2>
-              <p class="subtitle">Join RegularTravelManager to manage your travel allowances</p>
+              <h2>{{ translationService.translateSync('auth.registration.title') }}</h2>
+              <p class="subtitle">
+                {{ translationService.translateSync('auth.registration.subtitle') }}
+              </p>
             </div>
 
             <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
               <!-- Personal Information -->
               <mat-form-field appearance="outline">
-                <mat-label>First Name</mat-label>
+                <mat-label>{{
+                  translationService.translateSync('auth.registration.first_name')
+                }}</mat-label>
                 <input matInput formControlName="firstName" required />
                 <mat-error *ngIf="registrationForm.get('firstName')?.hasError('required')">
-                  First name is required
+                  {{ translationService.translateSync('auth.registration.first_name_required') }}
                 </mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Last Name</mat-label>
+                <mat-label>{{
+                  translationService.translateSync('auth.registration.last_name')
+                }}</mat-label>
                 <input matInput formControlName="lastName" required />
                 <mat-error *ngIf="registrationForm.get('lastName')?.hasError('required')">
-                  Last name is required
+                  {{ translationService.translateSync('auth.registration.last_name_required') }}
                 </mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Email</mat-label>
+                <mat-label>{{
+                  translationService.translateSync('auth.registration.email')
+                }}</mat-label>
                 <input matInput type="email" formControlName="email" required />
                 <mat-error *ngIf="registrationForm.get('email')?.hasError('required')">
-                  Email is required
+                  {{ translationService.translateSync('auth.registration.email_required') }}
                 </mat-error>
                 <mat-error *ngIf="registrationForm.get('email')?.hasError('email')">
-                  Please enter a valid email
+                  {{ translationService.translateSync('auth.registration.email_invalid') }}
                 </mat-error>
               </mat-form-field>
 
               <!-- Password Section -->
               <mat-form-field appearance="outline">
-                <mat-label>Password</mat-label>
+                <mat-label>{{
+                  translationService.translateSync('auth.registration.password')
+                }}</mat-label>
                 <input matInput type="password" formControlName="password" required />
-                <mat-hint
-                  >Minimum 12 characters with uppercase, lowercase, number, and special
-                  character</mat-hint
-                >
+                <mat-hint>{{
+                  translationService.translateSync('auth.registration.password_hint')
+                }}</mat-hint>
                 <mat-error *ngIf="registrationForm.get('password')?.hasError('required')">
-                  Password is required
+                  {{ translationService.translateSync('auth.registration.password_required') }}
                 </mat-error>
                 <mat-error *ngIf="registrationForm.get('password')?.hasError('minlength')">
-                  Password must be at least 12 characters long
+                  {{ translationService.translateSync('auth.registration.password_min_length') }}
                 </mat-error>
                 <mat-error *ngIf="registrationForm.get('password')?.hasError('passwordStrength')">
-                  Password must contain uppercase, lowercase, number, and special character
+                  {{ translationService.translateSync('auth.registration.password_strength') }}
                 </mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Confirm Password</mat-label>
+                <mat-label>{{
+                  translationService.translateSync('auth.registration.confirm_password')
+                }}</mat-label>
                 <input matInput type="password" formControlName="confirmPassword" required />
                 <mat-error *ngIf="registrationForm.get('confirmPassword')?.hasError('required')">
-                  Please confirm your password
+                  {{
+                    translationService.translateSync('auth.registration.confirm_password_required')
+                  }}
                 </mat-error>
                 <mat-error
                   *ngIf="registrationForm.get('confirmPassword')?.hasError('passwordMismatch')"
                 >
-                  Passwords don't match
+                  {{ translationService.translateSync('auth.registration.passwords_mismatch') }}
                 </mat-error>
               </mat-form-field>
 
               <!-- Address Section -->
-              <h3>Home Address</h3>
+              <h3>{{ translationService.translateSync('auth.registration.home_address') }}</h3>
               <div formGroupName="homeAddress">
                 <mat-form-field appearance="outline">
-                  <mat-label>Street Address</mat-label>
+                  <mat-label>{{
+                    translationService.translateSync('auth.registration.street_address')
+                  }}</mat-label>
                   <input matInput formControlName="street" required />
                   <mat-error
                     *ngIf="registrationForm.get('homeAddress.street')?.hasError('required')"
                   >
-                    Street address is required
+                    {{ translationService.translateSync('auth.registration.street_required') }}
                   </mat-error>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>City</mat-label>
+                  <mat-label>{{
+                    translationService.translateSync('auth.registration.city')
+                  }}</mat-label>
                   <input matInput formControlName="city" required />
                   <mat-error *ngIf="registrationForm.get('homeAddress.city')?.hasError('required')">
-                    City is required
+                    {{ translationService.translateSync('auth.registration.city_required') }}
                   </mat-error>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Postal Code</mat-label>
-                  <input matInput formControlName="postalCode" placeholder="1234" required />
-                  <mat-hint>Swiss postal code (4 digits)</mat-hint>
+                  <mat-label>{{
+                    translationService.translateSync('auth.registration.postal_code')
+                  }}</mat-label>
+                  <input
+                    matInput
+                    formControlName="postalCode"
+                    [placeholder]="
+                      translationService.translateSync('auth.registration.postal_code_placeholder')
+                    "
+                    required
+                  />
+                  <mat-hint>{{
+                    translationService.translateSync('auth.registration.postal_code_hint')
+                  }}</mat-hint>
                   <mat-error
                     *ngIf="registrationForm.get('homeAddress.postalCode')?.hasError('required')"
                   >
-                    Postal code is required
+                    {{ translationService.translateSync('auth.registration.postal_code_required') }}
                   </mat-error>
                   <mat-error
                     *ngIf="registrationForm.get('homeAddress.postalCode')?.hasError('pattern')"
                   >
-                    Swiss postal code must be 4 digits
+                    {{ translationService.translateSync('auth.registration.postal_code_invalid') }}
                   </mat-error>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Country</mat-label>
-                  <input matInput formControlName="country" value="Switzerland" readonly />
+                  <mat-label>{{
+                    translationService.translateSync('auth.registration.country')
+                  }}</mat-label>
+                  <input
+                    matInput
+                    formControlName="country"
+                    [value]="
+                      translationService.translateSync('auth.registration.country_switzerland')
+                    "
+                    readonly
+                  />
                 </mat-form-field>
               </div>
 
               <!-- Terms and Privacy -->
               <div class="checkbox-section">
                 <mat-checkbox formControlName="acceptTerms" required>
-                  I accept the <a href="/terms" target="_blank">Terms of Service</a>
+                  {{ translationService.translateSync('auth.registration.accept_terms') }}
+                  <a href="/terms" target="_blank">{{
+                    translationService.translateSync('auth.registration.terms_of_service')
+                  }}</a>
                 </mat-checkbox>
                 <mat-error *ngIf="registrationForm.get('acceptTerms')?.hasError('required')">
-                  You must accept the terms of service
+                  {{ translationService.translateSync('auth.registration.terms_required') }}
                 </mat-error>
               </div>
 
               <div class="checkbox-section">
                 <mat-checkbox formControlName="acceptPrivacy" required>
-                  I accept the <a href="/privacy" target="_blank">Privacy Policy</a>
+                  {{ translationService.translateSync('auth.registration.accept_privacy') }}
+                  <a href="/privacy" target="_blank">{{
+                    translationService.translateSync('auth.registration.privacy_policy')
+                  }}</a>
                 </mat-checkbox>
                 <mat-error *ngIf="registrationForm.get('acceptPrivacy')?.hasError('required')">
-                  You must accept the privacy policy
+                  {{ translationService.translateSync('auth.registration.privacy_required') }}
                 </mat-error>
               </div>
 
@@ -264,7 +310,11 @@ interface RegistrationState {
               >
                 <mat-icon *ngIf="state.loading">hourglass_empty</mat-icon>
                 <mat-icon *ngIf="!state.loading">person_add</mat-icon>
-                {{ state.loading ? 'Creating Account...' : 'Create Account' }}
+                {{
+                  state.loading
+                    ? translationService.translateSync('auth.registration.creating_account_button')
+                    : translationService.translateSync('auth.registration.create_account_button')
+                }}
               </button>
             </form>
           </div>
@@ -272,16 +322,16 @@ interface RegistrationState {
           <!-- Verification Sent Step -->
           <div *ngIf="state.step === 'verification-sent'" class="success-step">
             <mat-icon class="success-icon">mark_email_unread</mat-icon>
-            <h2>Check Your Email</h2>
+            <h2>{{ translationService.translateSync('auth.registration.check_email_title') }}</h2>
             <p>{{ state.message }}</p>
             <div class="action-buttons">
               <button mat-button (click)="resendVerification()">
                 <mat-icon>refresh</mat-icon>
-                Resend Email
+                {{ translationService.translateSync('auth.registration.resend_email') }}
               </button>
               <button mat-button (click)="goBack()">
                 <mat-icon>arrow_back</mat-icon>
-                Back to Form
+                {{ translationService.translateSync('auth.registration.back_to_form') }}
               </button>
             </div>
           </div>
@@ -289,22 +339,22 @@ interface RegistrationState {
           <!-- Success Step -->
           <div *ngIf="state.step === 'success'" class="success-step">
             <mat-icon class="success-icon">check_circle</mat-icon>
-            <h2>Registration Complete!</h2>
+            <h2>{{ translationService.translateSync('auth.registration.complete_title') }}</h2>
             <p>{{ state.message }}</p>
             <button mat-raised-button color="primary" (click)="goToLogin()">
               <mat-icon>login</mat-icon>
-              Go to Login
+              {{ translationService.translateSync('auth.registration.go_to_login') }}
             </button>
           </div>
 
           <!-- Error Step -->
           <div *ngIf="state.step === 'error'" class="error-step">
             <mat-icon class="error-icon">error</mat-icon>
-            <h2>Registration Failed</h2>
+            <h2>{{ translationService.translateSync('auth.registration.failed_title') }}</h2>
             <p>{{ state.error }}</p>
             <button mat-button (click)="goBack()">
               <mat-icon>arrow_back</mat-icon>
-              Try Again
+              {{ translationService.translateSync('auth.registration.try_again') }}
             </button>
           </div>
         </mat-card-content>
@@ -339,7 +389,8 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
     private router: Router,
     private snackBar: MatSnackBar,
     private registrationService: RegistrationService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    public translationService: TranslationService
   ) {}
 
   ngOnInit(): void {
@@ -424,9 +475,9 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
           next: response => {
             // Use staging-specific success message
             const successMessage = this.isStaging
-              ? "Registration successful! Our admin will verify your account shortly and you'll be notified when it's ready."
+              ? this.translationService.translateSync('auth.registration.staging_success')
               : response.data?.message ||
-                'Registration successful! Please check your email for verification instructions.';
+                this.translationService.translateSync('auth.registration.email_verification_sent');
 
             this.updateState({
               step: 'verification-sent',
@@ -438,23 +489,32 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
             console.error('Registration failed:', error);
 
             // Handle different error types
-            let errorMessage = 'Registration failed. Please try again.';
+            let errorMessage = this.translationService.translateSync(
+              'auth.registration.error_default'
+            );
 
             if (error.name === 'TimeoutError') {
-              errorMessage =
-                'Registration is taking longer than expected. Please check your internet connection and try again.';
+              errorMessage = this.translationService.translateSync(
+                'auth.registration.error_timeout'
+              );
             } else if (error.error?.code === 'EMAIL_EXISTS') {
-              errorMessage =
-                'An account with this email address already exists. Please try logging in.';
+              errorMessage = this.translationService.translateSync(
+                'auth.registration.error_email_exists'
+              );
             } else if (error.error?.code === 'VALIDATION_ERROR') {
-              errorMessage = 'Please check your information and try again.';
+              errorMessage = this.translationService.translateSync(
+                'auth.registration.error_validation'
+              );
             } else if (error.error?.code === 'GEOCODING_ERROR') {
-              errorMessage = 'Unable to verify your address. Please check your address details.';
+              errorMessage = this.translationService.translateSync(
+                'auth.registration.error_geocoding'
+              );
             } else if (error.error?.message) {
               errorMessage = error.error.message;
             } else if (error.status === 0) {
-              errorMessage =
-                'Unable to connect to the server. Please check your internet connection.';
+              errorMessage = this.translationService.translateSync(
+                'auth.registration.error_connection'
+              );
             }
 
             // Force error state regardless of error structure
@@ -466,9 +526,13 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
           },
         });
     } else {
-      this.snackBar.open('Please fill in all required fields correctly', 'Close', {
-        duration: 5000,
-      });
+      this.snackBar.open(
+        this.translationService.translateSync('auth.registration.form_invalid'),
+        this.translationService.translateSync('common.buttons.close'),
+        {
+          duration: 5000,
+        }
+      );
     }
   }
 
@@ -476,9 +540,13 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
     const formData = this.registrationForm.value;
 
     if (!formData.email) {
-      this.snackBar.open('Email address not found. Please fill in the form again.', 'Close', {
-        duration: 5000,
-      });
+      this.snackBar.open(
+        this.translationService.translateSync('auth.registration.email_not_found'),
+        this.translationService.translateSync('common.buttons.close'),
+        {
+          duration: 5000,
+        }
+      );
       return;
     }
 
@@ -488,8 +556,9 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
       .subscribe({
         next: response => {
           this.snackBar.open(
-            response.data.message || 'Verification email resent successfully',
-            'Close',
+            response.data.message ||
+              this.translationService.translateSync('auth.registration.resend_success'),
+            this.translationService.translateSync('common.buttons.close'),
             {
               duration: 3000,
             }
@@ -497,9 +566,13 @@ export class UserRegistrationComponent implements OnInit, OnDestroy {
         },
         error: error => {
           console.error('Resend verification failed:', error);
-          this.snackBar.open('Failed to resend verification email. Please try again.', 'Close', {
-            duration: 5000,
-          });
+          this.snackBar.open(
+            this.translationService.translateSync('auth.registration.resend_failed'),
+            this.translationService.translateSync('common.buttons.close'),
+            {
+              duration: 5000,
+            }
+          );
         },
       });
   }
