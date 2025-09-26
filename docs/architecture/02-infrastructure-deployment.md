@@ -55,6 +55,8 @@ Infrastructure Deployment → Config Generation → S3 Upload → CloudFront Del
 
 **Dependency Chain:** `InfrastructureStack → LambdaStack → ApiGatewayStack → CertificateStack → WebStack`
 
+**i18n Integration:** AWS Translate service permissions in InfrastructureStack, TranslateMasterData Lambda function in LambdaStack, translation API endpoint in ApiGatewayStack, and JSON translation assets in WebStack.
+
 **CloudFormation Export/Import Pattern:**
 - LambdaStack exports Lambda ARNs
 - ApiGatewayStack imports ARNs and creates integrations
@@ -70,12 +72,20 @@ Infrastructure Deployment → Config Generation → S3 Upload → CloudFront Del
 3. **Import Function in ApiGatewayStack** - CloudFormation import with permissions
 4. **Configure API Gateway Route** - HTTP method, path, and Lambda integration
 
+**Translation Service Integration Example:**
+- **Handler:** `translate-master-data.ts` with AWS Translate client integration
+- **LambdaStack:** `translateMasterDataFunction` with AWS Translate IAM permissions
+- **ApiGatewayStack:** `/api/translate-master-data` POST endpoint with Cognito auth
+- **Permissions:** `translate:TranslateText` and `translate:ListLanguages` actions
+
 **Integration Checklist Critical Points:**
 - Handler function uses standardized middleware
 - Lambda function ARN properly exported from LambdaStack
 - API Gateway import uses `sameEnvironment: true` for permissions
 - Route path exactly matches frontend service call path
 - Lambda integration includes proper authorization and permissions
+- AWS service permissions (Translate, RDS) configured in Lambda execution role
+- Translation cache table access permissions included for master data translation
 
 ### Architecture Enforcement
 
@@ -90,7 +100,7 @@ This 4-step integration process is **non-negotiable** for system stability. Code
 
 - **Independent Stack Deployment:** Update frontend without touching backend infrastructure
 - **Environment Parity:** LocalStack provides 95% AWS production behavior for development
-- **Configuration Security:** Dynamic generation prevents hardcoded credentials
+- **Configuration Security:** Dynamic generation prevents hardcoded credentials and includes JSON translation assets served via CloudFront
 - **Integration Reliability:** Systematic 4-step process prevents common infrastructure issues
 
 ## SSL Certificate Management and Cross-Region Deployment
@@ -134,3 +144,5 @@ this.certificate = new acm.DnsValidatedCertificate(this, 'WebCertificate', {
 - Certificate region must be `us-east-1` for CloudFront compatibility
 - DNS validation requires external DNS provider coordination
 - Cross-region certificate deployment works seamlessly with proper CDK constructs
+- AWS Translate must be deployed in same region as other services (eu-central-1)
+- Translation cache requires PostgreSQL table with proper TTL and cleanup functions

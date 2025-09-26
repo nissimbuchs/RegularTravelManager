@@ -8,6 +8,7 @@
 - Ensure accurate Swiss Franc-based allowance calculations using straight-line distance methodology
 - Deliver transparent status tracking for both employees and managers throughout the request lifecycle
 - Create a secure, scalable system that integrates with existing Swiss business practices and compliance requirements
+- Enable multilingual user experience supporting Swiss market languages (German, French, Italian, English) with instant language switching and comprehensive content translation
 
 ### Background Context
 
@@ -20,6 +21,7 @@ The solution leverages modern web technologies and AWS infrastructure to automat
 |------|---------|-------------|--------|
 | 2025-08-30 | 1.0 | Initial PRD creation based on comprehensive brainstorming and architecture work | John (PM) |
 | 2025-09-03 | 1.1 | Updated to reflect Story 2.4B backend correction - manager selection functionality and related requirement updates | John (PM) |
+| 2025-09-25 | 2.0 | Added Swiss Multilingual Support - Epic 7 with comprehensive i18n capability, new FR16-FR22, NFR15-NFR20, and multilingual goal integration | John (PM) |
 
 ## Requirements
 
@@ -40,6 +42,13 @@ The solution leverages modern web technologies and AWS infrastructure to automat
 13. **FR13**: System supports project and subproject management with active/inactive status control
 14. **FR14**: Authentication system distinguishes between employee and manager roles with appropriate access controls
 15. **FR15**: All currency calculations display in Swiss Francs (CHF) with proper decimal precision
+16. **FR16**: System supports dynamic language switching between German, French, Italian, and English without page reloads
+17. **FR17**: All static UI text (buttons, labels, messages, forms) translates instantly when language is changed
+18. **FR18**: User-generated content (project names, subproject names, descriptions) translates automatically using cloud translation services
+19. **FR19**: User language preference persists across sessions and devices
+20. **FR20**: System detects browser language preference for initial language selection with fallback to English
+21. **FR21**: Language switcher provides visual flags and clear language identification in main navigation
+22. **FR22**: System maintains original text accessibility (hover/tooltip) for translated content verification
 
 ### Non-Functional Requirements
 
@@ -57,6 +66,12 @@ The solution leverages modern web technologies and AWS infrastructure to automat
 12. **NFR12**: System must provide structured logging for debugging and monitoring purposes
 13. **NFR13**: Database constraints must enforce business rules at the schema level
 14. **NFR14**: API must implement rate limiting to prevent abuse and ensure fair usage
+15. **NFR15**: Translation responses must load within 200ms for cached content and 1000ms for new translations
+16. **NFR16**: System must cache translations for 24 hours to optimize performance and reduce translation API costs
+17. **NFR17**: Translation quality must maintain business-appropriate language with profanity filtering enabled
+18. **NFR18**: System must support Swiss German, French, Italian, and English language variants with proper locale formatting
+19. **NFR19**: All translated content must maintain WCAG 2.1 AA accessibility compliance across languages
+20. **NFR20**: Translation system must handle up to 1000 translation requests per hour during peak usage
 
 ## User Interface Design Goals
 
@@ -170,8 +185,14 @@ Implement manager review dashboard, approval/rejection capabilities, and email n
 **Epic 4: Request Management & Tracking**  
 Add employee request history, status tracking, withdrawal capabilities, and manager bulk approval operations for enhanced productivity.
 
-**Epic 5: User Management - Brownfield Enhancement**  
+**Epic 5: User Management - Brownfield Enhancement**
 Enable comprehensive user lifecycle management including self-service registration, profile management, and administrative user control, extending the existing Cognito authentication system to support dynamic user onboarding and organizational management.
+
+**Epic 6: ELCA Styling Architecture & Implementation**
+Establish comprehensive ELCA-compliant styling architecture with organized SCSS structure and refactor all existing frontend components to use consistent ELCA branding guidelines.
+
+**Epic 7: Swiss Multilingual Support**
+Implement comprehensive multilingual capability enabling dynamic language switching for static UI elements and automatic translation of user-generated content, supporting German, French, Italian, and English to ensure full Swiss market accessibility and compliance.
 
 ## Epic 1: Foundation & Core Infrastructure
 
@@ -675,6 +696,115 @@ so that **all components can consistently use ELCA branding guidelines and maint
 4. Component Style Separation: Refactor existing component CSS files to use SCSS and import base ELCA styles
 5. Build Integration: Ensure SCSS compilation works with Angular build system
 6. Style Documentation: Document ELCA styling architecture and usage patterns for developers
+
+## Epic 7: Swiss Multilingual Support
+
+**Epic Goal:** Implement comprehensive multilingual capability that transforms RegularTravelManager into a fully localized Swiss business application. This epic establishes both static UI translation using JSON-based runtime translation and dynamic master data translation using AWS Translate services, enabling instant language switching without page reloads and automatic translation of user-generated content like project names and descriptions.
+
+### Story 7.1: JSON-Based Static UI Translation Foundation
+
+As a **Swiss business user**,
+I want **the core translation infrastructure implemented**,
+so that **I have a solid foundation for multilingual support with proper services and language switching capability**.
+
+#### Acceptance Criteria
+1. **Translation Service Architecture**: Implement core TranslationService, TranslationLoader, and enhanced LanguageService for JSON-based runtime translation
+2. **JSON Translation Files**: Create hierarchical translation files for all UI text in `/assets/i18n/` (de.json, fr.json, it.json, en.json)
+3. **Translation Pipe Implementation**: Create translate pipe for template usage: `{{ 'key' | translate | async }}`
+4. **Language Switcher Component**: Implement language switcher with Swiss flag icons and proper language names in main navigation
+5. **Browser Language Detection**: Automatic language detection with Swiss locale priority and fallback to English
+6. **Persistence**: Language preference stored in localStorage and maintained across sessions
+7. **Performance Optimization**: Intelligent caching and lazy loading of translation files
+
+#### Technical Implementation Notes
+- Uses single application bundle approach (no separate builds per language)
+- Implements runtime translation with instant language switching
+- Follows hierarchical translation key structure (e.g., 'employee.dashboard.title')
+- Browser cache optimization for translation files (1-hour cache-control)
+- **Scope**: Pure infrastructure implementation with sample translation keys for testing
+
+### Story 7.1a: Complete Component Translation Conversion
+
+As a **Swiss business user**,
+I want **all application interface elements to display in my preferred language** (German, French, Italian, English),
+so that **every part of the application is consistently localized without any English-only components**.
+
+#### Acceptance Criteria
+1. **Authentication Component Translation**: Convert all 3 authentication components to use translation keys
+2. **Admin Component Translation**: Convert all 11 admin components to use translation keys
+3. **Manager Component Translation**: Convert all 5 manager components to use translation keys
+4. **Employee Component Translation**: Convert all 5 employee components to use translation keys
+5. **Profile Component Translation**: Convert profile component to use translation keys
+6. **Shared Component Translation**: Convert all 5 shared components to use translation keys
+7. **Translation Key Consistency**: Ensure hierarchical key structure matches existing foundation from Story 7.1
+8. **Complete UI Coverage**: No hardcoded English text remains in any component
+
+#### Technical Implementation Notes
+- Uses translation infrastructure from Story 7.1
+- Converts all 29 components across entire application
+- **Scope**: Auth (3), Admin (11), Manager (5), Employee (5), Profile (1), Shared (5) components
+- Maintains consistent translation key hierarchy established in Story 7.1
+
+### Story 7.2: Dynamic Master Data Translation Service
+
+As a **Swiss business user**,
+I want **project names, subproject names, and descriptions to appear in my selected language**,
+so that **all content in the application is consistently localized without mixing languages**.
+
+#### Acceptance Criteria
+1. **Translation Proxy Lambda**: Implement backend Lambda function integrating with AWS Translate service
+2. **Master Data Translation Service**: Create frontend service for translating user-generated content with intelligent caching
+3. **HTTP Response Interceptor**: Automatic translation of configured API response fields (project names, descriptions)
+4. **Database Translation Cache**: PostgreSQL table for caching translations (24-hour TTL) to optimize performance and costs
+5. **Configuration-Driven Mapping**: Configurable field mapping for automatic translation per API endpoint
+6. **Error Handling**: Graceful fallback to original text if translation fails
+7. **Performance Optimization**: Multi-level caching (backend + frontend) and batch translation support
+
+#### Technical Implementation Notes
+- Uses AWS Translate with Swiss German, French, Italian, English support
+- Implements intelligent caching strategy (PostgreSQL + memory cache)
+- Transparent to existing components (HTTP interceptor approach)
+- Context-aware translations (project vs subproject vs description contexts)
+
+### Story 7.3: Infrastructure & API Integration
+
+As a **developer**,
+I want **the translation infrastructure properly configured and deployed**,
+so that **multilingual features work reliably in all environments with proper monitoring**.
+
+#### Acceptance Criteria
+1. **Lambda Function Deployment**: Deploy TranslateMasterData Lambda with AWS Translate permissions
+2. **API Gateway Integration**: Add `/api/translate-master-data` endpoint with Cognito authentication
+3. **Database Schema**: Deploy master_data_translations table with proper indexes and cleanup functions
+4. **Environment Configuration**: Configure translation service across dev/staging/production environments
+5. **IAM Permissions**: Proper AWS Translate permissions and database access for Lambda function
+6. **Monitoring Setup**: CloudWatch logging and metrics for translation performance
+7. **Cost Optimization**: Translation request monitoring and cache hit rate tracking
+
+#### Technical Implementation Notes
+- EU-central-1 region for AWS Translate (Swiss data residency)
+- Database cleanup function for expired translations
+- Comprehensive error logging and performance monitoring
+
+### Story 7.4: Comprehensive Testing & Validation
+
+As a **quality assurance engineer**,
+I want **comprehensive multilingual testing coverage**,
+so that **language switching works reliably across all user scenarios**.
+
+#### Acceptance Criteria
+1. **Unit Testing**: Complete test coverage for translation services and components
+2. **Integration Testing**: End-to-end language switching across all major user workflows
+3. **Translation Validation**: Automated validation that all UI elements have translation keys
+4. **Performance Testing**: Translation loading performance and caching effectiveness validation
+5. **Accessibility Testing**: WCAG 2.1 AA compliance across all supported languages
+6. **Cross-Browser Testing**: Language switching functionality across major browsers
+7. **Error Scenario Testing**: Translation failure handling and fallback behavior validation
+
+#### Technical Implementation Notes
+- Playwright E2E tests for complete language switching workflows
+- Translation completeness validation scripts
+- Performance benchmarking for cache effectiveness
 
 ---
 
