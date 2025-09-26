@@ -16,7 +16,9 @@
       "export": "Exportieren",
       "import": "Importieren",
       "upload": "Hochladen",
-      "download": "Herunterladen"
+      "download": "Herunterladen",
+      "create": "Erstellen",
+      "update": "Aktualisieren"
     },
     "actions": {
       "loading": "Laden...",
@@ -57,6 +59,10 @@
       "unsaved_changes": "Sie haben ungespeicherte Änderungen. Möchten Sie wirklich verlassen?",
       "operation_successful": "Vorgang erfolgreich abgeschlossen",
       "operation_failed": "Vorgang fehlgeschlagen. Bitte versuchen Sie es erneut."
+    },
+    "values": {
+      "yes": "Ja",
+      "no": "Nein"
     }
   },
   "header": {
@@ -200,6 +206,41 @@
           "title": "Projekt löschen",
           "message": "Sind Sie sicher, dass Sie \"{{projectName}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
           "confirm": "Löschen"
+        },
+        "form": {
+          "fields": {
+            "project_name": "Projektname",
+            "description": "Beschreibung",
+            "default_cost": "Standard Kosten pro Kilometer (CHF)"
+          },
+          "placeholders": {
+            "project_name": "Projektname eingeben",
+            "description": "Projektbeschreibung eingeben",
+            "default_cost": "0.65"
+          },
+          "hints": {
+            "project_name": "Eindeutiger Name für dieses Projekt",
+            "description": "Optionale Beschreibung des Projekts",
+            "default_cost": "Kosten pro Kilometer in CHF (Schweizer Franken)"
+          },
+          "errors": {
+            "name_required": "Projektname ist erforderlich",
+            "name_max_length": "Projektname darf 255 Zeichen nicht überschreiten",
+            "cost_required": "Standard Kosten sind erforderlich",
+            "cost_min": "Kosten müssen mindestens 0.01 CHF betragen",
+            "cost_max": "Kosten dürfen 999.99 CHF nicht überschreiten",
+            "cost_pattern": "Bitte geben Sie einen gültigen Kostenbetrag ein"
+          },
+          "status": {
+            "active_hint": "Projekt ist für Reiseanträge verfügbar",
+            "inactive_hint": "Projekt ist nicht für neue Reiseanträge verfügbar"
+          },
+          "sections": {
+            "preview": "Vorschau"
+          },
+          "labels": {
+            "formatted_cost": "Formatierte Kosten"
+          }
         }
       },
       "messages": {

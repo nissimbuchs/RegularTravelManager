@@ -16,7 +16,9 @@
       "export": "Exporter",
       "import": "Importer",
       "upload": "Téléverser",
-      "download": "Télécharger"
+      "download": "Télécharger",
+      "create": "Créer",
+      "update": "Mettre à jour"
     },
     "actions": {
       "loading": "Chargement...",
@@ -57,6 +59,10 @@
       "unsaved_changes": "Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter ?",
       "operation_successful": "Opération terminée avec succès",
       "operation_failed": "Opération échouée. Veuillez réessayer."
+    },
+    "values": {
+      "yes": "Oui",
+      "no": "Non"
     }
   },
   "header": {
@@ -200,6 +206,41 @@
           "title": "Supprimer le projet",
           "message": "Êtes-vous sûr de vouloir supprimer \"{{projectName}}\" ? Cette action ne peut pas être annulée.",
           "confirm": "Supprimer"
+        },
+        "form": {
+          "fields": {
+            "project_name": "Nom du projet",
+            "description": "Description",
+            "default_cost": "Coût par défaut par kilomètre (CHF)"
+          },
+          "placeholders": {
+            "project_name": "Entrez le nom du projet",
+            "description": "Entrez la description du projet",
+            "default_cost": "0.65"
+          },
+          "hints": {
+            "project_name": "Nom unique pour ce projet",
+            "description": "Description optionnelle du projet",
+            "default_cost": "Coût par kilomètre en CHF (francs suisses)"
+          },
+          "errors": {
+            "name_required": "Le nom du projet est requis",
+            "name_max_length": "Le nom du projet ne peut pas dépasser 255 caractères",
+            "cost_required": "Le coût par défaut est requis",
+            "cost_min": "Le coût doit être d'au moins 0.01 CHF",
+            "cost_max": "Le coût ne peut pas dépasser 999.99 CHF",
+            "cost_pattern": "Veuillez entrer un montant de coût valide"
+          },
+          "status": {
+            "active_hint": "Le projet est disponible pour les demandes de voyage",
+            "inactive_hint": "Le projet n'est pas disponible pour les nouvelles demandes de voyage"
+          },
+          "sections": {
+            "preview": "Aperçu"
+          },
+          "labels": {
+            "formatted_cost": "Coût formaté"
+          }
         }
       },
       "messages": {

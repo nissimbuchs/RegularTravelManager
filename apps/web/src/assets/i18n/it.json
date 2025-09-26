@@ -16,7 +16,9 @@
       "export": "Esporta",
       "import": "Importa",
       "upload": "Carica",
-      "download": "Scarica"
+      "download": "Scarica",
+      "create": "Crea",
+      "update": "Aggiorna"
     },
     "actions": {
       "loading": "Caricamento...",
@@ -57,6 +59,10 @@
       "unsaved_changes": "Hai modifiche non salvate. Sei sicuro di voler uscire?",
       "operation_successful": "Operazione completata con successo",
       "operation_failed": "Operazione fallita. Riprova."
+    },
+    "values": {
+      "yes": "Sì",
+      "no": "No"
     }
   },
   "header": {
@@ -200,6 +206,41 @@
           "title": "Elimina progetto",
           "message": "Sei sicuro di voler eliminare \"{{projectName}}\"? Questa azione non può essere annullata.",
           "confirm": "Elimina"
+        },
+        "form": {
+          "fields": {
+            "project_name": "Nome progetto",
+            "description": "Descrizione",
+            "default_cost": "Costo predefinito per chilometro (CHF)"
+          },
+          "placeholders": {
+            "project_name": "Inserisci nome progetto",
+            "description": "Inserisci descrizione progetto",
+            "default_cost": "0.65"
+          },
+          "hints": {
+            "project_name": "Nome univoco per questo progetto",
+            "description": "Descrizione opzionale del progetto",
+            "default_cost": "Costo per chilometro in CHF (franchi svizzeri)"
+          },
+          "errors": {
+            "name_required": "Il nome del progetto è richiesto",
+            "name_max_length": "Il nome del progetto non può superare 255 caratteri",
+            "cost_required": "Il costo predefinito è richiesto",
+            "cost_min": "Il costo deve essere almeno 0.01 CHF",
+            "cost_max": "Il costo non può superare 999.99 CHF",
+            "cost_pattern": "Inserisci un importo valido"
+          },
+          "status": {
+            "active_hint": "Il progetto è disponibile per le richieste di viaggio",
+            "inactive_hint": "Il progetto non è disponibile per nuove richieste di viaggio"
+          },
+          "sections": {
+            "preview": "Anteprima"
+          },
+          "labels": {
+            "formatted_cost": "Costo formattato"
+          }
         }
       },
       "messages": {

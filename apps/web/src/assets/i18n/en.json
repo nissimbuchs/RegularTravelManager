@@ -16,7 +16,9 @@
       "export": "Export",
       "import": "Import",
       "upload": "Upload",
-      "download": "Download"
+      "download": "Download",
+      "create": "Create",
+      "update": "Update"
     },
     "actions": {
       "loading": "Loading...",
@@ -57,6 +59,10 @@
       "unsaved_changes": "You have unsaved changes. Are you sure you want to leave?",
       "operation_successful": "Operation completed successfully",
       "operation_failed": "Operation failed. Please try again."
+    },
+    "values": {
+      "yes": "Yes",
+      "no": "No"
     }
   },
   "header": {
@@ -253,69 +259,61 @@
           }
         },
         "subproject_form": {
-          "title": "Location Form",
           "sections": {
-            "basic_info": "Basic Information",
             "location_details": "Location Details",
-            "cost_settings": "Cost Settings"
+            "address_information": "Address Information",
+            "coordinates": "Coordinates",
+            "cost_rate": "Cost Rate (Optional)"
           },
           "fields": {
             "location_name": "Location Name",
-            "description": "Description",
             "street_address": "Street Address",
             "city": "City",
-            "state_region": "State/Region",
             "postal_code": "Postal Code",
-            "country": "Country",
-            "cost_per_km": "Custom Cost per Kilometer (CHF)"
+            "latitude": "Latitude",
+            "longitude": "Longitude",
+            "cost_per_km": "Custom Cost per Kilometer"
           },
           "placeholders": {
-            "location_name": "Enter location name",
-            "description": "Enter location description",
-            "street_address": "Enter street address",
-            "city": "Enter city",
-            "state_region": "Enter state or region",
-            "postal_code": "Enter postal code",
-            "country": "Enter country",
-            "cost_per_km": "0.65"
+            "location_name": "Enter location/subproject name",
+            "street_address": "Bahnhofstrasse 1",
+            "city": "Zurich",
+            "postal_code": "8001",
+            "latitude": "47.3769",
+            "longitude": "8.5417",
+            "cost_per_km": "Leave empty to inherit from project"
           },
           "hints": {
-            "location_name": "Unique name for this location",
-            "description": "Optional description of the location",
-            "street_address": "Street address for geocoding",
-            "cost_per_km": "Leave empty to use project default",
-            "coordinates": "Click 'Get Coordinates' to geocode the address"
-          },
-          "errors": {
-            "name_required": "Location name is required",
-            "name_max_length": "Location name cannot exceed 255 characters",
-            "address_required": "Street address is required for geocoding",
-            "city_required": "City is required",
-            "country_required": "Country is required",
-            "cost_min": "Cost must be at least 0.01 CHF",
-            "cost_max": "Cost cannot exceed 999.99 CHF",
-            "cost_pattern": "Please enter a valid cost amount",
-            "coordinates_required": "Coordinates are required. Please click 'Get Coordinates'",
-            "geocoding_failed": "Failed to get coordinates. Please check the address"
-          },
-          "actions": {
-            "get_coordinates": "Get Coordinates",
-            "clear_coordinates": "Clear Coordinates"
+            "location_name": "Descriptive name for this work location",
+            "street_address": "Full street address including number",
+            "latitude_range": "Swiss latitude range: 45.818 - 47.808",
+            "longitude_range": "Swiss longitude range: 5.956 - 10.492",
+            "cost_per_km": "Leave empty to use project default ({{defaultCost}})"
           },
           "status": {
-            "geocoding": "Getting coordinates...",
-            "geocoding_success": "Coordinates found successfully",
-            "geocoding_failed": "Failed to geocode address",
-            "geocoding_ready": "Ready to geocode"
+            "geocoded": "Geocoded",
+            "geocoding_failed": "Geocoding Failed"
+          },
+          "actions": {
+            "geocoding": "Geocoding...",
+            "get_coordinates": "Get Coordinates",
+            "clear": "Clear",
+            "apply_coordinates": "Apply Coordinates"
+          },
+          "tooltips": {
+            "clear_coordinates": "Clear coordinates",
+            "toggle_manual_coords": "Toggle manual coordinate entry"
           },
           "labels": {
-            "coordinates": "Coordinates",
-            "latitude": "Latitude",
-            "longitude": "Longitude"
+            "effective_rate": "Effective Rate"
           },
-          "messages": {
-            "coordinates_found": "Coordinates found: {{lat}}, {{lng}}",
-            "geocoding_error": "Could not find coordinates for this address"
+          "errors": {
+            "location_name_required": "Location name is required",
+            "postal_code_pattern": "Please enter a valid Swiss postal code (4-5 digits)",
+            "latitude_bounds": "Latitude must be within Swiss bounds",
+            "longitude_bounds": "Longitude must be within Swiss bounds",
+            "cost_min": "Cost must be greater than 0",
+            "cost_max": "Cost cannot exceed CHF 999.99"
           }
         }
       }
@@ -737,64 +735,6 @@
         "cost_min": "Cost must be greater than 0",
         "cost_max": "Cost cannot exceed CHF 999.99",
         "cost_pattern": "Please enter a valid decimal number (max 2 decimal places)"
-      }
-    },
-    "subproject_form": {
-      "sections": {
-        "location_details": "Location Details",
-        "address_information": "Address Information",
-        "coordinates": "Coordinates",
-        "cost_rate": "Cost Rate (Optional)"
-      },
-      "fields": {
-        "location_name": "Location Name",
-        "street_address": "Street Address",
-        "city": "City",
-        "postal_code": "Postal Code",
-        "latitude": "Latitude",
-        "longitude": "Longitude",
-        "cost_per_km": "Custom Cost per Kilometer"
-      },
-      "placeholders": {
-        "location_name": "Enter location/subproject name",
-        "street_address": "Bahnhofstrasse 1",
-        "city": "Zurich",
-        "postal_code": "8001",
-        "latitude": "47.3769",
-        "longitude": "8.5417",
-        "cost_per_km": "Leave empty to inherit from project"
-      },
-      "hints": {
-        "location_name": "Descriptive name for this work location",
-        "street_address": "Full street address including number",
-        "latitude_range": "Swiss latitude range: 45.818 - 47.808",
-        "longitude_range": "Swiss longitude range: 5.956 - 10.492",
-        "cost_per_km": "Leave empty to use project default ({{defaultCost}})"
-      },
-      "status": {
-        "geocoded": "Geocoded",
-        "geocoding_failed": "Geocoding Failed"
-      },
-      "actions": {
-        "geocoding": "Geocoding...",
-        "get_coordinates": "Get Coordinates",
-        "clear": "Clear",
-        "apply_coordinates": "Apply Coordinates"
-      },
-      "tooltips": {
-        "clear_coordinates": "Clear coordinates",
-        "toggle_manual_coords": "Toggle manual coordinate entry"
-      },
-      "labels": {
-        "effective_rate": "Effective Rate"
-      },
-      "errors": {
-        "location_name_required": "Location name is required",
-        "postal_code_pattern": "Please enter a valid Swiss postal code (4-5 digits)",
-        "latitude_bounds": "Latitude must be within Swiss boundaries",
-        "longitude_bounds": "Longitude must be within Swiss boundaries",
-        "cost_min": "Cost must be greater than 0",
-        "cost_max": "Cost cannot exceed CHF 999.99"
       }
     },
     "user_detail": {
