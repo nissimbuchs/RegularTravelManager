@@ -1,0 +1,196 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "submit": "Soumettre",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "confirm": "Confirmer",
+      "back": "Retour",
+      "next": "Suivant",
+      "close": "Fermer",
+      "refresh": "Actualiser",
+      "search": "Rechercher",
+      "filter": "Filtrer",
+      "export": "Exporter",
+      "import": "Importer",
+      "upload": "Téléverser",
+      "download": "Télécharger"
+    },
+    "actions": {
+      "loading": "Chargement...",
+      "saving": "Enregistrement...",
+      "processing": "Traitement...",
+      "success": "Succès !",
+      "error": "Erreur survenue",
+      "retry": "Réessayer"
+    },
+    "status": {
+      "pending": "En attente",
+      "approved": "Approuvé",
+      "rejected": "Rejeté",
+      "withdrawn": "Retiré",
+      "active": "Actif",
+      "inactive": "Inactif"
+    },
+    "navigation": {
+      "home": "Accueil",
+      "dashboard": "Tableau de bord",
+      "profile": "Profil",
+      "settings": "Paramètres",
+      "logout": "Déconnexion",
+      "login": "Connexion"
+    },
+    "forms": {
+      "required": "Ce champ est requis",
+      "invalid_email": "Veuillez saisir une adresse e-mail valide",
+      "invalid_format": "Format invalide",
+      "min_length": "Minimum {{length}} caractères requis",
+      "max_length": "Maximum {{length}} caractères autorisés",
+      "select_option": "Veuillez sélectionner une option"
+    },
+    "messages": {
+      "welcome": "Bienvenue",
+      "goodbye": "Au revoir",
+      "confirmation": "Êtes-vous sûr ?",
+      "unsaved_changes": "Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter ?",
+      "operation_successful": "Opération terminée avec succès",
+      "operation_failed": "Opération échouée. Veuillez réessayer."
+    }
+  },
+  "header": {
+    "title": "Regular Travel Manager",
+    "subtitle": "Système de gestion des frais de déplacement suisse",
+    "user_menu": {
+      "profile": "Mon profil",
+      "settings": "Paramètres",
+      "help": "Aide",
+      "logout": "Se déconnecter"
+    },
+    "language_switcher": {
+      "select_language": "Sélectionner la langue",
+      "current_language": "Langue actuelle : {{language}}"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}} Travel Manager. Tous droits réservés.",
+    "version": "Version {{version}}",
+    "support": "Support",
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions d'utilisation"
+  },
+  "employee": {
+    "dashboard": {
+      "title": "Tableau de bord employé",
+      "welcome": "Bienvenue, {{name}}",
+      "summary": {
+        "requests_submitted": "Demandes soumises",
+        "pending_approval": "En attente d'approbation",
+        "approved_this_month": "Approuvées ce mois",
+        "total_allowance": "Allocation totale (CHF)"
+      }
+    },
+    "new_request": {
+      "title": "Nouvelle demande de voyage",
+      "form": {
+        "project": "Projet",
+        "subproject": "Sous-projet",
+        "days_per_week": "Jours par semaine",
+        "justification": "Justification",
+        "submit": "Soumettre la demande"
+      }
+    },
+    "requests": {
+      "title": "Mes demandes de voyage",
+      "columns": {
+        "date": "Date",
+        "project": "Projet",
+        "status": "Statut",
+        "allowance": "Allocation (CHF)",
+        "actions": "Actions"
+      }
+    }
+  },
+  "manager": {
+    "dashboard": {
+      "title": "Tableau de bord manager",
+      "welcome": "Bienvenue, {{name}}",
+      "pending_requests": "Demandes en attente",
+      "team_summary": "Résumé de l'équipe"
+    },
+    "approvals": {
+      "title": "Approbations en attente",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "review": "Examiner",
+      "columns": {
+        "employee": "Employé",
+        "project": "Projet",
+        "submitted": "Soumis",
+        "allowance": "Allocation (CHF)",
+        "actions": "Actions"
+      }
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Tableau de bord admin",
+      "system_overview": "Vue d'ensemble du système",
+      "user_management": "Gestion des utilisateurs"
+    },
+    "users": {
+      "title": "Gestion des utilisateurs",
+      "add_user": "Ajouter un utilisateur",
+      "edit_user": "Modifier l'utilisateur",
+      "columns": {
+        "name": "Nom",
+        "email": "E-mail",
+        "role": "Rôle",
+        "status": "Statut",
+        "actions": "Actions"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Se connecter",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "remember_me": "Se souvenir de moi",
+      "forgot_password": "Mot de passe oublié ?",
+      "sign_in": "Se connecter",
+      "no_account": "Vous n'avez pas de compte ?",
+      "sign_up": "S'inscrire"
+    },
+    "register": {
+      "title": "Créer un compte",
+      "first_name": "Prénom",
+      "last_name": "Nom",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "confirm_password": "Confirmer le mot de passe",
+      "terms": "J'accepte les conditions générales",
+      "create_account": "Créer un compte",
+      "have_account": "Vous avez déjà un compte ?",
+      "sign_in": "Se connecter"
+    }
+  },
+  "errors": {
+    "404": {
+      "title": "Page non trouvée",
+      "message": "La page que vous recherchez n'existe pas.",
+      "go_home": "Aller au tableau de bord"
+    },
+    "500": {
+      "title": "Erreur serveur",
+      "message": "Quelque chose s'est mal passé de notre côté.",
+      "retry": "Réessayer"
+    },
+    "network": {
+      "title": "Erreur de connexion",
+      "message": "Veuillez vérifier votre connexion Internet.",
+      "retry": "Réessayer"
+    }
+  }
+}

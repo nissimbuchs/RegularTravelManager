@@ -11,6 +11,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
 import { LoadingService } from '../../core/services/loading.service';
+import { LanguageSwitcherComponent } from '../../shared/components/language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-login',
@@ -25,9 +26,15 @@ import { LoadingService } from '../../core/services/loading.service';
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatIconModule,
+    LanguageSwitcherComponent,
   ],
   template: `
     <div class="login-container">
+      <!-- Language Switcher for non-authenticated users -->
+      <div class="login-language-switcher">
+        <app-language-switcher></app-language-switcher>
+      </div>
+
       <mat-card class="login-card">
         <mat-card-header>
           <mat-card-title class="login-title">

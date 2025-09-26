@@ -1,0 +1,196 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "submit": "Submit",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirm": "Confirm",
+      "back": "Back",
+      "next": "Next",
+      "close": "Close",
+      "refresh": "Refresh",
+      "search": "Search",
+      "filter": "Filter",
+      "export": "Export",
+      "import": "Import",
+      "upload": "Upload",
+      "download": "Download"
+    },
+    "actions": {
+      "loading": "Loading...",
+      "saving": "Saving...",
+      "processing": "Processing...",
+      "success": "Success!",
+      "error": "Error occurred",
+      "retry": "Retry"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "withdrawn": "Withdrawn",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "navigation": {
+      "home": "Home",
+      "dashboard": "Dashboard",
+      "profile": "Profile",
+      "settings": "Settings",
+      "logout": "Logout",
+      "login": "Login"
+    },
+    "forms": {
+      "required": "This field is required",
+      "invalid_email": "Please enter a valid email address",
+      "invalid_format": "Invalid format",
+      "min_length": "Minimum {{length}} characters required",
+      "max_length": "Maximum {{length}} characters allowed",
+      "select_option": "Please select an option"
+    },
+    "messages": {
+      "welcome": "Welcome",
+      "goodbye": "Goodbye",
+      "confirmation": "Are you sure?",
+      "unsaved_changes": "You have unsaved changes. Are you sure you want to leave?",
+      "operation_successful": "Operation completed successfully",
+      "operation_failed": "Operation failed. Please try again."
+    }
+  },
+  "header": {
+    "title": "Regular Travel Manager",
+    "subtitle": "Swiss Employee Travel Allowance System",
+    "user_menu": {
+      "profile": "My Profile",
+      "settings": "Settings",
+      "help": "Help",
+      "logout": "Sign Out"
+    },
+    "language_switcher": {
+      "select_language": "Select Language",
+      "current_language": "Current Language: {{language}}"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}} Travel Manager. All rights reserved.",
+    "version": "Version {{version}}",
+    "support": "Support",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  },
+  "employee": {
+    "dashboard": {
+      "title": "Employee Dashboard",
+      "welcome": "Welcome, {{name}}",
+      "summary": {
+        "requests_submitted": "Requests Submitted",
+        "pending_approval": "Pending Approval",
+        "approved_this_month": "Approved This Month",
+        "total_allowance": "Total Allowance (CHF)"
+      }
+    },
+    "new_request": {
+      "title": "New Travel Request",
+      "form": {
+        "project": "Project",
+        "subproject": "Subproject",
+        "days_per_week": "Days per Week",
+        "justification": "Justification",
+        "submit": "Submit Request"
+      }
+    },
+    "requests": {
+      "title": "My Travel Requests",
+      "columns": {
+        "date": "Date",
+        "project": "Project",
+        "status": "Status",
+        "allowance": "Allowance (CHF)",
+        "actions": "Actions"
+      }
+    }
+  },
+  "manager": {
+    "dashboard": {
+      "title": "Manager Dashboard",
+      "welcome": "Welcome, {{name}}",
+      "pending_requests": "Pending Requests",
+      "team_summary": "Team Summary"
+    },
+    "approvals": {
+      "title": "Pending Approvals",
+      "approve": "Approve",
+      "reject": "Reject",
+      "review": "Review",
+      "columns": {
+        "employee": "Employee",
+        "project": "Project",
+        "submitted": "Submitted",
+        "allowance": "Allowance (CHF)",
+        "actions": "Actions"
+      }
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "system_overview": "System Overview",
+      "user_management": "User Management"
+    },
+    "users": {
+      "title": "User Management",
+      "add_user": "Add User",
+      "edit_user": "Edit User",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Sign In",
+      "email": "Email",
+      "password": "Password",
+      "remember_me": "Remember me",
+      "forgot_password": "Forgot password?",
+      "sign_in": "Sign In",
+      "no_account": "Don't have an account?",
+      "sign_up": "Sign up"
+    },
+    "register": {
+      "title": "Create Account",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "email": "Email",
+      "password": "Password",
+      "confirm_password": "Confirm Password",
+      "terms": "I agree to the terms and conditions",
+      "create_account": "Create Account",
+      "have_account": "Already have an account?",
+      "sign_in": "Sign in"
+    }
+  },
+  "errors": {
+    "404": {
+      "title": "Page Not Found",
+      "message": "The page you're looking for doesn't exist.",
+      "go_home": "Go to Dashboard"
+    },
+    "500": {
+      "title": "Server Error",
+      "message": "Something went wrong on our end.",
+      "retry": "Try Again"
+    },
+    "network": {
+      "title": "Connection Error",
+      "message": "Please check your internet connection.",
+      "retry": "Retry"
+    }
+  }
+}

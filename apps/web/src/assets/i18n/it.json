@@ -1,0 +1,196 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Salva",
+      "cancel": "Annulla",
+      "submit": "Invia",
+      "edit": "Modifica",
+      "delete": "Elimina",
+      "confirm": "Conferma",
+      "back": "Indietro",
+      "next": "Avanti",
+      "close": "Chiudi",
+      "refresh": "Aggiorna",
+      "search": "Cerca",
+      "filter": "Filtra",
+      "export": "Esporta",
+      "import": "Importa",
+      "upload": "Carica",
+      "download": "Scarica"
+    },
+    "actions": {
+      "loading": "Caricamento...",
+      "saving": "Salvataggio...",
+      "processing": "Elaborazione...",
+      "success": "Successo!",
+      "error": "Errore verificato",
+      "retry": "Riprova"
+    },
+    "status": {
+      "pending": "In attesa",
+      "approved": "Approvato",
+      "rejected": "Rifiutato",
+      "withdrawn": "Ritirato",
+      "active": "Attivo",
+      "inactive": "Inattivo"
+    },
+    "navigation": {
+      "home": "Home",
+      "dashboard": "Dashboard",
+      "profile": "Profilo",
+      "settings": "Impostazioni",
+      "logout": "Disconnetti",
+      "login": "Accedi"
+    },
+    "forms": {
+      "required": "Questo campo è obbligatorio",
+      "invalid_email": "Inserisci un indirizzo email valido",
+      "invalid_format": "Formato non valido",
+      "min_length": "Minimo {{length}} caratteri richiesti",
+      "max_length": "Massimo {{length}} caratteri consentiti",
+      "select_option": "Seleziona un'opzione"
+    },
+    "messages": {
+      "welcome": "Benvenuto",
+      "goodbye": "Arrivederci",
+      "confirmation": "Sei sicuro?",
+      "unsaved_changes": "Hai modifiche non salvate. Sei sicuro di voler uscire?",
+      "operation_successful": "Operazione completata con successo",
+      "operation_failed": "Operazione fallita. Riprova."
+    }
+  },
+  "header": {
+    "title": "Regular Travel Manager",
+    "subtitle": "Sistema svizzero di gestione indennità di viaggio",
+    "user_menu": {
+      "profile": "Il mio profilo",
+      "settings": "Impostazioni",
+      "help": "Aiuto",
+      "logout": "Disconnetti"
+    },
+    "language_switcher": {
+      "select_language": "Seleziona lingua",
+      "current_language": "Lingua corrente: {{language}}"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}} Travel Manager. Tutti i diritti riservati.",
+    "version": "Versione {{version}}",
+    "support": "Supporto",
+    "privacy": "Informativa sulla privacy",
+    "terms": "Termini di servizio"
+  },
+  "employee": {
+    "dashboard": {
+      "title": "Dashboard dipendente",
+      "welcome": "Benvenuto, {{name}}",
+      "summary": {
+        "requests_submitted": "Richieste inviate",
+        "pending_approval": "In attesa di approvazione",
+        "approved_this_month": "Approvate questo mese",
+        "total_allowance": "Indennità totale (CHF)"
+      }
+    },
+    "new_request": {
+      "title": "Nuova richiesta di viaggio",
+      "form": {
+        "project": "Progetto",
+        "subproject": "Sottoprogetto",
+        "days_per_week": "Giorni a settimana",
+        "justification": "Giustificazione",
+        "submit": "Invia richiesta"
+      }
+    },
+    "requests": {
+      "title": "Le mie richieste di viaggio",
+      "columns": {
+        "date": "Data",
+        "project": "Progetto",
+        "status": "Stato",
+        "allowance": "Indennità (CHF)",
+        "actions": "Azioni"
+      }
+    }
+  },
+  "manager": {
+    "dashboard": {
+      "title": "Dashboard manager",
+      "welcome": "Benvenuto, {{name}}",
+      "pending_requests": "Richieste in attesa",
+      "team_summary": "Riepilogo team"
+    },
+    "approvals": {
+      "title": "Approvazioni in attesa",
+      "approve": "Approva",
+      "reject": "Rifiuta",
+      "review": "Rivedi",
+      "columns": {
+        "employee": "Dipendente",
+        "project": "Progetto",
+        "submitted": "Inviato",
+        "allowance": "Indennità (CHF)",
+        "actions": "Azioni"
+      }
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Dashboard admin",
+      "system_overview": "Panoramica sistema",
+      "user_management": "Gestione utenti"
+    },
+    "users": {
+      "title": "Gestione utenti",
+      "add_user": "Aggiungi utente",
+      "edit_user": "Modifica utente",
+      "columns": {
+        "name": "Nome",
+        "email": "Email",
+        "role": "Ruolo",
+        "status": "Stato",
+        "actions": "Azioni"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Accedi",
+      "email": "Email",
+      "password": "Password",
+      "remember_me": "Ricordami",
+      "forgot_password": "Password dimenticata?",
+      "sign_in": "Accedi",
+      "no_account": "Non hai un account?",
+      "sign_up": "Registrati"
+    },
+    "register": {
+      "title": "Crea account",
+      "first_name": "Nome",
+      "last_name": "Cognome",
+      "email": "Email",
+      "password": "Password",
+      "confirm_password": "Conferma password",
+      "terms": "Accetto i termini e condizioni",
+      "create_account": "Crea account",
+      "have_account": "Hai già un account?",
+      "sign_in": "Accedi"
+    }
+  },
+  "errors": {
+    "404": {
+      "title": "Pagina non trovata",
+      "message": "La pagina che stai cercando non esiste.",
+      "go_home": "Vai alla dashboard"
+    },
+    "500": {
+      "title": "Errore del server",
+      "message": "Qualcosa è andato storto dal nostro lato.",
+      "retry": "Riprova"
+    },
+    "network": {
+      "title": "Errore di connessione",
+      "message": "Controlla la tua connessione internet.",
+      "retry": "Riprova"
+    }
+  }
+}

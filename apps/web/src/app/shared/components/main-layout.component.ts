@@ -15,6 +15,7 @@ import { Observable, Subject } from 'rxjs';
 import { map, shareReplay, takeUntil, filter } from 'rxjs/operators';
 import { AuthService, User } from '../../core/services/auth.service';
 import { LoadingService } from '../../core/services/loading.service';
+import { LanguageSwitcherComponent } from './language-switcher/language-switcher.component';
 
 interface NavigationItem {
   icon: string;
@@ -40,6 +41,7 @@ interface NavigationItem {
     MatTooltipModule,
     MatDividerModule,
     LayoutModule,
+    LanguageSwitcherComponent,
   ],
   template: `
     <mat-sidenav-container class="sidenav-container" [class.is-mobile]="isHandset$ | async">
@@ -99,6 +101,9 @@ interface NavigationItem {
           <span class="page-title">{{ getPageTitle() }}</span>
 
           <span class="toolbar-spacer"></span>
+
+          <!-- Language Switcher -->
+          <app-language-switcher class="language-switcher-toolbar"></app-language-switcher>
 
           <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-trigger">
             <mat-icon>account_circle</mat-icon>

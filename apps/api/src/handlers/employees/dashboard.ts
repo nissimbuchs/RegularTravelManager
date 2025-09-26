@@ -115,8 +115,12 @@ export const getEmployeeDashboard = async (
     const sortDirection = queryParams.sortDirection || 'desc';
 
     const filters: RequestFilters = {};
-    if (queryParams.status) filters.status = queryParams.status;
-    if (queryParams.projectName) filters.projectName = queryParams.projectName;
+    if (queryParams.status) {
+      filters.status = queryParams.status;
+    }
+    if (queryParams.projectName) {
+      filters.projectName = queryParams.projectName;
+    }
     if (queryParams.dateRangeStart && queryParams.dateRangeEnd) {
       filters.dateRange = {
         start: new Date(queryParams.dateRangeStart),
@@ -158,10 +162,11 @@ export const getEmployeeDashboard = async (
       projectName: 'p.name',
       dailyAllowance: 'tr.calculated_allowance_chf',
       weeklyAllowance: '(tr.calculated_allowance_chf * tr.days_per_week)',
-      status: 'tr.status'
+      status: 'tr.status',
     };
 
-    const sortField = validSortFields[sortActive as keyof typeof validSortFields] || 'tr.submitted_at';
+    const sortField =
+      validSortFields[sortActive as keyof typeof validSortFields] || 'tr.submitted_at';
     const orderBy = `ORDER BY ${sortField} ${sortDirection.toUpperCase()}`;
 
     // Get total count for pagination
@@ -274,10 +279,11 @@ export const getEmployeeDashboard = async (
       totalApprovedAllowance,
     };
 
-    logger.info(`Employee dashboard loaded: ${requests.length} requests for employee ${employeeId}`);
+    logger.info(
+      `Employee dashboard loaded: ${requests.length} requests for employee ${employeeId}`
+    );
 
     return formatResponse(200, dashboard, context.awsRequestId);
-
   } catch (error) {
     logger.error('Failed to load employee dashboard:', error);
     return formatResponse(500, { error: 'Internal server error' }, context.awsRequestId);
@@ -382,7 +388,6 @@ export const getRequestDetails = async (
     };
 
     return formatResponse(200, requestDetails, context.awsRequestId);
-
   } catch (error) {
     logger.error('Failed to get request details:', error);
     return formatResponse(500, { error: 'Internal server error' }, context.awsRequestId);
@@ -430,9 +435,13 @@ export const withdrawRequest = async (
 
     const request = checkResult.rows[0];
     if (request.status !== 'pending') {
-      return formatResponse(400, {
-        error: `Cannot withdraw ${request.status} request. Only pending requests can be withdrawn.`
-      }, context.awsRequestId);
+      return formatResponse(
+        400,
+        {
+          error: `Cannot withdraw ${request.status} request. Only pending requests can be withdrawn.`,
+        },
+        context.awsRequestId
+      );
     }
 
     // Start transaction to update request and add status history
@@ -462,16 +471,18 @@ export const withdrawRequest = async (
 
       logger.info(`Travel request ${requestId} withdrawn by employee ${employeeId}`);
 
-      return formatResponse(200, {
-        success: true,
-        message: 'Request withdrawn successfully'
-      }, context.awsRequestId);
-
+      return formatResponse(
+        200,
+        {
+          success: true,
+          message: 'Request withdrawn successfully',
+        },
+        context.awsRequestId
+      );
     } catch (error) {
       await db.query('ROLLBACK');
       throw error;
     }
-
   } catch (error) {
     logger.error('Failed to withdraw request:', error);
     return formatResponse(500, { error: 'Internal server error' }, context.awsRequestId);

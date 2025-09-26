@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
-import { getEmployeeDashboard, getRequestDetails, withdrawRequest } from '../../../handlers/employees/dashboard';
+import {
+  getEmployeeDashboard,
+  getRequestDetails,
+  withdrawRequest,
+} from '../../../handlers/employees/dashboard';
 
 // Mock dependencies
 vi.mock('../../../database/connection', () => ({
@@ -27,7 +31,6 @@ import { getUserContextFromEvent } from '../../../handlers/auth/auth-utils';
 
 const mockDbQuery = vi.mocked(db.query);
 const mockGetUserContextFromEvent = vi.mocked(getUserContextFromEvent);
-
 
 const mockContext: Context = {
   awsRequestId: 'test-request-id',
@@ -212,15 +215,15 @@ describe('Employee Dashboard Handlers', () => {
             id: 'request-1',
             projectName: 'Test Project Alpha',
             status: 'pending',
-            dailyAllowance: 50.00,
-            weeklyAllowance: 150.00,
+            dailyAllowance: 50.0,
+            weeklyAllowance: 150.0,
           }),
           expect.objectContaining({
             id: 'request-2',
             projectName: 'Test Project Beta',
             status: 'approved',
-            dailyAllowance: 75.00,
-            weeklyAllowance: 300.00,
+            dailyAllowance: 75.0,
+            weeklyAllowance: 300.0,
           }),
         ]),
       });
@@ -256,7 +259,15 @@ describe('Employee Dashboard Handlers', () => {
       expect(countQueryCall[0]).toContain('WHERE tr.employee_id = $1');
       expect(countQueryCall[0]).toContain('AND tr.status = $2');
       expect(countQueryCall[0]).toContain('AND p.name ILIKE $3');
-      expect(countQueryCall[1]).toEqual([mockEmployeeId, 'pending', '%Alpha%', expect.any(Date), expect.any(Date), 25, 0]);
+      expect(countQueryCall[1]).toEqual([
+        mockEmployeeId,
+        'pending',
+        '%Alpha%',
+        expect.any(Date),
+        expect.any(Date),
+        25,
+        0,
+      ]);
 
       // Check main query includes filters
       expect(mainQueryCall[0]).toContain('WHERE tr.employee_id = $1');
@@ -267,7 +278,7 @@ describe('Employee Dashboard Handlers', () => {
         expect.any(Date),
         expect.any(Date),
         25,
-        0
+        0,
       ]);
     });
 
@@ -395,10 +406,10 @@ describe('Employee Dashboard Handlers', () => {
         managerName: 'John Manager',
         managerEmail: 'john.manager@test.com',
         calculatedDistance: 25.5,
-        costPerKm: 0.70,
-        dailyAllowance: 50.00,
-        weeklyAllowance: 150.00,
-        monthlyEstimate: 650.00,
+        costPerKm: 0.7,
+        dailyAllowance: 50.0,
+        weeklyAllowance: 150.0,
+        monthlyEstimate: 650.0,
         daysPerWeek: 3,
         status: 'pending',
         employeeAddress: '123 Employee Street, Test City',
@@ -496,15 +507,18 @@ describe('Employee Dashboard Handlers', () => {
       expect(queryCalls.some(call => call[0] === 'COMMIT')).toBe(true);
 
       // Verify update call
-      expect(queryCalls.some(call =>
-        call[0].includes('UPDATE travel_requests') &&
-        call[0].includes("SET status = 'withdrawn'")
-      )).toBe(true);
+      expect(
+        queryCalls.some(
+          call =>
+            call[0].includes('UPDATE travel_requests') &&
+            call[0].includes("SET status = 'withdrawn'")
+        )
+      ).toBe(true);
 
       // Verify status history insert
-      expect(queryCalls.some(call =>
-        call[0].includes('INSERT INTO travel_request_status_history')
-      )).toBe(true);
+      expect(
+        queryCalls.some(call => call[0].includes('INSERT INTO travel_request_status_history'))
+      ).toBe(true);
     });
 
     it('should reject withdrawal of non-pending request', async () => {

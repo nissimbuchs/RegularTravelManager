@@ -1,0 +1,196 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "submit": "Absenden",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "confirm": "Bestätigen",
+      "back": "Zurück",
+      "next": "Weiter",
+      "close": "Schließen",
+      "refresh": "Aktualisieren",
+      "search": "Suchen",
+      "filter": "Filtern",
+      "export": "Exportieren",
+      "import": "Importieren",
+      "upload": "Hochladen",
+      "download": "Herunterladen"
+    },
+    "actions": {
+      "loading": "Laden...",
+      "saving": "Speichern...",
+      "processing": "Verarbeiten...",
+      "success": "Erfolg!",
+      "error": "Fehler aufgetreten",
+      "retry": "Wiederholen"
+    },
+    "status": {
+      "pending": "Ausstehend",
+      "approved": "Genehmigt",
+      "rejected": "Abgelehnt",
+      "withdrawn": "Zurückgezogen",
+      "active": "Aktiv",
+      "inactive": "Inaktiv"
+    },
+    "navigation": {
+      "home": "Startseite",
+      "dashboard": "Dashboard",
+      "profile": "Profil",
+      "settings": "Einstellungen",
+      "logout": "Abmelden",
+      "login": "Anmelden"
+    },
+    "forms": {
+      "required": "Dieses Feld ist erforderlich",
+      "invalid_email": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+      "invalid_format": "Ungültiges Format",
+      "min_length": "Mindestens {{length}} Zeichen erforderlich",
+      "max_length": "Maximal {{length}} Zeichen erlaubt",
+      "select_option": "Bitte wählen Sie eine Option"
+    },
+    "messages": {
+      "welcome": "Willkommen",
+      "goodbye": "Auf Wiedersehen",
+      "confirmation": "Sind Sie sicher?",
+      "unsaved_changes": "Sie haben ungespeicherte Änderungen. Möchten Sie wirklich verlassen?",
+      "operation_successful": "Vorgang erfolgreich abgeschlossen",
+      "operation_failed": "Vorgang fehlgeschlagen. Bitte versuchen Sie es erneut."
+    }
+  },
+  "header": {
+    "title": "Regular Travel Manager",
+    "subtitle": "Schweizer Reisekostenmanagement-System",
+    "user_menu": {
+      "profile": "Mein Profil",
+      "settings": "Einstellungen",
+      "help": "Hilfe",
+      "logout": "Abmelden"
+    },
+    "language_switcher": {
+      "select_language": "Sprache wählen",
+      "current_language": "Aktuelle Sprache: {{language}}"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}} Travel Manager. Alle Rechte vorbehalten.",
+    "version": "Version {{version}}",
+    "support": "Support",
+    "privacy": "Datenschutzrichtlinie",
+    "terms": "Nutzungsbedingungen"
+  },
+  "employee": {
+    "dashboard": {
+      "title": "Mitarbeiter Dashboard",
+      "welcome": "Willkommen, {{name}}",
+      "summary": {
+        "requests_submitted": "Eingereichte Anträge",
+        "pending_approval": "Zur Genehmigung",
+        "approved_this_month": "Diesen Monat genehmigt",
+        "total_allowance": "Gesamte Vergütung (CHF)"
+      }
+    },
+    "new_request": {
+      "title": "Neuer Reiseantrag",
+      "form": {
+        "project": "Projekt",
+        "subproject": "Unterprojekt",
+        "days_per_week": "Tage pro Woche",
+        "justification": "Begründung",
+        "submit": "Antrag einreichen"
+      }
+    },
+    "requests": {
+      "title": "Meine Reiseanträge",
+      "columns": {
+        "date": "Datum",
+        "project": "Projekt",
+        "status": "Status",
+        "allowance": "Vergütung (CHF)",
+        "actions": "Aktionen"
+      }
+    }
+  },
+  "manager": {
+    "dashboard": {
+      "title": "Manager Dashboard",
+      "welcome": "Willkommen, {{name}}",
+      "pending_requests": "Ausstehende Anträge",
+      "team_summary": "Team-Übersicht"
+    },
+    "approvals": {
+      "title": "Ausstehende Genehmigungen",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "review": "Überprüfen",
+      "columns": {
+        "employee": "Mitarbeiter",
+        "project": "Projekt",
+        "submitted": "Eingereicht",
+        "allowance": "Vergütung (CHF)",
+        "actions": "Aktionen"
+      }
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "system_overview": "Systemübersicht",
+      "user_management": "Benutzerverwaltung"
+    },
+    "users": {
+      "title": "Benutzerverwaltung",
+      "add_user": "Benutzer hinzufügen",
+      "edit_user": "Benutzer bearbeiten",
+      "columns": {
+        "name": "Name",
+        "email": "E-Mail",
+        "role": "Rolle",
+        "status": "Status",
+        "actions": "Aktionen"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Anmelden",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "remember_me": "Angemeldet bleiben",
+      "forgot_password": "Passwort vergessen?",
+      "sign_in": "Anmelden",
+      "no_account": "Haben Sie kein Konto?",
+      "sign_up": "Registrieren"
+    },
+    "register": {
+      "title": "Konto erstellen",
+      "first_name": "Vorname",
+      "last_name": "Nachname",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "confirm_password": "Passwort bestätigen",
+      "terms": "Ich stimme den Geschäftsbedingungen zu",
+      "create_account": "Konto erstellen",
+      "have_account": "Haben Sie bereits ein Konto?",
+      "sign_in": "Anmelden"
+    }
+  },
+  "errors": {
+    "404": {
+      "title": "Seite nicht gefunden",
+      "message": "Die gesuchte Seite existiert nicht.",
+      "go_home": "Zum Dashboard"
+    },
+    "500": {
+      "title": "Serverfehler",
+      "message": "Etwas ist auf unserer Seite schief gelaufen.",
+      "retry": "Erneut versuchen"
+    },
+    "network": {
+      "title": "Verbindungsfehler",
+      "message": "Bitte überprüfen Sie Ihre Internetverbindung.",
+      "retry": "Wiederholen"
+    }
+  }
+}

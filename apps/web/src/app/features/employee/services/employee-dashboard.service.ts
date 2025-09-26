@@ -80,10 +80,11 @@ export class EmployeeDashboardService implements OnDestroy {
             ...request,
             submittedDate: new Date(request.submittedDate),
             processedDate: request.processedDate ? new Date(request.processedDate) : undefined,
-            statusHistory: request.statusHistory?.map(history => ({
-              ...history,
-              timestamp: new Date(history.timestamp),
-            })) || [],
+            statusHistory:
+              request.statusHistory?.map(history => ({
+                ...history,
+                timestamp: new Date(history.timestamp),
+              })) || [],
           }));
           return dashboard;
         }),
@@ -167,15 +168,15 @@ export class EmployeeDashboardService implements OnDestroy {
         takeUntil(this.destroy$)
       )
       .subscribe({
-        next: (dashboard) => {
+        next: dashboard => {
           this.dashboardSubject.next(dashboard);
         },
-        error: (error) => {
+        error: error => {
           // Handle auto-refresh errors silently to avoid overwhelming user
           if (error.status !== 401 && error.status !== 403) {
             console.error('Auto-refresh failed:', error);
           }
-        }
+        },
       });
 
     return this.dashboard$;

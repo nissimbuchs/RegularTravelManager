@@ -38,7 +38,7 @@ describe('EmployeeRequestDashboardComponent', () => {
         managerName: 'Test Manager',
         managerEmail: 'manager@test.com',
         calculatedDistance: 25.5,
-        costPerKm: 0.70,
+        costPerKm: 0.7,
       },
       {
         id: 'request-2',
@@ -65,21 +65,25 @@ describe('EmployeeRequestDashboardComponent', () => {
   };
 
   beforeEach(async () => {
-    const employeeDashboardServiceSpy = jasmine.createSpyObj('EmployeeDashboardService', [
-      'getDashboardData',
-      'getRequestDetails',
-      'withdrawRequest',
-      'refreshDashboard',
-      'startAutoRefresh',
-      'stopAutoRefresh',
-      'getCurrentDashboard',
-      'clearDashboard',
-      'cleanup',
-    ], {
-      dashboard$: new BehaviorSubject<EmployeeDashboard | null>(mockDashboardData),
-      loading$: new BehaviorSubject<boolean>(false),
-      error$: new BehaviorSubject<string | null>(null),
-    });
+    const employeeDashboardServiceSpy = jasmine.createSpyObj(
+      'EmployeeDashboardService',
+      [
+        'getDashboardData',
+        'getRequestDetails',
+        'withdrawRequest',
+        'refreshDashboard',
+        'startAutoRefresh',
+        'stopAutoRefresh',
+        'getCurrentDashboard',
+        'clearDashboard',
+        'cleanup',
+      ],
+      {
+        dashboard$: new BehaviorSubject<EmployeeDashboard | null>(mockDashboardData),
+        loading$: new BehaviorSubject<boolean>(false),
+        error$: new BehaviorSubject<string | null>(null),
+      }
+    );
 
     const snackBarSpy = jasmine.createSpyObj('MatSnackBar', ['open']);
 
@@ -99,7 +103,9 @@ describe('EmployeeRequestDashboardComponent', () => {
 
     fixture = TestBed.createComponent(EmployeeRequestDashboardComponent);
     component = fixture.componentInstance;
-    mockEmployeeDashboardService = TestBed.inject(EmployeeDashboardService) as jasmine.SpyObj<EmployeeDashboardService>;
+    mockEmployeeDashboardService = TestBed.inject(
+      EmployeeDashboardService
+    ) as jasmine.SpyObj<EmployeeDashboardService>;
     mockSnackBar = TestBed.inject(MatSnackBar) as jasmine.SpyObj<MatSnackBar>;
   });
 
@@ -165,7 +171,7 @@ describe('EmployeeRequestDashboardComponent', () => {
 
       expect(mockSnackBar.open).toHaveBeenCalledWith('Failed to load dashboard data', 'Close', {
         duration: 5000,
-        panelClass: ['error-snackbar']
+        panelClass: ['error-snackbar'],
       });
       expect(console.error).toHaveBeenCalledWith('Failed to load dashboard data:', error);
     });
@@ -289,7 +295,7 @@ describe('EmployeeRequestDashboardComponent', () => {
       justification: 'Detailed justification',
       managerName: 'Test Manager',
       calculatedDistance: 25.5,
-      costPerKm: 0.70,
+      costPerKm: 0.7,
       dailyAllowance: 50.0,
       weeklyAllowance: 150.0,
       monthlyEstimate: 650.0,
@@ -331,7 +337,7 @@ describe('EmployeeRequestDashboardComponent', () => {
 
       expect(mockSnackBar.open).toHaveBeenCalledWith('Failed to load request details', 'Close', {
         duration: 3000,
-        panelClass: ['error-snackbar']
+        panelClass: ['error-snackbar'],
       });
       expect(console.error).toHaveBeenCalledWith('Failed to load request details:', error);
     });
@@ -340,7 +346,9 @@ describe('EmployeeRequestDashboardComponent', () => {
   describe('Request Withdrawal', () => {
     it('should withdraw pending request successfully', () => {
       const request = mockDashboardData.requests[0]; // pending status
-      mockEmployeeDashboardService.withdrawRequest.and.returnValue(of({ success: true, message: 'Withdrawn' }));
+      mockEmployeeDashboardService.withdrawRequest.and.returnValue(
+        of({ success: true, message: 'Withdrawn' })
+      );
       mockEmployeeDashboardService.getDashboardData.and.returnValue(of(mockDashboardData));
       spyOn(window, 'confirm').and.returnValue(true);
 
@@ -349,7 +357,7 @@ describe('EmployeeRequestDashboardComponent', () => {
       expect(mockEmployeeDashboardService.withdrawRequest).toHaveBeenCalledWith(request.id);
       expect(mockSnackBar.open).toHaveBeenCalledWith('Request withdrawn successfully', 'Close', {
         duration: 3000,
-        panelClass: ['success-snackbar']
+        panelClass: ['success-snackbar'],
       });
       expect(mockEmployeeDashboardService.getDashboardData).toHaveBeenCalled(); // Refresh
     });
@@ -382,7 +390,7 @@ describe('EmployeeRequestDashboardComponent', () => {
 
       expect(mockSnackBar.open).toHaveBeenCalledWith('Failed to withdraw request', 'Close', {
         duration: 5000,
-        panelClass: ['error-snackbar']
+        panelClass: ['error-snackbar'],
       });
       expect(console.error).toHaveBeenCalledWith('Failed to withdraw request:', error);
     });
@@ -410,7 +418,7 @@ describe('EmployeeRequestDashboardComponent', () => {
 
       expect(result).toEqual({
         color: '#ff9800',
-        'background-color': '#fff3e0'
+        'background-color': '#fff3e0',
       });
     });
 
