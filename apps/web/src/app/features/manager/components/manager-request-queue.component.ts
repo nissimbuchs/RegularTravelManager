@@ -21,6 +21,7 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
 import { Subject, takeUntil, debounceTime, distinctUntilChanged, merge } from 'rxjs';
 
 import { ManagerDashboardService } from '../services/manager-dashboard.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import {
   ManagerDashboard,
   TravelRequestSummary,
@@ -108,11 +109,7 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
     direction: 'desc',
   };
 
-  urgencyLevels = [
-    { value: 'high', label: 'High Priority', color: '#f44336' },
-    { value: 'medium', label: 'Medium Priority', color: '#ff9800' },
-    { value: 'low', label: 'Low Priority', color: '#4caf50' },
-  ];
+  urgencyLevels: { value: string; label: string; color: string }[] = [];
 
   private destroy$ = new Subject<void>();
   private lastRefresh = new Date();
@@ -120,7 +117,8 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
   constructor(
     private managerDashboardService: ManagerDashboardService,
     private fb: FormBuilder,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    public translationService: TranslationService
   ) {
     this.filterForm = this.fb.group({
       employeeName: [''],
@@ -132,6 +130,13 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
       allowanceMax: [''],
       urgencyLevels: [[]],
     });
+
+    // Initialize urgency levels with translated labels
+    this.urgencyLevels = [
+      { value: 'high', label: this.translationService.translateSync('manager.request_queue.priority_levels.high'), color: '#f44336' },
+      { value: 'medium', label: this.translationService.translateSync('manager.request_queue.priority_levels.medium'), color: '#ff9800' },
+      { value: 'low', label: this.translationService.translateSync('manager.request_queue.priority_levels.low'), color: '#4caf50' },
+    ];
   }
 
   ngOnInit(): void {
@@ -179,7 +184,7 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
           console.error('Failed to load dashboard data:', error);
           this.isLoading = false;
           this.snackBar
-            .open('Failed to load pending requests. Please try again.', 'Retry', { duration: 5000 })
+            .open(this.translationService.translateSync('manager.request_queue.messages.load_failed'), this.translationService.translateSync('common.buttons.retry'), { duration: 5000 })
             .onAction()
             .subscribe(() => {
               this.loadDashboardData();
@@ -258,7 +263,7 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
         error: (error: any) => {
           console.error('Failed to load employee context:', error);
           this.isLoadingContext = false;
-          this.snackBar.open('Failed to load employee details. Please try again.', 'Close', {
+          this.snackBar.open(this.translationService.translateSync('manager.request_queue.messages.employee_load_failed'), this.translationService.translateSync('common.buttons.close'), {
             duration: 5000,
           });
         },
@@ -267,7 +272,7 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
 
   refreshData(): void {
     this.loadDashboardData();
-    this.snackBar.open('Data refreshed', 'Close', { duration: 2000 });
+    this.snackBar.open(this.translationService.translateSync('manager.request_queue.messages.data_refreshed'), this.translationService.translateSync('common.buttons.close'), { duration: 2000 });
   }
 
   clearFilters(): void {
@@ -345,8 +350,8 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
     this.managerDashboardService.approveRequest(request.id).subscribe({
       next: (response: any) => {
         this.snackBar.open(
-          `Travel request for ${request.employeeName} has been approved successfully.`,
-          'Close',
+          this.translationService.translateSync('manager.request_queue.messages.approve_success', { name: request.employeeName }),
+          this.translationService.translateSync('common.buttons.close'),
           { duration: 4000 }
         );
 
@@ -359,8 +364,8 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
       error: (error: any) => {
         console.error('Error approving request:', error);
         this.snackBar.open(
-          `Failed to approve request for ${request.employeeName}. Please try again.`,
-          'Close',
+          this.translationService.translateSync('manager.request_queue.messages.approve_failed', { name: request.employeeName }),
+          this.translationService.translateSync('common.buttons.close'),
           { duration: 4000 }
         );
         this.isProcessingAction = false;
@@ -372,7 +377,7 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
   openRejectDialog(request: TravelRequestSummary): void {
     // For now, simulate rejection without dialog
     // In a real implementation, this would open a dialog for rejection reason
-    this.rejectRequest(request, 'Rejected by manager');
+    this.rejectRequest(request, this.translationService.translateSync('manager.request_queue.messages.default_rejection_reason'));
   }
 
   private rejectRequest(request: TravelRequestSummary, reason: string): void {
@@ -382,8 +387,8 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
     this.managerDashboardService.rejectRequest(request.id, reason).subscribe({
       next: (response: any) => {
         this.snackBar.open(
-          `Travel request for ${request.employeeName} has been rejected.`,
-          'Close',
+          this.translationService.translateSync('manager.request_queue.messages.reject_success', { name: request.employeeName }),
+          this.translationService.translateSync('common.buttons.close'),
           { duration: 4000 }
         );
 
@@ -396,8 +401,8 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
       error: (error: any) => {
         console.error('Error rejecting request:', error);
         this.snackBar.open(
-          `Failed to reject request for ${request.employeeName}. Please try again.`,
-          'Close',
+          this.translationService.translateSync('manager.request_queue.messages.reject_failed', { name: request.employeeName }),
+          this.translationService.translateSync('common.buttons.close'),
           { duration: 4000 }
         );
         this.isProcessingAction = false;
@@ -408,7 +413,7 @@ export class ManagerRequestQueueComponent implements OnInit, OnDestroy {
 
   viewRequestDetails(request: TravelRequestSummary): void {
     // Show the employee's justification for the travel request
-    this.snackBar.open(`Justification: ${request.justification}`, 'Close', {
+    this.snackBar.open(this.translationService.translateSync('manager.request_queue.messages.justification_detail', { justification: request.justification }), this.translationService.translateSync('common.buttons.close'), {
       duration: 8000,
       horizontalPosition: 'center',
       verticalPosition: 'bottom',

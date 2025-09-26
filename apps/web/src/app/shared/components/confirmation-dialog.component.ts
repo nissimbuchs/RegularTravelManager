@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslationService } from '../../core/services/translation.service';
 
 export interface ConfirmationDialogData {
   title: string;
@@ -33,10 +34,10 @@ export interface ConfirmationDialogData {
 
     <mat-dialog-actions align="end">
       <button mat-button (click)="onCancel()">
-        {{ data.cancelText || 'Cancel' }}
+        {{ data.cancelText || translationService.translateSync('common.actions.cancel') }}
       </button>
       <button mat-raised-button [color]="data.confirmColor || 'primary'" (click)="onConfirm()">
-        {{ data.confirmText || 'Confirm' }}
+        {{ data.confirmText || translationService.translateSync('common.actions.confirm') }}
       </button>
     </mat-dialog-actions>
   `,
@@ -45,7 +46,8 @@ export interface ConfirmationDialogData {
 export class ConfirmationDialogComponent {
   constructor(
     private dialogRef: MatDialogRef<ConfirmationDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: ConfirmationDialogData
+    @Inject(MAT_DIALOG_DATA) public data: ConfirmationDialogData,
+    public translationService: TranslationService
   ) {}
 
   onConfirm(): void {

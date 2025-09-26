@@ -2,25 +2,25 @@
   <!-- Header Section -->
   <div class="dashboard-header">
     <div class="header-content">
-      <h1>Travel Request Queue</h1>
+      <h1>{{ translationService.translateSync('manager.request_queue.title') }}</h1>
       <div class="header-stats">
         <mat-card class="stats-card pending">
           <mat-card-content>
             <div class="stats-number">{{ dashboard?.totalPending || 0 }}</div>
-            <div class="stats-label">Pending Requests</div>
+            <div class="stats-label">{{ translationService.translateSync('manager.request_queue.stats.pending_requests') }}</div>
           </mat-card-content>
         </mat-card>
         <mat-card class="stats-card urgent">
           <mat-card-content>
             <div class="stats-number">{{ dashboard?.urgentCount || 0 }}</div>
-            <div class="stats-label">Urgent Requests</div>
+            <div class="stats-label">{{ translationService.translateSync('manager.request_queue.stats.urgent_requests') }}</div>
           </mat-card-content>
         </mat-card>
         <div class="refresh-info">
-          <button mat-icon-button (click)="refreshData()" matTooltip="Refresh data">
+          <button mat-icon-button (click)="refreshData()" [matTooltip]="translationService.translateSync('manager.request_queue.tooltips.refresh_data')">
             <mat-icon>refresh</mat-icon>
           </button>
-          <small>Last updated: {{ lastRefreshTime }}</small>
+          <small>{{ translationService.translateSync('manager.request_queue.last_updated', { time: lastRefreshTime }) }}</small>
         </div>
       </div>
     </div>
@@ -29,48 +29,48 @@
   <!-- Filters Section -->
   <mat-card class="filters-card">
     <mat-card-header>
-      <mat-card-title>Filters</mat-card-title>
-      <mat-card-subtitle>Filter and search pending requests</mat-card-subtitle>
+      <mat-card-title>{{ translationService.translateSync('manager.request_queue.filters.title') }}</mat-card-title>
+      <mat-card-subtitle>{{ translationService.translateSync('manager.request_queue.filters.subtitle') }}</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
       <form [formGroup]="filterForm" class="filters-form">
         <div class="filter-row">
           <mat-form-field appearance="outline">
-            <mat-label>Employee Name</mat-label>
-            <input matInput formControlName="employeeName" placeholder="Search by name...">
+            <mat-label>{{ translationService.translateSync('manager.request_queue.filters.employee_name') }}</mat-label>
+            <input matInput formControlName="employeeName" [placeholder]="translationService.translateSync('manager.request_queue.filters.search_by_name')">
             <mat-icon matSuffix>person</mat-icon>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Project</mat-label>
-            <input matInput formControlName="projectName" placeholder="Search by project...">
+            <mat-label>{{ translationService.translateSync('manager.request_queue.filters.project') }}</mat-label>
+            <input matInput formControlName="projectName" [placeholder]="translationService.translateSync('manager.request_queue.filters.search_by_project')">
             <mat-icon matSuffix>business_center</mat-icon>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Subproject</mat-label>
-            <input matInput formControlName="subProjectName" placeholder="Search by location...">
+            <mat-label>{{ translationService.translateSync('manager.request_queue.filters.subproject') }}</mat-label>
+            <input matInput formControlName="subProjectName" [placeholder]="translationService.translateSync('manager.request_queue.filters.search_by_location')">
             <mat-icon matSuffix>location_on</mat-icon>
           </mat-form-field>
         </div>
 
         <div class="filter-row">
           <mat-form-field appearance="outline">
-            <mat-label>From Date</mat-label>
+            <mat-label>{{ translationService.translateSync('manager.request_queue.filters.from_date') }}</mat-label>
             <input matInput [matDatepicker]="startPicker" formControlName="dateRangeStart">
             <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
             <mat-datepicker #startPicker></mat-datepicker>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>To Date</mat-label>
+            <mat-label>{{ translationService.translateSync('manager.request_queue.filters.to_date') }}</mat-label>
             <input matInput [matDatepicker]="endPicker" formControlName="dateRangeEnd">
             <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
             <mat-datepicker #endPicker></mat-datepicker>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Priority Levels</mat-label>
+            <mat-label>{{ translationService.translateSync('manager.request_queue.filters.priority_levels') }}</mat-label>
             <mat-select formControlName="urgencyLevels" multiple>
               <mat-option *ngFor="let level of urgencyLevels" [value]="level.value">
                 <mat-icon [style.color]="level.color">{{ getUrgencyIconForLevel(level) }}</mat-icon>
@@ -81,19 +81,19 @@
 
           <button mat-raised-button color="accent" (click)="clearFilters()">
             <mat-icon>clear</mat-icon>
-            Clear Filters
+            {{ translationService.translateSync('manager.request_queue.filters.clear_filters') }}
           </button>
         </div>
 
         <div class="filter-row">
           <mat-form-field appearance="outline">
-            <mat-label>Min Allowance (CHF)</mat-label>
+            <mat-label>{{ translationService.translateSync('manager.request_queue.filters.min_allowance') }}</mat-label>
             <input matInput type="number" formControlName="allowanceMin" placeholder="0">
             <span matPrefix>CHF&nbsp;</span>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Max Allowance (CHF)</mat-label>
+            <mat-label>{{ translationService.translateSync('manager.request_queue.filters.max_allowance') }}</mat-label>
             <input matInput type="number" formControlName="allowanceMax" placeholder="1000">
             <span matPrefix>CHF&nbsp;</span>
           </mat-form-field>
@@ -107,8 +107,8 @@
     <div class="table-container" [class.with-panel]="showEmployeePanel">
       <mat-card class="table-card">
         <mat-card-header>
-          <mat-card-title>Pending Travel Requests</mat-card-title>
-          <mat-card-subtitle>Click on a request to view employee details</mat-card-subtitle>
+          <mat-card-title>{{ translationService.translateSync('manager.request_queue.table.title') }}</mat-card-title>
+          <mat-card-subtitle>{{ translationService.translateSync('manager.request_queue.table.subtitle') }}</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="table-wrapper">
@@ -117,10 +117,10 @@
 
               <!-- Urgency Column -->
               <ng-container matColumnDef="urgency">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header="urgencyLevel">Priority</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header="urgencyLevel">{{ translationService.translateSync('manager.request_queue.table.columns.priority') }}</th>
                 <td mat-cell *matCellDef="let request">
-                  <mat-icon [style.color]="getUrgencyColor(request.urgencyLevel)" 
-                           [matTooltip]="request.urgencyLevel + ' priority'">
+                  <mat-icon [style.color]="getUrgencyColor(request.urgencyLevel)"
+                           [matTooltip]="translationService.translateSync('manager.request_queue.table.priority_tooltip', { level: translationService.translateSync('manager.request_queue.priority_levels.' + request.urgencyLevel) })">
                     {{ getUrgencyIcon(request.urgencyLevel) }}
                   </mat-icon>
                 </td>
@@ -128,7 +128,7 @@
 
               <!-- Employee Name Column -->
               <ng-container matColumnDef="employeeName">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header="employeeName">Employee</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header="employeeName">{{ translationService.translateSync('manager.request_queue.table.columns.employee') }}</th>
                 <td mat-cell *matCellDef="let request" class="employee-cell">
                   <div class="employee-info">
                     <span class="employee-name">{{ request.employeeName }}</span>
@@ -139,19 +139,19 @@
 
               <!-- Project Column -->
               <ng-container matColumnDef="projectName">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header="projectName">Project</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header="projectName">{{ translationService.translateSync('manager.request_queue.table.columns.project') }}</th>
                 <td mat-cell *matCellDef="let request">{{ request.projectName }}</td>
               </ng-container>
 
               <!-- Subproject Column -->
               <ng-container matColumnDef="subProjectName">
-                <th mat-header-cell *matHeaderCellDef>Location</th>
+                <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('manager.request_queue.table.columns.location') }}</th>
                 <td mat-cell *matCellDef="let request">{{ request.subProjectName }}</td>
               </ng-container>
 
               <!-- Days Per Week Column -->
               <ng-container matColumnDef="daysPerWeek">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header="daysPerWeek">Days/Week</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header="daysPerWeek">{{ translationService.translateSync('manager.request_queue.table.columns.days_per_week') }}</th>
                 <td mat-cell *matCellDef="let request" class="center-cell">
                   <mat-chip-set>
                     <mat-chip>{{ request.daysPerWeek }}</mat-chip>
@@ -161,7 +161,7 @@
 
               <!-- Allowance Column -->
               <ng-container matColumnDef="calculatedAllowance">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header="calculatedAllowance">Weekly Allowance</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header="calculatedAllowance">{{ translationService.translateSync('manager.request_queue.table.columns.weekly_allowance') }}</th>
                 <td mat-cell *matCellDef="let request" class="currency-cell">
                   {{ formatCurrency(request.calculatedAllowance) }}
                 </td>
@@ -169,7 +169,7 @@
 
               <!-- Submitted Date Column -->
               <ng-container matColumnDef="submittedDate">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header="submittedDate">Submitted</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header="submittedDate">{{ translationService.translateSync('manager.request_queue.table.columns.submitted') }}</th>
                 <td mat-cell *matCellDef="let request">
                   {{ formatDate(request.submittedDate) }}
                 </td>
@@ -177,7 +177,7 @@
 
               <!-- Days Since Submission Column -->
               <ng-container matColumnDef="daysSinceSubmission">
-                <th mat-header-cell *matHeaderCellDef>Days Ago</th>
+                <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('manager.request_queue.table.columns.days_ago') }}</th>
                 <td mat-cell *matCellDef="let request" class="center-cell">
                   <mat-chip-set>
                     <mat-chip [color]="request.daysSinceSubmission > 7 ? 'warn' : request.daysSinceSubmission > 3 ? 'accent' : 'primary'">
@@ -189,9 +189,9 @@
 
               <!-- Actions Column -->
               <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('manager.request_queue.table.columns.actions') }}</th>
                 <td mat-cell *matCellDef="let request">
-                  <button mat-icon-button (click)="selectRequest(request)" matTooltip="View Details">
+                  <button mat-icon-button (click)="selectRequest(request)" [matTooltip]="translationService.translateSync('manager.request_queue.tooltips.view_details')">
                     <mat-icon>visibility</mat-icon>
                   </button>
                   <!-- Future: Add approve/reject buttons -->
@@ -207,14 +207,14 @@
             <!-- Loading Spinner -->
             <div *ngIf="isLoading" class="loading-container">
               <mat-spinner diameter="50"></mat-spinner>
-              <p>Loading requests...</p>
+              <p>{{ translationService.translateSync('manager.request_queue.loading.requests') }}</p>
             </div>
 
             <!-- No Data Message -->
             <div *ngIf="!isLoading && dataSource.data.length === 0" class="no-data-container">
               <mat-icon class="no-data-icon">inbox</mat-icon>
-              <h3>No pending requests</h3>
-              <p>There are no travel requests matching your current filters.</p>
+              <h3>{{ translationService.translateSync('manager.request_queue.no_data.title') }}</h3>
+              <p>{{ translationService.translateSync('manager.request_queue.no_data.message') }}</p>
             </div>
           </div>
 
@@ -236,7 +236,7 @@
       <mat-card class="employee-card">
         <mat-card-header>
           <mat-card-title>
-            Employee Details
+            {{ translationService.translateSync('manager.request_queue.employee_panel.title') }}
             <button mat-icon-button (click)="closeEmployeePanel()" class="close-button">
               <mat-icon>close</mat-icon>
             </button>
@@ -247,7 +247,7 @@
           <!-- Loading State -->
           <div *ngIf="isLoadingContext" class="context-loading">
             <mat-spinner diameter="30"></mat-spinner>
-            <p>Loading employee details...</p>
+            <p>{{ translationService.translateSync('manager.request_queue.employee_panel.loading') }}</p>
           </div>
 
           <!-- Employee Information -->
@@ -268,7 +268,7 @@
                 <mat-icon>attach_money</mat-icon>
                 <div class="stat-content">
                   <span class="stat-value">{{ formatCurrency(employeeContext.currentWeeklyAllowance) }}</span>
-                  <span class="stat-label">Current Weekly Total</span>
+                  <span class="stat-label">{{ translationService.translateSync('manager.request_queue.employee_panel.stats.current_weekly_total') }}</span>
                 </div>
               </div>
 
@@ -276,7 +276,7 @@
                 <mat-icon>pending</mat-icon>
                 <div class="stat-content">
                   <span class="stat-value">{{ employeeContext.activeRequestsCount }}</span>
-                  <span class="stat-label">Active Requests</span>
+                  <span class="stat-label">{{ translationService.translateSync('manager.request_queue.employee_panel.stats.active_requests') }}</span>
                 </div>
               </div>
 
@@ -284,7 +284,7 @@
                 <mat-icon>trending_up</mat-icon>
                 <div class="stat-content">
                   <span class="stat-value">{{ formatCurrency(employeeContext.averageWeeklyAllowance) }}</span>
-                  <span class="stat-label">Average Weekly</span>
+                  <span class="stat-label">{{ translationService.translateSync('manager.request_queue.employee_panel.stats.average_weekly') }}</span>
                 </div>
               </div>
 
@@ -292,7 +292,7 @@
                 <mat-icon>calendar_month</mat-icon>
                 <div class="stat-content">
                   <span class="stat-value">{{ employeeContext.totalRequestsThisYear }}</span>
-                  <span class="stat-label">Requests This Year</span>
+                  <span class="stat-label">{{ translationService.translateSync('manager.request_queue.employee_panel.stats.requests_this_year') }}</span>
                 </div>
               </div>
             </div>
@@ -301,25 +301,25 @@
 
             <!-- Performance & Budget Stats -->
             <div class="performance-section">
-              <h4>Performance Overview</h4>
+              <h4>{{ translationService.translateSync('manager.request_queue.employee_panel.performance.title') }}</h4>
               <div class="performance-grid">
                 <div class="performance-item">
                   <div class="performance-circle approved">
                     <span class="performance-number">{{ employeeContext.recentApprovals }}</span>
-                    <small>Approved</small>
+                    <small>{{ translationService.translateSync('manager.request_queue.employee_panel.performance.approved') }}</small>
                   </div>
                 </div>
                 <div class="performance-item">
                   <div class="performance-circle rejected">
                     <span class="performance-number">{{ employeeContext.recentRejections }}</span>
-                    <small>Rejected</small>
+                    <small>{{ translationService.translateSync('manager.request_queue.employee_panel.performance.rejected') }}</small>
                   </div>
                 </div>
                 <div class="performance-item budget-utilization">
                   <div class="budget-info">
-                    <span class="budget-label">Dept. Budget Used</span>
+                    <span class="budget-label">{{ translationService.translateSync('manager.request_queue.employee_panel.performance.dept_budget_used') }}</span>
                     <div class="budget-bar">
-                      <div class="budget-progress" 
+                      <div class="budget-progress"
                            [style.width.%]="employeeContext.departmentBudgetUtilization"
                            [class.warning]="employeeContext.departmentBudgetUtilization > 80"
                            [class.critical]="employeeContext.departmentBudgetUtilization > 90">
@@ -332,7 +332,7 @@
                   <div class="score-display">
                     <mat-icon>star</mat-icon>
                     <span class="score-value">{{ employeeContext.performanceScore }}/10</span>
-                    <small>Performance Score</small>
+                    <small>{{ translationService.translateSync('manager.request_queue.employee_panel.performance.performance_score') }}</small>
                   </div>
                 </div>
               </div>
@@ -342,36 +342,36 @@
 
             <!-- Selected Request Details -->
             <div *ngIf="selectedRequest" class="request-details">
-              <h4>Selected Request</h4>
+              <h4>{{ translationService.translateSync('manager.request_queue.employee_panel.request_details.title') }}</h4>
               <div class="request-detail-grid">
                 <div class="detail-item">
-                  <strong>Project:</strong>
+                  <strong>{{ translationService.translateSync('manager.request_queue.employee_panel.request_details.project') }}:</strong>
                   <span>{{ selectedRequest.projectName }}</span>
                 </div>
                 <div class="detail-item">
-                  <strong>Location:</strong>
+                  <strong>{{ translationService.translateSync('manager.request_queue.employee_panel.request_details.location') }}:</strong>
                   <span>{{ selectedRequest.subProjectName }}</span>
                 </div>
                 <div class="detail-item">
-                  <strong>Days per Week:</strong>
+                  <strong>{{ translationService.translateSync('manager.request_queue.employee_panel.request_details.days_per_week') }}:</strong>
                   <span>{{ selectedRequest.daysPerWeek }}</span>
                 </div>
                 <div class="detail-item">
-                  <strong>Weekly Allowance:</strong>
+                  <strong>{{ translationService.translateSync('manager.request_queue.employee_panel.request_details.weekly_allowance') }}:</strong>
                   <span>{{ formatCurrency(selectedRequest.calculatedAllowance) }}</span>
                 </div>
                 <div class="detail-item">
-                  <strong>Submitted:</strong>
+                  <strong>{{ translationService.translateSync('manager.request_queue.employee_panel.request_details.submitted') }}:</strong>
                   <span>{{ formatDate(selectedRequest.submittedDate) }}</span>
                 </div>
                 <div class="detail-item">
-                  <strong>Priority:</strong>
+                  <strong>{{ translationService.translateSync('manager.request_queue.employee_panel.request_details.priority') }}:</strong>
                   <mat-chip [style.background-color]="getUrgencyColor(selectedRequest.urgencyLevel)">
-                    {{ selectedRequest.urgencyLevel }}
+                    {{ translationService.translateSync('manager.request_queue.priority_levels.' + selectedRequest.urgencyLevel) }}
                   </mat-chip>
                 </div>
                 <div class="detail-item justification">
-                  <strong>Justification:</strong>
+                  <strong>{{ translationService.translateSync('manager.request_queue.employee_panel.request_details.justification') }}:</strong>
                   <span class="justification-text">{{ selectedRequest.justification }}</span>
                 </div>
               </div>
@@ -379,27 +379,27 @@
 
             <!-- Action Buttons -->
             <div class="action-buttons" *ngIf="selectedRequest">
-              <button mat-raised-button color="primary" 
+              <button mat-raised-button color="primary"
                       (click)="approveRequest(selectedRequest)"
                       [disabled]="isProcessingAction"
-                      matTooltip="Approve this travel request">
+                      [matTooltip]="translationService.translateSync('manager.request_queue.tooltips.approve_request')">
                 <mat-icon>check</mat-icon>
-                {{ isProcessingAction && actionType === 'approve' ? 'Approving...' : 'Approve' }}
+                {{ isProcessingAction && actionType === 'approve' ? translationService.translateSync('manager.request_queue.actions.approving') : translationService.translateSync('manager.request_queue.actions.approve') }}
               </button>
-              
-              <button mat-raised-button color="warn" 
+
+              <button mat-raised-button color="warn"
                       (click)="openRejectDialog(selectedRequest)"
                       [disabled]="isProcessingAction"
-                      matTooltip="Reject this travel request">
+                      [matTooltip]="translationService.translateSync('manager.request_queue.tooltips.reject_request')">
                 <mat-icon>close</mat-icon>
-                {{ isProcessingAction && actionType === 'reject' ? 'Rejecting...' : 'Reject' }}
+                {{ isProcessingAction && actionType === 'reject' ? translationService.translateSync('manager.request_queue.actions.rejecting') : translationService.translateSync('manager.request_queue.actions.reject') }}
               </button>
-              
+
               <button mat-stroked-button color="accent"
                       (click)="viewRequestDetails(selectedRequest)"
-                      matTooltip="View full request details">
+                      [matTooltip]="translationService.translateSync('manager.request_queue.tooltips.view_full_details')">
                 <mat-icon>visibility</mat-icon>
-                View Details
+                {{ translationService.translateSync('manager.request_queue.actions.view_details') }}
               </button>
             </div>
           </div>

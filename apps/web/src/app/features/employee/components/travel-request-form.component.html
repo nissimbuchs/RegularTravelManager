@@ -1,95 +1,95 @@
 <div class="travel-request-form-container">
   <mat-card class="form-card">
     <mat-card-header>
-      <mat-card-title>Travel Allowance Request</mat-card-title>
-      <mat-card-subtitle>Submit a new travel allowance request</mat-card-subtitle>
+      <mat-card-title>{{ translationService.translateSync('employee.travel_request.title') }}</mat-card-title>
+      <mat-card-subtitle>{{ translationService.translateSync('employee.travel_request.subtitle') }}</mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content>
       <form [formGroup]="requestForm" (ngSubmit)="onSubmit()" class="form-content">
         <!-- Project Selection -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Project</mat-label>
+          <mat-label>{{ translationService.translateSync('employee.travel_request.form.project.label') }}</mat-label>
           <mat-select formControlName="projectId" required>
-            <mat-option value="">Select a project</mat-option>
+            <mat-option value="">{{ translationService.translateSync('employee.travel_request.form.project.placeholder') }}</mat-option>
             <mat-option *ngFor="let project of projects" [value]="project.id">
               {{ project.name }}
             </mat-option>
           </mat-select>
           <mat-error *ngIf="requestForm.get('projectId')?.hasError('required')">
-            Project selection is required
+            {{ translationService.translateSync('employee.travel_request.form.project.error') }}
           </mat-error>
         </mat-form-field>
 
         <!-- Subproject Selection -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Subproject</mat-label>
+          <mat-label>{{ translationService.translateSync('employee.travel_request.form.subproject.label') }}</mat-label>
           <mat-select formControlName="subProjectId" required [disabled]="!requestForm.get('projectId')?.value">
-            <mat-option value="">Select a subproject</mat-option>
+            <mat-option value="">{{ translationService.translateSync('employee.travel_request.form.subproject.placeholder') }}</mat-option>
             <mat-option *ngFor="let subproject of subprojects" [value]="subproject.id">
               {{ subproject.name }}
               <span *ngIf="subproject.city"> - {{ subproject.city }}</span>
             </mat-option>
           </mat-select>
           <mat-error *ngIf="requestForm.get('subProjectId')?.hasError('required')">
-            Subproject selection is required
+            {{ translationService.translateSync('employee.travel_request.form.subproject.error') }}
           </mat-error>
         </mat-form-field>
 
         <!-- Manager Selection -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Manager</mat-label>
+          <mat-label>{{ translationService.translateSync('employee.travel_request.form.manager.label') }}</mat-label>
           <mat-select formControlName="managerId" required>
-            <mat-option value="">Select your manager</mat-option>
+            <mat-option value="">{{ translationService.translateSync('employee.travel_request.form.manager.placeholder') }}</mat-option>
             <mat-option *ngFor="let manager of managers" [value]="manager.id">
               {{ manager.name }} ({{ manager.employeeId }})
             </mat-option>
           </mat-select>
-          <mat-hint>Select the manager who will approve this request</mat-hint>
+          <mat-hint>{{ translationService.translateSync('employee.travel_request.form.manager.hint') }}</mat-hint>
           <mat-error *ngIf="requestForm.get('managerId')?.hasError('required')">
-            Manager selection is required
+            {{ translationService.translateSync('employee.travel_request.form.manager.error') }}
           </mat-error>
         </mat-form-field>
 
         <!-- Days Per Week -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Days Per Week</mat-label>
+          <mat-label>{{ translationService.translateSync('employee.travel_request.form.days.label') }}</mat-label>
           <mat-select formControlName="daysPerWeek" required>
-            <mat-option [value]="1">1 day</mat-option>
-            <mat-option [value]="2">2 days</mat-option>
-            <mat-option [value]="3">3 days</mat-option>
-            <mat-option [value]="4">4 days</mat-option>
-            <mat-option [value]="5">5 days</mat-option>
-            <mat-option [value]="6">6 days</mat-option>
-            <mat-option [value]="7">7 days</mat-option>
+            <mat-option [value]="1">{{ translationService.translateSync('employee.travel_request.form.days.options.one') }}</mat-option>
+            <mat-option [value]="2">{{ translationService.translateSync('employee.travel_request.form.days.options.two') }}</mat-option>
+            <mat-option [value]="3">{{ translationService.translateSync('employee.travel_request.form.days.options.three') }}</mat-option>
+            <mat-option [value]="4">{{ translationService.translateSync('employee.travel_request.form.days.options.four') }}</mat-option>
+            <mat-option [value]="5">{{ translationService.translateSync('employee.travel_request.form.days.options.five') }}</mat-option>
+            <mat-option [value]="6">{{ translationService.translateSync('employee.travel_request.form.days.options.six') }}</mat-option>
+            <mat-option [value]="7">{{ translationService.translateSync('employee.travel_request.form.days.options.seven') }}</mat-option>
           </mat-select>
           <mat-error *ngIf="requestForm.get('daysPerWeek')?.hasError('required')">
-            Days per week is required
+            {{ translationService.translateSync('employee.travel_request.form.days.errors.required') }}
           </mat-error>
           <mat-error *ngIf="requestForm.get('daysPerWeek')?.hasError('min') || requestForm.get('daysPerWeek')?.hasError('max')">
-            Days per week must be between 1 and 7
+            {{ translationService.translateSync('employee.travel_request.form.days.errors.range') }}
           </mat-error>
         </mat-form-field>
 
         <!-- Justification -->
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Justification</mat-label>
+          <mat-label>{{ translationService.translateSync('employee.travel_request.form.justification.label') }}</mat-label>
           <textarea 
             matInput 
             formControlName="justification" 
             rows="4"
-            placeholder="Please provide a detailed justification for your travel request (minimum 10 characters)"
+            [placeholder]="translationService.translateSync('employee.travel_request.form.justification.placeholder')"
             required>
           </textarea>
-          <mat-hint align="end">{{ justificationCharCount }}/500 characters</mat-hint>
+          <mat-hint align="end">{{ translationService.translateSync('employee.travel_request.form.justification.hint', { current: justificationCharCount, max: 500 }) }}</mat-hint>
           <mat-error *ngIf="requestForm.get('justification')?.hasError('required')">
-            Justification is required
+            {{ translationService.translateSync('employee.travel_request.form.justification.errors.required') }}
           </mat-error>
           <mat-error *ngIf="requestForm.get('justification')?.hasError('minlength')">
-            Justification must be at least 10 characters
+            {{ translationService.translateSync('employee.travel_request.form.justification.errors.minlength') }}
           </mat-error>
           <mat-error *ngIf="requestForm.get('justification')?.hasError('maxlength')">
-            Justification cannot exceed 500 characters
+            {{ translationService.translateSync('employee.travel_request.form.justification.errors.maxlength') }}
           </mat-error>
         </mat-form-field>
 
@@ -97,24 +97,24 @@
         <div class="calculation-preview" *ngIf="calculationPreview || isCalculating">
           <mat-card class="preview-card">
             <mat-card-header>
-              <mat-card-title class="preview-title">Cost Preview</mat-card-title>
+              <mat-card-title class="preview-title">{{ translationService.translateSync('employee.travel_request.preview.title') }}</mat-card-title>
             </mat-card-header>
             <mat-card-content>
               <div *ngIf="isCalculating" class="calculation-loading">
                 <mat-spinner diameter="24"></mat-spinner>
-                <span class="loading-text">Calculating...</span>
+                <span class="loading-text">{{ translationService.translateSync('employee.travel_request.preview.calculating') }}</span>
               </div>
               <div *ngIf="calculationPreview && !isCalculating" class="preview-details">
                 <div class="preview-item">
-                  <span class="label">Distance:</span>
+                  <span class="label">{{ translationService.translateSync('employee.travel_request.preview.distance') }}:</span>
                   <span class="value">{{ calculationPreview.distance | number:'1.3-3' }} km</span>
                 </div>
                 <div class="preview-item">
-                  <span class="label">Daily Allowance:</span>
+                  <span class="label">{{ translationService.translateSync('employee.travel_request.preview.daily_allowance') }}:</span>
                   <span class="value">CHF {{ calculationPreview.dailyAllowance | number:'1.2-2' }}</span>
                 </div>
                 <div class="preview-item highlight">
-                  <span class="label">Weekly Total:</span>
+                  <span class="label">{{ translationService.translateSync('employee.travel_request.preview.weekly_total') }}:</span>
                   <span class="value">CHF {{ calculationPreview.weeklyAllowance | number:'1.2-2' }}</span>
                 </div>
               </div>
@@ -133,10 +133,10 @@
         [disabled]="!isFormValid || isSubmitting"
         class="submit-button">
         <mat-spinner *ngIf="isSubmitting" diameter="20" class="submit-spinner"></mat-spinner>
-        {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+        {{ isSubmitting ? translationService.translateSync('employee.travel_request.actions.submitting') : translationService.translateSync('employee.travel_request.actions.submit') }}
       </button>
       <button mat-button type="button" class="cancel-button" (click)="onCancel()">
-        Cancel
+        {{ translationService.translateSync('employee.travel_request.actions.cancel') }}
       </button>
     </mat-card-actions>
   </mat-card>

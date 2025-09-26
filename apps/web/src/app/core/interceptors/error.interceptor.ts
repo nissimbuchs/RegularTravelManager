@@ -4,6 +4,7 @@ import { catchError, retry, takeUntil, timeout, switchMap } from 'rxjs/operators
 import { throwError, timer, EMPTY, Subject } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../services/auth.service';
+import { TranslationService } from '../services/translation.service';
 import { User } from '../services/auth.service';
 
 // Global error cleanup signal
@@ -19,6 +20,7 @@ export function triggerErrorCleanup(): void {
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const snackBar = inject(MatSnackBar);
   const authService = inject(AuthService);
+  const translationService = inject(TranslationService);
 
   return next(req).pipe(
     takeUntil(globalErrorCleanup$), // Cancel if error cleanup triggered
@@ -59,28 +61,28 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             return EMPTY;
           }
 
-          let errorMessage = 'An unexpected error occurred';
+          let errorMessage = translationService.translateSync('errors.general.unexpected');
 
           if (error.error instanceof ErrorEvent) {
             // Client-side error
-            errorMessage = `Error: ${error.error.message}`;
+            errorMessage = translationService.translateSync('errors.client.general', { message: error.error.message });
           } else {
             // Server-side error
             switch (error.status) {
               case 400:
-                errorMessage = 'Bad request. Please check your input.';
+                errorMessage = translationService.translateSync('errors.http.bad_request');
                 break;
               case 401:
-                errorMessage = 'You are not authorized to perform this action.';
+                errorMessage = translationService.translateSync('errors.http.unauthorized');
                 break;
               case 403:
-                errorMessage = "Access forbidden. You don't have permission.";
+                errorMessage = translationService.translateSync('errors.http.forbidden');
                 break;
               case 404:
-                errorMessage = 'The requested resource was not found.';
+                errorMessage = translationService.translateSync('errors.http.not_found');
                 break;
               case 500:
-                errorMessage = 'Internal server error. Please try again later.';
+                errorMessage = translationService.translateSync('errors.http.server_error');
                 break;
               default:
                 errorMessage = error.error?.message || errorMessage;
@@ -99,7 +101,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             error.status !== 401 &&
             !globalErrorCleanup$.closed
           ) {
-            snackBar.open(errorMessage, 'Close', {
+            snackBar.open(errorMessage, translationService.translateSync('common.actions.close'), {
               duration: 5000,
               panelClass: ['error-snackbar'],
             });

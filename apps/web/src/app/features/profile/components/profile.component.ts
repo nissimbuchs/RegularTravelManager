@@ -18,6 +18,7 @@ import { takeUntil } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { AdminService } from '../../../core/services/admin.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
 
 @Component({
@@ -44,53 +45,53 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
         <mat-card-header>
           <mat-card-title>
             <mat-icon>account_circle</mat-icon>
-            My Profile
+            {{ translationService.translateSync('profile.title') }}
           </mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <mat-tab-group animationDuration="0ms">
             <!-- Personal Information Tab -->
-            <mat-tab label="Personal Information">
+            <mat-tab [label]="translationService.translateSync('profile.tabs.personal')">
               <div class="tab-content">
                 <form [formGroup]="personalForm" (ngSubmit)="savePersonalInfo()">
                   <div class="form-row">
                     <mat-form-field appearance="outline" class="form-field-half">
-                      <mat-label>First Name</mat-label>
+                      <mat-label>{{ translationService.translateSync('profile.personal.fields.first_name') }}</mat-label>
                       <input matInput formControlName="firstName" />
                       <mat-icon matPrefix>person</mat-icon>
                       <mat-error *ngIf="personalForm.get('firstName')?.hasError('required')">
-                        First name is required
+                        {{ translationService.translateSync('profile.personal.errors.first_name_required') }}
                       </mat-error>
                     </mat-form-field>
 
                     <mat-form-field appearance="outline" class="form-field-half">
-                      <mat-label>Last Name</mat-label>
+                      <mat-label>{{ translationService.translateSync('profile.personal.fields.last_name') }}</mat-label>
                       <input matInput formControlName="lastName" />
                       <mat-error *ngIf="personalForm.get('lastName')?.hasError('required')">
-                        Last name is required
+                        {{ translationService.translateSync('profile.personal.errors.last_name_required') }}
                       </mat-error>
                     </mat-form-field>
                   </div>
 
                   <mat-form-field appearance="outline" class="form-field-full">
-                    <mat-label>Email</mat-label>
+                    <mat-label>{{ translationService.translateSync('profile.personal.fields.email') }}</mat-label>
                     <input matInput formControlName="email" readonly />
                     <mat-icon matPrefix>email</mat-icon>
                     <mat-hint
-                      >Email cannot be changed directly. Contact admin for changes.</mat-hint
+                      >{{ translationService.translateSync('profile.personal.fields.email_hint') }}</mat-hint
                     >
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="form-field-full">
-                    <mat-label>Phone Number</mat-label>
+                    <mat-label>{{ translationService.translateSync('profile.personal.fields.phone') }}</mat-label>
                     <input
                       matInput
                       formControlName="phoneNumber"
-                      placeholder="e.g., +41 79 123 45 67, +1 555 123 4567"
+                      [placeholder]="translationService.translateSync('profile.personal.fields.phone_placeholder')"
                     />
                     <mat-icon matPrefix>phone</mat-icon>
                     <mat-error *ngIf="personalForm.get('phoneNumber')?.hasError('pattern')">
-                      Please enter a valid phone number (10-15 digits, optional + prefix)
+                      {{ translationService.translateSync('profile.personal.errors.phone_invalid') }}
                     </mat-error>
                   </mat-form-field>
 
@@ -101,7 +102,7 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
                       (click)="resetPersonalForm()"
                       [disabled]="loading"
                     >
-                      Reset
+                      {{ translationService.translateSync('profile.personal.actions.reset') }}
                     </button>
                     <button
                       mat-raised-button
@@ -115,7 +116,7 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
                         mode="indeterminate"
                         diameter="20"
                       ></mat-progress-spinner>
-                      Save Changes
+                      {{ translationService.translateSync('profile.personal.actions.save') }}
                     </button>
                   </div>
                 </form>
@@ -123,18 +124,17 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
             </mat-tab>
 
             <!-- Address Management Tab -->
-            <mat-tab label="Home Address">
+            <mat-tab [label]="translationService.translateSync('profile.tabs.address')">
               <div class="tab-content">
                 <div class="address-info-card">
                   <mat-icon class="address-icon">home</mat-icon>
-                  <h3>Manage Your Home Address</h3>
+                  <h3>{{ translationService.translateSync('profile.address.title') }}</h3>
                   <p>
-                    Your home address is used to calculate travel distances and allowances for your
-                    travel requests.
+                    {{ translationService.translateSync('profile.address.description') }}
                   </p>
 
                   <div class="current-address" *ngIf="profile?.homeAddress">
-                    <h4>Current Address:</h4>
+                    <h4>{{ translationService.translateSync('profile.address.current') }}:</h4>
                     <div class="address-display">
                       <div>{{ profile!.homeAddress!.street }}</div>
                       <div>
@@ -147,8 +147,7 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
                   <div class="no-address" *ngIf="!profile?.homeAddress">
                     <mat-icon>location_off</mat-icon>
                     <p>
-                      No address set. Please add your home address to enable travel distance
-                      calculations.
+                      {{ translationService.translateSync('profile.address.no_address') }}
                     </p>
                   </div>
 
@@ -159,38 +158,38 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
                     class="address-button"
                   >
                     <mat-icon>edit_location</mat-icon>
-                    Manage Address
+                    {{ translationService.translateSync('profile.address.manage_button') }}
                   </button>
                 </div>
               </div>
             </mat-tab>
 
             <!-- Notification Settings Tab -->
-            <mat-tab label="Notifications">
+            <mat-tab [label]="translationService.translateSync('profile.tabs.notifications')">
               <div class="tab-content">
                 <form [formGroup]="notificationForm" (ngSubmit)="saveNotifications()">
-                  <h3>Email Notifications</h3>
+                  <h3>{{ translationService.translateSync('profile.notifications.title') }}</h3>
                   <div class="checkbox-group">
                     <mat-checkbox formControlName="email">
-                      Enable email notifications
+                      {{ translationService.translateSync('profile.notifications.enable_email') }}
                     </mat-checkbox>
                     <mat-checkbox formControlName="requestUpdates">
-                      Request status updates
+                      {{ translationService.translateSync('profile.notifications.request_updates') }}
                     </mat-checkbox>
                     <mat-checkbox formControlName="weeklyDigest">
-                      Weekly expense summaries
+                      {{ translationService.translateSync('profile.notifications.weekly_digest') }}
                     </mat-checkbox>
                     <mat-checkbox formControlName="maintenanceAlerts">
-                      System maintenance alerts
+                      {{ translationService.translateSync('profile.notifications.maintenance_alerts') }}
                     </mat-checkbox>
                   </div>
 
                   <mat-form-field appearance="outline" class="form-field-full">
-                    <mat-label>Notification Frequency</mat-label>
+                    <mat-label>{{ translationService.translateSync('profile.notifications.frequency_label') }}</mat-label>
                     <mat-select formControlName="frequency">
-                      <mat-option value="immediate">Immediate</mat-option>
-                      <mat-option value="daily">Daily Digest</mat-option>
-                      <mat-option value="weekly">Weekly Summary</mat-option>
+                      <mat-option value="immediate">{{ translationService.translateSync('profile.notifications.frequency.immediate') }}</mat-option>
+                      <mat-option value="daily">{{ translationService.translateSync('profile.notifications.frequency.daily') }}</mat-option>
+                      <mat-option value="weekly">{{ translationService.translateSync('profile.notifications.frequency.weekly') }}</mat-option>
                     </mat-select>
                     <mat-icon matPrefix>schedule</mat-icon>
                   </mat-form-field>
@@ -202,7 +201,7 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
                       (click)="resetNotificationForm()"
                       [disabled]="loading"
                     >
-                      Reset
+                      {{ translationService.translateSync('profile.notifications.actions.reset') }}
                     </button>
                     <button
                       mat-raised-button
@@ -216,7 +215,7 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
                         mode="indeterminate"
                         diameter="20"
                       ></mat-progress-spinner>
-                      Save Preferences
+                      {{ translationService.translateSync('profile.notifications.actions.save') }}
                     </button>
                   </div>
                 </form>
@@ -224,24 +223,24 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
             </mat-tab>
 
             <!-- Security Tab -->
-            <mat-tab label="Security">
+            <mat-tab [label]="translationService.translateSync('profile.tabs.security')">
               <div class="tab-content">
                 <div class="security-info">
-                  <h3>Account Security</h3>
+                  <h3>{{ translationService.translateSync('profile.security.title') }}</h3>
                   <div class="info-row">
-                    <span class="info-label">Account Status:</span>
+                    <span class="info-label">{{ translationService.translateSync('profile.security.account_status') }}:</span>
                     <span class="info-value">{{ profile?.status | titlecase }}</span>
                   </div>
                   <div class="info-row">
-                    <span class="info-label">Role:</span>
+                    <span class="info-label">{{ translationService.translateSync('profile.security.role') }}:</span>
                     <span class="info-value">{{ profile?.role | titlecase }}</span>
                   </div>
                   <div class="info-row">
-                    <span class="info-label">Last Login:</span>
+                    <span class="info-label">{{ translationService.translateSync('profile.security.last_login') }}:</span>
                     <span class="info-value">{{ profile?.lastLoginAt | date: 'medium' }}</span>
                   </div>
                   <div class="info-row">
-                    <span class="info-label">Email Verified:</span>
+                    <span class="info-label">{{ translationService.translateSync('profile.security.email_verified') }}:</span>
                     <span class="info-value">
                       <mat-icon *ngIf="profile?.emailVerifiedAt" color="primary"
                         >check_circle</mat-icon
@@ -252,15 +251,15 @@ import { UserProfile, UserProfileUpdateRequest } from '@rtm/shared';
                   <div class="button-group">
                     <button mat-stroked-button color="primary" disabled>
                       <mat-icon>lock</mat-icon>
-                      Change Password
+                      {{ translationService.translateSync('profile.security.change_password') }}
                     </button>
                     <button mat-stroked-button disabled>
                       <mat-icon>security</mat-icon>
-                      Two-Factor Authentication
+                      {{ translationService.translateSync('profile.security.two_factor') }}
                     </button>
                   </div>
                   <mat-hint class="security-hint"
-                    >Password and security features coming soon</mat-hint
+                    >{{ translationService.translateSync('profile.security.coming_soon') }}</mat-hint
                   >
                 </div>
               </div>
@@ -286,7 +285,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private adminService: AdminService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    public translationService: TranslationService
   ) {
     this.personalForm = this.fb.group({
       firstName: ['', Validators.required],
@@ -326,7 +326,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         },
         error: error => {
           console.error('Failed to load profile:', error);
-          this.snackBar.open('Failed to load profile', 'Close', { duration: 3000 });
+          this.snackBar.open(this.translationService.translateSync('profile.messages.load_failed'), this.translationService.translateSync('common.actions.close'), { duration: 3000 });
           this.loading = false;
         },
       });
@@ -354,7 +354,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       phoneNumber: this.personalForm.get('phoneNumber')?.value || undefined,
     };
 
-    this.updateProfile(updates, 'Personal information');
+    this.updateProfile(updates, this.translationService.translateSync('profile.messages.personal_info'));
   }
 
   navigateToAddress(): void {
@@ -366,7 +366,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       notificationPreferences: this.notificationForm.value,
     };
 
-    this.updateProfile(updates, 'Notification preferences');
+    this.updateProfile(updates, this.translationService.translateSync('profile.messages.notification_preferences'));
   }
 
   private updateProfile(updates: UserProfileUpdateRequest, updateType: string): void {
@@ -378,7 +378,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         next: updatedProfile => {
           this.profile = updatedProfile;
           this.populateForms(updatedProfile);
-          this.snackBar.open(`${updateType} updated successfully`, 'Close', { duration: 3000 });
+          this.snackBar.open(this.translationService.translateSync('profile.messages.update_success', { type: updateType }), this.translationService.translateSync('common.actions.close'), { duration: 3000 });
           this.loading = false;
 
           // Mark forms as pristine after successful save
@@ -387,7 +387,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         },
         error: error => {
           console.error('Failed to update profile:', error);
-          this.snackBar.open(`Failed to update ${updateType.toLowerCase()}`, 'Close', {
+          this.snackBar.open(this.translationService.translateSync('profile.messages.update_failed', { type: updateType.toLowerCase() }), this.translationService.translateSync('common.actions.close'), {
             duration: 3000,
           });
           this.loading = false;

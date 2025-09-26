@@ -21,6 +21,7 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
 import { Subject, takeUntil, debounceTime, distinctUntilChanged, merge } from 'rxjs';
 
 import { EmployeeDashboardService } from '../services/employee-dashboard.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import {
   EmployeeDashboard,
   EmployeeRequestSummary,
@@ -118,7 +119,8 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private employeeDashboardService: EmployeeDashboardService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    public translationService: TranslationService
   ) {
     this.filterForm = this.createFilterForm();
   }
@@ -182,7 +184,7 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
   }
 
   private showRefreshNotification(): void {
-    this.snackBar.open('Dashboard updated', 'Close', {
+    this.snackBar.open(this.translationService.translateSync('employee.request_dashboard.messages.updated'), this.translationService.translateSync('common.actions.close'), {
       duration: 2000,
       horizontalPosition: 'end',
       verticalPosition: 'top',
@@ -205,7 +207,7 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
         },
         error: error => {
           console.error('Failed to load dashboard data:', error);
-          this.snackBar.open('Failed to load dashboard data', 'Close', {
+          this.snackBar.open(this.translationService.translateSync('employee.request_dashboard.errors.load_failed'), this.translationService.translateSync('common.actions.close'), {
             duration: 5000,
             panelClass: ['error-snackbar'],
           });
@@ -283,7 +285,7 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
         },
         error: error => {
           console.error('Failed to load request details:', error);
-          this.snackBar.open('Failed to load request details', 'Close', {
+          this.snackBar.open(this.translationService.translateSync('employee.request_dashboard.errors.details_failed'), this.translationService.translateSync('common.actions.close'), {
             duration: 3000,
             panelClass: ['error-snackbar'],
           });
@@ -297,7 +299,7 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
     }
 
     const confirmed = confirm(
-      `Are you sure you want to withdraw this travel request for ${request.projectName}?`
+      this.translationService.translateSync('employee.request_dashboard.confirm.withdraw', { project: request.projectName })
     );
     if (!confirmed) {
       return;
@@ -308,7 +310,7 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.snackBar.open('Request withdrawn successfully', 'Close', {
+          this.snackBar.open(this.translationService.translateSync('employee.request_dashboard.messages.withdrawn'), this.translationService.translateSync('common.actions.close'), {
             duration: 3000,
             panelClass: ['success-snackbar'],
           });
@@ -316,7 +318,7 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
         },
         error: error => {
           console.error('Failed to withdraw request:', error);
-          this.snackBar.open('Failed to withdraw request', 'Close', {
+          this.snackBar.open(this.translationService.translateSync('employee.request_dashboard.errors.withdraw_failed'), this.translationService.translateSync('common.actions.close'), {
             duration: 5000,
             panelClass: ['error-snackbar'],
           });

@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-unauthorized',
@@ -16,18 +17,18 @@ import { AuthService } from '../../core/services/auth.service';
         <mat-card-content>
           <div class="unauthorized-content">
             <mat-icon class="unauthorized-icon">block</mat-icon>
-            <h2>Access Denied</h2>
-            <p>You don't have permission to access this page.</p>
-            <p>Please contact your administrator if you believe this is an error.</p>
+            <h2>{{ translationService.translateSync('unauthorized.title') }}</h2>
+            <p>{{ translationService.translateSync('unauthorized.message') }}</p>
+            <p>{{ translationService.translateSync('unauthorized.contact_admin') }}</p>
 
             <div class="action-buttons">
               <button mat-raised-button color="primary" (click)="goBack()">
                 <mat-icon>arrow_back</mat-icon>
-                Go Back
+                {{ translationService.translateSync('unauthorized.actions.go_back') }}
               </button>
               <button mat-raised-button color="warn" (click)="logout()">
                 <mat-icon>logout</mat-icon>
-                Sign Out
+                {{ translationService.translateSync('unauthorized.actions.sign_out') }}
               </button>
             </div>
           </div>
@@ -40,7 +41,8 @@ import { AuthService } from '../../core/services/auth.service';
 export class UnauthorizedComponent {
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    public translationService: TranslationService
   ) {}
 
   goBack(): void {

@@ -18,7 +18,9 @@
       "upload": "Hochladen",
       "download": "Herunterladen",
       "create": "Erstellen",
-      "update": "Aktualisieren"
+      "update": "Aktualisieren",
+      "retry": "Wiederholen",
+      "close": "Schließen"
     },
     "actions": {
       "loading": "Laden...",
@@ -26,7 +28,8 @@
       "processing": "Verarbeiten...",
       "success": "Erfolg!",
       "error": "Fehler aufgetreten",
-      "retry": "Wiederholen"
+      "retry": "Wiederholen",
+      "close": "Schließen"
     },
     "status": {
       "pending": "Ausstehend",
@@ -88,34 +91,376 @@
   },
   "employee": {
     "dashboard": {
-      "title": "Mitarbeiter Dashboard",
-      "welcome": "Willkommen, {{name}}",
-      "summary": {
-        "requests_submitted": "Eingereichte Anträge",
-        "pending_approval": "Zur Genehmigung",
-        "approved_this_month": "Diesen Monat genehmigt",
-        "total_allowance": "Gesamte Vergütung (CHF)"
+      "title": "Mitarbeiter-Dashboard",
+      "subtitle": "Verfolgen Sie Ihre Reisekostenerstattungsanträge und deren Status",
+      "cards": {
+        "address": {
+          "title": "Adressverwaltung",
+          "subtitle": "Aktualisieren Sie Ihre Wohnadresse für Reiseberechnungen",
+          "button": "Adresse verwalten"
+        },
+        "new_request": {
+          "title": "Neuer Reiseantrag",
+          "subtitle": "Neuen Reisekostenerstattungsantrag einreichen",
+          "button": "Neuer Antrag"
+        },
+        "my_requests": {
+          "title": "Meine Reiseanträge",
+          "subtitle": "Ihre Reiseantragsverlauf und Status anzeigen",
+          "button": "Anträge anzeigen"
+        }
       }
     },
-    "new_request": {
-      "title": "Neuer Reiseantrag",
+    "address": {
+      "current": {
+        "title": "Aktuelle Wohnadresse",
+        "subtitle": "Wird für Reiseentfernungsberechnungen verwendet"
+      },
+      "no_address": {
+        "title": "Keine Adresse festgelegt",
+        "description": "Bitte fügen Sie Ihre Wohnadresse hinzu, um Reiseentfernungsberechnungen zu ermöglichen."
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "edit": "Adresse bearbeiten",
+        "add": "Adresse hinzufügen"
+      },
       "form": {
+        "update_title": "Wohnadresse aktualisieren",
+        "add_title": "Wohnadresse hinzufügen",
+        "subtitle": "Alle Felder sind für genaue Geokodierung erforderlich",
+        "fields": {
+          "street": {
+            "label": "Straßenadresse",
+            "placeholder": "z.B. Bahnhofstrasse 45"
+          },
+          "city": {
+            "label": "Stadt",
+            "placeholder": "z.B. Zürich"
+          },
+          "postal_code": {
+            "label": "Postleitzahl",
+            "placeholder": "z.B. 8001"
+          },
+          "country": {
+            "label": "Land"
+          }
+        },
+        "errors": {
+          "street": {
+            "required": "Straßenadresse ist erforderlich",
+            "minlength": "Straßenadresse muss mindestens 3 Zeichen lang sein"
+          },
+          "city": {
+            "required": "Stadt ist erforderlich",
+            "minlength": "Stadt muss mindestens 2 Zeichen lang sein"
+          },
+          "postal_code": {
+            "required": "Postleitzahl ist erforderlich",
+            "pattern": "Schweizer Postleitzahl muss 4 Ziffern haben"
+          },
+          "country": {
+            "required": "Land ist erforderlich"
+          }
+        },
+        "actions": {
+          "cancel": "Abbrechen",
+          "update": "Aktualisieren",
+          "add": "Hinzufügen",
+          "address": "Adresse"
+        }
+      },
+      "info": {
+        "title": "Adressinformationen",
+        "last_updated": "Zuletzt aktualisiert",
+        "geocoding_status": "Geokodierungsstatus",
+        "geocoded_success": "✅ Adresse erfolgreich geokodiert"
+      },
+      "confirm": {
+        "update": {
+          "title": "Adresse aktualisieren",
+          "message": "Das Aktualisieren Ihrer Adresse wird die Entfernungen für ausstehende Reiseanträge neu berechnen. Fortfahren?",
+          "confirm": "Adresse aktualisieren"
+        }
+      },
+      "success": {
+        "updated_geocoded": "Adresse erfolgreich aktualisiert und geokodiert",
+        "updated_pending": "Adresse aktualisiert (Geokodierung läuft)"
+      },
+      "errors": {
+        "load_profile": "Fehler beim Laden des Mitarbeiterprofils",
+        "no_auth": "Keine Benutzerauthentifizierung gefunden",
+        "auth_error": "Authentifizierungsfehler",
+        "update_failed": "Fehler beim Aktualisieren der Adresse",
+        "invalid_format": "Ungültiges Adressformat. Bitte überprüfen Sie Ihre Eingabe.",
+        "profile_not_found": "Mitarbeiterprofil nicht gefunden",
+        "no_user_id": "Authentifizierungsfehler - keine Benutzer-ID gefunden"
+      }
+    },
+    "travel_request": {
+      "title": "Reisekostenerstattungsantrag",
+      "subtitle": "Neuen Reisekostenerstattungsantrag einreichen",
+      "form": {
+        "project": {
+          "label": "Projekt",
+          "placeholder": "Projekt auswählen",
+          "error": "Projektauswahl ist erforderlich"
+        },
+        "subproject": {
+          "label": "Unterprojekt",
+          "placeholder": "Unterprojekt auswählen",
+          "error": "Unterprojektauswahl ist erforderlich"
+        },
+        "manager": {
+          "label": "Manager",
+          "placeholder": "Manager auswählen",
+          "hint": "Wählen Sie den Manager aus, der diesen Antrag genehmigen wird",
+          "error": "Managerauswahl ist erforderlich"
+        },
+        "days": {
+          "label": "Tage pro Woche",
+          "options": {
+            "one": "1 Tag",
+            "two": "2 Tage",
+            "three": "3 Tage",
+            "four": "4 Tage",
+            "five": "5 Tage",
+            "six": "6 Tage",
+            "seven": "7 Tage"
+          },
+          "errors": {
+            "required": "Tage pro Woche ist erforderlich",
+            "range": "Tage pro Woche muss zwischen 1 und 7 liegen"
+          }
+        },
+        "justification": {
+          "label": "Begründung",
+          "placeholder": "Bitte geben Sie eine detaillierte Begründung für Ihren Reiseantrag an (mindestens 10 Zeichen)",
+          "hint": "{{current}}/{{max}} Zeichen",
+          "errors": {
+            "required": "Begründung ist erforderlich",
+            "minlength": "Begründung muss mindestens 10 Zeichen lang sein",
+            "maxlength": "Begründung darf 500 Zeichen nicht überschreiten"
+          }
+        }
+      },
+      "preview": {
+        "title": "Kostenvorschau",
+        "calculating": "Berechnung läuft...",
+        "distance": "Entfernung",
+        "daily_allowance": "Tägliche Vergütung",
+        "weekly_total": "Wöchentliche Gesamtsumme"
+      },
+      "actions": {
+        "submitting": "Wird eingereicht...",
+        "submit": "Antrag einreichen",
+        "cancel": "Abbrechen",
+        "clear_draft": "Entwurf löschen"
+      },
+      "errors": {
+        "initial_data": "Einige Anfangsdaten konnten nicht geladen werden. Das Formular hat möglicherweise eingeschränkte Funktionalität.",
+        "load_projects": "Projektliste konnte nicht geladen werden. Bitte aktualisieren Sie die Seite oder kontaktieren Sie den Support.",
+        "load_managers": "Managerliste konnte nicht geladen werden. Bitte aktualisieren Sie die Seite oder kontaktieren Sie den Support.",
+        "calculation_failed": "Reisekostenerstattung konnte nicht berechnet werden. Bitte überprüfen Sie Ihre Auswahlen und versuchen Sie es erneut.",
+        "load_subprojects": "Standorte für das ausgewählte Projekt konnten nicht geladen werden. Bitte versuchen Sie, ein anderes Projekt auszuwählen.",
+        "submit_failed": "Ihr Reiseantrag konnte nicht eingereicht werden.",
+        "bad_request": "Bitte überprüfen Sie Ihre Formulardaten und versuchen Sie es erneut.",
+        "permission_denied": "Sie haben möglicherweise keine Berechtigung, Anträge einzureichen. Bitte kontaktieren Sie Ihren Manager.",
+        "duplicate_request": "Ein ähnlicher Antrag existiert möglicherweise bereits. Bitte überprüfen Sie Ihre ausstehenden Anträge.",
+        "server_error": "Unser System ist vorübergehend nicht verfügbar. Bitte versuchen Sie es in einigen Minuten erneut.",
+        "offline": "Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+        "generic": "Bitte versuchen Sie es erneut oder kontaktieren Sie den Support, wenn das Problem weiterhin besteht.",
+        "draft_corrupted": "Ihr gespeicherter Entwurf konnte aufgrund von Datenkorruption nicht wiederhergestellt werden. Starte mit einem neuen Formular."
+      },
+      "messages": {
+        "form_reset": "Formular für neuen Antrag zurückgesetzt",
+        "draft_restored": "Entwurf wiederhergestellt"
+      }
+    },
+    "request_dashboard": {
+      "title": "Meine Reiseanträge",
+      "subtitle": "Verfolgen Sie Ihre Reisekostenerstattungsanträge und deren Status",
+      "actions": {
+        "new_request": "Neuer Antrag",
+        "new_request_tooltip": "Neuen Reiseantrag einreichen",
+        "refresh_tooltip": "Dashboard aktualisieren"
+      },
+      "summary": {
+        "total_requests": "Gesamtanträge",
+        "pending": "Ausstehend",
+        "approved": "Genehmigt",
+        "monthly_allowance": "Monatliche Vergütung"
+      },
+      "filters": {
+        "status": {
+          "label": "Status",
+          "all": "Alle Status",
+          "pending": "Ausstehend",
+          "approved": "Genehmigt",
+          "rejected": "Abgelehnt",
+          "withdrawn": "Zurückgezogen"
+        },
+        "project": {
+          "label": "Projektname",
+          "placeholder": "Projekte durchsuchen..."
+        },
+        "from_date": "Von Datum",
+        "to_date": "Bis Datum",
+        "apply_tooltip": "Filter anwenden",
+        "filter": "Filtern",
+        "clear_tooltip": "Alle Filter löschen",
+        "clear": "Löschen"
+      },
+      "loading": "Ihre Reiseanträge werden geladen...",
+      "table": {
+        "title": "Meine Reiseanträge",
+        "subtitle": "Klicken Sie auf einen Antrag, um Details anzuzeigen",
+        "showing": "{{current}} von {{total}} Anträgen angezeigt",
+        "headers": {
+          "status": "Status",
+          "project": "Projekt",
+          "location": "Standort",
+          "days_week": "Tage/Woche",
+          "daily_allowance": "Tägliche Vergütung",
+          "weekly_total": "Wöchentliche Gesamtsumme",
+          "submitted": "Eingereicht",
+          "processed": "Bearbeitet",
+          "actions": "Aktionen"
+        },
+        "per_day": "pro Tag",
+        "per_week": "pro Woche",
+        "actions": {
+          "view_details": "Details anzeigen",
+          "withdraw": "Antrag zurückziehen"
+        }
+      },
+      "no_data": {
+        "title": "Keine Reiseanträge gefunden",
+        "message": "Sie haben noch keine Reiseanträge eingereicht oder sie entsprechen nicht Ihren aktuellen Filtern.",
+        "action": "Ihren ersten Antrag einreichen"
+      },
+      "details": {
+        "title": "Antragsdetails",
+        "status": "Status",
+        "days_per_week": "Tage pro Woche",
+        "daily_allowance": "Tägliche Vergütung",
+        "weekly_allowance": "Wöchentliche Vergütung",
+        "submitted": "Eingereicht",
+        "processed": "Bearbeitet",
+        "manager": "Manager",
+        "distance": "Entfernung",
+        "justification": "Begründung",
+        "withdraw_tooltip": "Diesen Reiseantrag zurückziehen",
+        "withdraw_action": "Antrag zurückziehen"
+      },
+      "confirm": {
+        "withdraw": "Sind Sie sicher, dass Sie diesen Reiseantrag für {{project}} zurückziehen möchten?"
+      },
+      "messages": {
+        "updated": "Dashboard aktualisiert",
+        "withdrawn": "Antrag erfolgreich zurückgezogen"
+      },
+      "errors": {
+        "load_failed": "Fehler beim Laden der Dashboard-Daten",
+        "details_failed": "Fehler beim Laden der Antragsdetails",
+        "withdraw_failed": "Fehler beim Zurückziehen des Antrags"
+      }
+    },
+    "confirmation": {
+      "title": "Antrag erfolgreich eingereicht",
+      "auto_close": "Kehrt automatisch zum Dashboard zurück in {{seconds}} Sekunden...",
+      "request_id": {
+        "title": "Antrags-ID",
+        "hint": "Speichern Sie diese ID für zukünftige Referenz"
+      },
+      "allowance": {
+        "title": "Vergütungsübersicht",
+        "distance": "Entfernung",
+        "daily": "Tägliche Vergütung",
+        "weekly": "Wöchentliche Gesamtsumme"
+      },
+      "details": {
+        "title": "Antragsdetails",
         "project": "Projekt",
         "subproject": "Unterprojekt",
+        "manager": "Manager",
         "days_per_week": "Tage pro Woche",
-        "justification": "Begründung",
-        "submit": "Antrag einreichen"
+        "justification": "Begründung"
+      },
+      "actions": {
+        "create_new": "Neuen Antrag erstellen",
+        "close": "Schließen",
+        "view_requests": "Meine Anträge anzeigen"
+      }
+    }
+  },
+  "profile": {
+    "title": "Mein Profil",
+    "tabs": {
+      "personal": "Persönliche Daten",
+      "address": "Wohnadresse",
+      "notifications": "Benachrichtigungen",
+      "security": "Sicherheit"
+    },
+    "personal": {
+      "fields": {
+        "first_name": "Vorname",
+        "last_name": "Nachname",
+        "email": "E-Mail",
+        "email_hint": "E-Mail kann nicht direkt geändert werden. Wenden Sie sich für Änderungen an den Administrator.",
+        "phone": "Telefonnummer",
+        "phone_placeholder": "z.B. +41 79 123 45 67, +49 172 123 4567"
+      },
+      "errors": {
+        "first_name_required": "Vorname ist erforderlich",
+        "last_name_required": "Nachname ist erforderlich",
+        "phone_invalid": "Bitte geben Sie eine gültige Telefonnummer ein (10-15 Ziffern, optionales + Präfix)"
+      },
+      "actions": {
+        "reset": "Zurücksetzen",
+        "save": "Änderungen speichern"
       }
     },
-    "requests": {
-      "title": "Meine Reiseanträge",
-      "columns": {
-        "date": "Datum",
-        "project": "Projekt",
-        "status": "Status",
-        "allowance": "Vergütung (CHF)",
-        "actions": "Aktionen"
+    "address": {
+      "title": "Ihre Wohnadresse verwalten",
+      "description": "Ihre Wohnadresse wird zur Berechnung von Reiseentfernungen und Vergütungen für Ihre Reiseanträge verwendet.",
+      "current": "Aktuelle Adresse",
+      "no_address": "Keine Adresse hinterlegt. Bitte fügen Sie Ihre Wohnadresse hinzu, um Reiseentfernungsberechnungen zu ermöglichen.",
+      "manage_button": "Adresse verwalten"
+    },
+    "notifications": {
+      "title": "E-Mail-Benachrichtigungen",
+      "enable_email": "E-Mail-Benachrichtigungen aktivieren",
+      "request_updates": "Updates zum Antragsstatus",
+      "weekly_digest": "Wöchentliche Kostenzusammenfassung",
+      "maintenance_alerts": "Systemwartungshinweise",
+      "frequency_label": "Benachrichtigungshäufigkeit",
+      "frequency": {
+        "immediate": "Sofort",
+        "daily": "Tägliche Zusammenfassung",
+        "weekly": "Wöchentliche Zusammenfassung"
+      },
+      "actions": {
+        "reset": "Zurücksetzen",
+        "save": "Einstellungen speichern"
       }
+    },
+    "security": {
+      "title": "Kontosicherheit",
+      "account_status": "Kontostatus",
+      "role": "Rolle",
+      "last_login": "Letzte Anmeldung",
+      "email_verified": "E-Mail verifiziert",
+      "change_password": "Passwort ändern",
+      "two_factor": "Zwei-Faktor-Authentifizierung",
+      "coming_soon": "Passwort- und Sicherheitsfunktionen folgen in Kürze"
+    },
+    "messages": {
+      "load_failed": "Profil konnte nicht geladen werden",
+      "personal_info": "Persönliche Daten",
+      "notification_preferences": "Benachrichtigungseinstellungen",
+      "update_success": "{{type}} erfolgreich aktualisiert",
+      "update_failed": "{{type}} konnte nicht aktualisiert werden"
     }
   },
   "manager": {
@@ -746,6 +1091,168 @@
       }
     }
   },
+  "manager": {
+    "dashboard": {
+      "title": "Manager Dashboard",
+      "subtitle": "Übersicht über Reiseanträge, Budgets und Teammetriken",
+      "loading": "Dashboard-Daten werden geladen...",
+      "summary": {
+        "total_employees": "Gesamte Mitarbeiter",
+        "active_projects": "Aktive Projekte",
+        "pending_requests": "Ausstehende Anträge",
+        "monthly_budget": "Monatsbudget"
+      },
+      "pending_requests": {
+        "title": "Ausstehende Reiseanträge ({{count}})",
+        "urgent_count": "{{count}} dringende Anfrage(n)",
+        "days_per_week": "{{days}} Tage/Woche",
+        "priority": "{{level}} Priorität",
+        "amount_per_month": "CHF {{amount}}/Monat",
+        "days_ago": "vor {{days}} Tagen"
+      },
+      "priority_levels": {
+        "high": "hoch",
+        "medium": "mittel",
+        "low": "niedrig"
+      },
+      "actions": {
+        "view_all_requests": "Alle Anträge anzeigen"
+      },
+      "quick_actions": {
+        "pending_approvals": {
+          "title": "Ausstehende Genehmigungen",
+          "subtitle": "Reiseanträge überprüfen und genehmigen",
+          "button": "Anträge anzeigen"
+        },
+        "employee_management": {
+          "title": "Mitarbeiterverwaltung",
+          "subtitle": "Mitarbeiterinformationen anzeigen und verwalten",
+          "button": "Mitarbeiter verwalten"
+        },
+        "project_management": {
+          "title": "Projektverwaltung",
+          "subtitle": "Projekte und Standorte verwalten",
+          "button": "Projekte verwalten"
+        }
+      }
+    },
+    "approvals": {
+      "title": "Genehmigungen für Reiseanträge",
+      "coming_soon": "Diese Funktion wird in Epic 3 implementiert."
+    },
+    "employees": {
+      "title": "Mitarbeiterverwaltung",
+      "coming_soon": "Diese Funktion wird in Epic 3 implementiert."
+    },
+    "projects": {
+      "title": "Projektverwaltung",
+      "coming_soon": "Diese Funktion wird in Story 2.2 implementiert."
+    },
+    "request_queue": {
+      "title": "Reiseantrag-Warteschlange",
+      "stats": {
+        "pending_requests": "Ausstehende Anträge",
+        "urgent_requests": "Dringende Anträge"
+      },
+      "last_updated": "Zuletzt aktualisiert: {{time}}",
+      "tooltips": {
+        "refresh_data": "Daten aktualisieren",
+        "view_details": "Details anzeigen",
+        "approve_request": "Diesen Reiseantrag genehmigen",
+        "reject_request": "Diesen Reiseantrag ablehnen",
+        "view_full_details": "Vollständige Antragsdetails anzeigen"
+      },
+      "filters": {
+        "title": "Filter",
+        "subtitle": "Ausstehende Anträge filtern und durchsuchen",
+        "employee_name": "Mitarbeitername",
+        "search_by_name": "Nach Namen suchen...",
+        "project": "Projekt",
+        "search_by_project": "Nach Projekt suchen...",
+        "subproject": "Unterprojekt",
+        "search_by_location": "Nach Standort suchen...",
+        "from_date": "Von Datum",
+        "to_date": "Bis Datum",
+        "priority_levels": "Prioritätsstufen",
+        "clear_filters": "Filter löschen",
+        "min_allowance": "Min. Zulage (CHF)",
+        "max_allowance": "Max. Zulage (CHF)"
+      },
+      "priority_levels": {
+        "high": "Hohe Priorität",
+        "medium": "Mittlere Priorität",
+        "low": "Niedrige Priorität"
+      },
+      "table": {
+        "title": "Ausstehende Reiseanträge",
+        "subtitle": "Klicken Sie auf einen Antrag, um Mitarbeiterdetails anzuzeigen",
+        "columns": {
+          "priority": "Priorität",
+          "employee": "Mitarbeiter",
+          "project": "Projekt",
+          "location": "Standort",
+          "days_per_week": "Tage/Woche",
+          "weekly_allowance": "Wöchentliche Zulage",
+          "submitted": "Eingereicht",
+          "days_ago": "Vor Tagen",
+          "actions": "Aktionen"
+        },
+        "priority_tooltip": "{{level}} Priorität"
+      },
+      "loading": {
+        "requests": "Anträge werden geladen..."
+      },
+      "no_data": {
+        "title": "Keine ausstehenden Anträge",
+        "message": "Es gibt keine Reiseanträge, die Ihren aktuellen Filtern entsprechen."
+      },
+      "employee_panel": {
+        "title": "Mitarbeiterdetails",
+        "loading": "Mitarbeiterdetails werden geladen...",
+        "stats": {
+          "current_weekly_total": "Aktuelle Wochensumme",
+          "active_requests": "Aktive Anträge",
+          "average_weekly": "Durchschnittlich wöchentlich",
+          "requests_this_year": "Anträge dieses Jahr"
+        },
+        "performance": {
+          "title": "Leistungsübersicht",
+          "approved": "Genehmigt",
+          "rejected": "Abgelehnt",
+          "dept_budget_used": "Abteilungsbudget verwendet",
+          "performance_score": "Leistungsbewertung"
+        },
+        "request_details": {
+          "title": "Ausgewählter Antrag",
+          "project": "Projekt",
+          "location": "Standort",
+          "days_per_week": "Tage pro Woche",
+          "weekly_allowance": "Wöchentliche Zulage",
+          "submitted": "Eingereicht",
+          "priority": "Priorität",
+          "justification": "Begründung"
+        }
+      },
+      "actions": {
+        "approve": "Genehmigen",
+        "approving": "Genehmigung läuft...",
+        "reject": "Ablehnen",
+        "rejecting": "Ablehnung läuft...",
+        "view_details": "Details anzeigen"
+      },
+      "messages": {
+        "load_failed": "Laden der ausstehenden Anträge fehlgeschlagen. Bitte versuchen Sie es erneut.",
+        "employee_load_failed": "Laden der Mitarbeiterdetails fehlgeschlagen. Bitte versuchen Sie es erneut.",
+        "data_refreshed": "Daten aktualisiert",
+        "approve_success": "Reiseantrag für {{name}} wurde erfolgreich genehmigt.",
+        "approve_failed": "Genehmigung des Antrags für {{name}} fehlgeschlagen. Bitte versuchen Sie es erneut.",
+        "reject_success": "Reiseantrag für {{name}} wurde abgelehnt.",
+        "reject_failed": "Ablehnung des Antrags für {{name}} fehlgeschlagen. Bitte versuchen Sie es erneut.",
+        "default_rejection_reason": "Vom Manager abgelehnt",
+        "justification_detail": "Begründung: {{justification}}"
+      }
+    }
+  },
   "auth": {
     "login": {
       "app_title": "RegularTravelManager",
@@ -847,7 +1354,74 @@
       "resend_failed": "Fehler beim erneuten Senden der Verifizierungs-E-Mail. Bitte versuchen Sie es erneut."
     }
   },
+  "layout": {
+    "sidenav": {
+      "app_title": "RTFM"
+    },
+    "header": {
+      "app_title": "Regelmässiger Reiseformalitäten-Manager"
+    },
+    "navigation": {
+      "dashboard": "Dashboard",
+      "profile": "Profil",
+      "address": "Adresse",
+      "new_request": "Neue Anfrage",
+      "approvals": "Genehmigungen",
+      "employees": "Mitarbeiter",
+      "projects": "Projekte",
+      "manage_projects": "Projekte verwalten",
+      "manage_users": "Benutzer verwalten",
+      "sign_out": "Abmelden"
+    },
+    "user_menu": {
+      "role": {
+        "employee": "Mitarbeiter",
+        "manager": "Manager",
+        "admin": "Administrator"
+      },
+      "my_profile": "Mein Profil",
+      "my_address": "Meine Adresse",
+      "settings": "Einstellungen",
+      "sign_out": "Abmelden"
+    },
+    "page_titles": {
+      "dashboard": "Dashboard",
+      "my_profile": "Mein Profil",
+      "my_address": "Meine Adresse",
+      "travel_request": "Reiseantrag",
+      "approvals": "Genehmigungen",
+      "employees": "Mitarbeiter",
+      "projects": "Projekte",
+      "users": "Benutzer",
+      "default": "RegelmässigerReiseformalitäten-Manager"
+    }
+  },
+  "unauthorized": {
+    "title": "Zugriff verweigert",
+    "message": "Sie haben keine Berechtigung, auf diese Seite zuzugreifen.",
+    "contact_admin": "Bitte kontaktieren Sie Ihren Administrator, wenn Sie glauben, dass dies ein Fehler ist.",
+    "actions": {
+      "go_back": "Zurück",
+      "sign_out": "Abmelden"
+    }
+  },
+  "redirect": {
+    "loading": "Weiterleitung..."
+  },
   "errors": {
+    "general": {
+      "unexpected": "Ein unerwarteter Fehler ist aufgetreten"
+    },
+    "client": {
+      "general": "Fehler: {{message}}"
+    },
+    "http": {
+      "bad_request": "Ungültige Anfrage. Bitte überprüfen Sie Ihre Eingabe.",
+      "unauthorized": "Sie sind nicht berechtigt, diese Aktion durchzuführen.",
+      "forbidden": "Zugriff verweigert. Sie haben keine Berechtigung.",
+      "not_found": "Die angeforderte Ressource wurde nicht gefunden.",
+      "server_error": "Interner Serverfehler. Bitte versuchen Sie es später erneut."
+    },
     "404": {
       "title": "Seite nicht gefunden",
       "message": "Die gesuchte Seite existiert nicht.",

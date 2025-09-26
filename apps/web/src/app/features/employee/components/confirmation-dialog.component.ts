@@ -2,6 +2,7 @@ import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MaterialModule } from '../../../material.module';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { TranslationService } from '../../../core/services/translation.service';
 import { CalculationPreview } from '@rtm/shared';
 
 export interface ConfirmationData {
@@ -31,7 +32,8 @@ export class ConfirmationDialogComponent implements OnInit, OnDestroy {
 
   constructor(
     public dialogRef: MatDialogRef<ConfirmationDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: ConfirmationData
+    @Inject(MAT_DIALOG_DATA) public data: ConfirmationData,
+    public translationService: TranslationService
   ) {}
 
   ngOnInit(): void {

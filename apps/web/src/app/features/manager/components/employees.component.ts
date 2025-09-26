@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-employees',
@@ -12,14 +13,16 @@ import { MatIconModule } from '@angular/material/icon';
       <mat-card>
         <mat-card-header>
           <mat-icon mat-card-avatar>people</mat-icon>
-          <mat-card-title>Employee Management</mat-card-title>
+          <mat-card-title>{{ translationService.translateSync('manager.employees.title') }}</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <p>This feature will be implemented in Epic 3.</p>
+          <p>{{ translationService.translateSync('manager.employees.coming_soon') }}</p>
         </mat-card-content>
       </mat-card>
     </div>
   `,
   styleUrls: ['./employees.component.scss'],
 })
-export class EmployeesComponent {}
+export class EmployeesComponent {
+  constructor(public translationService: TranslationService) {}
+}

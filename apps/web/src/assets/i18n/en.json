@@ -18,7 +18,9 @@
       "upload": "Upload",
       "download": "Download",
       "create": "Create",
-      "update": "Update"
+      "update": "Update",
+      "retry": "Retry",
+      "close": "Close"
     },
     "actions": {
       "loading": "Loading...",
@@ -26,7 +28,8 @@
       "processing": "Processing...",
       "success": "Success!",
       "error": "Error occurred",
-      "retry": "Retry"
+      "retry": "Retry",
+      "close": "Close"
     },
     "status": {
       "pending": "Pending",
@@ -89,33 +92,375 @@
   "employee": {
     "dashboard": {
       "title": "Employee Dashboard",
-      "welcome": "Welcome, {{name}}",
-      "summary": {
-        "requests_submitted": "Requests Submitted",
-        "pending_approval": "Pending Approval",
-        "approved_this_month": "Approved This Month",
-        "total_allowance": "Total Allowance (CHF)"
+      "subtitle": "Track your travel allowance requests and view their status",
+      "cards": {
+        "address": {
+          "title": "Address Management",
+          "subtitle": "Update your home address for travel calculations",
+          "button": "Manage Address"
+        },
+        "new_request": {
+          "title": "New Travel Request",
+          "subtitle": "Submit a new travel allowance request",
+          "button": "New Request"
+        },
+        "my_requests": {
+          "title": "My Travel Requests",
+          "subtitle": "View your travel request history and status",
+          "button": "View Requests"
+        }
       }
     },
-    "new_request": {
-      "title": "New Travel Request",
+    "address": {
+      "current": {
+        "title": "Current Home Address",
+        "subtitle": "Used for travel distance calculations"
+      },
+      "no_address": {
+        "title": "No address set",
+        "description": "Please add your home address to enable travel distance calculations."
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "edit": "Edit Address",
+        "add": "Add Address"
+      },
       "form": {
+        "update_title": "Update Home Address",
+        "add_title": "Add Home Address",
+        "subtitle": "All fields are required for accurate geocoding",
+        "fields": {
+          "street": {
+            "label": "Street Address",
+            "placeholder": "e.g. Bahnhofstrasse 45"
+          },
+          "city": {
+            "label": "City",
+            "placeholder": "e.g. Zurich"
+          },
+          "postal_code": {
+            "label": "Postal Code",
+            "placeholder": "e.g. 8001"
+          },
+          "country": {
+            "label": "Country"
+          }
+        },
+        "errors": {
+          "street": {
+            "required": "Street address is required",
+            "minlength": "Street address must be at least 3 characters"
+          },
+          "city": {
+            "required": "City is required",
+            "minlength": "City must be at least 2 characters"
+          },
+          "postal_code": {
+            "required": "Postal code is required",
+            "pattern": "Swiss postal code must be 4 digits"
+          },
+          "country": {
+            "required": "Country is required"
+          }
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "update": "Update",
+          "add": "Add",
+          "address": "Address"
+        }
+      },
+      "info": {
+        "title": "Address Information",
+        "last_updated": "Last Updated",
+        "geocoding_status": "Geocoding Status",
+        "geocoded_success": "✅ Address successfully geocoded"
+      },
+      "confirm": {
+        "update": {
+          "title": "Update Address",
+          "message": "Updating your address will recalculate distances for any pending travel requests. Continue?",
+          "confirm": "Update Address"
+        }
+      },
+      "success": {
+        "updated_geocoded": "Address updated and geocoded successfully",
+        "updated_pending": "Address updated (geocoding in progress)"
+      },
+      "errors": {
+        "load_profile": "Failed to load employee profile",
+        "no_auth": "No user authentication found",
+        "auth_error": "Authentication error",
+        "update_failed": "Failed to update address",
+        "invalid_format": "Invalid address format. Please check your input.",
+        "profile_not_found": "Employee profile not found",
+        "no_user_id": "Authentication error - no user ID found"
+      }
+    },
+    "travel_request": {
+      "title": "Travel Allowance Request",
+      "subtitle": "Submit a new travel allowance request",
+      "form": {
+        "project": {
+          "label": "Project",
+          "placeholder": "Select a project",
+          "error": "Project selection is required"
+        },
+        "subproject": {
+          "label": "Subproject",
+          "placeholder": "Select a subproject",
+          "error": "Subproject selection is required"
+        },
+        "manager": {
+          "label": "Manager",
+          "placeholder": "Select your manager",
+          "hint": "Select the manager who will approve this request",
+          "error": "Manager selection is required"
+        },
+        "days": {
+          "label": "Days Per Week",
+          "options": {
+            "one": "1 day",
+            "two": "2 days",
+            "three": "3 days",
+            "four": "4 days",
+            "five": "5 days",
+            "six": "6 days",
+            "seven": "7 days"
+          },
+          "errors": {
+            "required": "Days per week is required",
+            "range": "Days per week must be between 1 and 7"
+          }
+        },
+        "justification": {
+          "label": "Justification",
+          "placeholder": "Please provide a detailed justification for your travel request (minimum 10 characters)",
+          "hint": "{{current}}/{{max}} characters",
+          "errors": {
+            "required": "Justification is required",
+            "minlength": "Justification must be at least 10 characters",
+            "maxlength": "Justification cannot exceed 500 characters"
+          }
+        }
+      },
+      "preview": {
+        "title": "Cost Preview",
+        "calculating": "Calculating...",
+        "distance": "Distance",
+        "daily_allowance": "Daily Allowance",
+        "weekly_total": "Weekly Total"
+      },
+      "actions": {
+        "submitting": "Submitting...",
+        "submit": "Submit Request",
+        "cancel": "Cancel",
+        "clear_draft": "Clear Draft"
+      },
+      "errors": {
+        "initial_data": "Some initial data could not be loaded. The form may have limited functionality.",
+        "load_projects": "Unable to load project list. Please refresh the page or contact support.",
+        "load_managers": "Unable to load managers list. Please refresh the page or contact support.",
+        "calculation_failed": "Could not calculate travel allowance. Please verify your selections and try again.",
+        "load_subprojects": "Could not load locations for the selected project. Please try selecting another project.",
+        "submit_failed": "Unable to submit your travel request.",
+        "bad_request": "Please check your form data and try again.",
+        "permission_denied": "You may not have permission to submit requests. Please contact your manager.",
+        "duplicate_request": "A similar request may already exist. Please check your pending requests.",
+        "server_error": "Our system is temporarily unavailable. Please try again in a few minutes.",
+        "offline": "Please check your internet connection and try again.",
+        "generic": "Please try again or contact support if the problem persists.",
+        "draft_corrupted": "Your saved draft could not be restored due to data corruption. Starting with a fresh form."
+      },
+      "messages": {
+        "form_reset": "Form reset for new request",
+        "draft_restored": "Draft restored"
+      }
+    },
+    "request_dashboard": {
+      "title": "My Travel Requests",
+      "subtitle": "Track your travel allowance requests and view their status",
+      "actions": {
+        "new_request": "New Request",
+        "new_request_tooltip": "Submit a new travel request",
+        "refresh_tooltip": "Refresh dashboard"
+      },
+      "summary": {
+        "total_requests": "Total Requests",
+        "pending": "Pending",
+        "approved": "Approved",
+        "monthly_allowance": "Monthly Allowance"
+      },
+      "filters": {
+        "status": {
+          "label": "Status",
+          "all": "All Statuses",
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "withdrawn": "Withdrawn"
+        },
+        "project": {
+          "label": "Project Name",
+          "placeholder": "Search projects..."
+        },
+        "from_date": "From Date",
+        "to_date": "To Date",
+        "apply_tooltip": "Apply filters",
+        "filter": "Filter",
+        "clear_tooltip": "Clear all filters",
+        "clear": "Clear"
+      },
+      "loading": "Loading your travel requests...",
+      "table": {
+        "title": "My Travel Requests",
+        "subtitle": "Click on a request to view details",
+        "showing": "Showing {{current}} of {{total}} requests",
+        "headers": {
+          "status": "Status",
+          "project": "Project",
+          "location": "Location",
+          "days_week": "Days/Week",
+          "daily_allowance": "Daily Allowance",
+          "weekly_total": "Weekly Total",
+          "submitted": "Submitted",
+          "processed": "Processed",
+          "actions": "Actions"
+        },
+        "per_day": "per day",
+        "per_week": "per week",
+        "actions": {
+          "view_details": "View details",
+          "withdraw": "Withdraw request"
+        }
+      },
+      "no_data": {
+        "title": "No travel requests found",
+        "message": "You haven't submitted any travel requests yet, or they don't match your current filters.",
+        "action": "Submit Your First Request"
+      },
+      "details": {
+        "title": "Request Details",
+        "status": "Status",
+        "days_per_week": "Days per Week",
+        "daily_allowance": "Daily Allowance",
+        "weekly_allowance": "Weekly Allowance",
+        "submitted": "Submitted",
+        "processed": "Processed",
+        "manager": "Manager",
+        "distance": "Distance",
+        "justification": "Justification",
+        "withdraw_tooltip": "Withdraw this travel request",
+        "withdraw_action": "Withdraw Request"
+      },
+      "confirm": {
+        "withdraw": "Are you sure you want to withdraw this travel request for {{project}}?"
+      },
+      "messages": {
+        "updated": "Dashboard updated",
+        "withdrawn": "Request withdrawn successfully"
+      },
+      "errors": {
+        "load_failed": "Failed to load dashboard data",
+        "details_failed": "Failed to load request details",
+        "withdraw_failed": "Failed to withdraw request"
+      }
+    },
+    "confirmation": {
+      "title": "Request Submitted Successfully",
+      "auto_close": "Will automatically return to dashboard in {{seconds}} seconds...",
+      "request_id": {
+        "title": "Request ID",
+        "hint": "Save this ID for future reference"
+      },
+      "allowance": {
+        "title": "Allowance Summary",
+        "distance": "Distance",
+        "daily": "Daily Allowance",
+        "weekly": "Weekly Total"
+      },
+      "details": {
+        "title": "Request Details",
         "project": "Project",
         "subproject": "Subproject",
+        "manager": "Manager",
         "days_per_week": "Days per Week",
-        "justification": "Justification",
-        "submit": "Submit Request"
+        "justification": "Justification"
+      },
+      "actions": {
+        "create_new": "Create New Request",
+        "close": "Close",
+        "view_requests": "View My Requests"
+      }
+    }
+  },
+  "profile": {
+    "title": "My Profile",
+    "tabs": {
+      "personal": "Personal Information",
+      "address": "Home Address",
+      "notifications": "Notifications",
+      "security": "Security"
+    },
+    "personal": {
+      "fields": {
+        "first_name": "First Name",
+        "last_name": "Last Name",
+        "email": "Email",
+        "email_hint": "Email cannot be changed directly. Contact admin for changes.",
+        "phone": "Phone Number",
+        "phone_placeholder": "e.g., +41 79 123 45 67, +1 555 123 4567"
+      },
+      "errors": {
+        "first_name_required": "First name is required",
+        "last_name_required": "Last name is required",
+        "phone_invalid": "Please enter a valid phone number (10-15 digits, optional + prefix)"
+      },
+      "actions": {
+        "reset": "Reset",
+        "save": "Save Changes"
       }
     },
-    "requests": {
-      "title": "My Travel Requests",
-      "columns": {
-        "date": "Date",
-        "project": "Project",
-        "status": "Status",
-        "allowance": "Allowance (CHF)",
-        "actions": "Actions"
+    "address": {
+      "title": "Manage Your Home Address",
+      "description": "Your home address is used to calculate travel distances and allowances for your travel requests.",
+      "current": "Current Address",
+      "no_address": "No address set. Please add your home address to enable travel distance calculations.",
+      "manage_button": "Manage Address"
+    },
+    "notifications": {
+      "title": "Email Notifications",
+      "enable_email": "Enable email notifications",
+      "request_updates": "Request status updates",
+      "weekly_digest": "Weekly expense summaries",
+      "maintenance_alerts": "System maintenance alerts",
+      "frequency_label": "Notification Frequency",
+      "frequency": {
+        "immediate": "Immediate",
+        "daily": "Daily Digest",
+        "weekly": "Weekly Summary"
+      },
+      "actions": {
+        "reset": "Reset",
+        "save": "Save Preferences"
       }
+    },
+    "security": {
+      "title": "Account Security",
+      "account_status": "Account Status",
+      "role": "Role",
+      "last_login": "Last Login",
+      "email_verified": "Email Verified",
+      "change_password": "Change Password",
+      "two_factor": "Two-Factor Authentication",
+      "coming_soon": "Password and security features coming soon"
+    },
+    "messages": {
+      "load_failed": "Failed to load profile",
+      "personal_info": "Personal information",
+      "notification_preferences": "Notification preferences",
+      "update_success": "{{type}} updated successfully",
+      "update_failed": "Failed to update {{type}}"
     }
   },
   "manager": {
@@ -1020,6 +1365,168 @@
       }
     }
   },
+  "manager": {
+    "dashboard": {
+      "title": "Manager Dashboard",
+      "subtitle": "Overview of travel requests, budgets, and team metrics",
+      "loading": "Loading dashboard data...",
+      "summary": {
+        "total_employees": "Total Employees",
+        "active_projects": "Active Projects",
+        "pending_requests": "Pending Requests",
+        "monthly_budget": "Monthly Budget"
+      },
+      "pending_requests": {
+        "title": "Pending Travel Requests ({{count}})",
+        "urgent_count": "{{count}} urgent request(s)",
+        "days_per_week": "{{days}} days/week",
+        "priority": "{{level}} priority",
+        "amount_per_month": "CHF {{amount}}/month",
+        "days_ago": "{{days}} days ago"
+      },
+      "priority_levels": {
+        "high": "high",
+        "medium": "medium",
+        "low": "low"
+      },
+      "actions": {
+        "view_all_requests": "View All Requests"
+      },
+      "quick_actions": {
+        "pending_approvals": {
+          "title": "Pending Approvals",
+          "subtitle": "Review and approve travel requests",
+          "button": "View Requests"
+        },
+        "employee_management": {
+          "title": "Employee Management",
+          "subtitle": "View and manage employee information",
+          "button": "Manage Employees"
+        },
+        "project_management": {
+          "title": "Project Management",
+          "subtitle": "Manage projects and locations",
+          "button": "Manage Projects"
+        }
+      }
+    },
+    "approvals": {
+      "title": "Travel Request Approvals",
+      "coming_soon": "This feature will be implemented in Epic 3."
+    },
+    "employees": {
+      "title": "Employee Management",
+      "coming_soon": "This feature will be implemented in Epic 3."
+    },
+    "projects": {
+      "title": "Project Management",
+      "coming_soon": "This feature will be implemented in Story 2.2."
+    },
+    "request_queue": {
+      "title": "Travel Request Queue",
+      "stats": {
+        "pending_requests": "Pending Requests",
+        "urgent_requests": "Urgent Requests"
+      },
+      "last_updated": "Last updated: {{time}}",
+      "tooltips": {
+        "refresh_data": "Refresh data",
+        "view_details": "View Details",
+        "approve_request": "Approve this travel request",
+        "reject_request": "Reject this travel request",
+        "view_full_details": "View full request details"
+      },
+      "filters": {
+        "title": "Filters",
+        "subtitle": "Filter and search pending requests",
+        "employee_name": "Employee Name",
+        "search_by_name": "Search by name...",
+        "project": "Project",
+        "search_by_project": "Search by project...",
+        "subproject": "Subproject",
+        "search_by_location": "Search by location...",
+        "from_date": "From Date",
+        "to_date": "To Date",
+        "priority_levels": "Priority Levels",
+        "clear_filters": "Clear Filters",
+        "min_allowance": "Min Allowance (CHF)",
+        "max_allowance": "Max Allowance (CHF)"
+      },
+      "priority_levels": {
+        "high": "High Priority",
+        "medium": "Medium Priority",
+        "low": "Low Priority"
+      },
+      "table": {
+        "title": "Pending Travel Requests",
+        "subtitle": "Click on a request to view employee details",
+        "columns": {
+          "priority": "Priority",
+          "employee": "Employee",
+          "project": "Project",
+          "location": "Location",
+          "days_per_week": "Days/Week",
+          "weekly_allowance": "Weekly Allowance",
+          "submitted": "Submitted",
+          "days_ago": "Days Ago",
+          "actions": "Actions"
+        },
+        "priority_tooltip": "{{level}} priority"
+      },
+      "loading": {
+        "requests": "Loading requests..."
+      },
+      "no_data": {
+        "title": "No pending requests",
+        "message": "There are no travel requests matching your current filters."
+      },
+      "employee_panel": {
+        "title": "Employee Details",
+        "loading": "Loading employee details...",
+        "stats": {
+          "current_weekly_total": "Current Weekly Total",
+          "active_requests": "Active Requests",
+          "average_weekly": "Average Weekly",
+          "requests_this_year": "Requests This Year"
+        },
+        "performance": {
+          "title": "Performance Overview",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "dept_budget_used": "Dept. Budget Used",
+          "performance_score": "Performance Score"
+        },
+        "request_details": {
+          "title": "Selected Request",
+          "project": "Project",
+          "location": "Location",
+          "days_per_week": "Days per Week",
+          "weekly_allowance": "Weekly Allowance",
+          "submitted": "Submitted",
+          "priority": "Priority",
+          "justification": "Justification"
+        }
+      },
+      "actions": {
+        "approve": "Approve",
+        "approving": "Approving...",
+        "reject": "Reject",
+        "rejecting": "Rejecting...",
+        "view_details": "View Details"
+      },
+      "messages": {
+        "load_failed": "Failed to load pending requests. Please try again.",
+        "employee_load_failed": "Failed to load employee details. Please try again.",
+        "data_refreshed": "Data refreshed",
+        "approve_success": "Travel request for {{name}} has been approved successfully.",
+        "approve_failed": "Failed to approve request for {{name}}. Please try again.",
+        "reject_success": "Travel request for {{name}} has been rejected.",
+        "reject_failed": "Failed to reject request for {{name}}. Please try again.",
+        "default_rejection_reason": "Rejected by manager",
+        "justification_detail": "Justification: {{justification}}"
+      }
+    }
+  },
   "auth": {
     "login": {
       "app_title": "RegularTravelManager",
@@ -1121,7 +1628,74 @@
       "resend_failed": "Failed to resend verification email. Please try again."
     }
   },
+  "layout": {
+    "sidenav": {
+      "app_title": "RTFM"
+    },
+    "header": {
+      "app_title": "Regular Travel Form Manager"
+    },
+    "navigation": {
+      "dashboard": "Dashboard",
+      "profile": "Profile",
+      "address": "Address",
+      "new_request": "New Request",
+      "approvals": "Approvals",
+      "employees": "Employees",
+      "projects": "Projects",
+      "manage_projects": "Manage Projects",
+      "manage_users": "Manage Users",
+      "sign_out": "Sign Out"
+    },
+    "user_menu": {
+      "role": {
+        "employee": "Employee",
+        "manager": "Manager",
+        "admin": "Administrator"
+      },
+      "my_profile": "My Profile",
+      "my_address": "My Address",
+      "settings": "Settings",
+      "sign_out": "Sign Out"
+    },
+    "page_titles": {
+      "dashboard": "Dashboard",
+      "my_profile": "My Profile",
+      "my_address": "My Address",
+      "travel_request": "Travel Request",
+      "approvals": "Approvals",
+      "employees": "Employees",
+      "projects": "Projects",
+      "users": "Users",
+      "default": "RegularTravelManager"
+    }
+  },
+  "unauthorized": {
+    "title": "Access Denied",
+    "message": "You don't have permission to access this page.",
+    "contact_admin": "Please contact your administrator if you believe this is an error.",
+    "actions": {
+      "go_back": "Go Back",
+      "sign_out": "Sign Out"
+    }
+  },
+  "redirect": {
+    "loading": "Redirecting..."
+  },
   "errors": {
+    "general": {
+      "unexpected": "An unexpected error occurred"
+    },
+    "client": {
+      "general": "Error: {{message}}"
+    },
+    "http": {
+      "bad_request": "Bad request. Please check your input.",
+      "unauthorized": "You are not authorized to perform this action.",
+      "forbidden": "Access forbidden. You don't have permission.",
+      "not_found": "The requested resource was not found.",
+      "server_error": "Internal server error. Please try again later."
+    },
     "404": {
       "title": "Page Not Found",
       "message": "The page you're looking for doesn't exist.",

@@ -18,7 +18,9 @@
       "upload": "Téléverser",
       "download": "Télécharger",
       "create": "Créer",
-      "update": "Mettre à jour"
+      "update": "Mettre à jour",
+      "retry": "Réessayer",
+      "close": "Fermer"
     },
     "actions": {
       "loading": "Chargement...",
@@ -26,7 +28,8 @@
       "processing": "Traitement...",
       "success": "Succès !",
       "error": "Erreur survenue",
-      "retry": "Réessayer"
+      "retry": "Réessayer",
+      "close": "Fermer"
     },
     "status": {
       "pending": "En attente",
@@ -89,33 +92,375 @@
   "employee": {
     "dashboard": {
       "title": "Tableau de bord employé",
-      "welcome": "Bienvenue, {{name}}",
-      "summary": {
-        "requests_submitted": "Demandes soumises",
-        "pending_approval": "En attente d'approbation",
-        "approved_this_month": "Approuvées ce mois",
-        "total_allowance": "Allocation totale (CHF)"
+      "subtitle": "Suivez vos demandes d'allocation de voyage et consultez leur statut",
+      "cards": {
+        "address": {
+          "title": "Gestion d'adresse",
+          "subtitle": "Mettez à jour votre adresse de domicile pour les calculs de voyage",
+          "button": "Gérer l'adresse"
+        },
+        "new_request": {
+          "title": "Nouvelle demande de voyage",
+          "subtitle": "Soumettre une nouvelle demande d'allocation de voyage",
+          "button": "Nouvelle demande"
+        },
+        "my_requests": {
+          "title": "Mes demandes de voyage",
+          "subtitle": "Consultez l'historique de vos demandes de voyage et leur statut",
+          "button": "Voir les demandes"
+        }
       }
     },
-    "new_request": {
-      "title": "Nouvelle demande de voyage",
+    "address": {
+      "current": {
+        "title": "Adresse de domicile actuelle",
+        "subtitle": "Utilisée pour les calculs de distance de voyage"
+      },
+      "no_address": {
+        "title": "Aucune adresse définie",
+        "description": "Veuillez ajouter votre adresse de domicile pour activer les calculs de distance de voyage."
+      },
+      "actions": {
+        "cancel": "Annuler",
+        "edit": "Modifier l'adresse",
+        "add": "Ajouter une adresse"
+      },
       "form": {
+        "update_title": "Mettre à jour l'adresse de domicile",
+        "add_title": "Ajouter l'adresse de domicile",
+        "subtitle": "Tous les champs sont requis pour un géocodage précis",
+        "fields": {
+          "street": {
+            "label": "Adresse de rue",
+            "placeholder": "ex. Bahnhofstrasse 45"
+          },
+          "city": {
+            "label": "Ville",
+            "placeholder": "ex. Zurich"
+          },
+          "postal_code": {
+            "label": "Code postal",
+            "placeholder": "ex. 8001"
+          },
+          "country": {
+            "label": "Pays"
+          }
+        },
+        "errors": {
+          "street": {
+            "required": "L'adresse de rue est requise",
+            "minlength": "L'adresse de rue doit comporter au moins 3 caractères"
+          },
+          "city": {
+            "required": "La ville est requise",
+            "minlength": "La ville doit comporter au moins 2 caractères"
+          },
+          "postal_code": {
+            "required": "Le code postal est requis",
+            "pattern": "Le code postal suisse doit comporter 4 chiffres"
+          },
+          "country": {
+            "required": "Le pays est requis"
+          }
+        },
+        "actions": {
+          "cancel": "Annuler",
+          "update": "Mettre à jour",
+          "add": "Ajouter",
+          "address": "Adresse"
+        }
+      },
+      "info": {
+        "title": "Informations d'adresse",
+        "last_updated": "Dernière mise à jour",
+        "geocoding_status": "Statut de géocodage",
+        "geocoded_success": "✅ Adresse géocodée avec succès"
+      },
+      "confirm": {
+        "update": {
+          "title": "Mettre à jour l'adresse",
+          "message": "La mise à jour de votre adresse recalculera les distances pour toutes les demandes de voyage en attente. Continuer ?",
+          "confirm": "Mettre à jour l'adresse"
+        }
+      },
+      "success": {
+        "updated_geocoded": "Adresse mise à jour et géocodée avec succès",
+        "updated_pending": "Adresse mise à jour (géocodage en cours)"
+      },
+      "errors": {
+        "load_profile": "Échec du chargement du profil employé",
+        "no_auth": "Aucune authentification utilisateur trouvée",
+        "auth_error": "Erreur d'authentification",
+        "update_failed": "Échec de la mise à jour de l'adresse",
+        "invalid_format": "Format d'adresse invalide. Veuillez vérifier votre saisie.",
+        "profile_not_found": "Profil employé non trouvé",
+        "no_user_id": "Erreur d'authentification - aucun ID utilisateur trouvé"
+      }
+    },
+    "travel_request": {
+      "title": "Demande d'allocation de voyage",
+      "subtitle": "Soumettre une nouvelle demande d'allocation de voyage",
+      "form": {
+        "project": {
+          "label": "Projet",
+          "placeholder": "Sélectionner un projet",
+          "error": "La sélection d'un projet est requise"
+        },
+        "subproject": {
+          "label": "Sous-projet",
+          "placeholder": "Sélectionner un sous-projet",
+          "error": "La sélection d'un sous-projet est requise"
+        },
+        "manager": {
+          "label": "Manager",
+          "placeholder": "Sélectionner votre manager",
+          "hint": "Sélectionnez le manager qui approuvera cette demande",
+          "error": "La sélection d'un manager est requise"
+        },
+        "days": {
+          "label": "Jours par semaine",
+          "options": {
+            "one": "1 jour",
+            "two": "2 jours",
+            "three": "3 jours",
+            "four": "4 jours",
+            "five": "5 jours",
+            "six": "6 jours",
+            "seven": "7 jours"
+          },
+          "errors": {
+            "required": "Les jours par semaine sont requis",
+            "range": "Les jours par semaine doivent être entre 1 et 7"
+          }
+        },
+        "justification": {
+          "label": "Justification",
+          "placeholder": "Veuillez fournir une justification détaillée pour votre demande de voyage (minimum 10 caractères)",
+          "hint": "{{current}}/{{max}} caractères",
+          "errors": {
+            "required": "La justification est requise",
+            "minlength": "La justification doit comporter au moins 10 caractères",
+            "maxlength": "La justification ne peut pas dépasser 500 caractères"
+          }
+        }
+      },
+      "preview": {
+        "title": "Aperçu des coûts",
+        "calculating": "Calcul en cours...",
+        "distance": "Distance",
+        "daily_allowance": "Allocation quotidienne",
+        "weekly_total": "Total hebdomadaire"
+      },
+      "actions": {
+        "submitting": "Soumission en cours...",
+        "submit": "Soumettre la demande",
+        "cancel": "Annuler",
+        "clear_draft": "Effacer le brouillon"
+      },
+      "errors": {
+        "initial_data": "Certaines données initiales n'ont pas pu être chargées. Le formulaire peut avoir des fonctionnalités limitées.",
+        "load_projects": "Impossible de charger la liste des projets. Veuillez actualiser la page ou contacter le support.",
+        "load_managers": "Impossible de charger la liste des managers. Veuillez actualiser la page ou contacter le support.",
+        "calculation_failed": "Impossible de calculer l'allocation de voyage. Veuillez vérifier vos sélections et réessayer.",
+        "load_subprojects": "Impossible de charger les emplacements pour le projet sélectionné. Veuillez essayer de sélectionner un autre projet.",
+        "submit_failed": "Impossible de soumettre votre demande de voyage.",
+        "bad_request": "Veuillez vérifier vos données de formulaire et réessayer.",
+        "permission_denied": "Vous n'avez peut-être pas la permission de soumettre des demandes. Veuillez contacter votre manager.",
+        "duplicate_request": "Une demande similaire existe peut-être déjà. Veuillez vérifier vos demandes en attente.",
+        "server_error": "Notre système est temporairement indisponible. Veuillez réessayer dans quelques minutes.",
+        "offline": "Veuillez vérifier votre connexion Internet et réessayer.",
+        "generic": "Veuillez réessayer ou contacter le support si le problème persiste.",
+        "draft_corrupted": "Votre brouillon sauvegardé n'a pas pu être restauré en raison d'une corruption de données. Démarrage avec un nouveau formulaire."
+      },
+      "messages": {
+        "form_reset": "Formulaire réinitialisé pour une nouvelle demande",
+        "draft_restored": "Brouillon restauré"
+      }
+    },
+    "request_dashboard": {
+      "title": "Mes demandes de voyage",
+      "subtitle": "Suivez vos demandes d'allocation de voyage et consultez leur statut",
+      "actions": {
+        "new_request": "Nouvelle demande",
+        "new_request_tooltip": "Soumettre une nouvelle demande de voyage",
+        "refresh_tooltip": "Actualiser le tableau de bord"
+      },
+      "summary": {
+        "total_requests": "Total des demandes",
+        "pending": "En attente",
+        "approved": "Approuvées",
+        "monthly_allowance": "Allocation mensuelle"
+      },
+      "filters": {
+        "status": {
+          "label": "Statut",
+          "all": "Tous les statuts",
+          "pending": "En attente",
+          "approved": "Approuvée",
+          "rejected": "Rejetée",
+          "withdrawn": "Retirée"
+        },
+        "project": {
+          "label": "Nom du projet",
+          "placeholder": "Rechercher des projets..."
+        },
+        "from_date": "Date de début",
+        "to_date": "Date de fin",
+        "apply_tooltip": "Appliquer les filtres",
+        "filter": "Filtrer",
+        "clear_tooltip": "Effacer tous les filtres",
+        "clear": "Effacer"
+      },
+      "loading": "Chargement de vos demandes de voyage...",
+      "table": {
+        "title": "Mes demandes de voyage",
+        "subtitle": "Cliquez sur une demande pour voir les détails",
+        "showing": "Affichage de {{current}} sur {{total}} demandes",
+        "headers": {
+          "status": "Statut",
+          "project": "Projet",
+          "location": "Emplacement",
+          "days_week": "Jours/Semaine",
+          "daily_allowance": "Allocation quotidienne",
+          "weekly_total": "Total hebdomadaire",
+          "submitted": "Soumise",
+          "processed": "Traitée",
+          "actions": "Actions"
+        },
+        "per_day": "par jour",
+        "per_week": "par semaine",
+        "actions": {
+          "view_details": "Voir les détails",
+          "withdraw": "Retirer la demande"
+        }
+      },
+      "no_data": {
+        "title": "Aucune demande de voyage trouvée",
+        "message": "Vous n'avez pas encore soumis de demandes de voyage, ou elles ne correspondent pas à vos filtres actuels.",
+        "action": "Soumettre votre première demande"
+      },
+      "details": {
+        "title": "Détails de la demande",
+        "status": "Statut",
+        "days_per_week": "Jours par semaine",
+        "daily_allowance": "Allocation quotidienne",
+        "weekly_allowance": "Allocation hebdomadaire",
+        "submitted": "Soumise",
+        "processed": "Traitée",
+        "manager": "Manager",
+        "distance": "Distance",
+        "justification": "Justification",
+        "withdraw_tooltip": "Retirer cette demande de voyage",
+        "withdraw_action": "Retirer la demande"
+      },
+      "confirm": {
+        "withdraw": "Êtes-vous sûr de vouloir retirer cette demande de voyage pour {{project}} ?"
+      },
+      "messages": {
+        "updated": "Tableau de bord mis à jour",
+        "withdrawn": "Demande retirée avec succès"
+      },
+      "errors": {
+        "load_failed": "Échec du chargement des données du tableau de bord",
+        "details_failed": "Échec du chargement des détails de la demande",
+        "withdraw_failed": "Échec du retrait de la demande"
+      }
+    },
+    "confirmation": {
+      "title": "Demande soumise avec succès",
+      "auto_close": "Retour automatique au tableau de bord dans {{seconds}} secondes...",
+      "request_id": {
+        "title": "ID de la demande",
+        "hint": "Sauvegardez cet ID pour référence future"
+      },
+      "allowance": {
+        "title": "Résumé de l'allocation",
+        "distance": "Distance",
+        "daily": "Allocation quotidienne",
+        "weekly": "Total hebdomadaire"
+      },
+      "details": {
+        "title": "Détails de la demande",
         "project": "Projet",
         "subproject": "Sous-projet",
+        "manager": "Manager",
         "days_per_week": "Jours par semaine",
-        "justification": "Justification",
-        "submit": "Soumettre la demande"
+        "justification": "Justification"
+      },
+      "actions": {
+        "create_new": "Créer une nouvelle demande",
+        "close": "Fermer",
+        "view_requests": "Voir mes demandes"
+      }
+    }
+  },
+  "profile": {
+    "title": "Mon Profil",
+    "tabs": {
+      "personal": "Informations personnelles",
+      "address": "Adresse de domicile",
+      "notifications": "Notifications",
+      "security": "Sécurité"
+    },
+    "personal": {
+      "fields": {
+        "first_name": "Prénom",
+        "last_name": "Nom de famille",
+        "email": "E-mail",
+        "email_hint": "L'e-mail ne peut pas être modifié directement. Contactez l'administrateur pour les modifications.",
+        "phone": "Numéro de téléphone",
+        "phone_placeholder": "p. ex. +41 79 123 45 67, +33 6 12 34 56 78"
+      },
+      "errors": {
+        "first_name_required": "Le prénom est requis",
+        "last_name_required": "Le nom de famille est requis",
+        "phone_invalid": "Veuillez saisir un numéro de téléphone valide (10-15 chiffres, préfixe + optionnel)"
+      },
+      "actions": {
+        "reset": "Réinitialiser",
+        "save": "Enregistrer les modifications"
       }
     },
-    "requests": {
-      "title": "Mes demandes de voyage",
-      "columns": {
-        "date": "Date",
-        "project": "Projet",
-        "status": "Statut",
-        "allowance": "Allocation (CHF)",
-        "actions": "Actions"
+    "address": {
+      "title": "Gérer votre adresse de domicile",
+      "description": "Votre adresse de domicile est utilisée pour calculer les distances de voyage et les allocations pour vos demandes de déplacement.",
+      "current": "Adresse actuelle",
+      "no_address": "Aucune adresse définie. Veuillez ajouter votre adresse de domicile pour permettre les calculs de distance de voyage.",
+      "manage_button": "Gérer l'adresse"
+    },
+    "notifications": {
+      "title": "Notifications par e-mail",
+      "enable_email": "Activer les notifications par e-mail",
+      "request_updates": "Mises à jour du statut des demandes",
+      "weekly_digest": "Résumés hebdomadaires des dépenses",
+      "maintenance_alerts": "Alertes de maintenance système",
+      "frequency_label": "Fréquence des notifications",
+      "frequency": {
+        "immediate": "Immédiate",
+        "daily": "Résumé quotidien",
+        "weekly": "Résumé hebdomadaire"
+      },
+      "actions": {
+        "reset": "Réinitialiser",
+        "save": "Enregistrer les préférences"
       }
+    },
+    "security": {
+      "title": "Sécurité du compte",
+      "account_status": "Statut du compte",
+      "role": "Rôle",
+      "last_login": "Dernière connexion",
+      "email_verified": "E-mail vérifié",
+      "change_password": "Changer le mot de passe",
+      "two_factor": "Authentification à deux facteurs",
+      "coming_soon": "Fonctionnalités de mot de passe et de sécurité bientôt disponibles"
+    },
+    "messages": {
+      "load_failed": "Échec du chargement du profil",
+      "personal_info": "Informations personnelles",
+      "notification_preferences": "Préférences de notification",
+      "update_success": "{{type}} mis à jour avec succès",
+      "update_failed": "Échec de la mise à jour de {{type}}"
     }
   },
   "manager": {
@@ -746,6 +1091,168 @@
       }
     }
   },
+  "manager": {
+    "dashboard": {
+      "title": "Tableau de Bord Manager",
+      "subtitle": "Aperçu des demandes de voyage, budgets et métriques d'équipe",
+      "loading": "Chargement des données du tableau de bord...",
+      "summary": {
+        "total_employees": "Total Employés",
+        "active_projects": "Projets Actifs",
+        "pending_requests": "Demandes en Attente",
+        "monthly_budget": "Budget Mensuel"
+      },
+      "pending_requests": {
+        "title": "Demandes de Voyage en Attente ({{count}})",
+        "urgent_count": "{{count}} demande(s) urgente(s)",
+        "days_per_week": "{{days}} jours/semaine",
+        "priority": "priorité {{level}}",
+        "amount_per_month": "CHF {{amount}}/mois",
+        "days_ago": "il y a {{days}} jours"
+      },
+      "priority_levels": {
+        "high": "élevée",
+        "medium": "moyenne",
+        "low": "faible"
+      },
+      "actions": {
+        "view_all_requests": "Voir Toutes les Demandes"
+      },
+      "quick_actions": {
+        "pending_approvals": {
+          "title": "Approbations en Attente",
+          "subtitle": "Examiner et approuver les demandes de voyage",
+          "button": "Voir les Demandes"
+        },
+        "employee_management": {
+          "title": "Gestion des Employés",
+          "subtitle": "Afficher et gérer les informations des employés",
+          "button": "Gérer les Employés"
+        },
+        "project_management": {
+          "title": "Gestion de Projet",
+          "subtitle": "Gérer les projets et localisations",
+          "button": "Gérer les Projets"
+        }
+      }
+    },
+    "approvals": {
+      "title": "Approbations de Demandes de Voyage",
+      "coming_soon": "Cette fonctionnalité sera implémentée dans l'Epic 3."
+    },
+    "employees": {
+      "title": "Gestion des Employés",
+      "coming_soon": "Cette fonctionnalité sera implémentée dans l'Epic 3."
+    },
+    "projects": {
+      "title": "Gestion de Projet",
+      "coming_soon": "Cette fonctionnalité sera implémentée dans l'Histoire 2.2."
+    },
+    "request_queue": {
+      "title": "File d'Attente des Demandes de Voyage",
+      "stats": {
+        "pending_requests": "Demandes en Attente",
+        "urgent_requests": "Demandes Urgentes"
+      },
+      "last_updated": "Dernière mise à jour : {{time}}",
+      "tooltips": {
+        "refresh_data": "Actualiser les données",
+        "view_details": "Voir les Détails",
+        "approve_request": "Approuver cette demande de voyage",
+        "reject_request": "Rejeter cette demande de voyage",
+        "view_full_details": "Voir les détails complets de la demande"
+      },
+      "filters": {
+        "title": "Filtres",
+        "subtitle": "Filtrer et rechercher les demandes en attente",
+        "employee_name": "Nom de l'Employé",
+        "search_by_name": "Rechercher par nom...",
+        "project": "Projet",
+        "search_by_project": "Rechercher par projet...",
+        "subproject": "Sous-projet",
+        "search_by_location": "Rechercher par localisation...",
+        "from_date": "Date de Début",
+        "to_date": "Date de Fin",
+        "priority_levels": "Niveaux de Priorité",
+        "clear_filters": "Effacer les Filtres",
+        "min_allowance": "Allocation Min. (CHF)",
+        "max_allowance": "Allocation Max. (CHF)"
+      },
+      "priority_levels": {
+        "high": "Priorité Élevée",
+        "medium": "Priorité Moyenne",
+        "low": "Priorité Faible"
+      },
+      "table": {
+        "title": "Demandes de Voyage en Attente",
+        "subtitle": "Cliquez sur une demande pour voir les détails de l'employé",
+        "columns": {
+          "priority": "Priorité",
+          "employee": "Employé",
+          "project": "Projet",
+          "location": "Localisation",
+          "days_per_week": "Jours/Semaine",
+          "weekly_allowance": "Allocation Hebdomadaire",
+          "submitted": "Soumise",
+          "days_ago": "Il y a X Jours",
+          "actions": "Actions"
+        },
+        "priority_tooltip": "priorité {{level}}"
+      },
+      "loading": {
+        "requests": "Chargement des demandes..."
+      },
+      "no_data": {
+        "title": "Aucune demande en attente",
+        "message": "Il n'y a aucune demande de voyage correspondant à vos filtres actuels."
+      },
+      "employee_panel": {
+        "title": "Détails de l'Employé",
+        "loading": "Chargement des détails de l'employé...",
+        "stats": {
+          "current_weekly_total": "Total Hebdomadaire Actuel",
+          "active_requests": "Demandes Actives",
+          "average_weekly": "Moyenne Hebdomadaire",
+          "requests_this_year": "Demandes cette Année"
+        },
+        "performance": {
+          "title": "Aperçu de Performance",
+          "approved": "Approuvée",
+          "rejected": "Rejetée",
+          "dept_budget_used": "Budget Départemental Utilisé",
+          "performance_score": "Score de Performance"
+        },
+        "request_details": {
+          "title": "Demande Sélectionnée",
+          "project": "Projet",
+          "location": "Localisation",
+          "days_per_week": "Jours par Semaine",
+          "weekly_allowance": "Allocation Hebdomadaire",
+          "submitted": "Soumise",
+          "priority": "Priorité",
+          "justification": "Justification"
+        }
+      },
+      "actions": {
+        "approve": "Approuver",
+        "approving": "Approbation en cours...",
+        "reject": "Rejeter",
+        "rejecting": "Rejet en cours...",
+        "view_details": "Voir les Détails"
+      },
+      "messages": {
+        "load_failed": "Échec du chargement des demandes en attente. Veuillez réessayer.",
+        "employee_load_failed": "Échec du chargement des détails de l'employé. Veuillez réessayer.",
+        "data_refreshed": "Données actualisées",
+        "approve_success": "La demande de voyage pour {{name}} a été approuvée avec succès.",
+        "approve_failed": "Échec de l'approbation de la demande pour {{name}}. Veuillez réessayer.",
+        "reject_success": "La demande de voyage pour {{name}} a été rejetée.",
+        "reject_failed": "Échec du rejet de la demande pour {{name}}. Veuillez réessayer.",
+        "default_rejection_reason": "Rejetée par le manager",
+        "justification_detail": "Justification : {{justification}}"
+      }
+    }
+  },
   "auth": {
     "login": {
       "app_title": "RegularTravelManager",
@@ -847,7 +1354,74 @@
       "resend_failed": "Échec du renvoi de l'e-mail de vérification. Veuillez réessayer."
     }
   },
+  "layout": {
+    "sidenav": {
+      "app_title": "RTFM"
+    },
+    "header": {
+      "app_title": "Gestionnaire de formulaires de voyage réguliers"
+    },
+    "navigation": {
+      "dashboard": "Tableau de bord",
+      "profile": "Profil",
+      "address": "Adresse",
+      "new_request": "Nouvelle demande",
+      "approvals": "Approbations",
+      "employees": "Employés",
+      "projects": "Projets",
+      "manage_projects": "Gérer les projets",
+      "manage_users": "Gérer les utilisateurs",
+      "sign_out": "Déconnexion"
+    },
+    "user_menu": {
+      "role": {
+        "employee": "Employé",
+        "manager": "Manager",
+        "admin": "Administrateur"
+      },
+      "my_profile": "Mon profil",
+      "my_address": "Mon adresse",
+      "settings": "Paramètres",
+      "sign_out": "Déconnexion"
+    },
+    "page_titles": {
+      "dashboard": "Tableau de bord",
+      "my_profile": "Mon profil",
+      "my_address": "Mon adresse",
+      "travel_request": "Demande de voyage",
+      "approvals": "Approbations",
+      "employees": "Employés",
+      "projects": "Projets",
+      "users": "Utilisateurs",
+      "default": "GestionnaireFormulaireVoyageRégulier"
+    }
+  },
+  "unauthorized": {
+    "title": "Accès refusé",
+    "message": "Vous n'avez pas l'autorisation d'accéder à cette page.",
+    "contact_admin": "Veuillez contacter votre administrateur si vous pensez qu'il s'agit d'une erreur.",
+    "actions": {
+      "go_back": "Retour",
+      "sign_out": "Déconnexion"
+    }
+  },
+  "redirect": {
+    "loading": "Redirection..."
+  },
   "errors": {
+    "general": {
+      "unexpected": "Une erreur inattendue s'est produite"
+    },
+    "client": {
+      "general": "Erreur: {{message}}"
+    },
+    "http": {
+      "bad_request": "Requête invalide. Veuillez vérifier votre saisie.",
+      "unauthorized": "Vous n'êtes pas autorisé à effectuer cette action.",
+      "forbidden": "Accès interdit. Vous n'avez pas la permission.",
+      "not_found": "La ressource demandée n'a pas été trouvée.",
+      "server_error": "Erreur interne du serveur. Veuillez réessayer plus tard."
+    },
     "404": {
       "title": "Page non trouvée",
       "message": "La page que vous recherchez n'existe pas.",
