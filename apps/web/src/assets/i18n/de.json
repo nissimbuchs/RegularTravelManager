@@ -139,16 +139,569 @@
       "system_overview": "Systemübersicht",
       "user_management": "Benutzerverwaltung"
     },
+    "projects": {
+      "title": "Projektverwaltung",
+      "search": {
+        "label": "Projekte suchen",
+        "placeholder": "Nach Name oder Beschreibung suchen"
+      },
+      "filters": {
+        "status": {
+          "label": "Status",
+          "all": "Alle"
+        },
+        "min_cost": {
+          "label": "Min. Kosten (CHF)",
+          "placeholder": "0.00"
+        },
+        "max_cost": {
+          "label": "Max. Kosten (CHF)",
+          "placeholder": "999.99"
+        }
+      },
+      "actions": {
+        "new_project": "Neues Projekt",
+        "clear_filters": "Filter löschen",
+        "view_details": "Details anzeigen",
+        "edit_project": "Projekt bearbeiten",
+        "activate": "Aktivieren",
+        "deactivate": "Deaktivieren",
+        "delete_project": "Projekt löschen"
+      },
+      "table": {
+        "columns": {
+          "name": "Name",
+          "description": "Beschreibung",
+          "default_cost": "Standard Kosten/km",
+          "subprojects": "Teilprojekte",
+          "created": "Erstellt",
+          "actions": "Aktionen"
+        },
+        "no_description": "Keine Beschreibung"
+      },
+      "dialogs": {
+        "create": {
+          "title": "Neues Projekt erstellen"
+        },
+        "edit": {
+          "title": "Projekt bearbeiten"
+        },
+        "activate": {
+          "title": "Projekt aktivieren",
+          "message": "Sind Sie sicher, dass Sie \"{{projectName}}\" aktivieren möchten?",
+          "confirm": "Aktivieren"
+        },
+        "deactivate": {
+          "title": "Projekt deaktivieren",
+          "message": "Sind Sie sicher, dass Sie \"{{projectName}}\" deaktivieren möchten?",
+          "confirm": "Deaktivieren"
+        },
+        "delete": {
+          "title": "Projekt löschen",
+          "message": "Sind Sie sicher, dass Sie \"{{projectName}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+          "confirm": "Löschen"
+        }
+      },
+      "messages": {
+        "load_failed": "Laden der Projekte fehlgeschlagen",
+        "filter_failed": "Filtern der Projekte fehlgeschlagen",
+        "created_successfully": "Projekt erfolgreich erstellt",
+        "updated_successfully": "Projekt erfolgreich aktualisiert",
+        "activated_successfully": "Projekt erfolgreich aktiviert",
+        "deactivated_successfully": "Projekt erfolgreich deaktiviert",
+        "activate_failed": "Aktivierung des Projekts fehlgeschlagen",
+        "deactivate_failed": "Deaktivierung des Projekts fehlgeschlagen",
+        "deleted_successfully": "Projekt erfolgreich gelöscht",
+        "delete_failed": "Löschen des Projekts fehlgeschlagen",
+        "cannot_delete_referenced": "Projekt kann nicht gelöscht werden. Es wird von {{count}} Reiseanträgen referenziert.",
+        "check_references_failed": "Überprüfung der Projektreferenzen fehlgeschlagen"
+      }
+    },
     "users": {
       "title": "Benutzerverwaltung",
+      "subtitle": "Benutzerkonten, Rollen und Berechtigungen verwalten",
       "add_user": "Benutzer hinzufügen",
       "edit_user": "Benutzer bearbeiten",
-      "columns": {
-        "name": "Name",
+      "loading": "Benutzer werden geladen...",
+      "search": {
+        "label": "Benutzer suchen",
+        "placeholder": "Nach Name, E-Mail oder Mitarbeiternummer suchen"
+      },
+      "filters": {
+        "role": {
+          "label": "Rolle",
+          "all": "Alle Rollen",
+          "employee": "Mitarbeiter",
+          "manager": "Manager",
+          "administrator": "Administrator"
+        },
+        "status": {
+          "label": "Status",
+          "all": "Alle Status"
+        }
+      },
+      "actions": {
+        "clear_filters": "Filter löschen",
+        "view_details": "Details anzeigen",
+        "more_actions": "Weitere Aktionen",
+        "change_role": "Rolle ändern",
+        "assign_manager": "Manager zuweisen",
+        "activate": "Aktivieren",
+        "deactivate": "Deaktivieren",
+        "delete_user": "Benutzer löschen"
+      },
+      "table": {
+        "columns": {
+          "name": "Name",
+          "email": "E-Mail",
+          "role": "Rolle",
+          "status": "Status",
+          "manager": "Manager",
+          "activity": "Aktivität",
+          "registered": "Registriert",
+          "actions": "Aktionen"
+        },
+        "values": {
+          "no_manager": "Kein Manager zugewiesen",
+          "request_count": "{{count}} Anträge",
+          "unverified": "Nicht verifiziert"
+        }
+      },
+      "messages": {
+        "load_failed": "Laden der Benutzer fehlgeschlagen",
+        "role_changed": "Benutzerrolle erfolgreich zu {{role}} geändert",
+        "role_change_failed": "Ändern der Benutzerrolle fehlgeschlagen",
+        "manager_assigned": "Manager erfolgreich zugewiesen",
+        "manager_removed": "Manager erfolgreich entfernt",
+        "manager_assignment_failed": "Aktualisierung der Manager-Zuweisung fehlgeschlagen",
+        "user_activated": "Benutzer erfolgreich aktiviert",
+        "user_deactivated": "Benutzer erfolgreich deaktiviert",
+        "user_activate_failed": "Aktivierung des Benutzers fehlgeschlagen",
+        "user_deactivate_failed": "Deaktivierung des Benutzers fehlgeschlagen",
+        "user_deleted": "Benutzer {{name}} erfolgreich gelöscht",
+        "user_delete_failed": "Löschen des Benutzers fehlgeschlagen"
+      },
+      "dialogs": {
+        "activate_user": "Benutzer aktivieren",
+        "deactivate_user": "Benutzer deaktivieren",
+        "activate_user_message": "Sind Sie sicher, dass Sie {{name}} aktivieren möchten?",
+        "deactivate_user_message": "Sind Sie sicher, dass Sie {{name}} deaktivieren möchten?",
+        "activate_confirm": "Aktivieren",
+        "deactivate_confirm": "Deaktivieren"
+      },
+      "audit": {
+        "user_activated": "Benutzer vom Administrator aktiviert",
+        "user_deactivated": "Benutzer vom Administrator deaktiviert"
+      },
+      "no_results": {
+        "title": "Keine Benutzer gefunden",
+        "message": "Versuchen Sie, Ihre Suchkriterien oder Filter anzupassen."
+      }
+    },
+    "project_detail": {
+      "title": "Projektdetails",
+      "back_to_projects": "Zurück zu Projekten",
+      "edit_project": "Projekt bearbeiten",
+      "info": {
+        "description": "Beschreibung",
+        "no_description": "Keine Beschreibung vorhanden",
+        "default_cost": "Standard Kosten pro Kilometer",
+        "created": "Erstellt",
+        "subprojects": "Teilprojekte",
+        "locations": "Standort(e)"
+      },
+      "subprojects": {
+        "title": "Teilprojekt-Standorte",
+        "add_location": "Standort hinzufügen",
+        "add_first_location": "Ersten Standort hinzufügen",
+        "no_locations": {
+          "title": "Noch keine Standorte hinzugefügt",
+          "message": "Fügen Sie Teilprojekt-Standorte hinzu, um Arbeitsplätze und individuelle Kostensätze festzulegen."
+        },
+        "table": {
+          "columns": {
+            "location_name": "Standortname",
+            "address": "Adresse",
+            "coordinates": "Koordinaten",
+            "cost_per_km": "Kosten/km",
+            "created": "Erstellt",
+            "actions": "Aktionen"
+          },
+          "no_address": "Keine Adresse angegeben",
+          "no_coordinates": "Nicht geokodiert",
+          "inherited": "(geerbt)"
+        },
+        "actions": {
+          "edit_location": "Standort bearbeiten",
+          "delete_location": "Standort löschen"
+        }
+      },
+      "dialogs": {
+        "edit_project": "Projekt bearbeiten",
+        "add_location": "Standort hinzufügen",
+        "edit_location": "Standort bearbeiten",
+        "activate_location": "Standort aktivieren",
+        "deactivate_location": "Standort deaktivieren",
+        "delete_location": "Standort löschen",
+        "activate_location_message": "Sind Sie sicher, dass Sie \"{{name}}\" aktivieren möchten?",
+        "deactivate_location_message": "Sind Sie sicher, dass Sie \"{{name}}\" deaktivieren möchten?",
+        "delete_location_message": "Sind Sie sicher, dass Sie \"{{name}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+        "activate_confirm": "Aktivieren",
+        "deactivate_confirm": "Deaktivieren",
+        "delete_confirm": "Löschen"
+      },
+      "messages": {
+        "load_project_failed": "Laden des Projekts fehlgeschlagen",
+        "load_subprojects_failed": "Laden der Teilprojekte fehlgeschlagen",
+        "project_updated": "Projekt erfolgreich aktualisiert",
+        "location_added": "Standort erfolgreich hinzugefügt",
+        "location_updated": "Standort erfolgreich aktualisiert",
+        "location_activated": "Standort erfolgreich aktiviert",
+        "location_deactivated": "Standort erfolgreich deaktiviert",
+        "location_deleted": "Standort erfolgreich gelöscht",
+        "location_activate_failed": "Aktivierung des Standorts fehlgeschlagen",
+        "location_deactivate_failed": "Deaktivierung des Standorts fehlgeschlagen",
+        "location_delete_failed": "Löschen des Standorts fehlgeschlagen"
+      }
+    },
+    "subproject_form": {
+      "sections": {
+        "location_details": "Standortdetails",
+        "address_information": "Adressinformationen",
+        "coordinates": "Koordinaten",
+        "cost_rate": "Kostensatz (Optional)"
+      },
+      "fields": {
+        "location_name": "Standortname",
+        "street_address": "Strassenadresse",
+        "city": "Stadt",
+        "postal_code": "Postleitzahl",
+        "latitude": "Breitengrad",
+        "longitude": "Längengrad",
+        "cost_per_km": "Individuelle Kosten pro Kilometer"
+      },
+      "placeholders": {
+        "location_name": "Standort-/Teilprojektname eingeben",
+        "street_address": "Bahnhofstrasse 1",
+        "city": "Zürich",
+        "postal_code": "8001",
+        "latitude": "47.3769",
+        "longitude": "8.5417",
+        "cost_per_km": "Leer lassen, um vom Projekt zu erben"
+      },
+      "hints": {
+        "location_name": "Beschreibender Name für diesen Arbeitsplatz",
+        "street_address": "Vollständige Strassenadresse inklusive Hausnummer",
+        "latitude_range": "Schweizer Breitengrad-Bereich: 45.818 - 47.808",
+        "longitude_range": "Schweizer Längengrad-Bereich: 5.956 - 10.492",
+        "cost_per_km": "Leer lassen, um Projektstandard zu verwenden ({{defaultCost}})"
+      },
+      "status": {
+        "geocoded": "Geokodiert",
+        "geocoding_failed": "Geokodierung fehlgeschlagen"
+      },
+      "actions": {
+        "geocoding": "Geokodierung...",
+        "get_coordinates": "Koordinaten abrufen",
+        "clear": "Löschen",
+        "apply_coordinates": "Koordinaten anwenden"
+      },
+      "tooltips": {
+        "clear_coordinates": "Koordinaten löschen",
+        "toggle_manual_coords": "Manuelle Koordinateneingabe umschalten"
+      },
+      "labels": {
+        "effective_rate": "Effektiver Satz"
+      },
+      "errors": {
+        "location_name_required": "Standortname ist erforderlich",
+        "postal_code_pattern": "Bitte geben Sie eine gültige Schweizer Postleitzahl ein (4-5 Ziffern)",
+        "latitude_bounds": "Breitengrad muss innerhalb der Schweizer Grenzen liegen",
+        "longitude_bounds": "Längengrad muss innerhalb der Schweizer Grenzen liegen",
+        "cost_min": "Kosten müssen grösser als 0 sein",
+        "cost_max": "Kosten können CHF 999.99 nicht überschreiten"
+      }
+    },
+    "user_detail": {
+      "loading": "Benutzerdetails werden geladen...",
+      "tabs": {
+        "basic_information": "Grundinformationen",
+        "management": "Management",
+        "activity": "Aktivität"
+      },
+      "sections": {
+        "personal_information": "Persönliche Informationen",
+        "address_information": "Adressinformationen",
+        "reports_to": "Berichtet an",
+        "direct_reports": "Direkte Mitarbeiter ({{count}})",
+        "travel_request_activity": "Reiseantragsaktivität",
+        "recent_travel_requests": "Aktuelle Reiseanträge"
+      },
+      "labels": {
+        "full_name": "Vollständiger Name",
         "email": "E-Mail",
+        "employee_number": "Mitarbeiternummer",
+        "phone_number": "Telefonnummer",
+        "status": "Status",
+        "verified": "Verifiziert",
+        "registration_date": "Registrierungsdatum"
+      },
+      "values": {
+        "not_provided": "Nicht angegeben"
+      },
+      "stats": {
+        "total_requests": "Gesamtanträge",
+        "this_month": "Diesen Monat",
+        "average_value": "Durchschnittswert"
+      },
+      "actions": {
+        "back_to_users": "Zurück zu Benutzern",
+        "edit_user": "Benutzer bearbeiten"
+      },
+      "dialogs": {
+        "edit_user_profile": "Benutzerprofil bearbeiten"
+      },
+      "messages": {
+        "profile_updated": "Benutzerprofil erfolgreich aktualisiert"
+      },
+      "errors": {
+        "user_not_found": "Benutzer nicht gefunden",
+        "user_not_found_message": "Der angeforderte Benutzer konnte nicht gefunden werden."
+      }
+    },
+    "user_profile_dialog": {
+      "title": "Benutzerprofil bearbeiten",
+      "tabs": {
+        "basic_information": "Grundinformationen",
+        "address": "Adresse",
+        "preferences": "Einstellungen"
+      },
+      "fields": {
+        "first_name": "Vorname",
+        "last_name": "Nachname",
+        "email": "E-Mail",
+        "employee_number": "Mitarbeiternummer",
+        "phone_number": "Telefonnummer",
         "role": "Rolle",
         "status": "Status",
-        "actions": "Aktionen"
+        "street_address": "Straßenadresse",
+        "city": "Stadt",
+        "postal_code": "Postleitzahl",
+        "country": "Land",
+        "profile_visibility": "Profilsichtbarkeit"
+      },
+      "placeholders": {
+        "first_name": "Vorname eingeben",
+        "last_name": "Nachname eingeben",
+        "email": "E-Mail-Adresse eingeben",
+        "employee_number": "EMP-0001",
+        "phone_number": "+41 XX XXX XX XX",
+        "street_address": "Straßenadresse eingeben",
+        "city": "Stadt eingeben",
+        "postal_code": "Postleitzahl eingeben",
+        "country": "Land eingeben"
+      },
+      "hints": {
+        "email_admin_only": "Nur für Administratoren - Änderungen erfordern Verifikation",
+        "country_default": "Standard: Schweiz"
+      },
+      "errors": {
+        "first_name_required": "Vorname ist erforderlich",
+        "last_name_required": "Nachname ist erforderlich",
+        "email_required": "E-Mail ist erforderlich",
+        "email_invalid": "Bitte geben Sie eine gültige E-Mail ein",
+        "phone_invalid": "Ungültiges Telefonnummernformat",
+        "street_required": "Straßenadresse ist erforderlich",
+        "city_required": "Stadt ist erforderlich",
+        "postal_code_required": "Postleitzahl ist erforderlich"
+      },
+      "roles": {
+        "employee": "Mitarbeiter",
+        "manager": "Manager",
+        "administrator": "Administrator"
+      },
+      "statuses": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "pending": "Ausstehend"
+      },
+      "sections": {
+        "notification_preferences": "Benachrichtigungseinstellungen",
+        "privacy_settings": "Datenschutzeinstellungen"
+      },
+      "preferences": {
+        "email_notifications": "E-Mail-Benachrichtigungen",
+        "request_updates": "Reiseantrags-Updates",
+        "weekly_digest": "Wöchentliche Zusammenfassung",
+        "maintenance_alerts": "Wartungswarnungen",
+        "allow_analytics": "Nutzungsanalyse erlauben",
+        "share_location_data": "Standortdaten teilen"
+      },
+      "visibility": {
+        "private": "Privat",
+        "team_only": "Nur Team",
+        "company_wide": "Firmenweit"
+      },
+      "notices": {
+        "address_change_warning": "Das Ändern der Adresse löst eine Neuberechnung der Entfernungen für ausstehende Reiseanträge aus."
+      },
+      "actions": {
+        "save_changes": "Änderungen speichern"
+      }
+    },
+    "manager_assignment_dialog": {
+      "title": "Manager zuweisen",
+      "sections": {
+        "employee_information": "Mitarbeiterinformationen",
+        "assignment_validation": "Zuweisungsvalidierung"
+      },
+      "fields": {
+        "name": "Name",
+        "email": "E-Mail",
+        "employee_id": "Mitarbeiter-ID",
+        "current_manager": "Aktueller Manager",
+        "search_manager": "Manager suchen und auswählen",
+        "reason": "Grund für Änderung"
+      },
+      "placeholders": {
+        "search_managers": "Tippen Sie, um Manager zu suchen...",
+        "reason": "Bitte geben Sie einen Grund für diese Manager-Zuweisung an..."
+      },
+      "status": {
+        "no_manager_assigned": "Kein Manager zugewiesen"
+      },
+      "actions": {
+        "assign_manager": "Manager zuweisen",
+        "remove_manager": "Manager entfernen",
+        "remove_assignment": "Manager-Zuweisung entfernen"
+      },
+      "errors": {
+        "manager_selection_required": "Bitte wählen Sie einen Manager aus oder entfernen Sie die Manager-Zuweisung",
+        "reason_required": "Grund ist erforderlich für Manager-Zuweisungen",
+        "reason_min_length": "Grund muss mindestens 10 Zeichen haben"
+      },
+      "validation": {
+        "cannot_assign_title": "Manager kann nicht zugewiesen werden",
+        "circular_hierarchy_title": "Zirkuläre Hierarchie erkannt",
+        "circular_hierarchy_message": "Diese Zuweisung würde eine zirkuläre Managementhierarchie erstellen, was nicht erlaubt ist.",
+        "warnings_title": "Warnungen",
+        "hierarchy_changes_title": "Hierarchieänderungen",
+        "capacity_warning_title": "Manager-Kapazitätswarnung",
+        "capacity_warning_message": "Der ausgewählte Manager hat bereits eine hohe Anzahl direkter Berichte. Berücksichtigen Sie die organisatorische Effizienz.",
+        "assignment_valid_title": "Zuweisung gültig",
+        "assignment_valid_message": "Diese Manager-Zuweisung kann ohne Probleme abgeschlossen werden."
+      },
+      "messages": {
+        "validating": "Manager-Zuweisung wird validiert..."
+      }
+    },
+    "role_change_dialog": {
+      "title": "Benutzerrolle ändern",
+      "sections": {
+        "user_information": "Benutzerinformationen",
+        "impact_analysis": "Auswirkungsanalyse",
+        "permission_changes": "Berechtigungsänderungen"
+      },
+      "fields": {
+        "name": "Name",
+        "email": "E-Mail",
+        "employee_id": "Mitarbeiter-ID",
+        "current_role": "Aktuelle Rolle",
+        "new_role": "Neue Rolle",
+        "reason": "Grund für Änderung"
+      },
+      "placeholders": {
+        "reason": "Bitte geben Sie einen Grund für diese Rollenänderung an..."
+      },
+      "roles": {
+        "employee": "Mitarbeiter",
+        "manager": "Manager",
+        "administrator": "Administrator"
+      },
+      "errors": {
+        "role_required": "Bitte wählen Sie eine neue Rolle aus",
+        "reason_required": "Grund ist erforderlich für Rollenänderungen",
+        "reason_min_length": "Grund muss mindestens 10 Zeichen haben"
+      },
+      "validation": {
+        "cannot_change_title": "Rolle kann nicht geändert werden",
+        "warnings_title": "Warnungen",
+        "changes_title": "Änderungen, die auftreten werden"
+      },
+      "labels": {
+        "current_permissions": "Aktuelle Berechtigungen",
+        "new_permissions": "Neue Berechtigungen"
+      },
+      "actions": {
+        "change_role": "Rolle ändern"
+      },
+      "messages": {
+        "validating": "Rollenänderung wird validiert..."
+      }
+    },
+    "user_deletion_dialog": {
+      "title": "Benutzerkonto löschen",
+      "warning": {
+        "title": "Dies ist eine permanente Aktion",
+        "message": "Dies wird das Benutzerkonto dauerhaft löschen und kann nicht rückgängig gemacht werden. Alle zugehörigen Daten werden archiviert."
+      },
+      "sections": {
+        "user_to_delete": "Zu löschender Benutzer",
+        "impact_title": "Was passiert, wenn dieser Benutzer gelöscht wird:"
+      },
+      "labels": {
+        "reports_to": "Berichtet an",
+        "travel_requests": "{{count}} Reiseanträge"
+      },
+      "impacts": {
+        "account_deactivated": {
+          "title": "Benutzerkonto wird deaktiviert",
+          "description": "Der Benutzer kann nicht mehr auf das System zugreifen"
+        },
+        "requests_archived": {
+          "title": "Reiseanträge werden archiviert",
+          "description": "{{count}} Reiseanträge werden für Prüfungszwecke aufbewahrt"
+        },
+        "reports_unassigned": {
+          "title": "Direkte Berichte werden nicht zugewiesen",
+          "description": "Mitarbeiter, die diesem Manager berichten, benötigen neue Manager-Zuweisungen"
+        },
+        "audit_preserved": {
+          "title": "Prüfpfad bewahrt",
+          "description": "Alle Profiländerungen und administrative Aktionen werden archiviert"
+        },
+        "data_retention": {
+          "title": "Datenaufbewahrung-Compliance",
+          "description": "Benutzerdaten werden soft-gelöscht, um regulatorische Compliance zu gewährleisten"
+        }
+      },
+      "fields": {
+        "reason": "Grund für Löschung *"
+      },
+      "placeholders": {
+        "reason": "Bitte geben Sie einen detaillierten Grund für die Löschung dieses Benutzerkontos an..."
+      },
+      "hints": {
+        "reason": "Erforderlich für Prüfungszwecke und Compliance"
+      },
+      "errors": {
+        "reason_required": "Löschungsgrund ist erforderlich",
+        "reason_min_length": "Grund muss mindestens 20 Zeichen für ordnungsgemäße Dokumentation haben"
+      },
+      "confirmation": {
+        "text": "Ich verstehe, dass diese Aktion permanent ist und {{name}}s Konto löscht"
+      },
+      "safety": {
+        "data_preserved": "Daten werden für Compliance- und Prüfungszwecke aufbewahrt",
+        "history_backed_up": "Profilhistorie und administrative Aktionen sind gesichert",
+        "action_logged": "Diese Aktion wird protokolliert und Ihrem Admin-Konto zugeordnet"
+      },
+      "actions": {
+        "delete_user": "Benutzer löschen"
+      },
+      "suggestions": {
+        "inactive_cleanup": "Benutzer war für längere Zeit inaktiv und Kontobereinigung ist erforderlich",
+        "unused_account": "Benutzerkonto wurde erstellt, aber nie verwendet - ungenutzte Konto entfernen"
       }
     }
   },

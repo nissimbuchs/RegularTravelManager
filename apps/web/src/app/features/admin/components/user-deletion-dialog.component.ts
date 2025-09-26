@@ -11,6 +11,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { UserSummary } from '@rtm/shared';
+import { TranslationService } from '../../../core/services/translation.service';
 
 export interface UserDeletionDialogData {
   user: UserSummary;
@@ -41,7 +42,7 @@ export interface UserDeletionResult {
       <div class="dialog-header">
         <h2 mat-dialog-title>
           <mat-icon color="warn">delete_forever</mat-icon>
-          Delete User Account
+          {{ translationService.translateSync('admin.users.dialogs.deletion.title') }}
         </h2>
       </div>
 
@@ -50,17 +51,16 @@ export interface UserDeletionResult {
         <div class="warning-banner">
           <mat-icon color="warn">warning</mat-icon>
           <div class="warning-content">
-            <h3>This is a permanent action</h3>
+            <h3>{{ translationService.translateSync('admin.users.dialogs.deletion.warning.title') }}</h3>
             <p>
-              This will permanently delete the user account and cannot be undone. All associated
-              data will be archived.
+              {{ translationService.translateSync('admin.users.dialogs.deletion.warning.message') }}
             </p>
           </div>
         </div>
 
         <!-- User Information -->
         <div class="user-info">
-          <h3>User to be Deleted</h3>
+          <h3>{{ translationService.translateSync('admin.users.dialogs.deletion.sections.user_to_delete') }}</h3>
           <div class="user-details">
             <div class="user-card">
               <div class="user-primary">
@@ -74,11 +74,11 @@ export interface UserDeletionResult {
                 <p><mat-icon>badge</mat-icon> {{ data.user.employeeNumber }}</p>
                 <p *ngIf="data.user.managerName">
                   <mat-icon>supervisor_account</mat-icon>
-                  Reports to: {{ data.user.managerName }}
+                  {{ translationService.translateSync('admin.users.dialogs.deletion.labels.reports_to') }}: {{ data.user.managerName }}
                 </p>
                 <p>
                   <mat-icon>assignment</mat-icon>
-                  {{ data.user.requestCount }} travel requests
+                  {{ translationService.translateSync('admin.users.dialogs.deletion.labels.travel_requests', {count: data.user.requestCount}) }}
                 </p>
               </div>
             </div>
@@ -89,22 +89,22 @@ export interface UserDeletionResult {
 
         <!-- Impact Information -->
         <div class="impact-section">
-          <h3>What will happen when this user is deleted:</h3>
+          <h3>{{ translationService.translateSync('admin.users.dialogs.deletion.sections.impact_title') }}</h3>
           <div class="impact-list">
             <div class="impact-item">
               <mat-icon color="primary">archive</mat-icon>
               <div class="impact-content">
-                <strong>User account will be deactivated</strong>
-                <p>The user will no longer be able to access the system</p>
+                <strong>{{ translationService.translateSync('admin.users.dialogs.deletion.impacts.account_deactivated.title') }}</strong>
+                <p>{{ translationService.translateSync('admin.users.dialogs.deletion.impacts.account_deactivated.description') }}</p>
               </div>
             </div>
 
             <div class="impact-item">
               <mat-icon color="primary">assignment</mat-icon>
               <div class="impact-content">
-                <strong>Travel requests will be archived</strong>
+                <strong>{{ translationService.translateSync('admin.users.dialogs.deletion.impacts.requests_archived.title') }}</strong>
                 <p>
-                  {{ data.user.requestCount }} travel requests will be preserved for audit purposes
+                  {{ translationService.translateSync('admin.users.dialogs.deletion.impacts.requests_archived.description', {count: data.user.requestCount}) }}
                 </p>
               </div>
             </div>
@@ -112,24 +112,24 @@ export interface UserDeletionResult {
             <div class="impact-item" *ngIf="data.user.role === 'manager'">
               <mat-icon color="warn">supervisor_account</mat-icon>
               <div class="impact-content">
-                <strong>Direct reports will be unassigned</strong>
-                <p>Employees reporting to this manager will need new manager assignments</p>
+                <strong>{{ translationService.translateSync('admin.users.dialogs.deletion.impacts.reports_unassigned.title') }}</strong>
+                <p>{{ translationService.translateSync('admin.users.dialogs.deletion.impacts.reports_unassigned.description') }}</p>
               </div>
             </div>
 
             <div class="impact-item">
               <mat-icon color="primary">history</mat-icon>
               <div class="impact-content">
-                <strong>Audit trail preserved</strong>
-                <p>All profile changes and administrative actions will be archived</p>
+                <strong>{{ translationService.translateSync('admin.users.dialogs.deletion.impacts.audit_preserved.title') }}</strong>
+                <p>{{ translationService.translateSync('admin.users.dialogs.deletion.impacts.audit_preserved.description') }}</p>
               </div>
             </div>
 
             <div class="impact-item">
               <mat-icon color="primary">lock</mat-icon>
               <div class="impact-content">
-                <strong>Data retention compliance</strong>
-                <p>User data will be soft-deleted to maintain regulatory compliance</p>
+                <strong>{{ translationService.translateSync('admin.users.dialogs.deletion.impacts.data_retention.title') }}</strong>
+                <p>{{ translationService.translateSync('admin.users.dialogs.deletion.impacts.data_retention.description') }}</p>
               </div>
             </div>
           </div>
@@ -140,27 +140,25 @@ export interface UserDeletionResult {
         <!-- Deletion Form -->
         <form [formGroup]="deletionForm" class="deletion-form">
           <mat-form-field appearance="outline">
-            <mat-label>Reason for Deletion *</mat-label>
+            <mat-label>{{ translationService.translateSync('admin.users.dialogs.deletion.fields.reason') }}</mat-label>
             <textarea
               matInput
               formControlName="reason"
               rows="4"
-              placeholder="Please provide a detailed reason for deleting this user account..."
+              [placeholder]="translationService.translateSync('admin.users.dialogs.deletion.placeholders.reason')"
             ></textarea>
-            <mat-hint>Required for audit purposes and compliance</mat-hint>
+            <mat-hint>{{ translationService.translateSync('admin.users.dialogs.deletion.hints.reason') }}</mat-hint>
             <mat-error *ngIf="deletionForm.get('reason')?.hasError('required')">
-              Deletion reason is required
+              {{ translationService.translateSync('admin.users.dialogs.deletion.errors.reason_required') }}
             </mat-error>
             <mat-error *ngIf="deletionForm.get('reason')?.hasError('minlength')">
-              Reason must be at least 20 characters for proper documentation
+              {{ translationService.translateSync('admin.users.dialogs.deletion.errors.reason_min_length') }}
             </mat-error>
           </mat-form-field>
 
           <mat-checkbox formControlName="confirmDeletion" class="confirmation-checkbox">
             <span class="confirmation-text">
-              I understand that this action is permanent and will delete
-              <strong>{{ data.user.firstName }} {{ data.user.lastName }}</strong
-              >'s account
+              {{ translationService.translateSync('admin.users.dialogs.deletion.confirmation.text', {name: data.user.firstName + ' ' + data.user.lastName}) }}
             </span>
           </mat-checkbox>
         </form>
@@ -169,24 +167,24 @@ export interface UserDeletionResult {
         <div class="safety-check">
           <div class="safety-item">
             <mat-icon color="primary">verified_user</mat-icon>
-            <span>Data will be preserved for compliance and audit purposes</span>
+            <span>{{ translationService.translateSync('admin.users.dialogs.deletion.safety.data_preserved') }}</span>
           </div>
           <div class="safety-item">
             <mat-icon color="primary">backup</mat-icon>
-            <span>Profile history and administrative actions are backed up</span>
+            <span>{{ translationService.translateSync('admin.users.dialogs.deletion.safety.history_backed_up') }}</span>
           </div>
           <div class="safety-item">
             <mat-icon color="primary">security</mat-icon>
-            <span>This action will be logged and attributed to your admin account</span>
+            <span>{{ translationService.translateSync('admin.users.dialogs.deletion.safety.action_logged') }}</span>
           </div>
         </div>
       </mat-dialog-content>
 
       <mat-dialog-actions align="end">
-        <button mat-button (click)="onCancel()">Cancel</button>
+        <button mat-button (click)="onCancel()">{{ translationService.translateSync('common.buttons.cancel') }}</button>
         <button mat-raised-button color="warn" (click)="onConfirm()" [disabled]="!canConfirm()">
           <mat-icon>delete_forever</mat-icon>
-          Delete User
+          {{ translationService.translateSync('admin.users.dialogs.deletion.actions.delete_user') }}
         </button>
       </mat-dialog-actions>
     </div>
@@ -199,7 +197,8 @@ export class UserDeletionDialogComponent implements OnInit {
   constructor(
     private dialogRef: MatDialogRef<UserDeletionDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: UserDeletionDialogData,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    public translationService: TranslationService
   ) {
     this.deletionForm = this.formBuilder.group({
       reason: ['', [Validators.required, Validators.minLength(20)]],
@@ -220,12 +219,14 @@ export class UserDeletionDialogComponent implements OnInit {
 
     if (this.data.user.status === 'inactive') {
       suggestions.push(
-        'User has been inactive for extended period and account cleanup is required'
+        this.translationService.translateSync('admin.users.dialogs.deletion.suggestions.inactive_cleanup')
       );
     }
 
     if (this.data.user.requestCount === 0) {
-      suggestions.push('User account was created but never used - removing unused account');
+      suggestions.push(
+        this.translationService.translateSync('admin.users.dialogs.deletion.suggestions.unused_account')
+      );
     }
 
     return suggestions;

@@ -15,6 +15,7 @@ import { takeUntil } from 'rxjs/operators';
 
 import { UserSummary, RoleChangeValidation } from '@rtm/shared';
 import { AdminService } from '../../../core/services/admin.service';
+import { TranslationService } from '../../../core/services/translation.service';
 
 export interface RoleChangeDialogData {
   user: UserSummary;
@@ -46,20 +47,20 @@ export interface RoleChangeResult {
       <div class="dialog-header">
         <h2 mat-dialog-title>
           <mat-icon color="accent">security</mat-icon>
-          Change User Role
+          {{ translationService.translateSync('admin.users.dialogs.role_change.title') }}
         </h2>
       </div>
 
       <mat-dialog-content>
         <!-- User Information -->
         <div class="user-info">
-          <h3>User Information</h3>
+          <h3>{{ translationService.translateSync('admin.users.dialogs.role_change.sections.user_information') }}</h3>
           <div class="user-details">
-            <p><strong>Name:</strong> {{ data.user.firstName }} {{ data.user.lastName }}</p>
-            <p><strong>Email:</strong> {{ data.user.email }}</p>
-            <p><strong>Employee ID:</strong> {{ data.user.employeeNumber }}</p>
+            <p><strong>{{ translationService.translateSync('admin.users.dialogs.role_change.fields.name') }}:</strong> {{ data.user.firstName }} {{ data.user.lastName }}</p>
+            <p><strong>{{ translationService.translateSync('admin.users.dialogs.role_change.fields.email') }}:</strong> {{ data.user.email }}</p>
+            <p><strong>{{ translationService.translateSync('admin.users.dialogs.role_change.fields.employee_id') }}:</strong> {{ data.user.employeeNumber }}</p>
             <p>
-              <strong>Current Role:</strong>
+              <strong>{{ translationService.translateSync('admin.users.dialogs.role_change.fields.current_role') }}:</strong>
               <mat-chip [color]="getRoleColor(data.user.role)">
                 {{ data.user.role | titlecase }}
               </mat-chip>
@@ -72,30 +73,30 @@ export interface RoleChangeResult {
         <!-- Role Change Form -->
         <form [formGroup]="roleForm" class="role-form">
           <mat-form-field appearance="outline">
-            <mat-label>New Role</mat-label>
+            <mat-label>{{ translationService.translateSync('admin.users.dialogs.role_change.fields.new_role') }}</mat-label>
             <mat-select formControlName="newRole" (selectionChange)="onRoleChange()">
-              <mat-option value="employee">Employee</mat-option>
-              <mat-option value="manager">Manager</mat-option>
-              <mat-option value="administrator">Administrator</mat-option>
+              <mat-option value="employee">{{ translationService.translateSync('admin.users.dialogs.role_change.roles.employee') }}</mat-option>
+              <mat-option value="manager">{{ translationService.translateSync('admin.users.dialogs.role_change.roles.manager') }}</mat-option>
+              <mat-option value="administrator">{{ translationService.translateSync('admin.users.dialogs.role_change.roles.administrator') }}</mat-option>
             </mat-select>
             <mat-error *ngIf="roleForm.get('newRole')?.hasError('required')">
-              Please select a new role
+              {{ translationService.translateSync('admin.users.dialogs.role_change.errors.role_required') }}
             </mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Reason for Change</mat-label>
+            <mat-label>{{ translationService.translateSync('admin.users.dialogs.role_change.fields.reason') }}</mat-label>
             <textarea
               matInput
               formControlName="reason"
               rows="3"
-              placeholder="Please provide a reason for this role change..."
+              [placeholder]="translationService.translateSync('admin.users.dialogs.role_change.placeholders.reason')"
             ></textarea>
             <mat-error *ngIf="roleForm.get('reason')?.hasError('required')">
-              Reason is required for role changes
+              {{ translationService.translateSync('admin.users.dialogs.role_change.errors.reason_required') }}
             </mat-error>
             <mat-error *ngIf="roleForm.get('reason')?.hasError('minlength')">
-              Reason must be at least 10 characters
+              {{ translationService.translateSync('admin.users.dialogs.role_change.errors.reason_min_length') }}
             </mat-error>
           </mat-form-field>
         </form>
@@ -103,13 +104,13 @@ export interface RoleChangeResult {
         <!-- Validation Results -->
         <div *ngIf="validation && !validationLoading" class="validation-section">
           <mat-divider></mat-divider>
-          <h3>Impact Analysis</h3>
+          <h3>{{ translationService.translateSync('admin.users.dialogs.role_change.sections.impact_analysis') }}</h3>
 
           <!-- No Change Warning -->
           <div *ngIf="!validation.canChangeRole" class="validation-result no-change">
             <mat-icon color="warn">warning</mat-icon>
             <div class="validation-content">
-              <h4>Cannot Change Role</h4>
+              <h4>{{ translationService.translateSync('admin.users.dialogs.role_change.validation.cannot_change_title') }}</h4>
               <ul>
                 <li *ngFor="let warning of validation.warnings">{{ warning }}</li>
               </ul>
@@ -123,7 +124,7 @@ export interface RoleChangeResult {
           >
             <mat-icon color="warn">warning</mat-icon>
             <div class="validation-content">
-              <h4>Warnings</h4>
+              <h4>{{ translationService.translateSync('admin.users.dialogs.role_change.validation.warnings_title') }}</h4>
               <ul>
                 <li *ngFor="let warning of validation.warnings">{{ warning }}</li>
               </ul>
@@ -134,7 +135,7 @@ export interface RoleChangeResult {
           <div *ngIf="validation.impacts.length > 0" class="validation-result impacts">
             <mat-icon color="primary">info</mat-icon>
             <div class="validation-content">
-              <h4>Changes That Will Occur</h4>
+              <h4>{{ translationService.translateSync('admin.users.dialogs.role_change.validation.changes_title') }}</h4>
               <ul>
                 <li *ngFor="let impact of validation.impacts">{{ impact }}</li>
               </ul>
@@ -143,10 +144,10 @@ export interface RoleChangeResult {
 
           <!-- Permission Changes -->
           <div class="permission-changes">
-            <h4>Permission Changes</h4>
+            <h4>{{ translationService.translateSync('admin.users.dialogs.role_change.sections.permission_changes') }}</h4>
             <div class="permission-comparison">
               <div class="current-permissions">
-                <h5>Current Permissions</h5>
+                <h5>{{ translationService.translateSync('admin.users.dialogs.role_change.labels.current_permissions') }}</h5>
                 <mat-chip-listbox>
                   <mat-chip *ngFor="let permission of validation.existingPermissions">
                     {{ permission | titlecase }}
@@ -157,7 +158,7 @@ export interface RoleChangeResult {
                 <mat-icon>arrow_forward</mat-icon>
               </div>
               <div class="new-permissions">
-                <h5>New Permissions</h5>
+                <h5>{{ translationService.translateSync('admin.users.dialogs.role_change.labels.new_permissions') }}</h5>
                 <mat-chip-listbox>
                   <mat-chip
                     *ngFor="let permission of validation.newPermissions"
@@ -174,15 +175,15 @@ export interface RoleChangeResult {
         <!-- Loading State -->
         <div *ngIf="validationLoading" class="loading-section">
           <mat-spinner diameter="30"></mat-spinner>
-          <p>Validating role change...</p>
+          <p>{{ translationService.translateSync('admin.users.dialogs.role_change.messages.validating') }}</p>
         </div>
       </mat-dialog-content>
 
       <mat-dialog-actions align="end">
-        <button mat-button (click)="onCancel()">Cancel</button>
+        <button mat-button (click)="onCancel()">{{ translationService.translateSync('common.buttons.cancel') }}</button>
         <button mat-raised-button color="primary" (click)="onConfirm()" [disabled]="!canConfirm()">
           <mat-icon>security</mat-icon>
-          Change Role
+          {{ translationService.translateSync('admin.users.dialogs.role_change.actions.change_role') }}
         </button>
       </mat-dialog-actions>
     </div>
@@ -200,7 +201,8 @@ export class RoleChangeDialogComponent implements OnInit, OnDestroy {
     private dialogRef: MatDialogRef<RoleChangeDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: RoleChangeDialogData,
     private formBuilder: FormBuilder,
-    private adminService: AdminService
+    private adminService: AdminService,
+    public translationService: TranslationService
   ) {
     this.roleForm = this.formBuilder.group({
       newRole: ['', [Validators.required]],
