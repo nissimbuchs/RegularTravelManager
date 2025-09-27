@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ViewChild,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -24,6 +31,7 @@ import { takeUntil, debounceTime, distinctUntilChanged, startWith } from 'rxjs/o
 import { UserSummary } from '@rtm/shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { LoadingService } from '../../../core/services/loading.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 import {
   RoleChangeDialogComponent,
@@ -73,48 +81,48 @@ import {
         <mat-card-header>
           <mat-card-title>
             <mat-icon>people</mat-icon>
-            User Management
+            {{ translationService.translateSync('admin.users.title') }}
           </mat-card-title>
-          <mat-card-subtitle> Manage user accounts, roles, and permissions </mat-card-subtitle>
+          <mat-card-subtitle>{{ translationService.translateSync('admin.users.subtitle') }}</mat-card-subtitle>
         </mat-card-header>
 
         <!-- Search and Filters -->
         <mat-card-content>
           <form [formGroup]="filterForm" class="filter-form">
             <mat-form-field appearance="outline">
-              <mat-label>Search users</mat-label>
+              <mat-label>{{ translationService.translateSync('admin.users.search.label') }}</mat-label>
               <input
                 matInput
                 formControlName="search"
-                placeholder="Search by name, email, or employee ID"
+                [placeholder]="translationService.translateSync('admin.users.search.placeholder')"
               />
               <mat-icon matSuffix>search</mat-icon>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Role</mat-label>
+              <mat-label>{{ translationService.translateSync('admin.users.filters.role.label') }}</mat-label>
               <mat-select formControlName="role">
-                <mat-option [value]="null">All Roles</mat-option>
-                <mat-option value="employee">Employee</mat-option>
-                <mat-option value="manager">Manager</mat-option>
-                <mat-option value="administrator">Administrator</mat-option>
+                <mat-option [value]="null">{{ translationService.translateSync('admin.users.filters.role.all') }}</mat-option>
+                <mat-option value="employee">{{ translationService.translateSync('admin.users.filters.role.employee') }}</mat-option>
+                <mat-option value="manager">{{ translationService.translateSync('admin.users.filters.role.manager') }}</mat-option>
+                <mat-option value="administrator">{{ translationService.translateSync('admin.users.filters.role.administrator') }}</mat-option>
               </mat-select>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Status</mat-label>
+              <mat-label>{{ translationService.translateSync('admin.users.filters.status.label') }}</mat-label>
               <mat-select formControlName="status">
-                <mat-option [value]="null">All Status</mat-option>
-                <mat-option value="active">Active</mat-option>
-                <mat-option value="inactive">Inactive</mat-option>
-                <mat-option value="pending">Pending</mat-option>
+                <mat-option [value]="null">{{ translationService.translateSync('admin.users.filters.status.all') }}</mat-option>
+                <mat-option value="active">{{ translationService.translateSync('common.status.active') }}</mat-option>
+                <mat-option value="inactive">{{ translationService.translateSync('common.status.inactive') }}</mat-option>
+                <mat-option value="pending">{{ translationService.translateSync('common.status.pending') }}</mat-option>
               </mat-select>
             </mat-form-field>
 
             <div class="filter-actions">
               <button mat-stroked-button (click)="clearFilters()">
                 <mat-icon>clear</mat-icon>
-                Clear Filters
+                {{ translationService.translateSync('admin.users.actions.clear_filters') }}
               </button>
             </div>
           </form>
@@ -126,7 +134,7 @@ import {
         <div class="table-container">
           <div *ngIf="loading$ | async" class="loading-container">
             <mat-spinner diameter="40"></mat-spinner>
-            <p>Loading users...</p>
+            <p>{{ translationService.translateSync('admin.users.loading') }}</p>
           </div>
 
           <table
@@ -138,7 +146,7 @@ import {
           >
             <!-- Name Column -->
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('admin.users.table.columns.name') }}</th>
               <td mat-cell *matCellDef="let user">
                 <div class="user-info">
                   <div class="user-name">
@@ -152,7 +160,7 @@ import {
 
             <!-- Role Column -->
             <ng-container matColumnDef="role">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Role</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('admin.users.table.columns.role') }}</th>
               <td mat-cell *matCellDef="let user">
                 <mat-chip [color]="getRoleColor(user.role)">
                   {{ user.role | titlecase }}
@@ -162,7 +170,7 @@ import {
 
             <!-- Status Column -->
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('admin.users.table.columns.status') }}</th>
               <td mat-cell *matCellDef="let user">
                 <mat-chip [color]="getStatusColor(user.status)">
                   <mat-icon>{{ getStatusIcon(user.status) }}</mat-icon>
@@ -173,29 +181,29 @@ import {
 
             <!-- Manager Column -->
             <ng-container matColumnDef="manager">
-              <th mat-header-cell *matHeaderCellDef>Manager</th>
+              <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('admin.users.table.columns.manager') }}</th>
               <td mat-cell *matCellDef="let user">
                 <span *ngIf="user.managerName; else noManager">
                   {{ user.managerName }}
                 </span>
                 <ng-template #noManager>
-                  <span class="no-manager">No manager assigned</span>
+                  <span class="no-manager">{{ translationService.translateSync('admin.users.table.values.no_manager') }}</span>
                 </ng-template>
               </td>
             </ng-container>
 
             <!-- Activity Column -->
             <ng-container matColumnDef="activity">
-              <th mat-header-cell *matHeaderCellDef>Activity</th>
+              <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('admin.users.table.columns.activity') }}</th>
               <td mat-cell *matCellDef="let user">
                 <div class="activity-info">
                   <div class="request-count">
                     <mat-icon>assignment</mat-icon>
-                    {{ user.requestCount }} requests
+                    {{ translationService.translateSync('admin.users.table.values.request_count', { count: user.requestCount }) }}
                   </div>
                   <div class="verification-status" *ngIf="!user.isVerified">
                     <mat-icon color="warn">warning</mat-icon>
-                    Unverified
+                    {{ translationService.translateSync('admin.users.table.values.unverified') }}
                   </div>
                 </div>
               </td>
@@ -203,7 +211,7 @@ import {
 
             <!-- Registration Column -->
             <ng-container matColumnDef="registration">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Registered</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('admin.users.table.columns.registered') }}</th>
               <td mat-cell *matCellDef="let user">
                 {{ user.registrationDate | date: 'short' }}
               </td>
@@ -211,38 +219,38 @@ import {
 
             <!-- Actions Column -->
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('admin.users.table.columns.actions') }}</th>
               <td mat-cell *matCellDef="let user">
                 <div class="action-buttons">
                   <button
                     mat-icon-button
                     [routerLink]="['/admin/users', user.id]"
-                    matTooltip="View Details"
+                    [matTooltip]="translationService.translateSync('admin.users.actions.view_details')"
                   >
                     <mat-icon>visibility</mat-icon>
                   </button>
 
-                  <button mat-icon-button [matMenuTriggerFor]="userMenu" matTooltip="More Actions">
+                  <button mat-icon-button [matMenuTriggerFor]="userMenu" [matTooltip]="translationService.translateSync('admin.users.actions.more_actions')">
                     <mat-icon>more_vert</mat-icon>
                   </button>
 
                   <mat-menu #userMenu="matMenu">
                     <button mat-menu-item (click)="changeUserRole(user)">
                       <mat-icon>security</mat-icon>
-                      Change Role
+                      {{ translationService.translateSync('admin.users.actions.change_role') }}
                     </button>
                     <button mat-menu-item (click)="assignManager(user)">
                       <mat-icon>supervisor_account</mat-icon>
-                      Assign Manager
+                      {{ translationService.translateSync('admin.users.actions.assign_manager') }}
                     </button>
                     <button mat-menu-item (click)="toggleUserStatus(user)">
                       <mat-icon>{{ user.status === 'active' ? 'block' : 'check_circle' }}</mat-icon>
-                      {{ user.status === 'active' ? 'Deactivate' : 'Activate' }}
+                      {{ user.status === 'active' ? translationService.translateSync('admin.users.actions.deactivate') : translationService.translateSync('admin.users.actions.activate') }}
                     </button>
                     <mat-divider></mat-divider>
                     <button mat-menu-item (click)="deleteUser(user)" class="danger-action">
                       <mat-icon color="warn">delete</mat-icon>
-                      Delete User
+                      {{ translationService.translateSync('admin.users.actions.delete_user') }}
                     </button>
                   </mat-menu>
                 </div>
@@ -268,8 +276,8 @@ import {
         <!-- No Results -->
         <div *ngIf="!(loading$ | async) && dataSource.data.length === 0" class="no-results">
           <mat-icon>people_outline</mat-icon>
-          <h3>No users found</h3>
-          <p>Try adjusting your search criteria or filters.</p>
+          <h3>{{ translationService.translateSync('admin.users.no_results.title') }}</h3>
+          <p>{{ translationService.translateSync('admin.users.no_results.message') }}</p>
         </div>
       </mat-card>
     </div>
@@ -314,7 +322,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     private loadingService: LoadingService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    public translationService: TranslationService
   ) {}
 
   ngOnInit(): void {
@@ -380,7 +389,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.adminService.loadUsers(filters, pagination).subscribe({
       error: error => {
         console.error('Failed to load users:', error);
-        this.snackBar.open('Failed to load users', 'Close', { duration: 3000 });
+        this.snackBar.open(
+          this.translationService.translateSync('admin.users.messages.load_failed'),
+          this.translationService.translateSync('common.buttons.close'),
+          { duration: 3000 }
+        );
       },
     });
   }
@@ -422,14 +435,21 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             })
             .subscribe({
               next: () => {
-                this.snackBar.open(`User role changed to ${result.newRole} successfully`, 'Close', {
+                this.snackBar.open(
+                  this.translationService.translateSync('admin.users.messages.role_changed', { role: result.newRole }),
+                  this.translationService.translateSync('common.buttons.close'),
+                  {
                   duration: 3000,
                 });
                 // User list will be refreshed automatically by the admin service
               },
               error: error => {
                 console.error('Failed to change user role:', error);
-                this.snackBar.open('Failed to change user role', 'Close', { duration: 3000 });
+                this.snackBar.open(
+                  this.translationService.translateSync('admin.users.messages.role_change_failed'),
+                  this.translationService.translateSync('common.buttons.close'),
+                  { duration: 3000 }
+                );
               },
             });
         }
@@ -460,12 +480,20 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             .subscribe({
               next: () => {
                 const action = result.managerId ? 'assigned' : 'removed';
-                this.snackBar.open(`Manager ${action} successfully`, 'Close', { duration: 3000 });
+                const messageKey = action === 'assigned' ? 'admin.users.messages.manager_assigned' : 'admin.users.messages.manager_removed';
+                this.snackBar.open(
+                  this.translationService.translateSync(messageKey),
+                  this.translationService.translateSync('common.buttons.close'),
+                  { duration: 3000 }
+                );
                 // User list will be refreshed automatically by the admin service
               },
               error: error => {
                 console.error('Failed to update manager assignment:', error);
-                this.snackBar.open('Failed to update manager assignment', 'Close', {
+                this.snackBar.open(
+                  this.translationService.translateSync('admin.users.messages.manager_assignment_failed'),
+                  this.translationService.translateSync('common.buttons.close'),
+                  {
                   duration: 3000,
                 });
               },
@@ -480,9 +508,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
-        title: `${action === 'activate' ? 'Activate' : 'Deactivate'} User`,
-        message: `Are you sure you want to ${action} ${user.firstName} ${user.lastName}?`,
-        confirmText: action === 'activate' ? 'Activate' : 'Deactivate',
+        title: this.translationService.translateSync(action === 'activate' ? 'admin.users.dialogs.activate_user' : 'admin.users.dialogs.deactivate_user'),
+        message: this.translationService.translateSync(action === 'activate' ? 'admin.users.dialogs.activate_user_message' : 'admin.users.dialogs.deactivate_user_message', { name: `${user.firstName} ${user.lastName}` }),
+        confirmText: this.translationService.translateSync(action === 'activate' ? 'admin.users.dialogs.activate_confirm' : 'admin.users.dialogs.deactivate_confirm'),
         confirmColor: action === 'activate' ? 'primary' : 'warn',
       },
     });
@@ -495,17 +523,26 @@ export class UserManagementComponent implements OnInit, OnDestroy {
           this.adminService
             .updateUserStatus(user.id, {
               isActive: newStatus,
-              reason: `User ${action}d by administrator`,
+              reason: this.translationService.translateSync(action === 'activate' ? 'admin.users.audit.user_activated' : 'admin.users.audit.user_deactivated'),
             })
             .subscribe({
               next: () => {
-                this.snackBar.open(`User ${action}d successfully`, 'Close', {
+                const successKey = action === 'activate' ? 'admin.users.messages.user_activated' : 'admin.users.messages.user_deactivated';
+                this.snackBar.open(
+                  this.translationService.translateSync(successKey),
+                  this.translationService.translateSync('common.buttons.close'),
+                  {
                   duration: 3000,
                 });
               },
               error: error => {
                 console.error('Failed to update user status:', error);
-                this.snackBar.open(`Failed to ${action} user`, 'Close', { duration: 3000 });
+                const errorKey = action === 'activate' ? 'admin.users.messages.user_activate_failed' : 'admin.users.messages.user_deactivate_failed';
+                this.snackBar.open(
+                  this.translationService.translateSync(errorKey),
+                  this.translationService.translateSync('common.buttons.close'),
+                  { duration: 3000 }
+                );
               },
             });
         }
@@ -530,8 +567,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
           this.adminService.deleteUser(user.id, { reason: result.reason }).subscribe({
             next: summary => {
               this.snackBar.open(
-                `User ${user.firstName} ${user.lastName} deleted successfully`,
-                'Close',
+                this.translationService.translateSync('admin.users.messages.user_deleted', { name: `${user.firstName} ${user.lastName}` }),
+                this.translationService.translateSync('common.buttons.close'),
                 { duration: 3000 }
               );
               console.log('Deletion summary:', summary);
@@ -539,7 +576,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             },
             error: error => {
               console.error('Failed to delete user:', error);
-              this.snackBar.open('Failed to delete user', 'Close', { duration: 3000 });
+              this.snackBar.open(
+                this.translationService.translateSync('admin.users.messages.user_delete_failed'),
+                this.translationService.translateSync('common.buttons.close'),
+                { duration: 3000 }
+              );
             },
           });
         }

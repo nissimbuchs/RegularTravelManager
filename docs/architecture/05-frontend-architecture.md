@@ -6,6 +6,11 @@ Angular components organized by feature modules following domain-driven design p
 
 ```
 apps/web/src/
+├── assets/i18n/               # JSON translation files
+│   ├── de.json                # German translations
+│   ├── fr.json                # French translations
+│   ├── it.json                # Italian translations
+│   └── en.json                # English (fallback)
 ├── app/
 │   ├── features/
 │   │   ├── employee/
@@ -29,23 +34,34 @@ apps/web/src/
 │   ├── shared/
 │   │   ├── components/
 │   │   │   ├── forms/
-│   │   │   └── tables/
+│   │   │   ├── tables/
+│   │   │   └── language-switcher/     # Swiss flag-based language selector
+│   │   ├── pipes/
+│   │   │   └── translate.pipe.ts      # Translation pipe (optional - synchronous service preferred)
+│   │   ├── directives/
+│   │   │   └── translate.directive.ts # Translation directive for complex cases
 │   │   └── services/
 │   │       └── project.service.ts
 │   ├── core/
 │   │   ├── services/
 │   │   │   ├── auth.service.ts
 │   │   │   ├── employee.service.ts
-│   │   │   └── config.service.ts
+│   │   │   ├── config.service.ts
+│   │   │   ├── translation.service.ts       # Core JSON-based translation service
+│   │   │   ├── translation-loader.service.ts # HTTP loader for translation files
+│   │   │   ├── language.service.ts          # Language state management
+│   │   │   ├── master-data-translation.service.ts # AWS Translate integration
+│   │   │   └── pluralization.service.ts     # ICU-like pluralization
 │   │   ├── guards/
 │   │   └── interceptors/
 │   │       ├── auth.interceptor.ts
-│   │       └── response.interceptor.ts
+│   │       ├── response.interceptor.ts
+│   │       └── master-data-translation.interceptor.ts # Automatic master data translation
 ```
 
 ## State Management
 
-RxJS service-based state management pattern with reactive data flow:
+RxJS service-based state management pattern with reactive data flow and multilingual state management:
 
 ```typescript
 // Service-based State Management with BehaviorSubjects
@@ -112,6 +128,113 @@ export class EmployeeDashboardComponent {
 
   ngOnInit() {
     this.travelRequestService.loadRequests().subscribe();
+  }
+}
+```
+
+## Translation Architecture Integration
+
+### Synchronous JSON-Based Translation System
+
+**Current Implementation: Synchronous Translation Service**
+```typescript
+// Template usage with synchronous translation service
+<h1>{{ translationService.translateSync('employee.dashboard.title') }}</h1>
+<button>{{ translationService.translateSync('common.buttons.save') }}</button>
+
+// Template usage with parameters
+<p>{{ translationService.translateSync('employee.confirmation.autoClose', { seconds: currentCountdown }) }}</p>
+
+// Component usage with direct synchronous access
+export class EmployeeDashboardComponent {
+  constructor(public translationService: TranslationService) {}
+
+  getPageTitle(): string {
+    return this.translationService.translateSync('employee.dashboard.title');
+  }
+
+  getWelcomeMessage(): string {
+    return this.translationService.translateSync('employee.dashboard.welcome',
+      { name: this.currentUser?.name }
+    );
+  }
+}
+```
+
+**Key Implementation Details:**
+- **Synchronous Access**: `translateSync()` method provides immediate translation results
+- **Public Service Injection**: Services injected as `public` for direct template access
+- **Parameter Support**: String interpolation with object parameters
+- **Fallback Strategy**: Returns original key if translation missing
+- **Performance**: Pre-loaded JSON translations for instant access
+- **Memory Efficient**: Single JSON file loaded per language
+
+**Layer 2: Automatic Master Data Translation**
+```typescript
+// HTTP response automatically translated via interceptor
+this.http.get<Project[]>('/api/projects').subscribe(projects => {
+  // project.name automatically translated to current language
+  console.log(projects[0].name); // "Projet Zurich" (if French selected)
+});
+
+// Manual translation service usage (optional)
+this.masterDataTranslationService.translateContent(
+  'Zurich Project', 'de', 'project'
+).subscribe(result => {
+  console.log(result.translatedText); // "Projekt Zürich"
+});
+```
+
+**Translation Service Architecture:**
+```typescript
+// Core synchronous translation service implementation
+@Injectable({ providedIn: 'root' })
+export class TranslationService {
+  private currentLanguageSubject = new BehaviorSubject<SupportedLanguage>('en');
+  public currentLanguage$ = this.currentLanguageSubject.asObservable();
+  private translations: Record<string, any> = {};
+
+  constructor(
+    private translationLoader: TranslationLoaderService,
+    private languageService: LanguageService
+  ) {
+    this.initializeTranslations();
+  }
+
+  /**
+   * Synchronous translation method - core implementation
+   * @param key - Translation key (e.g., 'employee.dashboard.title')
+   * @param params - Optional parameters for string interpolation
+   * @returns Translated string or fallback
+   */
+  translateSync(key: string, params?: Record<string, any>): string {
+    const translation = this.getNestedTranslation(key);
+
+    if (!translation) {
+      console.warn(`Translation key not found: ${key}`);
+      return key; // Fallback to key
+    }
+
+    return params ? this.interpolateParameters(translation, params) : translation;
+  }
+
+  /**
+   * Language switching with immediate effect
+   * @param language - Target language code
+   */
+  setLanguage(language: SupportedLanguage): void {
+    this.currentLanguageSubject.next(language);
+    this.loadTranslationsForLanguage(language);
+  }
+
+  private getNestedTranslation(key: string): string | null {
+    return key.split('.').reduce((obj, k) => obj?.[k], this.translations);
+  }
+
+  private interpolateParameters(template: string, params: Record<string, any>): string {
+    return template.replace(/\{\{(\w+)\}\}/g, (match, paramName) =>
+      params[paramName]?.toString() ?? match
+    );
   }
 }
 ```
@@ -429,16 +552,32 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
 ### 🚨 Mandatory Patterns for All Components
 
-1. **Component Subscription Management:**
+1. **Component Subscription Management (With Synchronous Translation):**
    ```typescript
    export class YourComponent implements OnInit, OnDestroy {
      private destroy$ = new Subject<void>();
-     
+
+     // Synchronous translation integration - no subscription needed
+     constructor(public translationService: TranslationService) {}
+
      ngOnInit(): void {
-       // ALL subscriptions MUST use takeUntil(this.destroy$)
+       // ALL async subscriptions MUST use takeUntil(this.destroy$)
        this.service.data$.pipe(takeUntil(this.destroy$)).subscribe(/*...*/);
+
+       // Language change subscriptions need cleanup (for reactive updates)
+       this.translationService.currentLanguage$
+         .pipe(takeUntil(this.destroy$))
+         .subscribe(lang => {
+           // Handle language changes - typically triggers UI refresh
+           this.cdRef.detectChanges(); // If using OnPush change detection
+         });
      }
-     
+
+     // Direct synchronous translation usage
+     getPageTitle(): string {
+       return this.translationService.translateSync('your.page.title');
+     }
+
      ngOnDestroy(): void {
        this.destroy$.next();
        this.destroy$.complete();
@@ -486,13 +625,27 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
 ### Integration Checklist for New Features
 
+**Subscription Management:**
 - [ ] All components implement `OnDestroy` with `destroy$` subject
 - [ ] All subscriptions use `takeUntil(this.destroy$)`
-- [ ] Services implement `cleanup()` method 
+- [ ] Services implement `cleanup()` method
 - [ ] Auth error handling ignores 401/403 during logout
 - [ ] Auto-refresh timers are properly cancelled
 - [ ] Form value change subscriptions are cleaned up
 - [ ] HTTP requests are cancellable via global cleanup subjects
+
+**Synchronous Translation Integration:**
+- [ ] All static text uses `translationService.translateSync()`: `{{ translationService.translateSync('key') }}`
+- [ ] Translation services injected as `public` for direct template access
+- [ ] Translation keys follow hierarchical structure: `feature.component.element`
+- [ ] Parameter interpolation uses object syntax: `translateSync('key', { param: value })`
+- [ ] Language change subscriptions use `takeUntil(this.destroy$)` for cleanup
+- [ ] Master data fields automatically translated via HTTP interceptor
+- [ ] New translation keys added to all language files (de.json, fr.json, it.json, en.json)
+- [ ] Language switcher component included in main navigation
+- [ ] Forms handle translated validation messages with synchronous access
+- [ ] Error messages support multilingual display through sync translation
+- [ ] Components implement proper fallback for missing translation keys
 
 ## Frontend Architecture Benefits
 
@@ -501,8 +654,38 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 1. **Phase 1 Issue:** Application subscriptions (timers, forms, API calls) continued running after logout
 2. **Phase 2 Issue:** Angular's internal framework subscriptions (296+ active) were not being cleaned up, causing memory leaks and error propagation
 
-**Benefits:** Zero unauthorized errors, memory leak prevention, improved performance, better user experience, and scalable pattern for new features.
+**Benefits:** Zero unauthorized errors, memory leak prevention, improved performance, better user experience, scalable pattern for new features, and seamless multilingual support across all components.
 
-**Requirements:** Phase 1 patterns are mandatory for all components/services, Phase 2 integration is automatic through AuthService, testing must verify subscription cleanup.
+**Requirements:** Phase 1 patterns are mandatory for all components/services, Phase 2 integration is automatic through AuthService, testing must verify subscription cleanup, and all new features must include multilingual support with proper translation key structure.
 
-This subscription lifecycle management ensures application stability and user experience quality.
+## Synchronous Translation Integration Benefits
+
+**Complete Multilingual Coverage:**
+- **Synchronous Static UI Translation:** All buttons, labels, forms, messages in user's preferred language with immediate access
+- **Dynamic Master Data:** Project names, descriptions automatically translated via HTTP interceptor
+- **Instant Language Switching:** Immediate UI updates through synchronous translation access
+- **Simplified Integration:** Direct method calls instead of subscription management
+
+**Developer Experience:**
+- **Simple Template Syntax:** `{{ translationService.translateSync('key') }}` for all static text
+- **Direct Method Access:** No observable subscriptions needed for static translations
+- **Parameter Interpolation:** Built-in support for dynamic values: `translateSync('key', { count: 5 })`
+- **Hierarchical Translation Keys:** Organized, maintainable JSON structure
+- **Automatic Master Data:** HTTP interceptor handles all API response translation
+- **Swiss Market Optimization:** Flag-based language switcher, regional preloading
+
+**Performance & Reliability:**
+- **Synchronous Access:** No async overhead for static UI translations
+- **Memory Efficiency:** Pre-loaded JSON translations for instant access
+- **Fallback Resilience:** Original key shown if translation missing
+- **Multi-Level Caching:** Backend PostgreSQL + frontend memory cache for master data
+- **Intelligent Preloading:** Browser language detection and regional optimization
+- **Cost Optimization:** Caching reduces AWS Translate API usage
+
+**Architecture Advantages:**
+- **Reduced Complexity:** Eliminates async pipe chains for static text
+- **Better Performance:** Direct object property access vs. observable streams
+- **Simplified Testing:** Synchronous methods easier to unit test
+- **Improved DX:** Less boilerplate code for translation integration
+
+This synchronous translation architecture combined with subscription lifecycle management ensures application stability, user experience quality, and complete Swiss market multilingual support with simplified developer workflows.

@@ -11,6 +11,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
 import { LoadingService } from '../../core/services/loading.service';
+import { TranslationService } from '../../core/services/translation.service';
+import { LanguageSwitcherComponent } from '../../shared/components/language-switcher/language-switcher.component';
 
 @Component({
   selector: 'app-login',
@@ -25,27 +27,37 @@ import { LoadingService } from '../../core/services/loading.service';
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatIconModule,
+    LanguageSwitcherComponent,
   ],
   template: `
     <div class="login-container">
+      <!-- Language Switcher for non-authenticated users -->
+      <div class="login-language-switcher">
+        <app-language-switcher></app-language-switcher>
+      </div>
+
       <mat-card class="login-card">
         <mat-card-header>
           <mat-card-title class="login-title">
             <div class="elca-logo"></div>
-            RegularTravelManager
+            {{ translationService.translateSync('auth.login.app_title') }}
           </mat-card-title>
-          <mat-card-subtitle>Sign in to your account</mat-card-subtitle>
+          <mat-card-subtitle>{{
+            translationService.translateSync('auth.login.subtitle')
+          }}</mat-card-subtitle>
         </mat-card-header>
 
         <mat-card-content>
           <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Email</mat-label>
+              <mat-label>{{
+                translationService.translateSync('auth.login.email_label')
+              }}</mat-label>
               <input
                 matInput
                 type="email"
                 formControlName="email"
-                placeholder="Enter your email"
+                [placeholder]="translationService.translateSync('auth.login.email_placeholder')"
                 autocomplete="username"
                 [class.mat-form-field-invalid]="
                   loginForm.get('email')?.invalid && loginForm.get('email')?.touched
@@ -53,20 +65,22 @@ import { LoadingService } from '../../core/services/loading.service';
               />
               <mat-icon matSuffix>email</mat-icon>
               <mat-error *ngIf="loginForm.get('email')?.hasError('required')">
-                Email is required
+                {{ translationService.translateSync('auth.login.email_required') }}
               </mat-error>
               <mat-error *ngIf="loginForm.get('email')?.hasError('email')">
-                Please enter a valid email
+                {{ translationService.translateSync('auth.login.email_invalid') }}
               </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Password</mat-label>
+              <mat-label>{{
+                translationService.translateSync('auth.login.password_label')
+              }}</mat-label>
               <input
                 matInput
                 [type]="hidePassword ? 'password' : 'text'"
                 formControlName="password"
-                placeholder="Enter your password"
+                [placeholder]="translationService.translateSync('auth.login.password_placeholder')"
                 autocomplete="current-password"
                 [class.mat-form-field-invalid]="
                   loginForm.get('password')?.invalid && loginForm.get('password')?.touched
@@ -76,10 +90,10 @@ import { LoadingService } from '../../core/services/loading.service';
                 {{ hidePassword ? 'visibility_off' : 'visibility' }}
               </mat-icon>
               <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
-                Password is required
+                {{ translationService.translateSync('auth.login.password_required') }}
               </mat-error>
               <mat-error *ngIf="loginForm.get('password')?.hasError('minlength')">
-                Password must be at least 8 characters
+                {{ translationService.translateSync('auth.login.password_min_length') }}
               </mat-error>
             </mat-form-field>
 
@@ -95,19 +109,23 @@ import { LoadingService } from '../../core/services/loading.service';
                 diameter="20"
                 class="login-spinner"
               ></mat-spinner>
-              <span *ngIf="!(isLoading$ | async)">Sign In</span>
-              <span *ngIf="isLoading$ | async">Signing In...</span>
+              <span *ngIf="!(isLoading$ | async)">{{
+                translationService.translateSync('auth.login.sign_in_button')
+              }}</span>
+              <span *ngIf="isLoading$ | async">{{
+                translationService.translateSync('auth.login.signing_in')
+              }}</span>
             </button>
 
             <div class="registration-link">
-              Don't have an account?
+              {{ translationService.translateSync('auth.login.no_account') }}
               <button
                 mat-button
                 color="primary"
                 (click)="goToRegistration()"
                 class="register-button"
               >
-                Create Account
+                {{ translationService.translateSync('auth.login.create_account') }}
               </button>
             </div>
           </form>
@@ -127,7 +145,8 @@ export class LoginComponent implements OnInit {
     private authService: AuthService,
     private loadingService: LoadingService,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    public translationService: TranslationService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -167,10 +186,17 @@ export class LoginComponent implements OnInit {
       this.authService.login(credentials).subscribe({
         next: response => {
           this.loadingService.setLoading(false);
-          this.snackBar.open(`Welcome back, ${response.user.name}!`, 'Close', {
-            duration: 3000,
-            panelClass: ['success-snackbar'],
+          const welcomeMessage = this.translationService.translateSync('auth.login.welcome_back', {
+            name: response.user.name,
           });
+          this.snackBar.open(
+            welcomeMessage,
+            this.translationService.translateSync('common.buttons.close'),
+            {
+              duration: 3000,
+              panelClass: ['success-snackbar'],
+            }
+          );
           this.redirectAfterLogin();
         },
         error: error => {
@@ -195,9 +221,11 @@ export class LoginComponent implements OnInit {
             }
           }, 100);
 
+          const errorMessage =
+            error.message || this.translationService.translateSync('auth.login.login_failed');
           this.snackBar.open(
-            error.message || 'Login failed. Please check your credentials and try again.',
-            'Close',
+            errorMessage,
+            this.translationService.translateSync('common.buttons.close'),
             {
               duration: 5000,
               panelClass: ['error-snackbar'],

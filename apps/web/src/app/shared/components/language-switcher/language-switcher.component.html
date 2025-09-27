@@ -1,0 +1,85 @@
+<div class="language-switcher"
+     [class.dropdown-open]="isDropdownOpen"
+     (clickOutside)="closeDropdown()">
+
+  <!-- Current Language Button -->
+  <button
+    class="language-button"
+    type="button"
+    [attr.aria-label]="translationService.translateSync('header.language_switcher.select_language')"
+    [attr.aria-expanded]="isDropdownOpen"
+    aria-haspopup="listbox"
+    (click)="toggleDropdown()"
+    (keydown)="onKeyDown($event)">
+
+    <!-- Current Language Flag -->
+    <img
+      [src]="getFlagPath(currentLanguage)"
+      [alt]="getLanguageName(currentLanguage)"
+      class="flag-icon"
+      width="20"
+      height="15">
+
+    <!-- Current Language Name -->
+    <span class="language-name">{{ getLanguageName(currentLanguage) }}</span>
+
+    <!-- Dropdown Arrow -->
+    <svg class="dropdown-arrow"
+         [class.rotated]="isDropdownOpen"
+         width="12"
+         height="12"
+         viewBox="0 0 12 12"
+         fill="none"
+         xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 4.5L6 7.5L9 4.5"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <!-- Language Dropdown -->
+  <div class="language-dropdown"
+       *ngIf="isDropdownOpen"
+       role="listbox"
+       [attr.aria-label]="translationService.translateSync('header.language_switcher.select_language')">
+
+    <button
+      *ngFor="let lang of supportedLanguages | keyvalue"
+      class="language-option"
+      type="button"
+      role="option"
+      [class.selected]="lang.key === currentLanguage"
+      [attr.aria-selected]="lang.key === currentLanguage"
+      (click)="selectLanguage(asLanguage(lang.key))"
+      (keydown)="onLanguageKeyDown($event, asLanguage(lang.key))">
+
+      <!-- Language Flag -->
+      <img
+        [src]="getFlagPath(asLanguage(lang.key))"
+        [alt]="lang.value.name"
+        class="flag-icon"
+        width="20"
+        height="15">
+
+      <!-- Language Name -->
+      <span class="language-name">{{ lang.value.name }}</span>
+
+      <!-- Selected Indicator -->
+      <svg *ngIf="lang.key === currentLanguage"
+           class="selected-icon"
+           width="16"
+           height="16"
+           viewBox="0 0 16 16"
+           fill="none"
+           xmlns="http://www.w3.org/2000/svg">
+        <path d="M13.5 4.5L6 12L2.5 8.5"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+</div>

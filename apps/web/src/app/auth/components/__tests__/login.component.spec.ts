@@ -3,11 +3,15 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 
 import { LoginComponent } from '../login.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoadingService } from '../../../core/services/loading.service';
+import { TranslationService } from '../../../core/services/translation.service';
+import { TranslationLoaderService } from '../../../core/services/translation-loader.service';
+import { LanguageService } from '../../../core/services/language.service';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
@@ -30,12 +34,15 @@ describe('LoginComponent', () => {
     const snackBarSpy = jasmine.createSpyObj('MatSnackBar', ['open']);
 
     await TestBed.configureTestingModule({
-      imports: [LoginComponent, ReactiveFormsModule, NoopAnimationsModule],
+      imports: [LoginComponent, ReactiveFormsModule, NoopAnimationsModule, HttpClientTestingModule],
       providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: LoadingService, useValue: loadingServiceSpy },
         { provide: Router, useValue: routerSpy },
         { provide: MatSnackBar, useValue: snackBarSpy },
+        TranslationService,
+        TranslationLoaderService,
+        LanguageService,
       ],
     }).compileComponents();
 
@@ -174,4 +181,33 @@ describe('LoginComponent', () => {
     );
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/employee/dashboard']);
   }));
+
+  it('should use translation service for UI text', () => {
+    // Test that the component properly integrates with the translation service
+    expect(component.translationService).toBeDefined();
+
+    // Verify that translation service is properly injected and working
+    const translationService = component.translationService;
+
+    // Test that translation keys exist and return string values (not the key itself)
+    const appTitle = translationService.translateSync('auth.login.app_title');
+    expect(typeof appTitle).toBe('string');
+    expect(appTitle).not.toBe('auth.login.app_title'); // Should not return the key itself
+
+    const emailLabel = translationService.translateSync('auth.login.email_label');
+    expect(typeof emailLabel).toBe('string');
+    expect(emailLabel).not.toBe('auth.login.email_label');
+
+    const passwordLabel = translationService.translateSync('auth.login.password_label');
+    expect(typeof passwordLabel).toBe('string');
+    expect(passwordLabel).not.toBe('auth.login.password_label');
+  });
+
+  it('should handle translation with parameters', () => {
+    const translationService = component.translationService;
+    const result = translationService.translateSync('auth.login.welcome_back', { name: 'John Doe' });
+    expect(typeof result).toBe('string');
+    expect(result).toContain('John Doe'); // Should interpolate the name parameter
+    expect(result).not.toBe('auth.login.welcome_back'); // Should not return the key itself
+  });
 });

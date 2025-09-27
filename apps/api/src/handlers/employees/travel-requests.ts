@@ -305,7 +305,7 @@ export const getTravelRequests = async (
     const projectNameFilter = queryParams.projectName;
 
     // Build WHERE clause for filters
-    let whereConditions = ['tr.employee_id = $1'];
+    const whereConditions = ['tr.employee_id = $1'];
     const queryValues = [employeeId];
     let paramIndex = 2;
 
@@ -336,7 +336,7 @@ export const getTravelRequests = async (
       submittedDate: 'tr.submitted_at',
       projectName: 'p.name',
       status: 'tr.status',
-      processedDate: 'tr.processed_at'
+      processedDate: 'tr.processed_at',
     };
     const sortColumn = sortMap[sortActive] || 'tr.submitted_at';
     const orderBy = `${sortColumn} ${sortDirection.toUpperCase()}`;
@@ -427,7 +427,8 @@ export const getTravelRequests = async (
     // Transform requests to match frontend model
     const requests = result.rows.map((row: any) => {
       const costPerKm = parseFloat(row.cost_per_km || row.default_cost_per_km || 0.68);
-      const dailyAllowance = parseFloat(row.calculated_allowance_chf || 0) / parseInt(row.days_per_week || 1);
+      const dailyAllowance =
+        parseFloat(row.calculated_allowance_chf || 0) / parseInt(row.days_per_week || 1);
       const weeklyAllowance = parseFloat(row.calculated_allowance_chf || 0);
 
       return {
@@ -445,7 +446,7 @@ export const getTravelRequests = async (
         managerEmail: row.manager_email,
         calculatedDistance: row.calculated_distance_km,
         costPerKm: costPerKm,
-        statusHistory: [] // Will be populated if needed in details view
+        statusHistory: [], // Will be populated if needed in details view
       };
     });
 
@@ -457,7 +458,7 @@ export const getTravelRequests = async (
       approvedCount,
       rejectedCount,
       withdrawnCount,
-      totalApprovedAllowance: parseFloat(totalApprovedAllowance.toFixed(2))
+      totalApprovedAllowance: parseFloat(totalApprovedAllowance.toFixed(2)),
     };
 
     return formatResponse(200, dashboardData, 'get-travel-requests');
@@ -561,7 +562,7 @@ export const getRequestDetails = async (
       processedDate: request.processed_at, // Will be converted to Date in frontend
       statusHistory: [], // TODO: Add status history query if needed
       employeeAddress: request.employee_address,
-      subprojectAddress: request.subproject_address
+      subprojectAddress: request.subproject_address,
     };
 
     return formatResponse(200, requestDetails, 'get-request-details');
@@ -620,9 +621,13 @@ export const withdrawRequest = async (
 
     // Only pending requests can be withdrawn
     if (currentStatus !== 'pending') {
-      return formatResponse(400, {
-        error: `Cannot withdraw request with status: ${currentStatus}`
-      }, 'withdraw-request');
+      return formatResponse(
+        400,
+        {
+          error: `Cannot withdraw request with status: ${currentStatus}`,
+        },
+        'withdraw-request'
+      );
     }
 
     // Update request status to withdrawn
@@ -644,11 +649,15 @@ export const withdrawRequest = async (
 
     const updatedRequest = result.rows[0];
 
-    return formatResponse(200, {
-      id: updatedRequest.id,
-      status: updatedRequest.status,
-      processedAt: updatedRequest.processed_at?.toISOString()
-    }, 'withdraw-request');
+    return formatResponse(
+      200,
+      {
+        id: updatedRequest.id,
+        status: updatedRequest.status,
+        processedAt: updatedRequest.processed_at?.toISOString(),
+      },
+      'withdraw-request'
+    );
   } catch (error) {
     console.error('Error withdrawing request:', error);
     return formatResponse(500, { error: 'Internal server error' }, 'withdraw-request');

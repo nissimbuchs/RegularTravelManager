@@ -22,6 +22,7 @@ import {
   GeocodingResult,
 } from '../../../core/models/project.model';
 import { ProjectService } from '../../../core/services/project.service';
+import { TranslationService } from '../../../core/services/translation.service';
 
 export interface SubprojectFormDialogData {
   title: string;
@@ -60,19 +61,19 @@ export interface SubprojectFormDialogData {
       <form [formGroup]="subprojectForm" class="subproject-form">
         <!-- Basic Information -->
         <div class="form-section">
-          <h4>Location Details</h4>
+          <h4>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.sections.location_details') }}</h4>
 
           <mat-form-field appearance="outline">
-            <mat-label>Location Name</mat-label>
+            <mat-label>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.fields.location_name') }}</mat-label>
             <input
               matInput
               formControlName="name"
-              placeholder="Enter location/subproject name"
+              [placeholder]="translationService.translateSync('admin.projects.dialogs.subproject_form.placeholders.location_name')"
               maxlength="255"
             />
-            <mat-hint>Descriptive name for this work location</mat-hint>
+            <mat-hint>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.hints.location_name') }}</mat-hint>
             <mat-error *ngIf="subprojectForm.get('name')?.hasError('required')">
-              Location name is required
+              {{ translationService.translateSync('admin.projects.dialogs.subproject_form.errors.location_name_required') }}
             </mat-error>
           </mat-form-field>
 
@@ -82,7 +83,7 @@ export interface SubprojectFormDialogData {
                 <mat-icon [color]="subprojectForm.get('isActive')?.value ? 'primary' : 'warn'">
                   {{ subprojectForm.get('isActive')?.value ? 'toggle_on' : 'toggle_off' }}
                 </mat-icon>
-                {{ subprojectForm.get('isActive')?.value ? 'Active' : 'Inactive' }}
+                {{ subprojectForm.get('isActive')?.value ? translationService.translateSync('common.status.active') : translationService.translateSync('common.status.inactive') }}
               </span>
             </mat-slide-toggle>
           </div>
@@ -92,45 +93,45 @@ export interface SubprojectFormDialogData {
         <div class="form-section">
           <h4>
             <mat-icon>place</mat-icon>
-            Address Information
+            {{ translationService.translateSync('admin.projects.dialogs.subproject_form.sections.address_information') }}
             <mat-chip *ngIf="geocodingStatus === 'success'" color="accent">
               <mat-icon>check_circle</mat-icon>
-              Geocoded
+              {{ translationService.translateSync('admin.projects.dialogs.subproject_form.status.geocoded') }}
             </mat-chip>
             <mat-chip *ngIf="geocodingStatus === 'error'" color="warn">
               <mat-icon>error</mat-icon>
-              Geocoding Failed
+              {{ translationService.translateSync('admin.projects.dialogs.subproject_form.status.geocoding_failed') }}
             </mat-chip>
           </h4>
 
           <mat-form-field appearance="outline">
-            <mat-label>Street Address</mat-label>
+            <mat-label>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.fields.street_address') }}</mat-label>
             <input
               matInput
               formControlName="streetAddress"
-              placeholder="Bahnhofstrasse 1"
+              [placeholder]="translationService.translateSync('admin.projects.dialogs.subproject_form.placeholders.street_address')"
               maxlength="255"
             />
-            <mat-hint>Full street address including number</mat-hint>
+            <mat-hint>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.hints.street_address') }}</mat-hint>
           </mat-form-field>
 
           <div class="address-row">
             <mat-form-field appearance="outline">
-              <mat-label>City</mat-label>
-              <input matInput formControlName="city" placeholder="Zurich" maxlength="100" />
+              <mat-label>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.fields.city') }}</mat-label>
+              <input matInput formControlName="city" [placeholder]="translationService.translateSync('admin.projects.dialogs.subproject_form.placeholders.city')" maxlength="100" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Postal Code</mat-label>
+              <mat-label>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.fields.postal_code') }}</mat-label>
               <input
                 matInput
                 formControlName="postalCode"
-                placeholder="8001"
+                [placeholder]="translationService.translateSync('admin.projects.dialogs.subproject_form.placeholders.postal_code')"
                 maxlength="20"
                 pattern="[0-9]{4,5}"
               />
               <mat-error *ngIf="subprojectForm.get('postalCode')?.hasError('pattern')">
-                Please enter a valid Swiss postal code (4-5 digits)
+                {{ translationService.translateSync('admin.projects.dialogs.subproject_form.errors.postal_code_pattern') }}
               </mat-error>
             </mat-form-field>
           </div>
@@ -144,7 +145,7 @@ export interface SubprojectFormDialogData {
             >
               <mat-icon *ngIf="!isGeocoding">my_location</mat-icon>
               <mat-icon *ngIf="isGeocoding" class="spinning">refresh</mat-icon>
-              {{ isGeocoding ? 'Geocoding...' : 'Get Coordinates' }}
+              {{ isGeocoding ? translationService.translateSync('admin.projects.dialogs.subproject_form.actions.geocoding') : translationService.translateSync('admin.projects.dialogs.subproject_form.actions.get_coordinates') }}
             </button>
 
             <button
@@ -152,10 +153,10 @@ export interface SubprojectFormDialogData {
               mat-button
               (click)="clearCoordinates()"
               [disabled]="!hasCoordinates()"
-              matTooltip="Clear coordinates"
+              [matTooltip]="translationService.translateSync('admin.projects.dialogs.subproject_form.tooltips.clear_coordinates')"
             >
               <mat-icon>location_off</mat-icon>
-              Clear
+              {{ translationService.translateSync('admin.projects.dialogs.subproject_form.actions.clear') }}
             </button>
           </div>
         </div>
@@ -164,12 +165,12 @@ export interface SubprojectFormDialogData {
         <div class="form-section" *ngIf="hasCoordinates() || showManualCoords">
           <h4>
             <mat-icon>my_location</mat-icon>
-            Coordinates
+            {{ translationService.translateSync('admin.projects.dialogs.subproject_form.sections.coordinates') }}
             <button
               type="button"
               mat-icon-button
               (click)="toggleManualCoords()"
-              matTooltip="Toggle manual coordinate entry"
+              [matTooltip]="translationService.translateSync('admin.projects.dialogs.subproject_form.tooltips.toggle_manual_coords')"
             >
               <mat-icon>{{ showManualCoords ? 'visibility_off' : 'edit' }}</mat-icon>
             </button>
@@ -179,11 +180,11 @@ export interface SubprojectFormDialogData {
             <mat-card class="coords-card">
               <div class="coords-info">
                 <div class="coord-item">
-                  <strong>Latitude:</strong>
+                  <strong>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.fields.latitude') }}:</strong>
                   <span class="coord-value">{{ coordinates?.latitude | number: '1.6-6' }}</span>
                 </div>
                 <div class="coord-item">
-                  <strong>Longitude:</strong>
+                  <strong>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.fields.longitude') }}:</strong>
                   <span class="coord-value">{{ coordinates?.longitude | number: '1.6-6' }}</span>
                 </div>
               </div>
@@ -193,46 +194,46 @@ export interface SubprojectFormDialogData {
           <div *ngIf="showManualCoords" class="manual-coords">
             <div class="coords-row">
               <mat-form-field appearance="outline">
-                <mat-label>Latitude</mat-label>
+                <mat-label>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.fields.latitude') }}</mat-label>
                 <input
                   matInput
                   type="number"
                   formControlName="manualLatitude"
-                  placeholder="47.3769"
+                  [placeholder]="translationService.translateSync('admin.projects.dialogs.subproject_form.placeholders.latitude')"
                   step="0.000001"
                   min="45.818"
                   max="47.808"
                 />
-                <mat-hint>Swiss latitude range: 45.818 - 47.808</mat-hint>
+                <mat-hint>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.hints.latitude_range') }}</mat-hint>
                 <mat-error
                   *ngIf="
                     subprojectForm.get('manualLatitude')?.hasError('min') ||
                     subprojectForm.get('manualLatitude')?.hasError('max')
                   "
                 >
-                  Latitude must be within Swiss boundaries
+                  {{ translationService.translateSync('admin.projects.dialogs.subproject_form.errors.latitude_bounds') }}
                 </mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Longitude</mat-label>
+                <mat-label>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.fields.longitude') }}</mat-label>
                 <input
                   matInput
                   type="number"
                   formControlName="manualLongitude"
-                  placeholder="8.5417"
+                  [placeholder]="translationService.translateSync('admin.projects.dialogs.subproject_form.placeholders.longitude')"
                   step="0.000001"
                   min="5.956"
                   max="10.492"
                 />
-                <mat-hint>Swiss longitude range: 5.956 - 10.492</mat-hint>
+                <mat-hint>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.hints.longitude_range') }}</mat-hint>
                 <mat-error
                   *ngIf="
                     subprojectForm.get('manualLongitude')?.hasError('min') ||
                     subprojectForm.get('manualLongitude')?.hasError('max')
                   "
                 >
-                  Longitude must be within Swiss boundaries
+                  {{ translationService.translateSync('admin.projects.dialogs.subproject_form.errors.longitude_bounds') }}
                 </mat-error>
               </mat-form-field>
             </div>
@@ -245,7 +246,7 @@ export interface SubprojectFormDialogData {
                 [disabled]="!isValidManualCoords()"
               >
                 <mat-icon>save</mat-icon>
-                Apply Coordinates
+                {{ translationService.translateSync('admin.projects.dialogs.subproject_form.actions.apply_coordinates') }}
               </button>
             </div>
           </div>
@@ -255,36 +256,37 @@ export interface SubprojectFormDialogData {
         <div class="form-section">
           <h4>
             <mat-icon>attach_money</mat-icon>
-            Cost Rate (Optional)
+            {{ translationService.translateSync('admin.projects.dialogs.subproject_form.sections.cost_rate') }}
           </h4>
 
           <mat-form-field appearance="outline">
-            <mat-label>Custom Cost per Kilometer</mat-label>
+            <mat-label>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.fields.cost_per_km') }}</mat-label>
             <input
               matInput
               type="number"
               formControlName="costPerKm"
-              placeholder="Leave empty to inherit from project"
+              [placeholder]="translationService.translateSync('admin.projects.dialogs.subproject_form.placeholders.cost_per_km')"
               step="0.01"
               min="0.01"
               max="999.99"
             />
             <span matPrefix>CHF&nbsp;</span>
             <mat-hint>
-              Leave empty to use project default ({{
-                formatCurrency(data.project.defaultCostPerKm)
-              }})
+              {{ translationService.translateSync('admin.projects.dialogs.subproject_form.hints.cost_per_km', {
+                defaultCost: formatCurrency(data.project.defaultCostPerKm)
+              })
+              }}
             </mat-hint>
             <mat-error *ngIf="subprojectForm.get('costPerKm')?.hasError('min')">
-              Cost must be greater than 0
+              {{ translationService.translateSync('admin.projects.dialogs.subproject_form.errors.cost_min') }}
             </mat-error>
             <mat-error *ngIf="subprojectForm.get('costPerKm')?.hasError('max')">
-              Cost cannot exceed CHF 999.99
+              {{ translationService.translateSync('admin.projects.dialogs.subproject_form.errors.cost_max') }}
             </mat-error>
           </mat-form-field>
 
           <div class="cost-preview">
-            <strong>Effective Rate: </strong>
+            <strong>{{ translationService.translateSync('admin.projects.dialogs.subproject_form.labels.effective_rate') }}: </strong>
             <span class="cost-display">{{ getEffectiveCost() }}</span>
           </div>
         </div>
@@ -292,7 +294,7 @@ export interface SubprojectFormDialogData {
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close [disabled]="isLoading">Cancel</button>
+      <button mat-button mat-dialog-close [disabled]="isLoading">{{ translationService.translateSync('common.buttons.cancel') }}</button>
       <button
         mat-raised-button
         color="primary"
@@ -301,7 +303,7 @@ export interface SubprojectFormDialogData {
       >
         <mat-icon *ngIf="isLoading">hourglass_empty</mat-icon>
         <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add_location' }}</mat-icon>
-        {{ isLoading ? 'Saving...' : isEditMode ? 'Update' : 'Create' }}
+        {{ isLoading ? translationService.translateSync('common.actions.saving') : (isEditMode ? translationService.translateSync('common.buttons.update') : translationService.translateSync('common.buttons.create')) }}
       </button>
     </mat-dialog-actions>
   `,
@@ -321,6 +323,7 @@ export class SubprojectFormDialogComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private projectService: ProjectService,
+    public translationService: TranslationService,
     private dialogRef: MatDialogRef<SubprojectFormDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: SubprojectFormDialogData
   ) {

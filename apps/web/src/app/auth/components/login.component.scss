@@ -6,6 +6,47 @@
   min-height: 100vh;
   background: linear-gradient(135deg, $elca-coral-red 0%, darken($elca-coral-red, 10%) 100%);
   padding: $elca-layout-container-padding;
+  position: relative;
+}
+
+.login-language-switcher {
+  position: absolute;
+  top: $elca-spacing-lg;
+  right: $elca-spacing-lg;
+  z-index: 10;
+
+  // Style overrides for login page context
+  ::ng-deep .language-switcher {
+    .language-button {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(4px);
+
+      &:hover {
+        background: rgba(255, 255, 255, 1);
+        border-color: $elca-coral-red;
+      }
+
+      &:focus {
+        outline-color: white;
+      }
+    }
+
+    .language-dropdown {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(8px);
+    }
+  }
+
+  @media (max-width: 480px) {
+    top: $elca-spacing-base;
+    right: $elca-spacing-base;
+
+    ::ng-deep .language-switcher .language-button {
+      min-width: 100px;
+      padding: $elca-spacing-xs $elca-spacing-sm;
+    }
+  }
 }
 
 .login-card {

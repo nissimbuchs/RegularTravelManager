@@ -16,6 +16,7 @@ import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { UserSummary, ManagerAssignmentValidation } from '@rtm/shared';
 import { AdminService } from '../../../core/services/admin.service';
+import { TranslationService } from '../../../core/services/translation.service';
 
 export interface ManagerAssignmentDialogData {
   user: UserSummary;
@@ -48,25 +49,25 @@ export interface ManagerAssignmentResult {
       <div class="dialog-header">
         <h2 mat-dialog-title>
           <mat-icon color="accent">supervisor_account</mat-icon>
-          Assign Manager
+          {{ translationService.translateSync('admin.users.dialogs.manager_assignment.title') }}
         </h2>
       </div>
 
       <mat-dialog-content>
         <!-- User Information -->
         <div class="user-info">
-          <h3>Employee Information</h3>
+          <h3>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.sections.employee_information') }}</h3>
           <div class="user-details">
-            <p><strong>Name:</strong> {{ data.user.firstName }} {{ data.user.lastName }}</p>
-            <p><strong>Email:</strong> {{ data.user.email }}</p>
-            <p><strong>Employee ID:</strong> {{ data.user.employeeNumber }}</p>
+            <p><strong>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.fields.name') }}:</strong> {{ data.user.firstName }} {{ data.user.lastName }}</p>
+            <p><strong>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.fields.email') }}:</strong> {{ data.user.email }}</p>
+            <p><strong>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.fields.employee_id') }}:</strong> {{ data.user.employeeNumber }}</p>
             <p>
-              <strong>Current Manager:</strong>
+              <strong>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.fields.current_manager') }}:</strong>
               <span *ngIf="data.user.managerName; else noManager">
                 {{ data.user.managerName }}
               </span>
               <ng-template #noManager>
-                <span class="no-manager">No manager assigned</span>
+                <span class="no-manager">{{ translationService.translateSync('admin.users.dialogs.manager_assignment.status.no_manager_assigned') }}</span>
               </ng-template>
             </p>
           </div>
@@ -77,12 +78,12 @@ export interface ManagerAssignmentResult {
         <!-- Manager Assignment Form -->
         <form [formGroup]="managerForm" class="manager-form">
           <mat-form-field appearance="outline">
-            <mat-label>Search and Select Manager</mat-label>
+            <mat-label>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.fields.search_manager') }}</mat-label>
             <input
               matInput
               formControlName="managerSearch"
               [matAutocomplete]="managerAuto"
-              placeholder="Type to search managers..."
+              [placeholder]="translationService.translateSync('admin.users.dialogs.manager_assignment.placeholders.search_managers')"
             />
             <mat-autocomplete
               #managerAuto="matAutocomplete"
@@ -91,7 +92,7 @@ export interface ManagerAssignmentResult {
             >
               <mat-option value="" class="clear-option">
                 <mat-icon>clear</mat-icon>
-                <span>Remove manager assignment</span>
+                <span>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.actions.remove_assignment') }}</span>
               </mat-option>
               <mat-option *ngFor="let manager of filteredManagers$ | async" [value]="manager">
                 <div class="manager-option">
@@ -108,23 +109,23 @@ export interface ManagerAssignmentResult {
               </mat-option>
             </mat-autocomplete>
             <mat-error *ngIf="managerForm.get('managerSearch')?.hasError('required')">
-              Please select a manager or choose to remove manager assignment
+              {{ translationService.translateSync('admin.users.dialogs.manager_assignment.errors.manager_selection_required') }}
             </mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Reason for Change</mat-label>
+            <mat-label>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.fields.reason') }}</mat-label>
             <textarea
               matInput
               formControlName="reason"
               rows="3"
-              placeholder="Please provide a reason for this manager assignment change..."
+              [placeholder]="translationService.translateSync('admin.users.dialogs.manager_assignment.placeholders.reason')"
             ></textarea>
             <mat-error *ngIf="managerForm.get('reason')?.hasError('required')">
-              Reason is required for manager assignments
+              {{ translationService.translateSync('admin.users.dialogs.manager_assignment.errors.reason_required') }}
             </mat-error>
             <mat-error *ngIf="managerForm.get('reason')?.hasError('minlength')">
-              Reason must be at least 10 characters
+              {{ translationService.translateSync('admin.users.dialogs.manager_assignment.errors.reason_min_length') }}
             </mat-error>
           </mat-form-field>
         </form>
@@ -132,13 +133,13 @@ export interface ManagerAssignmentResult {
         <!-- Validation Results -->
         <div *ngIf="validation && !validationLoading" class="validation-section">
           <mat-divider></mat-divider>
-          <h3>Assignment Validation</h3>
+          <h3>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.sections.assignment_validation') }}</h3>
 
           <!-- Cannot Assign Warning -->
           <div *ngIf="!validation.canAssignManager" class="validation-result error">
             <mat-icon color="warn">error</mat-icon>
             <div class="validation-content">
-              <h4>Cannot Assign Manager</h4>
+              <h4>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.validation.cannot_assign_title') }}</h4>
               <ul>
                 <li *ngFor="let warning of validation.warnings">{{ warning }}</li>
               </ul>
@@ -149,9 +150,9 @@ export interface ManagerAssignmentResult {
           <div *ngIf="validation.loopDetected" class="validation-result error">
             <mat-icon color="warn">loop</mat-icon>
             <div class="validation-content">
-              <h4>Circular Hierarchy Detected</h4>
+              <h4>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.validation.circular_hierarchy_title') }}</h4>
               <p>
-                This assignment would create a circular management hierarchy, which is not allowed.
+                {{ translationService.translateSync('admin.users.dialogs.manager_assignment.validation.circular_hierarchy_message') }}
               </p>
             </div>
           </div>
@@ -163,7 +164,7 @@ export interface ManagerAssignmentResult {
           >
             <mat-icon color="warn">warning</mat-icon>
             <div class="validation-content">
-              <h4>Warnings</h4>
+              <h4>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.validation.warnings_title') }}</h4>
               <ul>
                 <li *ngFor="let warning of validation.warnings">{{ warning }}</li>
               </ul>
@@ -174,7 +175,7 @@ export interface ManagerAssignmentResult {
           <div *ngIf="validation.hierarchyImpacts.length > 0" class="validation-result impacts">
             <mat-icon color="primary">info</mat-icon>
             <div class="validation-content">
-              <h4>Hierarchy Changes</h4>
+              <h4>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.validation.hierarchy_changes_title') }}</h4>
               <ul>
                 <li *ngFor="let impact of validation.hierarchyImpacts">{{ impact }}</li>
               </ul>
@@ -185,10 +186,9 @@ export interface ManagerAssignmentResult {
           <div *ngIf="!validation.managerCapacityOk" class="validation-result warnings">
             <mat-icon color="warn">groups</mat-icon>
             <div class="validation-content">
-              <h4>Manager Capacity Warning</h4>
+              <h4>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.validation.capacity_warning_title') }}</h4>
               <p>
-                The selected manager already has a high number of direct reports. Consider
-                organizational efficiency.
+                {{ translationService.translateSync('admin.users.dialogs.manager_assignment.validation.capacity_warning_message') }}
               </p>
             </div>
           </div>
@@ -204,8 +204,8 @@ export interface ManagerAssignmentResult {
           >
             <mat-icon color="primary">check_circle</mat-icon>
             <div class="validation-content">
-              <h4>Assignment Valid</h4>
-              <p>This manager assignment can be completed without issues.</p>
+              <h4>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.validation.assignment_valid_title') }}</h4>
+              <p>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.validation.assignment_valid_message') }}</p>
             </div>
           </div>
         </div>
@@ -213,15 +213,15 @@ export interface ManagerAssignmentResult {
         <!-- Loading State -->
         <div *ngIf="validationLoading" class="loading-section">
           <mat-spinner diameter="30"></mat-spinner>
-          <p>Validating manager assignment...</p>
+          <p>{{ translationService.translateSync('admin.users.dialogs.manager_assignment.messages.validating') }}</p>
         </div>
       </mat-dialog-content>
 
       <mat-dialog-actions align="end">
-        <button mat-button (click)="onCancel()">Cancel</button>
+        <button mat-button (click)="onCancel()">{{ translationService.translateSync('common.buttons.cancel') }}</button>
         <button mat-raised-button color="primary" (click)="onConfirm()" [disabled]="!canConfirm()">
           <mat-icon>supervisor_account</mat-icon>
-          {{ selectedManager ? 'Assign Manager' : 'Remove Manager' }}
+          {{ selectedManager ? translationService.translateSync('admin.users.dialogs.manager_assignment.actions.assign_manager') : translationService.translateSync('admin.users.dialogs.manager_assignment.actions.remove_manager') }}
         </button>
       </mat-dialog-actions>
     </div>
@@ -243,7 +243,8 @@ export class ManagerAssignmentDialogComponent implements OnInit, OnDestroy {
     private dialogRef: MatDialogRef<ManagerAssignmentDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: ManagerAssignmentDialogData,
     private formBuilder: FormBuilder,
-    private adminService: AdminService
+    private adminService: AdminService,
+    public translationService: TranslationService
   ) {
     this.managerForm = this.formBuilder.group({
       managerSearch: [''],

@@ -111,6 +111,48 @@
       color: white;
     }
   }
+
+  // Language switcher in toolbar
+  .language-switcher-toolbar {
+    margin-right: $elca-spacing-base;
+
+    // Override styles for toolbar context
+    ::ng-deep .language-switcher {
+      .language-button {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: white;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        &:focus {
+          outline-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .dropdown-arrow {
+          color: rgba(255, 255, 255, 0.7);
+        }
+      }
+
+      &.dropdown-open .language-button {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+      }
+    }
+
+    @media (max-width: 768px) {
+      margin-right: $elca-spacing-sm;
+
+      ::ng-deep .language-switcher .language-button {
+        min-width: 100px;
+        padding: 6px 8px;
+      }
+    }
+  }
 }
 
 .main-content {

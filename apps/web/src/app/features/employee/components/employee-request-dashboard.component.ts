@@ -21,6 +21,7 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
 import { Subject, takeUntil, debounceTime, distinctUntilChanged, merge } from 'rxjs';
 
 import { EmployeeDashboardService } from '../services/employee-dashboard.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import {
   EmployeeDashboard,
   EmployeeRequestSummary,
@@ -118,7 +119,8 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private employeeDashboardService: EmployeeDashboardService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    public translationService: TranslationService
   ) {
     this.filterForm = this.createFilterForm();
   }
@@ -151,11 +153,7 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
   private setupFilterWatchers(): void {
     // Watch for filter changes with debouncing
     this.filterForm.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$)
-      )
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(() => {
         this.applyFilters();
       });
@@ -163,20 +161,21 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
 
   private startAutoRefresh(): void {
     // Auto-refresh every 2 minutes following manager dashboard pattern
-    this.autoRefreshSubscription = this.employeeDashboardService.startAutoRefresh()
+    this.autoRefreshSubscription = this.employeeDashboardService
+      .startAutoRefresh()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (dashboard) => {
+        next: dashboard => {
           if (dashboard) {
             this.dashboard = dashboard;
             this.updateDataSource();
             this.showRefreshNotification();
           }
         },
-        error: (error) => {
+        error: error => {
           // Silently handle auto-refresh errors to avoid overwhelming user
           console.error('Auto-refresh failed:', error);
-        }
+        },
       });
   }
 
@@ -185,11 +184,11 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
   }
 
   private showRefreshNotification(): void {
-    this.snackBar.open('Dashboard updated', 'Close', {
+    this.snackBar.open(this.translationService.translateSync('employee.request_dashboard.messages.updated'), this.translationService.translateSync('common.actions.close'), {
       duration: 2000,
       horizontalPosition: 'end',
       verticalPosition: 'top',
-      panelClass: ['success-snackbar']
+      panelClass: ['success-snackbar'],
     });
   }
 
@@ -200,20 +199,20 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
       .getDashboardData(this.filters, this.pagination, this.sortConfig)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (dashboard) => {
+        next: dashboard => {
           this.dashboard = dashboard;
           this.pagination.totalCount = dashboard.totalRequests;
           this.updateDataSource();
           this.isLoading = false;
         },
-        error: (error) => {
+        error: error => {
           console.error('Failed to load dashboard data:', error);
-          this.snackBar.open('Failed to load dashboard data', 'Close', {
+          this.snackBar.open(this.translationService.translateSync('employee.request_dashboard.errors.load_failed'), this.translationService.translateSync('common.actions.close'), {
             duration: 5000,
-            panelClass: ['error-snackbar']
+            panelClass: ['error-snackbar'],
           });
           this.isLoading = false;
-        }
+        },
       });
   }
 
@@ -236,10 +235,13 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
     this.filters = {
       status: formValue.status || undefined,
       projectName: formValue.projectName || undefined,
-      dateRange: (formValue.dateRangeStart && formValue.dateRangeEnd) ? {
-        start: formValue.dateRangeStart,
-        end: formValue.dateRangeEnd
-      } : undefined,
+      dateRange:
+        formValue.dateRangeStart && formValue.dateRangeEnd
+          ? {
+              start: formValue.dateRangeStart,
+              end: formValue.dateRangeEnd,
+            }
+          : undefined,
     };
 
     // Reset to first page when applying filters
@@ -276,18 +278,18 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
       .getRequestDetails(requestId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (details) => {
+        next: details => {
           if (this.selectedRequest) {
             this.selectedRequest = { ...this.selectedRequest, ...details };
           }
         },
-        error: (error) => {
+        error: error => {
           console.error('Failed to load request details:', error);
-          this.snackBar.open('Failed to load request details', 'Close', {
+          this.snackBar.open(this.translationService.translateSync('employee.request_dashboard.errors.details_failed'), this.translationService.translateSync('common.actions.close'), {
             duration: 3000,
-            panelClass: ['error-snackbar']
+            panelClass: ['error-snackbar'],
           });
-        }
+        },
       });
   }
 
@@ -296,7 +298,9 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const confirmed = confirm(`Are you sure you want to withdraw this travel request for ${request.projectName}?`);
+    const confirmed = confirm(
+      this.translationService.translateSync('employee.request_dashboard.confirm.withdraw', { project: request.projectName })
+    );
     if (!confirmed) {
       return;
     }
@@ -306,19 +310,19 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.snackBar.open('Request withdrawn successfully', 'Close', {
+          this.snackBar.open(this.translationService.translateSync('employee.request_dashboard.messages.withdrawn'), this.translationService.translateSync('common.actions.close'), {
             duration: 3000,
-            panelClass: ['success-snackbar']
+            panelClass: ['success-snackbar'],
           });
           this.loadDashboardData(); // Refresh data
         },
-        error: (error) => {
+        error: error => {
           console.error('Failed to withdraw request:', error);
-          this.snackBar.open('Failed to withdraw request', 'Close', {
+          this.snackBar.open(this.translationService.translateSync('employee.request_dashboard.errors.withdraw_failed'), this.translationService.translateSync('common.actions.close'), {
             duration: 5000,
-            panelClass: ['error-snackbar']
+            panelClass: ['error-snackbar'],
           });
-        }
+        },
       });
   }
 
@@ -337,7 +341,7 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
     const config = this.statusConfig[status as keyof typeof this.statusConfig];
     return {
       color: config?.color || '#666',
-      'background-color': config?.backgroundColor || '#f5f5f5'
+      'background-color': config?.backgroundColor || '#f5f5f5',
     };
   }
 
@@ -363,7 +367,6 @@ export class EmployeeRequestDashboardComponent implements OnInit, OnDestroy {
       day: '2-digit',
     }).format(dateObj);
   }
-
 
   canWithdrawRequest(status: string): boolean {
     return status === 'pending';

@@ -10,6 +10,7 @@ import { Project, Subproject } from '../../../core/models/project.model';
 import { TravelRequestService } from '../services/travel-request.service';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import { ConfirmationDialogComponent, ConfirmationData } from './confirmation-dialog.component';
 import { debounceTime, distinctUntilChanged, switchMap, tap, takeUntil } from 'rxjs/operators';
 import { EMPTY, Observable, Subject } from 'rxjs';
@@ -49,7 +50,8 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    public translationService: TranslationService
   ) {
     this.requestForm = this.fb.group({
       projectId: ['', [Validators.required]],
@@ -78,8 +80,8 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
         // Still load draft even if projects fail
         this.loadDraft();
         this.snackBar.open(
-          'Some initial data could not be loaded. The form may have limited functionality.',
-          'Close',
+          this.translationService.translateSync('employee.travel_request.errors.initial_data'),
+          this.translationService.translateSync('common.actions.close'),
           { duration: 6000, horizontalPosition: 'center', verticalPosition: 'top' }
         );
       });
@@ -116,8 +118,8 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
             console.error('Failed to load projects:', error);
             this.snackBar
               .open(
-                'Unable to load project list. Please refresh the page or contact support.',
-                'Retry',
+                this.translationService.translateSync('employee.travel_request.errors.load_projects'),
+                this.translationService.translateSync('common.actions.retry'),
                 { duration: 8000, horizontalPosition: 'center', verticalPosition: 'top' }
               )
               .onAction()
@@ -144,8 +146,8 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
           error: error => {
             console.error('Failed to load managers:', error);
             this.snackBar.open(
-              'Unable to load managers list. Please refresh the page or contact support.',
-              'Close',
+              this.translationService.translateSync('employee.travel_request.errors.load_managers'),
+              this.translationService.translateSync('common.actions.close'),
               { duration: 8000, horizontalPosition: 'center', verticalPosition: 'top' }
             );
             reject(error);
@@ -189,8 +191,8 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
           this.calculationPreview = null;
           this.isCalculating = false;
           this.snackBar.open(
-            'Could not calculate travel allowance. Please verify your selections and try again.',
-            'Close',
+            this.translationService.translateSync('employee.travel_request.errors.calculation_failed'),
+            this.translationService.translateSync('common.actions.close'),
             { duration: 5000, horizontalPosition: 'center', verticalPosition: 'top' }
           );
         },
@@ -208,8 +210,8 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
         error: error => {
           console.error('Failed to load subprojects:', error);
           this.snackBar.open(
-            'Could not load locations for the selected project. Please try selecting another project.',
-            'Close',
+            this.translationService.translateSync('employee.travel_request.errors.load_subprojects'),
+            this.translationService.translateSync('common.actions.close'),
             { duration: 6000, horizontalPosition: 'center', verticalPosition: 'top' }
           );
         },
@@ -257,27 +259,24 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
             this.isSubmitting = false;
 
             // Provide specific error messages based on error type
-            let errorMessage = 'Unable to submit your travel request. ';
-            let actionText = 'Close';
+            let errorMessage = this.translationService.translateSync('employee.travel_request.errors.submit_failed');
+            let actionText = this.translationService.translateSync('common.actions.close');
             const duration = 8000;
 
             if (error?.status === 400) {
-              errorMessage += 'Please check your form data and try again.';
+              errorMessage = this.translationService.translateSync('employee.travel_request.errors.bad_request');
             } else if (error?.status === 401 || error?.status === 403) {
-              errorMessage +=
-                'You may not have permission to submit requests. Please contact your manager.';
+              errorMessage = this.translationService.translateSync('employee.travel_request.errors.permission_denied');
             } else if (error?.status === 409) {
-              errorMessage +=
-                'A similar request may already exist. Please check your pending requests.';
+              errorMessage = this.translationService.translateSync('employee.travel_request.errors.duplicate_request');
             } else if (error?.status >= 500) {
-              errorMessage +=
-                'Our system is temporarily unavailable. Please try again in a few minutes.';
-              actionText = 'Retry';
+              errorMessage = this.translationService.translateSync('employee.travel_request.errors.server_error');
+              actionText = this.translationService.translateSync('common.actions.retry');
             } else if (!navigator.onLine) {
-              errorMessage += 'Please check your internet connection and try again.';
-              actionText = 'Retry';
+              errorMessage = this.translationService.translateSync('employee.travel_request.errors.offline');
+              actionText = this.translationService.translateSync('common.actions.retry');
             } else {
-              errorMessage += 'Please try again or contact support if the problem persists.';
+              errorMessage = this.translationService.translateSync('employee.travel_request.errors.generic');
             }
 
             const snackBarRef = this.snackBar.open(errorMessage, actionText, {
@@ -286,7 +285,7 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
               verticalPosition: 'top',
             });
 
-            if (actionText === 'Retry') {
+            if (actionText === this.translationService.translateSync('common.actions.retry')) {
               snackBarRef
                 .onAction()
                 .pipe(takeUntil(this.destroy$))
@@ -353,7 +352,7 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
     this.subprojects = [];
     this.calculationPreview = null;
     this.clearDraft();
-    this.snackBar.open('Form reset for new request', 'Close', { duration: 2000 });
+    this.snackBar.open(this.translationService.translateSync('employee.travel_request.messages.form_reset'), this.translationService.translateSync('common.actions.close'), { duration: 2000 });
   }
 
   private setupAutoSave(): void {
@@ -388,7 +387,7 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
           }
 
           this.snackBar
-            .open('Draft restored', 'Clear Draft', {
+            .open(this.translationService.translateSync('employee.travel_request.messages.draft_restored'), this.translationService.translateSync('employee.travel_request.actions.clear_draft'), {
               duration: 5000,
               horizontalPosition: 'center',
               verticalPosition: 'top',
@@ -402,8 +401,8 @@ export class TravelRequestFormComponent implements OnInit, OnDestroy {
         console.error('Failed to load draft:', error);
         this.clearDraft();
         this.snackBar.open(
-          'Your saved draft could not be restored due to data corruption. Starting with a fresh form.',
-          'Close',
+          this.translationService.translateSync('employee.travel_request.errors.draft_corrupted'),
+          this.translationService.translateSync('common.actions.close'),
           { duration: 4000, horizontalPosition: 'center', verticalPosition: 'top' }
         );
       }

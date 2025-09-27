@@ -15,6 +15,8 @@ import { Observable, Subject } from 'rxjs';
 import { map, shareReplay, takeUntil, filter } from 'rxjs/operators';
 import { AuthService, User } from '../../core/services/auth.service';
 import { LoadingService } from '../../core/services/loading.service';
+import { TranslationService } from '../../core/services/translation.service';
+import { LanguageSwitcherComponent } from './language-switcher/language-switcher.component';
 
 interface NavigationItem {
   icon: string;
@@ -40,6 +42,7 @@ interface NavigationItem {
     MatTooltipModule,
     MatDividerModule,
     LayoutModule,
+    LanguageSwitcherComponent,
   ],
   template: `
     <mat-sidenav-container class="sidenav-container" [class.is-mobile]="isHandset$ | async">
@@ -53,7 +56,7 @@ interface NavigationItem {
       >
         <mat-toolbar class="sidenav-header">
           <div class="elca-logo"></div>
-          <span class="app-title">RTFM</span>
+          <span class="app-title">{{ translationService.translateSync('layout.sidenav.app_title') }}</span>
         </mat-toolbar>
 
         <mat-nav-list>
@@ -67,7 +70,7 @@ interface NavigationItem {
               matTooltipPosition="right"
             >
               <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-              <span matListItemTitle>{{ item.label }}</span>
+              <span matListItemTitle>{{ translationService.translateSync(item.label) }}</span>
             </a>
           </ng-container>
 
@@ -75,7 +78,7 @@ interface NavigationItem {
 
           <a mat-list-item (click)="logout()">
             <mat-icon matListItemIcon color="warn">logout</mat-icon>
-            <span matListItemTitle>Sign Out</span>
+            <span matListItemTitle>{{ translationService.translateSync('layout.navigation.sign_out') }}</span>
           </a>
         </mat-nav-list>
       </mat-sidenav>
@@ -92,13 +95,16 @@ interface NavigationItem {
             <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
           </button>
 
-          <span class="app-title">Regular Travel Form Manager</span>
+          <span class="app-title">{{ translationService.translateSync('layout.header.app_title') }}</span>
 
           <span class="toolbar-spacer"></span>
 
           <span class="page-title">{{ getPageTitle() }}</span>
 
           <span class="toolbar-spacer"></span>
+
+          <!-- Language Switcher -->
+          <app-language-switcher class="language-switcher-toolbar"></app-language-switcher>
 
           <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-trigger">
             <mat-icon>account_circle</mat-icon>
@@ -109,26 +115,26 @@ interface NavigationItem {
             <div class="user-menu-header" mat-menu-item disabled>
               <div class="user-info">
                 <div class="user-full-name">{{ (currentUser$ | async)?.name }}</div>
-                <div class="user-role">{{ (currentUser$ | async)?.role | titlecase }}</div>
+                <div class="user-role">{{ translationService.translateSync('layout.user_menu.role.' + ((currentUser$ | async)?.role || 'employee')) }}</div>
               </div>
             </div>
             <mat-divider></mat-divider>
             <button mat-menu-item routerLink="/profile">
               <mat-icon>person</mat-icon>
-              <span>My Profile</span>
+              <span>{{ translationService.translateSync('layout.user_menu.my_profile') }}</span>
             </button>
             <button mat-menu-item routerLink="/employee/address">
               <mat-icon>home</mat-icon>
-              <span>My Address</span>
+              <span>{{ translationService.translateSync('layout.user_menu.my_address') }}</span>
             </button>
             <button mat-menu-item>
               <mat-icon>settings</mat-icon>
-              <span>Settings</span>
+              <span>{{ translationService.translateSync('layout.user_menu.settings') }}</span>
             </button>
             <mat-divider></mat-divider>
             <button mat-menu-item (click)="logout()">
               <mat-icon color="warn">logout</mat-icon>
-              <span>Sign Out</span>
+              <span>{{ translationService.translateSync('layout.user_menu.sign_out') }}</span>
             </button>
           </mat-menu>
         </mat-toolbar>
@@ -156,55 +162,55 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   navigationItems: NavigationItem[] = [
     {
       icon: 'dashboard',
-      label: 'Dashboard',
+      label: 'layout.navigation.dashboard',
       route: (role: string) => (role === 'manager' ? '/manager/dashboard' : '/employee/dashboard'),
       roles: ['employee', 'manager'],
     },
     {
       icon: 'account_circle',
-      label: 'Profile',
+      label: 'layout.navigation.profile',
       route: '/profile',
       roles: ['employee', 'manager', 'admin'],
     },
     {
       icon: 'home',
-      label: 'Address',
+      label: 'layout.navigation.address',
       route: (role: string) => (role === 'manager' ? '/employee/address' : '/employee/address'), // Both use employee address for now
       roles: ['employee', 'manager'],
     },
     {
       icon: 'add_circle',
-      label: 'New Request',
+      label: 'layout.navigation.new_request',
       route: (role: string) => (role === 'manager' ? '/employee/request' : '/employee/request'), // Both use employee request for now
       roles: ['employee', 'manager'],
     },
     {
       icon: 'check_circle',
-      label: 'Approvals',
+      label: 'layout.navigation.approvals',
       route: '/manager/approvals',
       roles: ['manager'],
     },
     {
       icon: 'people',
-      label: 'Employees',
+      label: 'layout.navigation.employees',
       route: '/manager/employees',
       roles: ['manager'],
     },
     {
       icon: 'work',
-      label: 'Projects',
+      label: 'layout.navigation.projects',
       route: '/manager/projects',
       roles: ['manager'],
     },
     {
       icon: 'admin_panel_settings',
-      label: 'Manage Projects',
+      label: 'layout.navigation.manage_projects',
       route: '/admin/projects',
       roles: ['admin'],
     },
     {
       icon: 'group',
-      label: 'Manage Users',
+      label: 'layout.navigation.manage_users',
       route: '/admin/users',
       roles: ['admin'],
     },
@@ -214,7 +220,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     private breakpointObserver: BreakpointObserver,
     private authService: AuthService,
     private loadingService: LoadingService,
-    private router: Router
+    private router: Router,
+    public translationService: TranslationService
   ) {}
 
   ngOnInit(): void {
@@ -256,16 +263,16 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   getPageTitle(): string {
     const url = this.router.url;
 
-    if (url.includes('/dashboard')) return 'Dashboard';
-    if (url.includes('/profile')) return 'My Profile';
-    if (url.includes('/address')) return 'My Address';
-    if (url.includes('/request')) return 'Travel Request';
-    if (url.includes('/approvals')) return 'Approvals';
-    if (url.includes('/employees')) return 'Employees';
-    if (url.includes('/projects')) return 'Projects';
-    if (url.includes('/users')) return 'Users';
+    if (url.includes('/dashboard')) return this.translationService.translateSync('layout.page_titles.dashboard');
+    if (url.includes('/profile')) return this.translationService.translateSync('layout.page_titles.my_profile');
+    if (url.includes('/address')) return this.translationService.translateSync('layout.page_titles.my_address');
+    if (url.includes('/request')) return this.translationService.translateSync('layout.page_titles.travel_request');
+    if (url.includes('/approvals')) return this.translationService.translateSync('layout.page_titles.approvals');
+    if (url.includes('/employees')) return this.translationService.translateSync('layout.page_titles.employees');
+    if (url.includes('/projects')) return this.translationService.translateSync('layout.page_titles.projects');
+    if (url.includes('/users')) return this.translationService.translateSync('layout.page_titles.users');
 
-    return 'RegularTravelManager';
+    return this.translationService.translateSync('layout.page_titles.default');
   }
 
   logout(): void {

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { TranslationService } from '../../core/services/translation.service';
 import { take } from 'rxjs/operators';
 
 @Component({
@@ -8,14 +9,15 @@ import { take } from 'rxjs/operators';
   standalone: true,
   template: `
     <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
-      <div>Redirecting...</div>
+      <div>{{ translationService.translateSync('redirect.loading') }}</div>
     </div>
   `,
 })
 export class RoleRedirectComponent implements OnInit {
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    public translationService: TranslationService
   ) {}
 
   ngOnInit(): void {

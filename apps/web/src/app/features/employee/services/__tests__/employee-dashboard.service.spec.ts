@@ -40,7 +40,7 @@ describe('EmployeeDashboardService', () => {
         managerName: 'Test Manager',
         managerEmail: 'manager@test.com',
         calculatedDistance: 25.5,
-        costPerKm: 0.70,
+        costPerKm: 0.7,
       },
     ],
     totalRequests: 1,
@@ -59,7 +59,7 @@ describe('EmployeeDashboardService', () => {
     managerName: 'Test Manager',
     managerEmail: 'manager@test.com',
     calculatedDistance: 25.5,
-    costPerKm: 0.70,
+    costPerKm: 0.7,
     dailyAllowance: 50.0,
     weeklyAllowance: 150.0,
     monthlyEstimate: 650.0,
@@ -86,10 +86,7 @@ describe('EmployeeDashboardService', () => {
 
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [
-        EmployeeDashboardService,
-        { provide: ConfigService, useValue: configServiceSpy },
-      ],
+      providers: [EmployeeDashboardService, { provide: ConfigService, useValue: configServiceSpy }],
     });
 
     service = TestBed.inject(EmployeeDashboardService);
@@ -113,7 +110,7 @@ describe('EmployeeDashboardService', () => {
     it('should fetch dashboard data with basic parameters', () => {
       const filters: RequestFilters = {};
 
-      service.getDashboardData(filters, pagination, sort).subscribe((dashboard) => {
+      service.getDashboardData(filters, pagination, sort).subscribe(dashboard => {
         expect(dashboard).toEqual(mockDashboardData);
         expect(dashboard.requests[0].submittedDate).toBeInstanceOf(Date);
       });
@@ -149,12 +146,14 @@ describe('EmployeeDashboardService', () => {
 
       service.getDashboardData(filters, pagination, sort).subscribe();
 
-      const req = httpMock.expectOne((request) => {
+      const req = httpMock.expectOne(request => {
         const url = request.url;
-        return url.includes('status=pending') &&
-               url.includes('projectName=Test') &&
-               url.includes('dateRangeStart=2025-09-01') &&
-               url.includes('dateRangeEnd=2025-09-30');
+        return (
+          url.includes('status=pending') &&
+          url.includes('projectName=Test') &&
+          url.includes('dateRangeStart=2025-09-01') &&
+          url.includes('dateRangeEnd=2025-09-30')
+        );
       });
       expect(req.request.method).toBe('GET');
 
@@ -166,24 +165,28 @@ describe('EmployeeDashboardService', () => {
 
       service.getDashboardData(filters, pagination, sort).subscribe({
         next: () => fail('should have failed'),
-        error: (error) => {
+        error: error => {
           expect(error.status).toBe(500);
         },
       });
 
-      const req = httpMock.expectOne((request) => request.url.includes('/employees/dashboard/requests'));
+      const req = httpMock.expectOne(request =>
+        request.url.includes('/employees/dashboard/requests')
+      );
       req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
     });
 
     it('should update loading states correctly', () => {
       const filters: RequestFilters = {};
-      let loadingStates: boolean[] = [];
+      const loadingStates: boolean[] = [];
 
       service.loading$.subscribe(loading => loadingStates.push(loading));
 
       service.getDashboardData(filters, pagination, sort).subscribe();
 
-      const req = httpMock.expectOne((request) => request.url.includes('/employees/dashboard/requests'));
+      const req = httpMock.expectOne(request =>
+        request.url.includes('/employees/dashboard/requests')
+      );
 
       // Should start with loading true
       expect(loadingStates).toContain(true);
@@ -196,13 +199,15 @@ describe('EmployeeDashboardService', () => {
 
     it('should update dashboard subject with response data', () => {
       const filters: RequestFilters = {};
-      let dashboardUpdates: (EmployeeDashboard | null)[] = [];
+      const dashboardUpdates: (EmployeeDashboard | null)[] = [];
 
       service.dashboard$.subscribe(dashboard => dashboardUpdates.push(dashboard));
 
       service.getDashboardData(filters, pagination, sort).subscribe();
 
-      const req = httpMock.expectOne((request) => request.url.includes('/employees/dashboard/requests'));
+      const req = httpMock.expectOne(request =>
+        request.url.includes('/employees/dashboard/requests')
+      );
       req.flush({ data: mockDashboardData });
 
       expect(dashboardUpdates[dashboardUpdates.length - 1]).toEqual(mockDashboardData);
@@ -213,7 +218,7 @@ describe('EmployeeDashboardService', () => {
     it('should fetch request details successfully', () => {
       const requestId = 'request-1';
 
-      service.getRequestDetails(requestId).subscribe((details) => {
+      service.getRequestDetails(requestId).subscribe(details => {
         expect(details).toEqual(mockRequestDetails);
         expect(details.submittedDate).toBeInstanceOf(Date);
         expect(details.statusHistory[0].timestamp).toBeInstanceOf(Date);
@@ -242,7 +247,7 @@ describe('EmployeeDashboardService', () => {
 
       service.getRequestDetails(requestId).subscribe({
         next: () => fail('should have failed'),
-        error: (error) => {
+        error: error => {
           expect(error.status).toBe(404);
         },
       });
@@ -263,7 +268,7 @@ describe('EmployeeDashboardService', () => {
       // Setup initial dashboard state
       service['dashboardSubject'].next(mockDashboardData);
 
-      service.withdrawRequest(requestId).subscribe((response) => {
+      service.withdrawRequest(requestId).subscribe(response => {
         expect(response).toEqual(mockResponse);
       });
 
@@ -283,7 +288,7 @@ describe('EmployeeDashboardService', () => {
 
       service.withdrawRequest(requestId).subscribe({
         next: () => fail('should have failed'),
-        error: (error) => {
+        error: error => {
           expect(error.status).toBe(400);
         },
       });
@@ -324,7 +329,9 @@ describe('EmployeeDashboardService', () => {
 
       // Auto-refresh should make periodic calls
       setTimeout(() => {
-        const req = httpMock.expectOne((request) => request.url.includes('/employees/dashboard/requests'));
+        const req = httpMock.expectOne(request =>
+          request.url.includes('/employees/dashboard/requests')
+        );
         req.flush({ data: mockDashboardData });
       }, 10);
     });
@@ -342,7 +349,9 @@ describe('EmployeeDashboardService', () => {
       service.startAutoRefresh().subscribe();
 
       setTimeout(() => {
-        const req = httpMock.expectOne((request) => request.url.includes('/employees/dashboard/requests'));
+        const req = httpMock.expectOne(request =>
+          request.url.includes('/employees/dashboard/requests')
+        );
         req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
 
         // Should log error but not propagate
@@ -356,7 +365,9 @@ describe('EmployeeDashboardService', () => {
       service.startAutoRefresh().subscribe();
 
       setTimeout(() => {
-        const req = httpMock.expectOne((request) => request.url.includes('/employees/dashboard/requests'));
+        const req = httpMock.expectOne(request =>
+          request.url.includes('/employees/dashboard/requests')
+        );
         req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
 
         // Should not log auth errors
@@ -388,7 +399,9 @@ describe('EmployeeDashboardService', () => {
       service.cleanup();
 
       expect(service['destroy$'].next).toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith('EmployeeDashboardService: All subscriptions cleaned up');
+      expect(console.log).toHaveBeenCalledWith(
+        'EmployeeDashboardService: All subscriptions cleaned up'
+      );
     });
 
     it('should expose observables for reactive state', () => {

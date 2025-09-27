@@ -41,11 +41,13 @@ TravelRequest (n) ←→ (1) SubProject
 
 ### PostgreSQL with PostGIS Extension
 
-**Technology Choice:** PostgreSQL with PostGIS provides ACID compliance, accurate geographic distance calculations, and efficient spatial indexing for location-based queries.
+**Technology Choice:** PostgreSQL with PostGIS provides ACID compliance, accurate geographic distance calculations, efficient spatial indexing for location-based queries, and translation caching for multilingual content.
 
 ### Core Schema Design Principles
 
 **Geographic Data Management:** All coordinates stored in WGS 84 (SRID 4326) with GIST spatial indexes and PostGIS ST_Distance function for calculations.
+
+**Translation Cache Management:** Master data translations stored with 24-hour TTL, automatic cleanup functions, and multi-language support for user-generated content.
 
 **Audit Trail Architecture:** Immutable audit records track employee address changes and travel request status changes with timestamps and user attribution.
 
@@ -53,14 +55,56 @@ TravelRequest (n) ←→ (1) SubProject
 
 ### Key Database Features
 
-**Indexing Strategy:** GIST indexes on geographic columns, B-tree indexes on foreign keys, and composite indexes for common query patterns optimize performance.
+**Indexing Strategy:** GIST indexes on geographic columns, B-tree indexes on foreign keys, composite indexes for common query patterns, and optimized translation cache indexes for multilingual queries.
 
 **PostGIS Functions:** ST_Distance for calculations, GEOMETRY(POINT, 4326) for storage, and spatial indexing enable efficient location-based operations.
+
+### Translation Cache Schema
+
+**Master Data Translations Table:**
+```sql
+CREATE TABLE master_data_translations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  original_text TEXT NOT NULL,
+  translated_text TEXT NOT NULL,
+  source_language VARCHAR(2) DEFAULT 'auto',
+  target_language VARCHAR(2) NOT NULL CHECK (target_language IN ('de', 'fr', 'it', 'en')),
+  context VARCHAR(50) NOT NULL,
+  confidence_score DECIMAL(3,2) CHECK (confidence_score >= 0 AND confidence_score <= 1),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '24 hours'),
+
+  UNIQUE(original_text, target_language, context)
+);
+```
+
+**Translation Cache Indexes:**
+```sql
+-- Performance optimization for translation lookups
+CREATE INDEX idx_master_data_translations_lookup
+ON master_data_translations(original_text, target_language, context);
+
+-- Cleanup optimization for expired translations
+CREATE INDEX idx_master_data_translations_expiry
+ON master_data_translations(expires_at);
+```
+
+**Automatic Cleanup Function:**
+```sql
+CREATE OR REPLACE FUNCTION cleanup_expired_master_data_translations()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM master_data_translations WHERE expires_at < NOW();
+END;
+$$ LANGUAGE plpgsql;
+```
 
 ## Data Security & Privacy
 
 **Access Control:** Row-level security through cognito_user_id filtering ensures users access only their own data, with managers limited to direct reports and admin users having controlled elevated access.
 
+**Translation Data Privacy:** Translation cache contains no personal information, only business content (project names, descriptions) with automatic expiration.
+
 **Data Privacy:** Home addresses stored for calculation purposes only, with personal information access controlled by authentication and comprehensive audit trails.
 
-This data architecture ensures secure, efficient management of travel allowance data while maintaining strong entity relationships and comprehensive audit capabilities.
+This data architecture ensures secure, efficient management of travel allowance data while maintaining strong entity relationships, comprehensive audit capabilities, and optimized multilingual content translation with intelligent caching strategies.

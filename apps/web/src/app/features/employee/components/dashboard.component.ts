@@ -4,6 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterModule } from '@angular/router';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-employee-dashboard',
@@ -12,20 +13,20 @@ import { RouterModule } from '@angular/router';
   template: `
     <div class="dashboard-container">
       <div class="welcome-section">
-        <h1>Employee Dashboard</h1>
-        <p>Welcome to RegularTravelManager. Manage your travel requests and profile information.</p>
+        <h1>{{ translationService.translateSync('employee.dashboard.title') }}</h1>
+        <p>{{ translationService.translateSync('employee.dashboard.subtitle') }}</p>
       </div>
 
       <div class="dashboard-grid">
         <mat-card class="dashboard-card">
           <mat-card-header>
             <mat-icon mat-card-avatar>add_location</mat-icon>
-            <mat-card-title>My Address</mat-card-title>
-            <mat-card-subtitle>Update your home address</mat-card-subtitle>
+            <mat-card-title>{{ translationService.translateSync('employee.dashboard.cards.address.title') }}</mat-card-title>
+            <mat-card-subtitle>{{ translationService.translateSync('employee.dashboard.cards.address.subtitle') }}</mat-card-subtitle>
           </mat-card-header>
           <mat-card-actions>
             <button mat-raised-button color="primary" routerLink="/employee/address">
-              Manage Address
+              {{ translationService.translateSync('employee.dashboard.cards.address.button') }}
             </button>
           </mat-card-actions>
         </mat-card>
@@ -33,12 +34,12 @@ import { RouterModule } from '@angular/router';
         <mat-card class="dashboard-card">
           <mat-card-header>
             <mat-icon mat-card-avatar>add_circle</mat-icon>
-            <mat-card-title>New Travel Request</mat-card-title>
-            <mat-card-subtitle>Submit a new travel allowance request</mat-card-subtitle>
+            <mat-card-title>{{ translationService.translateSync('employee.dashboard.cards.new_request.title') }}</mat-card-title>
+            <mat-card-subtitle>{{ translationService.translateSync('employee.dashboard.cards.new_request.subtitle') }}</mat-card-subtitle>
           </mat-card-header>
           <mat-card-actions>
             <button mat-raised-button color="primary" routerLink="/employee/request">
-              Create Request
+              {{ translationService.translateSync('employee.dashboard.cards.new_request.button') }}
             </button>
           </mat-card-actions>
         </mat-card>
@@ -46,12 +47,12 @@ import { RouterModule } from '@angular/router';
         <mat-card class="dashboard-card">
           <mat-card-header>
             <mat-icon mat-card-avatar>history</mat-icon>
-            <mat-card-title>My Requests</mat-card-title>
-            <mat-card-subtitle>View and track your travel requests</mat-card-subtitle>
+            <mat-card-title>{{ translationService.translateSync('employee.dashboard.cards.my_requests.title') }}</mat-card-title>
+            <mat-card-subtitle>{{ translationService.translateSync('employee.dashboard.cards.my_requests.subtitle') }}</mat-card-subtitle>
           </mat-card-header>
           <mat-card-actions>
             <button mat-raised-button color="primary" routerLink="/employee/requests">
-              View Requests
+              {{ translationService.translateSync('employee.dashboard.cards.my_requests.button') }}
             </button>
           </mat-card-actions>
         </mat-card>
@@ -60,4 +61,6 @@ import { RouterModule } from '@angular/router';
   `,
   styleUrls: ['./dashboard.component.scss'],
 })
-export class DashboardComponent {}
+export class DashboardComponent {
+  constructor(public translationService: TranslationService) {}
+}

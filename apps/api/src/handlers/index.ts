@@ -109,11 +109,7 @@ export const employeesDashboard = errorHandler(async (event, context) => {
     return withdrawRequest(event, context);
   } else {
     console.log('❌ No route found for employees dashboard', { method, path });
-    return formatResponse(
-      404,
-      { error: 'Route not found', method, path },
-      context.awsRequestId
-    );
+    return formatResponse(404, { error: 'Route not found', method, path }, context.awsRequestId);
   }
 });
 

@@ -15,6 +15,7 @@ import { takeUntil, switchMap } from 'rxjs/operators';
 
 import { UserDetails } from '@rtm/shared';
 import { AdminService } from '../../../core/services/admin.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import { UserProfileDialogComponent } from './user-profile-dialog.component';
 
 @Component({
@@ -38,7 +39,7 @@ import { UserProfileDialogComponent } from './user-profile-dialog.component';
       <!-- Loading State -->
       <div *ngIf="loading" class="loading-container">
         <mat-spinner diameter="40"></mat-spinner>
-        <p>Loading user details...</p>
+        <p>{{ translationService.translateSync('admin.user_detail.loading') }}</p>
       </div>
 
       <!-- User Details -->
@@ -58,11 +59,11 @@ import { UserProfileDialogComponent } from './user-profile-dialog.component';
           <mat-card-actions>
             <button mat-button (click)="goBack()">
               <mat-icon>arrow_back</mat-icon>
-              Back to Users
+              {{ translationService.translateSync('admin.user_detail.actions.back_to_users') }}
             </button>
             <button mat-raised-button color="primary" (click)="editUser()">
               <mat-icon>edit</mat-icon>
-              Edit User
+              {{ translationService.translateSync('admin.user_detail.actions.edit_user') }}
             </button>
           </mat-card-actions>
         </mat-card>
@@ -70,44 +71,44 @@ import { UserProfileDialogComponent } from './user-profile-dialog.component';
         <!-- User Information Tabs -->
         <mat-tab-group>
           <!-- Basic Information -->
-          <mat-tab label="Basic Information">
+          <mat-tab [label]="translationService.translateSync('admin.user_detail.tabs.basic_information')">
             <div class="tab-content">
               <mat-card>
                 <mat-card-header>
-                  <mat-card-title>Personal Information</mat-card-title>
+                  <mat-card-title>{{ translationService.translateSync('admin.user_detail.sections.personal_information') }}</mat-card-title>
                 </mat-card-header>
                 <mat-card-content>
                   <div class="info-grid">
                     <div class="info-item">
-                      <label>Full Name</label>
+                      <label>{{ translationService.translateSync('admin.user_detail.labels.full_name') }}</label>
                       <span>{{ user.firstName }} {{ user.lastName }}</span>
                     </div>
                     <div class="info-item">
-                      <label>Email</label>
+                      <label>{{ translationService.translateSync('admin.user_detail.labels.email') }}</label>
                       <span>{{ user.email }}</span>
                     </div>
                     <div class="info-item">
-                      <label>Employee Number</label>
+                      <label>{{ translationService.translateSync('admin.user_detail.labels.employee_number') }}</label>
                       <span>{{ user.employeeNumber }}</span>
                     </div>
                     <div class="info-item">
-                      <label>Phone Number</label>
-                      <span>{{ user.phoneNumber || 'Not provided' }}</span>
+                      <label>{{ translationService.translateSync('admin.user_detail.labels.phone_number') }}</label>
+                      <span>{{ user.phoneNumber || translationService.translateSync('admin.user_detail.values.not_provided') }}</span>
                     </div>
                     <div class="info-item">
-                      <label>Status</label>
+                      <label>{{ translationService.translateSync('admin.user_detail.labels.status') }}</label>
                       <mat-chip [color]="getStatusColor(user.status)">
                         {{ user.status | titlecase }}
                       </mat-chip>
                     </div>
                     <div class="info-item">
-                      <label>Verified</label>
+                      <label>{{ translationService.translateSync('admin.user_detail.labels.verified') }}</label>
                       <mat-chip [color]="user.isVerified ? 'primary' : 'warn'">
-                        {{ user.isVerified ? 'Yes' : 'No' }}
+                        {{ user.isVerified ? translationService.translateSync('common.values.yes') : translationService.translateSync('common.values.no') }}
                       </mat-chip>
                     </div>
                     <div class="info-item">
-                      <label>Registration Date</label>
+                      <label>{{ translationService.translateSync('admin.user_detail.labels.registration_date') }}</label>
                       <span>{{ user.registrationDate | date: 'medium' }}</span>
                     </div>
                   </div>
@@ -117,7 +118,7 @@ import { UserProfileDialogComponent } from './user-profile-dialog.component';
               <!-- Address Information -->
               <mat-card>
                 <mat-card-header>
-                  <mat-card-title>Address Information</mat-card-title>
+                  <mat-card-title>{{ translationService.translateSync('admin.user_detail.sections.address_information') }}</mat-card-title>
                 </mat-card-header>
                 <mat-card-content>
                   <div class="address-content">
@@ -131,12 +132,12 @@ import { UserProfileDialogComponent } from './user-profile-dialog.component';
           </mat-tab>
 
           <!-- Management Hierarchy -->
-          <mat-tab label="Management">
+          <mat-tab [label]="translationService.translateSync('admin.user_detail.tabs.management')">
             <div class="tab-content">
               <!-- Manager Information -->
               <mat-card *ngIf="user.managerName">
                 <mat-card-header>
-                  <mat-card-title>Reports To</mat-card-title>
+                  <mat-card-title>{{ translationService.translateSync('admin.user_detail.sections.reports_to') }}</mat-card-title>
                 </mat-card-header>
                 <mat-card-content>
                   <div class="manager-info">
@@ -149,7 +150,7 @@ import { UserProfileDialogComponent } from './user-profile-dialog.component';
               <!-- Direct Reports -->
               <mat-card *ngIf="user.directReports.length > 0">
                 <mat-card-header>
-                  <mat-card-title>Direct Reports ({{ user.directReports.length }})</mat-card-title>
+                  <mat-card-title>{{ translationService.translateSync('admin.user_detail.sections.direct_reports', { count: user.directReports.length }) }}</mat-card-title>
                 </mat-card-header>
                 <mat-card-content>
                   <div class="direct-reports">
@@ -169,27 +170,27 @@ import { UserProfileDialogComponent } from './user-profile-dialog.component';
           </mat-tab>
 
           <!-- Activity Summary -->
-          <mat-tab label="Activity">
+          <mat-tab [label]="translationService.translateSync('admin.user_detail.tabs.activity')">
             <div class="tab-content">
               <mat-card>
                 <mat-card-header>
-                  <mat-card-title>Travel Request Activity</mat-card-title>
+                  <mat-card-title>{{ translationService.translateSync('admin.user_detail.sections.travel_request_activity') }}</mat-card-title>
                 </mat-card-header>
                 <mat-card-content>
                   <div class="activity-stats">
                     <div class="stat-item">
                       <div class="stat-value">{{ user.activitySummary.totalRequests }}</div>
-                      <div class="stat-label">Total Requests</div>
+                      <div class="stat-label">{{ translationService.translateSync('admin.user_detail.stats.total_requests') }}</div>
                     </div>
                     <div class="stat-item">
                       <div class="stat-value">{{ user.activitySummary.requestsThisMonth }}</div>
-                      <div class="stat-label">This Month</div>
+                      <div class="stat-label">{{ translationService.translateSync('admin.user_detail.stats.this_month') }}</div>
                     </div>
                     <div class="stat-item">
                       <div class="stat-value">
                         {{ user.activitySummary.averageRequestValue | currency: 'CHF' }}
                       </div>
-                      <div class="stat-label">Average Value</div>
+                      <div class="stat-label">{{ translationService.translateSync('admin.user_detail.stats.average_value') }}</div>
                     </div>
                   </div>
                 </mat-card-content>
@@ -198,7 +199,7 @@ import { UserProfileDialogComponent } from './user-profile-dialog.component';
               <!-- Recent Requests -->
               <mat-card *ngIf="user.recentRequests.length > 0">
                 <mat-card-header>
-                  <mat-card-title>Recent Travel Requests</mat-card-title>
+                  <mat-card-title>{{ translationService.translateSync('admin.user_detail.sections.recent_travel_requests') }}</mat-card-title>
                 </mat-card-header>
                 <mat-card-content>
                   <div class="recent-requests">
@@ -229,9 +230,9 @@ import { UserProfileDialogComponent } from './user-profile-dialog.component';
       <!-- Error State -->
       <div *ngIf="!loading && !user" class="error-container">
         <mat-icon>error</mat-icon>
-        <h3>User not found</h3>
-        <p>The requested user could not be found.</p>
-        <button mat-raised-button color="primary" (click)="goBack()">Back to Users</button>
+        <h3>{{ translationService.translateSync('admin.user_detail.errors.user_not_found') }}</h3>
+        <p>{{ translationService.translateSync('admin.user_detail.errors.user_not_found_message') }}</p>
+        <button mat-raised-button color="primary" (click)="goBack()">{{ translationService.translateSync('admin.user_detail.actions.back_to_users') }}</button>
       </div>
     </div>
   `,
@@ -247,6 +248,7 @@ export class UserDetailComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private adminService: AdminService,
+    public translationService: TranslationService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) {}
@@ -287,7 +289,7 @@ export class UserDetailComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(UserProfileDialogComponent, {
       width: '800px',
       data: {
-        title: 'Edit User Profile',
+        title: this.translationService.translateSync('admin.user_detail.dialogs.edit_user_profile'),
         user: this.user,
         isAdminEdit: true,
       },
@@ -307,9 +309,11 @@ export class UserDetailComponent implements OnInit, OnDestroy {
           .subscribe({
             next: user => {
               this.user = user;
-              this.snackBar.open('User profile updated successfully', 'Close', {
-                duration: 3000,
-              });
+              this.snackBar.open(
+                this.translationService.translateSync('admin.user_detail.messages.profile_updated'),
+                this.translationService.translateSync('common.buttons.close'),
+                { duration: 3000 }
+              );
             },
             error: error => {
               console.error('Failed to reload user details:', error);

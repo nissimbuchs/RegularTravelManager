@@ -20,6 +20,7 @@ import { takeUntil } from 'rxjs/operators';
 import { Project, Subproject } from '../../../core/models/project.model';
 import { ProjectService } from '../../../core/services/project.service';
 import { LoadingService } from '../../../core/services/loading.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import { SubprojectFormDialogComponent } from './subproject-form-dialog.component';
 import { ProjectFormDialogComponent } from './project-form-dialog.component';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
@@ -55,18 +56,18 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                 <mat-icon class="project-icon">business_center</mat-icon>
                 <h2>{{ project.name }}</h2>
                 <mat-chip [color]="project.isActive ? 'primary' : 'warn'">
-                  {{ project.isActive ? 'Active' : 'Inactive' }}
+                  {{ project.isActive ? translationService.translateSync('common.status.active') : translationService.translateSync('common.status.inactive') }}
                 </mat-chip>
               </div>
 
               <div class="header-actions">
                 <button mat-stroked-button (click)="editProject()">
                   <mat-icon>edit</mat-icon>
-                  Edit Project
+                  {{ translationService.translateSync('admin.project_detail.edit_project') }}
                 </button>
                 <button mat-button [routerLink]="['/admin/projects']">
                   <mat-icon>arrow_back</mat-icon>
-                  Back to Projects
+                  {{ translationService.translateSync('admin.project_detail.back_to_projects') }}
                 </button>
               </div>
             </div>
@@ -79,15 +80,15 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
               <div class="info-item">
                 <mat-icon>description</mat-icon>
                 <div>
-                  <strong>Description</strong>
-                  <p>{{ project.description || 'No description provided' }}</p>
+                  <strong>{{ translationService.translateSync('admin.project_detail.info.description') }}</strong>
+                  <p>{{ project.description || translationService.translateSync('admin.project_detail.info.no_description') }}</p>
                 </div>
               </div>
 
               <div class="info-item">
                 <mat-icon>attach_money</mat-icon>
                 <div>
-                  <strong>Default Cost per Kilometer</strong>
+                  <strong>{{ translationService.translateSync('admin.project_detail.info.default_cost') }}</strong>
                   <p class="cost-value">{{ formatCurrency(project.defaultCostPerKm) }}</p>
                 </div>
               </div>
@@ -95,7 +96,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
               <div class="info-item">
                 <mat-icon>event</mat-icon>
                 <div>
-                  <strong>Created</strong>
+                  <strong>{{ translationService.translateSync('admin.project_detail.info.created') }}</strong>
                   <p>{{ project.createdAt | date: 'medium' }}</p>
                 </div>
               </div>
@@ -103,8 +104,8 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
               <div class="info-item">
                 <mat-icon>location_on</mat-icon>
                 <div>
-                  <strong>Subprojects</strong>
-                  <p>{{ subprojects.length }} location(s)</p>
+                  <strong>{{ translationService.translateSync('admin.project_detail.info.subprojects') }}</strong>
+                  <p>{{ subprojects.length }} {{ translationService.translateSync('admin.project_detail.info.locations') }}</p>
                 </div>
               </div>
             </div>
@@ -119,11 +120,11 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
             <div class="subprojects-header">
               <div class="header-title">
                 <mat-icon>location_on</mat-icon>
-                Subproject Locations
+                {{ translationService.translateSync('admin.project_detail.subprojects.title') }}
               </div>
               <button mat-raised-button color="primary" (click)="createSubproject()">
                 <mat-icon>add_location</mat-icon>
-                Add Location
+                {{ translationService.translateSync('admin.project_detail.subprojects.add_location') }}
               </button>
             </div>
           </mat-card-title>
@@ -133,19 +134,19 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
           <div class="table-container">
             <table mat-table [dataSource]="dataSource" matSort class="subprojects-table">
               <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>Location Name</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('admin.project_detail.subprojects.table.columns.location_name') }}</th>
                 <td mat-cell *matCellDef="let subproject">
                   <div class="location-name">
                     <strong>{{ subproject.name }}</strong>
                     <mat-chip [color]="subproject.isActive ? 'primary' : 'warn'">
-                      {{ subproject.isActive ? 'Active' : 'Inactive' }}
+                      {{ subproject.isActive ? translationService.translateSync('common.status.active') : translationService.translateSync('common.status.inactive') }}
                     </mat-chip>
                   </div>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="address">
-                <th mat-header-cell *matHeaderCellDef>Address</th>
+                <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('admin.project_detail.subprojects.table.columns.address') }}</th>
                 <td mat-cell *matCellDef="let subproject">
                   <div class="address" *ngIf="hasAddress(subproject); else noAddress">
                     <mat-icon class="address-icon">place</mat-icon>
@@ -157,13 +158,13 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                     </div>
                   </div>
                   <ng-template #noAddress>
-                    <span class="no-address">No address provided</span>
+                    <span class="no-address">{{ translationService.translateSync('admin.project_detail.subprojects.table.no_address') }}</span>
                   </ng-template>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="coordinates">
-                <th mat-header-cell *matHeaderCellDef>Coordinates</th>
+                <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('admin.project_detail.subprojects.table.columns.coordinates') }}</th>
                 <td mat-cell *matCellDef="let subproject">
                   <div class="coordinates" *ngIf="subproject.locationCoordinates; else noCoords">
                     <mat-icon class="coords-icon">my_location</mat-icon>
@@ -173,38 +174,38 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                     </span>
                   </div>
                   <ng-template #noCoords>
-                    <span class="no-coordinates">Not geocoded</span>
+                    <span class="no-coordinates">{{ translationService.translateSync('admin.project_detail.subprojects.table.no_coordinates') }}</span>
                   </ng-template>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="costPerKm">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>Cost/km</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('admin.project_detail.subprojects.table.columns.cost_per_km') }}</th>
                 <td mat-cell *matCellDef="let subproject">
                   <div class="cost-info">
                     <span class="cost-value">
                       {{ formatCurrency(subproject.costPerKm || project.defaultCostPerKm) }}
                     </span>
-                    <span class="cost-source" *ngIf="!subproject.costPerKm"> (inherited) </span>
+                    <span class="cost-source" *ngIf="!subproject.costPerKm"> {{ translationService.translateSync('admin.project_detail.subprojects.table.inherited') }} </span>
                   </div>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="createdAt">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('admin.project_detail.subprojects.table.columns.created') }}</th>
                 <td mat-cell *matCellDef="let subproject">
                   {{ subproject.createdAt | date: 'short' }}
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('admin.project_detail.subprojects.table.columns.actions') }}</th>
                 <td mat-cell *matCellDef="let subproject">
                   <div class="action-buttons">
                     <button
                       mat-icon-button
                       (click)="editSubproject(subproject)"
-                      matTooltip="Edit Location"
+                      [matTooltip]="translationService.translateSync('admin.project_detail.subprojects.actions.edit_location')"
                     >
                       <mat-icon>edit_location</mat-icon>
                     </button>
@@ -212,7 +213,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                     <button
                       mat-icon-button
                       (click)="toggleSubprojectStatus(subproject)"
-                      [matTooltip]="subproject.isActive ? 'Deactivate' : 'Activate'"
+                      [matTooltip]="subproject.isActive ? translationService.translateSync('admin.projects.actions.deactivate') : translationService.translateSync('admin.projects.actions.activate')"
                     >
                       <mat-icon [color]="subproject.isActive ? 'warn' : 'primary'">
                         {{ subproject.isActive ? 'toggle_off' : 'toggle_on' }}
@@ -222,7 +223,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                     <button
                       mat-icon-button
                       (click)="deleteSubproject(subproject)"
-                      matTooltip="Delete Location"
+                      [matTooltip]="translationService.translateSync('admin.project_detail.subprojects.actions.delete_location')"
                       color="warn"
                     >
                       <mat-icon>delete_forever</mat-icon>
@@ -237,11 +238,11 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
 
             <div *ngIf="subprojects.length === 0" class="no-subprojects">
               <mat-icon>location_off</mat-icon>
-              <h3>No locations added yet</h3>
-              <p>Add subproject locations to specify work sites and custom cost rates.</p>
+              <h3>{{ translationService.translateSync('admin.project_detail.subprojects.no_locations.title') }}</h3>
+              <p>{{ translationService.translateSync('admin.project_detail.subprojects.no_locations.message') }}</p>
               <button mat-raised-button color="primary" (click)="createSubproject()">
                 <mat-icon>add_location</mat-icon>
-                Add First Location
+                {{ translationService.translateSync('admin.project_detail.subprojects.add_first_location') }}
               </button>
             </div>
 
@@ -283,7 +284,8 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     private projectService: ProjectService,
     private loadingService: LoadingService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    public translationService: TranslationService
   ) {}
 
   ngOnInit(): void {
@@ -319,7 +321,11 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
         },
         error: error => {
           console.error('Failed to load project:', error);
-          this.snackBar.open('Failed to load project', 'Close', { duration: 3000 });
+          this.snackBar.open(
+            this.translationService.translateSync('admin.project_detail.messages.load_project_failed'),
+            this.translationService.translateSync('common.buttons.close'),
+            { duration: 3000 }
+          );
           this.router.navigate(['/admin/projects']);
           this.loadingService.setLoading(false);
         },
@@ -337,7 +343,11 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
         },
         error: error => {
           console.error('Failed to load subprojects:', error);
-          this.snackBar.open('Failed to load subprojects', 'Close', { duration: 3000 });
+          this.snackBar.open(
+            this.translationService.translateSync('admin.project_detail.messages.load_subprojects_failed'),
+            this.translationService.translateSync('common.buttons.close'),
+            { duration: 3000 }
+          );
         },
       });
   }
@@ -347,13 +357,20 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
 
     const dialogRef = this.dialog.open(ProjectFormDialogComponent, {
       width: '600px',
-      data: { title: 'Edit Project', project: this.project },
+      data: {
+        title: this.translationService.translateSync('admin.project_detail.dialogs.edit_project'),
+        project: this.project
+      },
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.loadProject(this.project!.id);
-        this.snackBar.open('Project updated successfully', 'Close', { duration: 3000 });
+        this.snackBar.open(
+          this.translationService.translateSync('admin.project_detail.messages.project_updated'),
+          this.translationService.translateSync('common.buttons.close'),
+          { duration: 3000 }
+        );
       }
     });
   }
@@ -364,7 +381,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(SubprojectFormDialogComponent, {
       width: '700px',
       data: {
-        title: 'Add New Location',
+        title: this.translationService.translateSync('admin.project_detail.dialogs.add_location'),
         project: this.project,
         subproject: null,
       },
@@ -373,7 +390,11 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.loadSubprojects(this.project!.id);
-        this.snackBar.open('Location added successfully', 'Close', { duration: 3000 });
+        this.snackBar.open(
+          this.translationService.translateSync('admin.project_detail.messages.location_added'),
+          this.translationService.translateSync('common.buttons.close'),
+          { duration: 3000 }
+        );
       }
     });
   }
@@ -384,7 +405,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(SubprojectFormDialogComponent, {
       width: '700px',
       data: {
-        title: 'Edit Location',
+        title: this.translationService.translateSync('admin.project_detail.dialogs.edit_location'),
         project: this.project,
         subproject,
       },
@@ -393,7 +414,11 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.loadSubprojects(this.project!.id);
-        this.snackBar.open('Location updated successfully', 'Close', { duration: 3000 });
+        this.snackBar.open(
+          this.translationService.translateSync('admin.project_detail.messages.location_updated'),
+          this.translationService.translateSync('common.buttons.close'),
+          { duration: 3000 }
+        );
       }
     });
   }
@@ -402,11 +427,15 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     if (!this.project) return;
 
     const action = subproject.isActive ? 'deactivate' : 'activate';
+    const titleKey = action === 'activate' ? 'admin.project_detail.dialogs.activate_location' : 'admin.project_detail.dialogs.deactivate_location';
+    const messageKey = action === 'activate' ? 'admin.project_detail.dialogs.activate_location_message' : 'admin.project_detail.dialogs.deactivate_location_message';
+    const confirmKey = action === 'activate' ? 'admin.project_detail.dialogs.activate_confirm' : 'admin.project_detail.dialogs.deactivate_confirm';
+
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
-        title: `${action === 'activate' ? 'Activate' : 'Deactivate'} Location`,
-        message: `Are you sure you want to ${action} "${subproject.name}"?`,
-        confirmText: action === 'activate' ? 'Activate' : 'Deactivate',
+        title: this.translationService.translateSync(titleKey),
+        message: this.translationService.translateSync(messageKey, { name: subproject.name }),
+        confirmText: this.translationService.translateSync(confirmKey),
         confirmColor: action === 'activate' ? 'primary' : 'warn',
       },
     });
@@ -419,11 +448,21 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
           .subscribe({
             next: () => {
               this.loadSubprojects(this.project!.id);
-              this.snackBar.open(`Location ${action}d successfully`, 'Close', { duration: 3000 });
+              const successKey = action === 'activate' ? 'admin.project_detail.messages.location_activated' : 'admin.project_detail.messages.location_deactivated';
+              this.snackBar.open(
+                this.translationService.translateSync(successKey),
+                this.translationService.translateSync('common.buttons.close'),
+                { duration: 3000 }
+              );
             },
             error: error => {
               console.error('Failed to toggle subproject status:', error);
-              this.snackBar.open(`Failed to ${action} location`, 'Close', { duration: 3000 });
+              const errorKey = action === 'activate' ? 'admin.project_detail.messages.location_activate_failed' : 'admin.project_detail.messages.location_deactivate_failed';
+              this.snackBar.open(
+                this.translationService.translateSync(errorKey),
+                this.translationService.translateSync('common.buttons.close'),
+                { duration: 3000 }
+              );
             },
           });
       }
@@ -435,9 +474,9 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
 
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
-        title: 'Delete Location',
-        message: `Are you sure you want to delete "${subproject.name}"? This action cannot be undone.`,
-        confirmText: 'Delete',
+        title: this.translationService.translateSync('admin.project_detail.dialogs.delete_location'),
+        message: this.translationService.translateSync('admin.project_detail.dialogs.delete_location_message', { name: subproject.name }),
+        confirmText: this.translationService.translateSync('admin.project_detail.dialogs.delete_confirm'),
         confirmColor: 'warn',
         icon: 'delete_forever',
       },
@@ -451,11 +490,19 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
           .subscribe({
             next: () => {
               this.loadSubprojects(this.project!.id);
-              this.snackBar.open('Location deleted successfully', 'Close', { duration: 3000 });
+              this.snackBar.open(
+                this.translationService.translateSync('admin.project_detail.messages.location_deleted'),
+                this.translationService.translateSync('common.buttons.close'),
+                { duration: 3000 }
+              );
             },
             error: error => {
               console.error('Failed to delete subproject:', error);
-              this.snackBar.open('Failed to delete location', 'Close', { duration: 3000 });
+              this.snackBar.open(
+                this.translationService.translateSync('admin.project_detail.messages.location_delete_failed'),
+                this.translationService.translateSync('common.buttons.close'),
+                { duration: 3000 }
+              );
             },
           });
       }

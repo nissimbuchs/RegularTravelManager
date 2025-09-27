@@ -16,6 +16,7 @@ import { takeUntil, finalize } from 'rxjs/operators';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { LoadingService } from '../../../core/services/loading.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import { EmployeeDto, UpdateEmployeeAddressRequest } from '@rtm/shared';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 
@@ -41,8 +42,8 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
       <mat-card class="current-address-card">
         <mat-card-header>
           <mat-icon mat-card-avatar>home</mat-icon>
-          <mat-card-title>Current Home Address</mat-card-title>
-          <mat-card-subtitle>Used for travel distance calculations</mat-card-subtitle>
+          <mat-card-title>{{ translationService.translateSync('employee.address.current.title') }}</mat-card-title>
+          <mat-card-subtitle>{{ translationService.translateSync('employee.address.current.subtitle') }}</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div *ngIf="employee && hasAddress(); else noAddress" class="address-display">
@@ -67,8 +68,8 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
           <ng-template #noAddress>
             <div class="no-address">
               <mat-icon>location_off</mat-icon>
-              <h3>No address set</h3>
-              <p>Please add your home address to enable travel distance calculations.</p>
+              <h3>{{ translationService.translateSync('employee.address.no_address.title') }}</h3>
+              <p>{{ translationService.translateSync('employee.address.no_address.description') }}</p>
             </div>
           </ng-template>
         </mat-card-content>
@@ -80,7 +81,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
             [disabled]="isLoading"
           >
             <mat-icon>{{ isEditMode ? 'cancel' : 'edit' }}</mat-icon>
-            {{ isEditMode ? 'Cancel' : hasAddress() ? 'Edit Address' : 'Add Address' }}
+            {{ isEditMode ? translationService.translateSync('employee.address.actions.cancel') : hasAddress() ? translationService.translateSync('employee.address.actions.edit') : translationService.translateSync('employee.address.actions.add') }}
           </button>
         </mat-card-actions>
       </mat-card>
@@ -89,69 +90,69 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
       <mat-card *ngIf="isEditMode" class="address-form-card">
         <mat-card-header>
           <mat-icon mat-card-avatar>edit_location</mat-icon>
-          <mat-card-title>{{ hasAddress() ? 'Update' : 'Add' }} Home Address</mat-card-title>
-          <mat-card-subtitle>All fields are required for accurate geocoding</mat-card-subtitle>
+          <mat-card-title>{{ hasAddress() ? translationService.translateSync('employee.address.form.update_title') : translationService.translateSync('employee.address.form.add_title') }}</mat-card-title>
+          <mat-card-subtitle>{{ translationService.translateSync('employee.address.form.subtitle') }}</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <form [formGroup]="addressForm" (ngSubmit)="onSubmit()">
             <div class="form-row">
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Street Address</mat-label>
+                <mat-label>{{ translationService.translateSync('employee.address.form.fields.street.label') }}</mat-label>
                 <input
                   matInput
                   formControlName="homeStreet"
-                  placeholder="e.g. Bahnhofstrasse 45"
+                  [placeholder]="translationService.translateSync('employee.address.form.fields.street.placeholder')"
                   maxlength="255"
                 />
                 <mat-icon matSuffix>home</mat-icon>
                 <mat-error *ngIf="addressForm.get('homeStreet')?.errors?.['required']">
-                  Street address is required
+                  {{ translationService.translateSync('employee.address.form.errors.street.required') }}
                 </mat-error>
                 <mat-error *ngIf="addressForm.get('homeStreet')?.errors?.['minlength']">
-                  Street address must be at least 3 characters
+                  {{ translationService.translateSync('employee.address.form.errors.street.minlength') }}
                 </mat-error>
               </mat-form-field>
             </div>
 
             <div class="form-row">
               <mat-form-field appearance="outline" class="city-field">
-                <mat-label>City</mat-label>
+                <mat-label>{{ translationService.translateSync('employee.address.form.fields.city.label') }}</mat-label>
                 <input
                   matInput
                   formControlName="homeCity"
-                  placeholder="e.g. Zurich"
+                  [placeholder]="translationService.translateSync('employee.address.form.fields.city.placeholder')"
                   maxlength="100"
                 />
                 <mat-icon matSuffix>location_city</mat-icon>
                 <mat-error *ngIf="addressForm.get('homeCity')?.errors?.['required']">
-                  City is required
+                  {{ translationService.translateSync('employee.address.form.errors.city.required') }}
                 </mat-error>
                 <mat-error *ngIf="addressForm.get('homeCity')?.errors?.['minlength']">
-                  City must be at least 2 characters
+                  {{ translationService.translateSync('employee.address.form.errors.city.minlength') }}
                 </mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="postal-field">
-                <mat-label>Postal Code</mat-label>
+                <mat-label>{{ translationService.translateSync('employee.address.form.fields.postal_code.label') }}</mat-label>
                 <input
                   matInput
                   formControlName="homePostalCode"
-                  placeholder="e.g. 8001"
+                  [placeholder]="translationService.translateSync('employee.address.form.fields.postal_code.placeholder')"
                   maxlength="4"
                 />
                 <mat-icon matSuffix>markunread_mailbox</mat-icon>
                 <mat-error *ngIf="addressForm.get('homePostalCode')?.errors?.['required']">
-                  Postal code is required
+                  {{ translationService.translateSync('employee.address.form.errors.postal_code.required') }}
                 </mat-error>
                 <mat-error *ngIf="addressForm.get('homePostalCode')?.errors?.['pattern']">
-                  Swiss postal code must be 4 digits
+                  {{ translationService.translateSync('employee.address.form.errors.postal_code.pattern') }}
                 </mat-error>
               </mat-form-field>
             </div>
 
             <div class="form-row">
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Country</mat-label>
+                <mat-label>{{ translationService.translateSync('employee.address.form.fields.country.label') }}</mat-label>
                 <mat-select formControlName="homeCountry">
                   <mat-option *ngFor="let country of supportedCountries" [value]="country">
                     {{ country }}
@@ -159,7 +160,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                 </mat-select>
                 <mat-icon matSuffix>flag</mat-icon>
                 <mat-error *ngIf="addressForm.get('homeCountry')?.errors?.['required']">
-                  Country is required
+                  {{ translationService.translateSync('employee.address.form.errors.country.required') }}
                 </mat-error>
               </mat-form-field>
             </div>
@@ -167,7 +168,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
         </mat-card-content>
         <mat-card-actions align="end">
           <button mat-button type="button" (click)="toggleEditMode()" [disabled]="isLoading">
-            Cancel
+            {{ translationService.translateSync('employee.address.form.actions.cancel') }}
           </button>
           <button
             mat-raised-button
@@ -177,7 +178,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
           >
             <mat-spinner diameter="20" *ngIf="isLoading" class="button-spinner"></mat-spinner>
             <mat-icon *ngIf="!isLoading">{{ hasAddress() ? 'update' : 'add_location' }}</mat-icon>
-            {{ hasAddress() ? 'Update' : 'Add' }} Address
+            {{ hasAddress() ? translationService.translateSync('employee.address.form.actions.update') : translationService.translateSync('employee.address.form.actions.add') }} {{ translationService.translateSync('employee.address.form.actions.address') }}
           </button>
         </mat-card-actions>
       </mat-card>
@@ -186,22 +187,22 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
       <mat-card *ngIf="employee && hasAddress()" class="address-history-card">
         <mat-card-header>
           <mat-icon mat-card-avatar>history</mat-icon>
-          <mat-card-title>Address Information</mat-card-title>
+          <mat-card-title>{{ translationService.translateSync('employee.address.info.title') }}</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <div class="info-grid">
             <div class="info-item">
               <mat-icon>event</mat-icon>
               <div>
-                <strong>Last Updated</strong>
+                <strong>{{ translationService.translateSync('employee.address.info.last_updated') }}</strong>
                 <p>{{ employee.updatedAt | date: 'medium' }}</p>
               </div>
             </div>
             <div class="info-item" *ngIf="employee.homeLocation">
               <mat-icon>map</mat-icon>
               <div>
-                <strong>Geocoding Status</strong>
-                <p>✅ Address successfully geocoded</p>
+                <strong>{{ translationService.translateSync('employee.address.info.geocoding_status') }}</strong>
+                <p>{{ translationService.translateSync('employee.address.info.geocoded_success') }}</p>
               </div>
             </div>
           </div>
@@ -226,7 +227,8 @@ export class AddressComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private loadingService: LoadingService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    public translationService: TranslationService
   ) {
     this.supportedCountries = this.employeeService.getSupportedCountries();
     this.addressForm = this.createAddressForm();
@@ -274,20 +276,20 @@ export class AddressComponent implements OnInit, OnDestroy {
                 error: error => {
                   console.error('Failed to load employee profile:', error);
                   this.snackBar.open(
-                    `Failed to load employee profile: ${error.message || error.status}`,
-                    'Close',
+                    `${this.translationService.translateSync('employee.address.errors.load_profile')}: ${error.message || error.status}`,
+                    this.translationService.translateSync('common.actions.close'),
                     { duration: 5000 }
                   );
                 },
               });
           } else {
-            this.snackBar.open('No user authentication found', 'Close', { duration: 3000 });
+            this.snackBar.open(this.translationService.translateSync('employee.address.errors.no_auth'), this.translationService.translateSync('common.actions.close'), { duration: 3000 });
             this.loadingService.setLoading(false);
           }
         },
         error: error => {
           console.error('Failed to get current user:', error);
-          this.snackBar.open('Authentication error', 'Close', { duration: 3000 });
+          this.snackBar.open(this.translationService.translateSync('employee.address.errors.auth_error'), this.translationService.translateSync('common.actions.close'), { duration: 3000 });
           this.loadingService.setLoading(false);
         },
       });
@@ -333,10 +335,9 @@ export class AddressComponent implements OnInit, OnDestroy {
     if (this.hasAddress()) {
       const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
         data: {
-          title: 'Update Address',
-          message:
-            'Updating your address will recalculate distances for any pending travel requests. Continue?',
-          confirmText: 'Update Address',
+          title: this.translationService.translateSync('employee.address.confirm.update.title'),
+          message: this.translationService.translateSync('employee.address.confirm.update.message'),
+          confirmText: this.translationService.translateSync('employee.address.confirm.update.confirm'),
           confirmColor: 'primary',
           icon: 'update',
         },
@@ -374,30 +375,30 @@ export class AddressComponent implements OnInit, OnDestroy {
                   this.isEditMode = false;
                   this.snackBar.open(
                     updatedEmployee.homeLocation
-                      ? 'Address updated and geocoded successfully'
-                      : 'Address updated (geocoding in progress)',
-                    'Close',
+                      ? this.translationService.translateSync('employee.address.success.updated_geocoded')
+                      : this.translationService.translateSync('employee.address.success.updated_pending'),
+                    this.translationService.translateSync('common.actions.close'),
                     { duration: 3000 }
                   );
                 },
                 error: error => {
                   console.error('Failed to update address:', error);
-                  let errorMessage = 'Failed to update address';
+                  let errorMessage = this.translationService.translateSync('employee.address.errors.update_failed');
 
                   if (error.status === 422) {
-                    errorMessage = 'Invalid address format. Please check your input.';
+                    errorMessage = this.translationService.translateSync('employee.address.errors.invalid_format');
                   } else if (error.status === 404) {
-                    errorMessage = 'Employee profile not found';
+                    errorMessage = this.translationService.translateSync('employee.address.errors.profile_not_found');
                   } else if (error.error?.message) {
                     errorMessage = error.error.message;
                   }
 
-                  this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
+                  this.snackBar.open(errorMessage, this.translationService.translateSync('common.actions.close'), { duration: 5000 });
                 },
               });
           } else {
             this.isLoading = false;
-            this.snackBar.open('Authentication error - no user ID found', 'Close', {
+            this.snackBar.open(this.translationService.translateSync('employee.address.errors.no_user_id'), this.translationService.translateSync('common.actions.close'), {
               duration: 3000,
             });
           }
@@ -405,7 +406,7 @@ export class AddressComponent implements OnInit, OnDestroy {
         error: error => {
           console.error('Failed to get current user:', error);
           this.isLoading = false;
-          this.snackBar.open('Authentication error', 'Close', { duration: 3000 });
+          this.snackBar.open(this.translationService.translateSync('employee.address.errors.auth_error'), this.translationService.translateSync('common.actions.close'), { duration: 3000 });
         },
       });
   }

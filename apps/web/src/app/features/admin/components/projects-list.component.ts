@@ -22,6 +22,7 @@ import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Project, ProjectSearchFilters } from '../../../core/models/project.model';
 import { ProjectService } from '../../../core/services/project.service';
 import { LoadingService } from '../../../core/services/loading.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import { ProjectFormDialogComponent } from './project-form-dialog.component';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog.component';
 
@@ -53,50 +54,50 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
         <mat-card-header>
           <mat-card-title>
             <mat-icon>business_center</mat-icon>
-            Project Management
+            {{ translationService.translateSync('admin.projects.title') }}
           </mat-card-title>
         </mat-card-header>
 
         <mat-card-content>
           <form [formGroup]="searchForm" class="search-form">
             <mat-form-field appearance="outline">
-              <mat-label>Search projects</mat-label>
+              <mat-label>{{ translationService.translateSync('admin.projects.search.label') }}</mat-label>
               <input
                 matInput
                 formControlName="search"
-                placeholder="Search by name or description"
+                [placeholder]="translationService.translateSync('admin.projects.search.placeholder')"
               />
               <mat-icon matSuffix>search</mat-icon>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Status</mat-label>
+              <mat-label>{{ translationService.translateSync('admin.projects.filters.status.label') }}</mat-label>
               <mat-select formControlName="isActive">
-                <mat-option [value]="null">All</mat-option>
-                <mat-option [value]="true">Active</mat-option>
-                <mat-option [value]="false">Inactive</mat-option>
+                <mat-option [value]="null">{{ translationService.translateSync('admin.projects.filters.status.all') }}</mat-option>
+                <mat-option [value]="true">{{ translationService.translateSync('common.status.active') }}</mat-option>
+                <mat-option [value]="false">{{ translationService.translateSync('common.status.inactive') }}</mat-option>
               </mat-select>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Min Cost (CHF)</mat-label>
+              <mat-label>{{ translationService.translateSync('admin.projects.filters.min_cost.label') }}</mat-label>
               <input
                 matInput
                 type="number"
                 formControlName="minCostPerKm"
-                placeholder="0.00"
+                [placeholder]="translationService.translateSync('admin.projects.filters.min_cost.placeholder')"
                 step="0.01"
                 min="0"
               />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Max Cost (CHF)</mat-label>
+              <mat-label>{{ translationService.translateSync('admin.projects.filters.max_cost.label') }}</mat-label>
               <input
                 matInput
                 type="number"
                 formControlName="maxCostPerKm"
-                placeholder="999.99"
+                [placeholder]="translationService.translateSync('admin.projects.filters.max_cost.placeholder')"
                 step="0.01"
                 min="0"
               />
@@ -105,12 +106,12 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
             <div class="form-actions">
               <button mat-raised-button color="primary" (click)="createProject()">
                 <mat-icon>add</mat-icon>
-                New Project
+                {{ translationService.translateSync('admin.projects.actions.new_project') }}
               </button>
 
               <button mat-stroked-button (click)="clearFilters()">
                 <mat-icon>clear</mat-icon>
-                Clear Filters
+                {{ translationService.translateSync('admin.projects.actions.clear_filters') }}
               </button>
             </div>
           </form>
@@ -121,36 +122,36 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
         <div class="table-container">
           <table mat-table [dataSource]="dataSource" matSort class="projects-table">
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('admin.projects.table.columns.name') }}</th>
               <td mat-cell *matCellDef="let project">
                 <div class="project-name">
                   <strong>{{ project.name }}</strong>
                   <mat-chip [color]="project.isActive ? 'primary' : 'warn'">
-                    {{ project.isActive ? 'Active' : 'Inactive' }}
+                    {{ project.isActive ? translationService.translateSync('common.status.active') : translationService.translateSync('common.status.inactive') }}
                   </mat-chip>
                 </div>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="description">
-              <th mat-header-cell *matHeaderCellDef>Description</th>
+              <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('admin.projects.table.columns.description') }}</th>
               <td mat-cell *matCellDef="let project">
-                <span class="description" [matTooltip]="project.description || 'No description'">
-                  {{ project.description || 'No description' | slice: 0 : 50 }}
+                <span class="description" [matTooltip]="project.description || translationService.translateSync('admin.projects.table.no_description')">
+                  {{ project.description || translationService.translateSync('admin.projects.table.no_description') | slice: 0 : 50 }}
                   <span *ngIf="(project.description?.length || 0) > 50">...</span>
                 </span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="defaultCostPerKm">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Default Cost/km</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('admin.projects.table.columns.default_cost') }}</th>
               <td mat-cell *matCellDef="let project">
                 <span class="cost-rate">{{ formatCurrency(project.defaultCostPerKm) }}</span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="subprojectsCount">
-              <th mat-header-cell *matHeaderCellDef>Subprojects</th>
+              <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('admin.projects.table.columns.subprojects') }}</th>
               <td mat-cell *matCellDef="let project">
                 <mat-icon class="subprojects-icon">location_on</mat-icon>
                 {{ project.subprojectCount || 0 }}
@@ -158,32 +159,36 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
             </ng-container>
 
             <ng-container matColumnDef="createdAt">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('admin.projects.table.columns.created') }}</th>
               <td mat-cell *matCellDef="let project">
                 {{ project.createdAt | date: 'short' }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('admin.projects.table.columns.actions') }}</th>
               <td mat-cell *matCellDef="let project">
                 <div class="action-buttons">
                   <button
                     mat-icon-button
                     [routerLink]="['/admin/projects', project.id]"
-                    matTooltip="View Details"
+                    [matTooltip]="translationService.translateSync('admin.projects.actions.view_details')"
                   >
                     <mat-icon>visibility</mat-icon>
                   </button>
 
-                  <button mat-icon-button (click)="editProject(project)" matTooltip="Edit Project">
+                  <button
+                    mat-icon-button
+                    (click)="editProject(project)"
+                    [matTooltip]="translationService.translateSync('admin.projects.actions.edit_project')"
+                  >
                     <mat-icon>edit</mat-icon>
                   </button>
 
                   <button
                     mat-icon-button
                     (click)="toggleProjectStatus(project)"
-                    [matTooltip]="project.isActive ? 'Deactivate' : 'Activate'"
+                    [matTooltip]="project.isActive ? translationService.translateSync('admin.projects.actions.deactivate') : translationService.translateSync('admin.projects.actions.activate')"
                   >
                     <mat-icon [color]="project.isActive ? 'warn' : 'primary'">
                       {{ project.isActive ? 'toggle_off' : 'toggle_on' }}
@@ -193,7 +198,7 @@ import { ConfirmationDialogComponent } from '../../../shared/components/confirma
                   <button
                     mat-icon-button
                     (click)="deleteProject(project)"
-                    matTooltip="Delete Project"
+                    [matTooltip]="translationService.translateSync('admin.projects.actions.delete_project')"
                     color="warn"
                   >
                     <mat-icon>delete</mat-icon>
@@ -242,7 +247,8 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
     private projectService: ProjectService,
     private loadingService: LoadingService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    public translationService: TranslationService
   ) {}
 
   ngOnInit(): void {
@@ -281,7 +287,11 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
         },
         error: error => {
           console.error('Failed to load projects:', error);
-          this.snackBar.open('Failed to load projects', 'Close', { duration: 3000 });
+          this.snackBar.open(
+            this.translationService.translateSync('admin.projects.messages.load_failed'),
+            this.translationService.translateSync('common.buttons.close'),
+            { duration: 3000 }
+          );
           this.loadingService.setLoading(false);
         },
       });
@@ -327,7 +337,11 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
         },
         error: error => {
           console.error('Failed to filter projects:', error);
-          this.snackBar.open('Failed to filter projects', 'Close', { duration: 3000 });
+          this.snackBar.open(
+            this.translationService.translateSync('admin.projects.messages.filter_failed'),
+            this.translationService.translateSync('common.buttons.close'),
+            { duration: 3000 }
+          );
           this.loadingService.setLoading(false);
         },
       });
@@ -336,7 +350,10 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
   createProject(): void {
     const dialogRef = this.dialog.open(ProjectFormDialogComponent, {
       width: '600px',
-      data: { title: 'Create New Project', project: null },
+      data: {
+        title: this.translationService.translateSync('admin.projects.dialogs.create.title'),
+        project: null
+      },
     });
 
     dialogRef
@@ -345,7 +362,11 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
       .subscribe(result => {
         if (result) {
           this.loadProjects();
-          this.snackBar.open('Project created successfully', 'Close', { duration: 3000 });
+          this.snackBar.open(
+            this.translationService.translateSync('admin.projects.messages.created_successfully'),
+            this.translationService.translateSync('common.buttons.close'),
+            { duration: 3000 }
+          );
         }
       });
   }
@@ -353,7 +374,10 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
   editProject(project: Project): void {
     const dialogRef = this.dialog.open(ProjectFormDialogComponent, {
       width: '600px',
-      data: { title: 'Edit Project', project },
+      data: {
+        title: this.translationService.translateSync('admin.projects.dialogs.edit.title'),
+        project
+      },
     });
 
     dialogRef
@@ -362,18 +386,25 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
       .subscribe(result => {
         if (result) {
           this.loadProjects();
-          this.snackBar.open('Project updated successfully', 'Close', { duration: 3000 });
+          this.snackBar.open(
+            this.translationService.translateSync('admin.projects.messages.updated_successfully'),
+            this.translationService.translateSync('common.buttons.close'),
+            { duration: 3000 }
+          );
         }
       });
   }
 
   toggleProjectStatus(project: Project): void {
     const action = project.isActive ? 'deactivate' : 'activate';
+    const titleKey = action === 'activate' ? 'admin.projects.dialogs.activate.title' : 'admin.projects.dialogs.deactivate.title';
+    const confirmKey = action === 'activate' ? 'admin.projects.dialogs.activate.confirm' : 'admin.projects.dialogs.deactivate.confirm';
+
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
-        title: `${action === 'activate' ? 'Activate' : 'Deactivate'} Project`,
-        message: `Are you sure you want to ${action} "${project.name}"?`,
-        confirmText: action === 'activate' ? 'Activate' : 'Deactivate',
+        title: this.translationService.translateSync(titleKey),
+        message: this.translationService.translateSync(`admin.projects.dialogs.${action}.message`, { projectName: project.name }),
+        confirmText: this.translationService.translateSync(confirmKey),
         confirmColor: action === 'activate' ? 'primary' : 'warn',
       },
     });
@@ -389,11 +420,21 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
             .subscribe({
               next: () => {
                 this.loadProjects();
-                this.snackBar.open(`Project ${action}d successfully`, 'Close', { duration: 3000 });
+                const successKey = action === 'activate' ? 'admin.projects.messages.activated_successfully' : 'admin.projects.messages.deactivated_successfully';
+                this.snackBar.open(
+                  this.translationService.translateSync(successKey),
+                  this.translationService.translateSync('common.buttons.close'),
+                  { duration: 3000 }
+                );
               },
               error: error => {
                 console.error('Failed to toggle project status:', error);
-                this.snackBar.open(`Failed to ${action} project`, 'Close', { duration: 3000 });
+                const errorKey = action === 'activate' ? 'admin.projects.messages.activate_failed' : 'admin.projects.messages.deactivate_failed';
+                this.snackBar.open(
+                  this.translationService.translateSync(errorKey),
+                  this.translationService.translateSync('common.buttons.close'),
+                  { duration: 3000 }
+                );
               },
             });
         }
@@ -409,8 +450,8 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
         next: result => {
           if (!result.canDelete) {
             this.snackBar.open(
-              `Cannot delete project. It is referenced by ${result.referencesCount} travel request(s).`,
-              'Close',
+              this.translationService.translateSync('admin.projects.messages.cannot_delete_referenced', { count: result.referencesCount }),
+              this.translationService.translateSync('common.buttons.close'),
               { duration: 5000 }
             );
             return;
@@ -418,9 +459,9 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
 
           const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
             data: {
-              title: 'Delete Project',
-              message: `Are you sure you want to delete "${project.name}"? This action cannot be undone.`,
-              confirmText: 'Delete',
+              title: this.translationService.translateSync('admin.projects.dialogs.delete.title'),
+              message: this.translationService.translateSync('admin.projects.dialogs.delete.message', { projectName: project.name }),
+              confirmText: this.translationService.translateSync('admin.projects.dialogs.delete.confirm'),
               confirmColor: 'warn',
             },
           });
@@ -436,13 +477,19 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
                   .subscribe({
                     next: () => {
                       this.loadProjects();
-                      this.snackBar.open('Project deleted successfully', 'Close', {
-                        duration: 3000,
-                      });
+                      this.snackBar.open(
+                        this.translationService.translateSync('admin.projects.messages.deleted_successfully'),
+                        this.translationService.translateSync('common.buttons.close'),
+                        { duration: 3000 }
+                      );
                     },
                     error: error => {
                       console.error('Failed to delete project:', error);
-                      this.snackBar.open('Failed to delete project', 'Close', { duration: 3000 });
+                      this.snackBar.open(
+                        this.translationService.translateSync('admin.projects.messages.delete_failed'),
+                        this.translationService.translateSync('common.buttons.close'),
+                        { duration: 3000 }
+                      );
                     },
                   });
               }
@@ -450,9 +497,11 @@ export class ProjectsListComponent implements OnInit, OnDestroy {
         },
         error: error => {
           console.error('Failed to check project references:', error);
-          this.snackBar.open('Failed to verify project deletion safety', 'Close', {
-            duration: 3000,
-          });
+          this.snackBar.open(
+            this.translationService.translateSync('admin.projects.messages.check_references_failed'),
+            this.translationService.translateSync('common.buttons.close'),
+            { duration: 3000 }
+          );
         },
       });
   }

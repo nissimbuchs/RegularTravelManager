@@ -7,6 +7,7 @@ import { RouterModule } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subject, takeUntil } from 'rxjs';
 import { ManagerDashboardService } from '../services/manager-dashboard.service';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-manager-dashboard',
@@ -22,13 +23,13 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
   template: `
     <div class="dashboard-container">
       <div class="welcome-section">
-        <h1>Manager Dashboard</h1>
-        <p>Overview of travel requests, budgets, and team metrics.</p>
+        <h1>{{ translationService.translateSync('manager.dashboard.title') }}</h1>
+        <p>{{ translationService.translateSync('manager.dashboard.subtitle') }}</p>
       </div>
 
       <div *ngIf="loading" class="loading-spinner">
         <mat-spinner></mat-spinner>
-        <p>Loading dashboard data...</p>
+        <p>{{ translationService.translateSync('manager.dashboard.loading') }}</p>
       </div>
 
       <div *ngIf="dashboardData && !loading">
@@ -38,7 +39,7 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
             <mat-card-header>
               <mat-icon mat-card-avatar>people</mat-icon>
               <mat-card-title>{{ dashboardData.summary.totalEmployees }}</mat-card-title>
-              <mat-card-subtitle>Total Employees</mat-card-subtitle>
+              <mat-card-subtitle>{{ translationService.translateSync('manager.dashboard.summary.total_employees') }}</mat-card-subtitle>
             </mat-card-header>
           </mat-card>
 
@@ -46,7 +47,7 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
             <mat-card-header>
               <mat-icon mat-card-avatar>business_center</mat-icon>
               <mat-card-title>{{ dashboardData.summary.activeProjects }}</mat-card-title>
-              <mat-card-subtitle>Active Projects</mat-card-subtitle>
+              <mat-card-subtitle>{{ translationService.translateSync('manager.dashboard.summary.active_projects') }}</mat-card-subtitle>
             </mat-card-header>
           </mat-card>
 
@@ -54,7 +55,7 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
             <mat-card-header>
               <mat-icon mat-card-avatar>pending_actions</mat-icon>
               <mat-card-title>{{ dashboardData.summary.pendingRequests }}</mat-card-title>
-              <mat-card-subtitle>Pending Requests</mat-card-subtitle>
+              <mat-card-subtitle>{{ translationService.translateSync('manager.dashboard.summary.pending_requests') }}</mat-card-subtitle>
             </mat-card-header>
           </mat-card>
 
@@ -64,7 +65,7 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
               <mat-card-title
                 >CHF {{ dashboardData.summary.monthlyBudget | number: '1.0-0' }}</mat-card-title
               >
-              <mat-card-subtitle>Monthly Budget</mat-card-subtitle>
+              <mat-card-subtitle>{{ translationService.translateSync('manager.dashboard.summary.monthly_budget') }}</mat-card-subtitle>
             </mat-card-header>
           </mat-card>
         </div>
@@ -74,10 +75,10 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
           <mat-card>
             <mat-card-header>
               <mat-card-title
-                >Pending Travel Requests ({{ dashboardData.totalPending }})</mat-card-title
+                >{{ translationService.translateSync('manager.dashboard.pending_requests.title', { count: dashboardData.totalPending }) }}</mat-card-title
               >
               <mat-card-subtitle *ngIf="dashboardData.urgentCount > 0" class="urgent-indicator">
-                {{ dashboardData.urgentCount }} urgent request(s)
+                {{ translationService.translateSync('manager.dashboard.pending_requests.urgent_count', { count: dashboardData.urgentCount }) }}
               </mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
@@ -86,23 +87,23 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
                   <div class="request-info">
                     <h4>{{ request.employeeName }}</h4>
                     <p>{{ request.projectName }} - {{ request.subProjectName }}</p>
-                    <span class="days">{{ request.daysPerWeek }} days/week</span>
+                    <span class="days">{{ translationService.translateSync('manager.dashboard.pending_requests.days_per_week', { days: request.daysPerWeek }) }}</span>
                     <span class="urgency" [class]="'urgency-' + request.urgencyLevel">
-                      {{ request.urgencyLevel }} priority
+                      {{ translationService.translateSync('manager.dashboard.pending_requests.priority', { level: translationService.translateSync('manager.dashboard.priority_levels.' + request.urgencyLevel) }) }}
                     </span>
                   </div>
                   <div class="request-amount">
                     <span class="amount"
-                      >CHF {{ request.calculatedAllowance | number: '1.2-2' }}/month</span
+                      >{{ translationService.translateSync('manager.dashboard.pending_requests.amount_per_month', { amount: request.calculatedAllowance.toFixed(2) }) }}</span
                     >
-                    <span class="days-since">{{ request.daysSinceSubmission }} days ago</span>
+                    <span class="days-since">{{ translationService.translateSync('manager.dashboard.pending_requests.days_ago', { days: request.daysSinceSubmission }) }}</span>
                   </div>
                 </div>
               </div>
             </mat-card-content>
             <mat-card-actions>
               <button mat-raised-button color="primary" routerLink="/manager/approvals">
-                View All Requests
+                {{ translationService.translateSync('manager.dashboard.actions.view_all_requests') }}
               </button>
             </mat-card-actions>
           </mat-card>
@@ -113,12 +114,12 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
           <mat-card class="dashboard-card">
             <mat-card-header>
               <mat-icon mat-card-avatar>check_circle</mat-icon>
-              <mat-card-title>Pending Approvals</mat-card-title>
-              <mat-card-subtitle>Review and approve travel requests</mat-card-subtitle>
+              <mat-card-title>{{ translationService.translateSync('manager.dashboard.quick_actions.pending_approvals.title') }}</mat-card-title>
+              <mat-card-subtitle>{{ translationService.translateSync('manager.dashboard.quick_actions.pending_approvals.subtitle') }}</mat-card-subtitle>
             </mat-card-header>
             <mat-card-actions>
               <button mat-raised-button color="primary" routerLink="/manager/approvals">
-                View Requests
+                {{ translationService.translateSync('manager.dashboard.quick_actions.pending_approvals.button') }}
               </button>
             </mat-card-actions>
           </mat-card>
@@ -126,12 +127,12 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
           <mat-card class="dashboard-card">
             <mat-card-header>
               <mat-icon mat-card-avatar>people</mat-icon>
-              <mat-card-title>Employee Management</mat-card-title>
-              <mat-card-subtitle>View and manage employee information</mat-card-subtitle>
+              <mat-card-title>{{ translationService.translateSync('manager.dashboard.quick_actions.employee_management.title') }}</mat-card-title>
+              <mat-card-subtitle>{{ translationService.translateSync('manager.dashboard.quick_actions.employee_management.subtitle') }}</mat-card-subtitle>
             </mat-card-header>
             <mat-card-actions>
               <button mat-raised-button color="primary" routerLink="/manager/employees">
-                Manage Employees
+                {{ translationService.translateSync('manager.dashboard.quick_actions.employee_management.button') }}
               </button>
             </mat-card-actions>
           </mat-card>
@@ -139,12 +140,12 @@ import { ManagerDashboardService } from '../services/manager-dashboard.service';
           <mat-card class="dashboard-card">
             <mat-card-header>
               <mat-icon mat-card-avatar>business_center</mat-icon>
-              <mat-card-title>Project Management</mat-card-title>
-              <mat-card-subtitle>Manage projects and locations</mat-card-subtitle>
+              <mat-card-title>{{ translationService.translateSync('manager.dashboard.quick_actions.project_management.title') }}</mat-card-title>
+              <mat-card-subtitle>{{ translationService.translateSync('manager.dashboard.quick_actions.project_management.subtitle') }}</mat-card-subtitle>
             </mat-card-header>
             <mat-card-actions>
               <button mat-raised-button color="primary" routerLink="/manager/projects">
-                Manage Projects
+                {{ translationService.translateSync('manager.dashboard.quick_actions.project_management.button') }}
               </button>
             </mat-card-actions>
           </mat-card>
@@ -159,7 +160,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loading = false;
   private destroy$ = new Subject<void>();
 
-  constructor(private dashboardService: ManagerDashboardService) {}
+  constructor(
+    private dashboardService: ManagerDashboardService,
+    public translationService: TranslationService
+  ) {}
 
   ngOnInit() {
     this.loadDashboardData();

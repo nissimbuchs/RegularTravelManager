@@ -1,0 +1,1441 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Salva",
+      "cancel": "Annulla",
+      "submit": "Invia",
+      "edit": "Modifica",
+      "delete": "Elimina",
+      "confirm": "Conferma",
+      "back": "Indietro",
+      "next": "Avanti",
+      "close": "Chiudi",
+      "refresh": "Aggiorna",
+      "search": "Cerca",
+      "filter": "Filtra",
+      "export": "Esporta",
+      "import": "Importa",
+      "upload": "Carica",
+      "download": "Scarica",
+      "create": "Crea",
+      "update": "Aggiorna",
+      "retry": "Riprova",
+      "close": "Chiudi"
+    },
+    "actions": {
+      "loading": "Caricamento...",
+      "saving": "Salvataggio...",
+      "processing": "Elaborazione...",
+      "success": "Successo!",
+      "error": "Errore verificato",
+      "retry": "Riprova",
+      "close": "Chiudi"
+    },
+    "status": {
+      "pending": "In attesa",
+      "approved": "Approvato",
+      "rejected": "Rifiutato",
+      "withdrawn": "Ritirato",
+      "active": "Attivo",
+      "inactive": "Inattivo"
+    },
+    "navigation": {
+      "home": "Home",
+      "dashboard": "Dashboard",
+      "profile": "Profilo",
+      "settings": "Impostazioni",
+      "logout": "Disconnetti",
+      "login": "Accedi"
+    },
+    "forms": {
+      "required": "Questo campo è obbligatorio",
+      "invalid_email": "Inserisci un indirizzo email valido",
+      "invalid_format": "Formato non valido",
+      "min_length": "Minimo {{length}} caratteri richiesti",
+      "max_length": "Massimo {{length}} caratteri consentiti",
+      "select_option": "Seleziona un'opzione"
+    },
+    "messages": {
+      "welcome": "Benvenuto",
+      "goodbye": "Arrivederci",
+      "confirmation": "Sei sicuro?",
+      "unsaved_changes": "Hai modifiche non salvate. Sei sicuro di voler uscire?",
+      "operation_successful": "Operazione completata con successo",
+      "operation_failed": "Operazione fallita. Riprova."
+    },
+    "values": {
+      "yes": "Sì",
+      "no": "No"
+    }
+  },
+  "header": {
+    "title": "Regular Travel Manager",
+    "subtitle": "Sistema svizzero di gestione indennità di viaggio",
+    "user_menu": {
+      "profile": "Il mio profilo",
+      "settings": "Impostazioni",
+      "help": "Aiuto",
+      "logout": "Disconnetti"
+    },
+    "language_switcher": {
+      "select_language": "Seleziona lingua",
+      "current_language": "Lingua corrente: {{language}}"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}} Travel Manager. Tutti i diritti riservati.",
+    "version": "Versione {{version}}",
+    "support": "Supporto",
+    "privacy": "Informativa sulla privacy",
+    "terms": "Termini di servizio"
+  },
+  "employee": {
+    "dashboard": {
+      "title": "Dashboard Dipendente",
+      "subtitle": "Traccia le tue richieste di indennità di viaggio e visualizza il loro stato",
+      "cards": {
+        "address": {
+          "title": "Gestione Indirizzi",
+          "subtitle": "Aggiorna il tuo indirizzo di casa per i calcoli di viaggio",
+          "button": "Gestisci Indirizzo"
+        },
+        "new_request": {
+          "title": "Nuova Richiesta di Viaggio",
+          "subtitle": "Invia una nuova richiesta di indennità di viaggio",
+          "button": "Nuova Richiesta"
+        },
+        "my_requests": {
+          "title": "Le Mie Richieste di Viaggio",
+          "subtitle": "Visualizza la cronologia delle tue richieste di viaggio e il loro stato",
+          "button": "Visualizza Richieste"
+        }
+      }
+    },
+    "address": {
+      "current": {
+        "title": "Indirizzo di Casa Attuale",
+        "subtitle": "Utilizzato per i calcoli delle distanze di viaggio"
+      },
+      "no_address": {
+        "title": "Nessun indirizzo impostato",
+        "description": "Si prega di aggiungere il proprio indirizzo di casa per abilitare i calcoli delle distanze di viaggio."
+      },
+      "actions": {
+        "cancel": "Annulla",
+        "edit": "Modifica Indirizzo",
+        "add": "Aggiungi Indirizzo"
+      },
+      "form": {
+        "update_title": "Aggiorna Indirizzo di Casa",
+        "add_title": "Aggiungi Indirizzo di Casa",
+        "subtitle": "Tutti i campi sono richiesti per una geocodifica accurata",
+        "fields": {
+          "street": {
+            "label": "Indirizzo Stradale",
+            "placeholder": "es. Bahnhofstrasse 45"
+          },
+          "city": {
+            "label": "Città",
+            "placeholder": "es. Zurigo"
+          },
+          "postal_code": {
+            "label": "Codice Postale",
+            "placeholder": "es. 8001"
+          },
+          "country": {
+            "label": "Paese"
+          }
+        },
+        "errors": {
+          "street": {
+            "required": "L'indirizzo stradale è richiesto",
+            "minlength": "L'indirizzo stradale deve essere di almeno 3 caratteri"
+          },
+          "city": {
+            "required": "La città è richiesta",
+            "minlength": "La città deve essere di almeno 2 caratteri"
+          },
+          "postal_code": {
+            "required": "Il codice postale è richiesto",
+            "pattern": "Il codice postale svizzero deve essere di 4 cifre"
+          },
+          "country": {
+            "required": "Il paese è richiesto"
+          }
+        },
+        "actions": {
+          "cancel": "Annulla",
+          "update": "Aggiorna",
+          "add": "Aggiungi",
+          "address": "Indirizzo"
+        }
+      },
+      "info": {
+        "title": "Informazioni Indirizzo",
+        "last_updated": "Ultimo Aggiornamento",
+        "geocoding_status": "Stato Geocodifica",
+        "geocoded_success": "✅ Indirizzo geocodificato con successo"
+      },
+      "confirm": {
+        "update": {
+          "title": "Aggiorna Indirizzo",
+          "message": "L'aggiornamento del tuo indirizzo ricalcolerà le distanze per tutte le richieste di viaggio in sospeso. Continuare?",
+          "confirm": "Aggiorna Indirizzo"
+        }
+      },
+      "success": {
+        "updated_geocoded": "Indirizzo aggiornato e geocodificato con successo",
+        "updated_pending": "Indirizzo aggiornato (geocodifica in corso)"
+      },
+      "errors": {
+        "load_profile": "Caricamento del profilo dipendente fallito",
+        "no_auth": "Nessuna autenticazione utente trovata",
+        "auth_error": "Errore di autenticazione",
+        "update_failed": "Aggiornamento dell'indirizzo fallito",
+        "invalid_format": "Formato indirizzo non valido. Controllare l'input.",
+        "profile_not_found": "Profilo dipendente non trovato",
+        "no_user_id": "Errore di autenticazione - nessun ID utente trovato"
+      }
+    },
+    "travel_request": {
+      "title": "Richiesta Indennità di Viaggio",
+      "subtitle": "Invia una nuova richiesta di indennità di viaggio",
+      "form": {
+        "project": {
+          "label": "Progetto",
+          "placeholder": "Seleziona un progetto",
+          "error": "La selezione del progetto è richiesta"
+        },
+        "subproject": {
+          "label": "Sottoprogetto",
+          "placeholder": "Seleziona un sottoprogetto",
+          "error": "La selezione del sottoprogetto è richiesta"
+        },
+        "manager": {
+          "label": "Manager",
+          "placeholder": "Seleziona il tuo manager",
+          "hint": "Seleziona il manager che approverà questa richiesta",
+          "error": "La selezione del manager è richiesta"
+        },
+        "days": {
+          "label": "Giorni per Settimana",
+          "options": {
+            "one": "1 giorno",
+            "two": "2 giorni",
+            "three": "3 giorni",
+            "four": "4 giorni",
+            "five": "5 giorni",
+            "six": "6 giorni",
+            "seven": "7 giorni"
+          },
+          "errors": {
+            "required": "I giorni per settimana sono richiesti",
+            "range": "I giorni per settimana devono essere tra 1 e 7"
+          }
+        },
+        "justification": {
+          "label": "Giustificazione",
+          "placeholder": "Si prega di fornire una giustificazione dettagliata per la richiesta di viaggio (minimo 10 caratteri)",
+          "hint": "{{current}}/{{max}} caratteri",
+          "errors": {
+            "required": "La giustificazione è richiesta",
+            "minlength": "La giustificazione deve essere di almeno 10 caratteri",
+            "maxlength": "La giustificazione non può superare 500 caratteri"
+          }
+        }
+      },
+      "preview": {
+        "title": "Anteprima Costi",
+        "calculating": "Calcolo in corso...",
+        "distance": "Distanza",
+        "daily_allowance": "Indennità Giornaliera",
+        "weekly_total": "Totale Settimanale"
+      },
+      "actions": {
+        "submitting": "Invio in corso...",
+        "submit": "Invia Richiesta",
+        "cancel": "Annulla",
+        "clear_draft": "Cancella Bozza"
+      },
+      "errors": {
+        "initial_data": "Alcuni dati iniziali non sono stati caricati. Il modulo potrebbe avere funzionalità limitate.",
+        "load_projects": "Impossibile caricare l'elenco dei progetti. Si prega di aggiornare la pagina o contattare il supporto.",
+        "load_managers": "Impossibile caricare l'elenco dei manager. Si prega di aggiornare la pagina o contattare il supporto.",
+        "calculation_failed": "Impossibile calcolare l'indennità di viaggio. Si prega di verificare le selezioni e riprovare.",
+        "load_subprojects": "Impossibile caricare le ubicazioni per il progetto selezionato. Si prega di provare a selezionare un altro progetto.",
+        "submit_failed": "Impossibile inviare la richiesta di viaggio.",
+        "bad_request": "Si prega di controllare i dati del modulo e riprovare.",
+        "permission_denied": "Potresti non avere il permesso di inviare richieste. Si prega di contattare il proprio manager.",
+        "duplicate_request": "Una richiesta simile potrebbe già esistere. Si prega di controllare le richieste in sospeso.",
+        "server_error": "Il nostro sistema è temporaneamente non disponibile. Si prega di riprovare tra qualche minuto.",
+        "offline": "Si prega di controllare la connessione Internet e riprovare.",
+        "generic": "Si prega di riprovare o contattare il supporto se il problema persiste.",
+        "draft_corrupted": "La bozza salvata non è stata ripristinata a causa di corruzione dei dati. Iniziando con un nuovo modulo."
+      },
+      "messages": {
+        "form_reset": "Modulo reimpostato per nuova richiesta",
+        "draft_restored": "Bozza ripristinata"
+      }
+    },
+    "request_dashboard": {
+      "title": "Le Mie Richieste di Viaggio",
+      "subtitle": "Traccia le tue richieste di indennità di viaggio e visualizza il loro stato",
+      "actions": {
+        "new_request": "Nuova Richiesta",
+        "new_request_tooltip": "Invia una nuova richiesta di viaggio",
+        "refresh_tooltip": "Aggiorna dashboard"
+      },
+      "summary": {
+        "total_requests": "Richieste Totali",
+        "pending": "In Sospeso",
+        "approved": "Approvate",
+        "monthly_allowance": "Indennità Mensile"
+      },
+      "filters": {
+        "status": {
+          "label": "Stato",
+          "all": "Tutti gli Stati",
+          "pending": "In Sospeso",
+          "approved": "Approvata",
+          "rejected": "Rifiutata",
+          "withdrawn": "Ritirata"
+        },
+        "project": {
+          "label": "Nome Progetto",
+          "placeholder": "Cerca progetti..."
+        },
+        "from_date": "Da Data",
+        "to_date": "A Data",
+        "apply_tooltip": "Applica filtri",
+        "filter": "Filtra",
+        "clear_tooltip": "Cancella tutti i filtri",
+        "clear": "Cancella"
+      },
+      "loading": "Caricamento delle tue richieste di viaggio...",
+      "table": {
+        "title": "Le Mie Richieste di Viaggio",
+        "subtitle": "Clicca su una richiesta per vedere i dettagli",
+        "showing": "Mostrando {{current}} di {{total}} richieste",
+        "headers": {
+          "status": "Stato",
+          "project": "Progetto",
+          "location": "Ubicazione",
+          "days_week": "Giorni/Settimana",
+          "daily_allowance": "Indennità Giornaliera",
+          "weekly_total": "Totale Settimanale",
+          "submitted": "Inviata",
+          "processed": "Elaborata",
+          "actions": "Azioni"
+        },
+        "per_day": "al giorno",
+        "per_week": "a settimana",
+        "actions": {
+          "view_details": "Visualizza dettagli",
+          "withdraw": "Ritira richiesta"
+        }
+      },
+      "no_data": {
+        "title": "Nessuna richiesta di viaggio trovata",
+        "message": "Non hai ancora inviato richieste di viaggio, o non corrispondono ai tuoi filtri attuali.",
+        "action": "Invia la Tua Prima Richiesta"
+      },
+      "details": {
+        "title": "Dettagli Richiesta",
+        "status": "Stato",
+        "days_per_week": "Giorni per Settimana",
+        "daily_allowance": "Indennità Giornaliera",
+        "weekly_allowance": "Indennità Settimanale",
+        "submitted": "Inviata",
+        "processed": "Elaborata",
+        "manager": "Manager",
+        "distance": "Distanza",
+        "justification": "Giustificazione",
+        "withdraw_tooltip": "Ritira questa richiesta di viaggio",
+        "withdraw_action": "Ritira Richiesta"
+      },
+      "confirm": {
+        "withdraw": "Sei sicuro di voler ritirare questa richiesta di viaggio per {{project}}?"
+      },
+      "messages": {
+        "updated": "Dashboard aggiornata",
+        "withdrawn": "Richiesta ritirata con successo"
+      },
+      "errors": {
+        "load_failed": "Caricamento dei dati della dashboard fallito",
+        "details_failed": "Caricamento dei dettagli della richiesta fallito",
+        "withdraw_failed": "Ritiro della richiesta fallito"
+      }
+    },
+    "confirmation": {
+      "title": "Richiesta Inviata con Successo",
+      "auto_close": "Tornerà automaticamente alla dashboard tra {{seconds}} secondi...",
+      "request_id": {
+        "title": "ID Richiesta",
+        "hint": "Salva questo ID per riferimento futuro"
+      },
+      "allowance": {
+        "title": "Riepilogo Indennità",
+        "distance": "Distanza",
+        "daily": "Indennità Giornaliera",
+        "weekly": "Totale Settimanale"
+      },
+      "details": {
+        "title": "Dettagli Richiesta",
+        "project": "Progetto",
+        "subproject": "Sottoprogetto",
+        "manager": "Manager",
+        "days_per_week": "Giorni per Settimana",
+        "justification": "Giustificazione"
+      },
+      "actions": {
+        "create_new": "Crea Nuova Richiesta",
+        "close": "Chiudi",
+        "view_requests": "Visualizza le Mie Richieste"
+      }
+    }
+  },
+  "profile": {
+    "title": "Il Mio Profilo",
+    "tabs": {
+      "personal": "Informazioni personali",
+      "address": "Indirizzo di residenza",
+      "notifications": "Notifiche",
+      "security": "Sicurezza"
+    },
+    "personal": {
+      "fields": {
+        "first_name": "Nome",
+        "last_name": "Cognome",
+        "email": "E-mail",
+        "email_hint": "L'e-mail non può essere modificata direttamente. Contattare l'amministratore per le modifiche.",
+        "phone": "Numero di telefono",
+        "phone_placeholder": "es. +41 79 123 45 67, +39 340 123 4567"
+      },
+      "errors": {
+        "first_name_required": "Il nome è obbligatorio",
+        "last_name_required": "Il cognome è obbligatorio",
+        "phone_invalid": "Si prega di inserire un numero di telefono valido (10-15 cifre, prefisso + opzionale)"
+      },
+      "actions": {
+        "reset": "Ripristina",
+        "save": "Salva modifiche"
+      }
+    },
+    "address": {
+      "title": "Gestisci il tuo indirizzo di residenza",
+      "description": "Il tuo indirizzo di residenza viene utilizzato per calcolare le distanze di viaggio e le indennità per le tue richieste di trasferta.",
+      "current": "Indirizzo attuale",
+      "no_address": "Nessun indirizzo impostato. Si prega di aggiungere il proprio indirizzo di residenza per abilitare i calcoli delle distanze di viaggio.",
+      "manage_button": "Gestisci indirizzo"
+    },
+    "notifications": {
+      "title": "Notifiche e-mail",
+      "enable_email": "Abilita notifiche e-mail",
+      "request_updates": "Aggiornamenti stato richieste",
+      "weekly_digest": "Riassunti settimanali delle spese",
+      "maintenance_alerts": "Avvisi di manutenzione sistema",
+      "frequency_label": "Frequenza notifiche",
+      "frequency": {
+        "immediate": "Immediata",
+        "daily": "Riassunto giornaliero",
+        "weekly": "Riassunto settimanale"
+      },
+      "actions": {
+        "reset": "Ripristina",
+        "save": "Salva preferenze"
+      }
+    },
+    "security": {
+      "title": "Sicurezza account",
+      "account_status": "Stato account",
+      "role": "Ruolo",
+      "last_login": "Ultimo accesso",
+      "email_verified": "E-mail verificata",
+      "change_password": "Cambia password",
+      "two_factor": "Autenticazione a due fattori",
+      "coming_soon": "Funzionalità di password e sicurezza disponibili a breve"
+    },
+    "messages": {
+      "load_failed": "Caricamento profilo non riuscito",
+      "personal_info": "Informazioni personali",
+      "notification_preferences": "Preferenze di notifica",
+      "update_success": "{{type}} aggiornato con successo",
+      "update_failed": "Aggiornamento {{type}} non riuscito"
+    }
+  },
+  "manager": {
+    "dashboard": {
+      "title": "Dashboard manager",
+      "welcome": "Benvenuto, {{name}}",
+      "pending_requests": "Richieste in attesa",
+      "team_summary": "Riepilogo team"
+    },
+    "approvals": {
+      "title": "Approvazioni in attesa",
+      "approve": "Approva",
+      "reject": "Rifiuta",
+      "review": "Rivedi",
+      "columns": {
+        "employee": "Dipendente",
+        "project": "Progetto",
+        "submitted": "Inviato",
+        "allowance": "Indennità (CHF)",
+        "actions": "Azioni"
+      }
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Dashboard admin",
+      "system_overview": "Panoramica sistema",
+      "user_management": "Gestione utenti"
+    },
+    "projects": {
+      "title": "Gestione progetti",
+      "search": {
+        "label": "Cerca progetti",
+        "placeholder": "Cerca per nome o descrizione"
+      },
+      "filters": {
+        "status": {
+          "label": "Stato",
+          "all": "Tutti"
+        },
+        "min_cost": {
+          "label": "Costo min. (CHF)",
+          "placeholder": "0.00"
+        },
+        "max_cost": {
+          "label": "Costo max. (CHF)",
+          "placeholder": "999.99"
+        }
+      },
+      "actions": {
+        "new_project": "Nuovo progetto",
+        "clear_filters": "Cancella filtri",
+        "view_details": "Visualizza dettagli",
+        "edit_project": "Modifica progetto",
+        "activate": "Attiva",
+        "deactivate": "Disattiva",
+        "delete_project": "Elimina progetto"
+      },
+      "table": {
+        "columns": {
+          "name": "Nome",
+          "description": "Descrizione",
+          "default_cost": "Costo predefinito/km",
+          "subprojects": "Sottoprogetti",
+          "created": "Creato",
+          "actions": "Azioni"
+        },
+        "no_description": "Nessuna descrizione"
+      },
+      "dialogs": {
+        "create": {
+          "title": "Crea nuovo progetto"
+        },
+        "edit": {
+          "title": "Modifica progetto"
+        },
+        "activate": {
+          "title": "Attiva progetto",
+          "message": "Sei sicuro di voler attivare \"{{projectName}}\"?",
+          "confirm": "Attiva"
+        },
+        "deactivate": {
+          "title": "Disattiva progetto",
+          "message": "Sei sicuro di voler disattivare \"{{projectName}}\"?",
+          "confirm": "Disattiva"
+        },
+        "delete": {
+          "title": "Elimina progetto",
+          "message": "Sei sicuro di voler eliminare \"{{projectName}}\"? Questa azione non può essere annullata.",
+          "confirm": "Elimina"
+        },
+        "subproject_form": {
+          "sections": {
+            "location_details": "Dettagli della posizione",
+            "address_information": "Informazioni indirizzo",
+            "coordinates": "Coordinate",
+            "cost_rate": "Tariffa di costo (Opzionale)"
+          },
+          "fields": {
+            "location_name": "Nome della posizione",
+            "street_address": "Indirizzo",
+            "city": "Città",
+            "postal_code": "Codice postale",
+            "latitude": "Latitudine",
+            "longitude": "Longitudine",
+            "cost_per_km": "Costo personalizzato per chilometro"
+          },
+          "placeholders": {
+            "location_name": "Inserisci il nome della posizione/sottoprogetto",
+            "street_address": "Bahnhofstrasse 1",
+            "city": "Zurigo",
+            "postal_code": "8001",
+            "latitude": "47.3769",
+            "longitude": "8.5417",
+            "cost_per_km": "Lasciare vuoto per ereditare dal progetto"
+          },
+          "hints": {
+            "location_name": "Nome descrittivo per questo luogo di lavoro",
+            "street_address": "Indirizzo completo con numero civico",
+            "latitude_range": "Intervallo latitudine svizzera: 45.818 - 47.808",
+            "longitude_range": "Intervallo longitudine svizzera: 5.956 - 10.492",
+            "cost_per_km": "Lasciare vuoto per utilizzare il valore predefinito del progetto ({{defaultCost}})"
+          },
+          "status": {
+            "geocoded": "Geocodificato",
+            "geocoding_failed": "Geocodifica fallita"
+          },
+          "actions": {
+            "geocoding": "Geocodifica...",
+            "get_coordinates": "Ottieni coordinate",
+            "clear": "Cancella",
+            "apply_coordinates": "Applica coordinate"
+          },
+          "tooltips": {
+            "clear_coordinates": "Cancella coordinate",
+            "toggle_manual_coords": "Attiva/disattiva inserimento manuale coordinate"
+          },
+          "labels": {
+            "effective_rate": "Tariffa effettiva"
+          },
+          "errors": {
+            "location_name_required": "Il nome della posizione è richiesto",
+            "postal_code_pattern": "Inserisci un codice postale svizzero valido (4-5 cifre)",
+            "latitude_bounds": "La latitudine deve essere entro i confini svizzeri",
+            "longitude_bounds": "La longitudine deve essere entro i confini svizzeri",
+            "cost_min": "Il costo deve essere maggiore di 0",
+            "cost_max": "Il costo non può superare CHF 999.99"
+          }
+        },
+        "form": {
+          "fields": {
+            "project_name": "Nome progetto",
+            "description": "Descrizione",
+            "default_cost": "Costo predefinito per chilometro (CHF)"
+          },
+          "placeholders": {
+            "project_name": "Inserisci nome progetto",
+            "description": "Inserisci descrizione progetto",
+            "default_cost": "0.65"
+          },
+          "hints": {
+            "project_name": "Nome univoco per questo progetto",
+            "description": "Descrizione opzionale del progetto",
+            "default_cost": "Costo per chilometro in CHF (franchi svizzeri)"
+          },
+          "errors": {
+            "name_required": "Il nome del progetto è richiesto",
+            "name_max_length": "Il nome del progetto non può superare 255 caratteri",
+            "cost_required": "Il costo predefinito è richiesto",
+            "cost_min": "Il costo deve essere almeno 0.01 CHF",
+            "cost_max": "Il costo non può superare 999.99 CHF",
+            "cost_pattern": "Inserisci un importo valido"
+          },
+          "status": {
+            "active_hint": "Il progetto è disponibile per le richieste di viaggio",
+            "inactive_hint": "Il progetto non è disponibile per nuove richieste di viaggio"
+          },
+          "sections": {
+            "preview": "Anteprima"
+          },
+          "labels": {
+            "formatted_cost": "Costo formattato"
+          }
+        }
+      },
+      "messages": {
+        "load_failed": "Caricamento progetti fallito",
+        "filter_failed": "Filtro progetti fallito",
+        "created_successfully": "Progetto creato con successo",
+        "updated_successfully": "Progetto aggiornato con successo",
+        "activated_successfully": "Progetto attivato con successo",
+        "deactivated_successfully": "Progetto disattivato con successo",
+        "activate_failed": "Attivazione progetto fallita",
+        "deactivate_failed": "Disattivazione progetto fallita",
+        "deleted_successfully": "Progetto eliminato con successo",
+        "delete_failed": "Eliminazione progetto fallita",
+        "cannot_delete_referenced": "Impossibile eliminare il progetto. È referenziato da {{count}} richiesta/e di viaggio.",
+        "check_references_failed": "Verifica riferimenti progetto fallita"
+      }
+    },
+    "users": {
+      "title": "Gestione utenti",
+      "subtitle": "Gestisci account utente, ruoli e permessi",
+      "add_user": "Aggiungi utente",
+      "edit_user": "Modifica utente",
+      "loading": "Caricamento utenti...",
+      "search": {
+        "label": "Cerca utenti",
+        "placeholder": "Cerca per nome, email o numero dipendente"
+      },
+      "filters": {
+        "role": {
+          "label": "Ruolo",
+          "all": "Tutti i ruoli",
+          "employee": "Dipendente",
+          "manager": "Manager",
+          "administrator": "Amministratore"
+        },
+        "status": {
+          "label": "Stato",
+          "all": "Tutti gli stati"
+        }
+      },
+      "actions": {
+        "clear_filters": "Cancella filtri",
+        "view_details": "Visualizza dettagli",
+        "more_actions": "Altre azioni",
+        "change_role": "Cambia ruolo",
+        "assign_manager": "Assegna manager",
+        "activate": "Attiva",
+        "deactivate": "Disattiva",
+        "delete_user": "Elimina utente"
+      },
+      "table": {
+        "columns": {
+          "name": "Nome",
+          "email": "Email",
+          "role": "Ruolo",
+          "status": "Stato",
+          "manager": "Manager",
+          "activity": "Attività",
+          "registered": "Registrato",
+          "actions": "Azioni"
+        },
+        "values": {
+          "no_manager": "Nessun manager assegnato",
+          "request_count": "{{count}} richieste",
+          "unverified": "Non verificato"
+        }
+      },
+      "messages": {
+        "load_failed": "Caricamento utenti fallito",
+        "role_changed": "Ruolo utente modificato con successo a {{role}}",
+        "role_change_failed": "Modifica del ruolo utente fallita",
+        "manager_assigned": "Manager assegnato con successo",
+        "manager_removed": "Manager rimosso con successo",
+        "manager_assignment_failed": "Aggiornamento assegnazione manager fallito",
+        "user_activated": "Utente attivato con successo",
+        "user_deactivated": "Utente disattivato con successo",
+        "user_activate_failed": "Attivazione utente fallita",
+        "user_deactivate_failed": "Disattivazione utente fallita",
+        "user_deleted": "Utente {{name}} eliminato con successo",
+        "user_delete_failed": "Eliminazione utente fallita"
+      },
+      "dialogs": {
+        "activate_user": "Attiva utente",
+        "deactivate_user": "Disattiva utente",
+        "activate_user_message": "Sei sicuro di voler attivare {{name}}?",
+        "deactivate_user_message": "Sei sicuro di voler disattivare {{name}}?",
+        "activate_confirm": "Attiva",
+        "deactivate_confirm": "Disattiva"
+      },
+      "audit": {
+        "user_activated": "Utente attivato dall'amministratore",
+        "user_deactivated": "Utente disattivato dall'amministratore"
+      },
+      "no_results": {
+        "title": "Nessun utente trovato",
+        "message": "Prova ad aggiustare i tuoi criteri di ricerca o filtri."
+      }
+    },
+    "project_detail": {
+      "title": "Dettagli progetto",
+      "back_to_projects": "Torna ai progetti",
+      "edit_project": "Modifica progetto",
+      "info": {
+        "description": "Descrizione",
+        "no_description": "Nessuna descrizione fornita",
+        "default_cost": "Costo predefinito per chilometro",
+        "created": "Creato",
+        "subprojects": "Sottoprogetti",
+        "locations": "posizione/i"
+      },
+      "subprojects": {
+        "title": "Posizioni sottoprogetti",
+        "add_location": "Aggiungi posizione",
+        "add_first_location": "Aggiungi prima posizione",
+        "no_locations": {
+          "title": "Nessuna posizione aggiunta ancora",
+          "message": "Aggiungi posizioni dei sottoprogetti per specificare i siti di lavoro e le tariffe personalizzate."
+        },
+        "table": {
+          "columns": {
+            "location_name": "Nome posizione",
+            "address": "Indirizzo",
+            "coordinates": "Coordinate",
+            "cost_per_km": "Costo/km",
+            "created": "Creato",
+            "actions": "Azioni"
+          },
+          "no_address": "Nessun indirizzo fornito",
+          "no_coordinates": "Non geocodificato",
+          "inherited": "(ereditato)"
+        },
+        "actions": {
+          "edit_location": "Modifica posizione",
+          "delete_location": "Elimina posizione"
+        }
+      },
+      "dialogs": {
+        "edit_project": "Modifica progetto",
+        "add_location": "Aggiungi posizione",
+        "edit_location": "Modifica posizione",
+        "activate_location": "Attiva posizione",
+        "deactivate_location": "Disattiva posizione",
+        "delete_location": "Elimina posizione",
+        "activate_location_message": "Sei sicuro di voler attivare \"{{name}}\"?",
+        "deactivate_location_message": "Sei sicuro di voler disattivare \"{{name}}\"?",
+        "delete_location_message": "Sei sicuro di voler eliminare \"{{name}}\"? Questa azione non può essere annullata.",
+        "activate_confirm": "Attiva",
+        "deactivate_confirm": "Disattiva",
+        "delete_confirm": "Elimina"
+      },
+      "messages": {
+        "load_project_failed": "Caricamento del progetto fallito",
+        "load_subprojects_failed": "Caricamento dei sottoprogetti fallito",
+        "project_updated": "Progetto aggiornato con successo",
+        "location_added": "Posizione aggiunta con successo",
+        "location_updated": "Posizione aggiornata con successo",
+        "location_activated": "Posizione attivata con successo",
+        "location_deactivated": "Posizione disattivata con successo",
+        "location_deleted": "Posizione eliminata con successo",
+        "location_activate_failed": "Attivazione della posizione fallita",
+        "location_deactivate_failed": "Disattivazione della posizione fallita",
+        "location_delete_failed": "Eliminazione della posizione fallita"
+      }
+    },
+    "user_detail": {
+      "loading": "Caricamento dettagli utente...",
+      "tabs": {
+        "basic_information": "Informazioni di base",
+        "management": "Gestione",
+        "activity": "Attività"
+      },
+      "sections": {
+        "personal_information": "Informazioni personali",
+        "address_information": "Informazioni indirizzo",
+        "reports_to": "Riporta a",
+        "direct_reports": "Rapporti diretti ({{count}})",
+        "travel_request_activity": "Attività richieste di viaggio",
+        "recent_travel_requests": "Richieste di viaggio recenti"
+      },
+      "labels": {
+        "full_name": "Nome completo",
+        "email": "Email",
+        "employee_number": "Numero dipendente",
+        "phone_number": "Numero di telefono",
+        "status": "Stato",
+        "verified": "Verificato",
+        "registration_date": "Data di registrazione"
+      },
+      "values": {
+        "not_provided": "Non fornito"
+      },
+      "stats": {
+        "total_requests": "Richieste totali",
+        "this_month": "Questo mese",
+        "average_value": "Valore medio"
+      },
+      "actions": {
+        "back_to_users": "Torna agli utenti",
+        "edit_user": "Modifica utente"
+      },
+      "dialogs": {
+        "edit_user_profile": "Modifica profilo utente"
+      },
+      "messages": {
+        "profile_updated": "Profilo utente aggiornato con successo"
+      },
+      "errors": {
+        "user_not_found": "Utente non trovato",
+        "user_not_found_message": "L'utente richiesto non è stato trovato."
+      }
+    },
+    "user_profile_dialog": {
+      "title": "Modifica profilo utente",
+      "tabs": {
+        "basic_information": "Informazioni di base",
+        "address": "Indirizzo",
+        "preferences": "Preferenze"
+      },
+      "fields": {
+        "first_name": "Nome",
+        "last_name": "Cognome",
+        "email": "Email",
+        "employee_number": "Numero dipendente",
+        "phone_number": "Numero di telefono",
+        "role": "Ruolo",
+        "status": "Stato",
+        "street_address": "Indirizzo stradale",
+        "city": "Città",
+        "postal_code": "Codice postale",
+        "country": "Paese",
+        "profile_visibility": "Visibilità profilo"
+      },
+      "placeholders": {
+        "first_name": "Inserisci il nome",
+        "last_name": "Inserisci il cognome",
+        "email": "Inserisci l'indirizzo email",
+        "employee_number": "EMP-0001",
+        "phone_number": "+41 XX XXX XX XX",
+        "street_address": "Inserisci l'indirizzo stradale",
+        "city": "Inserisci la città",
+        "postal_code": "Inserisci il codice postale",
+        "country": "Inserisci il paese"
+      },
+      "hints": {
+        "email_admin_only": "Solo amministratore - Le modifiche richiedono verifica",
+        "country_default": "Predefinito: Svizzera"
+      },
+      "errors": {
+        "first_name_required": "Il nome è richiesto",
+        "last_name_required": "Il cognome è richiesto",
+        "email_required": "L'email è richiesta",
+        "email_invalid": "Inserisci un'email valida",
+        "phone_invalid": "Formato numero di telefono non valido",
+        "street_required": "L'indirizzo stradale è richiesto",
+        "city_required": "La città è richiesta",
+        "postal_code_required": "Il codice postale è richiesto"
+      },
+      "roles": {
+        "employee": "Dipendente",
+        "manager": "Manager",
+        "administrator": "Amministratore"
+      },
+      "statuses": {
+        "active": "Attivo",
+        "inactive": "Inattivo",
+        "pending": "In attesa"
+      },
+      "sections": {
+        "notification_preferences": "Preferenze di notifica",
+        "privacy_settings": "Impostazioni privacy"
+      },
+      "preferences": {
+        "email_notifications": "Notifiche email",
+        "request_updates": "Aggiornamenti richieste di viaggio",
+        "weekly_digest": "Riassunto settimanale",
+        "maintenance_alerts": "Avvisi di manutenzione",
+        "allow_analytics": "Consenti analisi utilizzo",
+        "share_location_data": "Condividi dati di posizione"
+      },
+      "visibility": {
+        "private": "Privato",
+        "team_only": "Solo team",
+        "company_wide": "Tutta l'azienda"
+      },
+      "notices": {
+        "address_change_warning": "Il cambio di indirizzo attiverà il ricalcolo delle distanze per le richieste di viaggio in sospeso."
+      },
+      "actions": {
+        "save_changes": "Salva modifiche"
+      }
+    },
+    "manager_assignment_dialog": {
+      "title": "Assegna manager",
+      "sections": {
+        "employee_information": "Informazioni dipendente",
+        "assignment_validation": "Validazione assegnazione"
+      },
+      "fields": {
+        "name": "Nome",
+        "email": "Email",
+        "employee_id": "ID dipendente",
+        "current_manager": "Manager attuale",
+        "search_manager": "Cerca e seleziona manager",
+        "reason": "Motivo del cambio"
+      },
+      "placeholders": {
+        "search_managers": "Digita per cercare manager...",
+        "reason": "Fornisci un motivo per questo cambio di assegnazione manager..."
+      },
+      "status": {
+        "no_manager_assigned": "Nessun manager assegnato"
+      },
+      "actions": {
+        "assign_manager": "Assegna manager",
+        "remove_manager": "Rimuovi manager",
+        "remove_assignment": "Rimuovi assegnazione manager"
+      },
+      "errors": {
+        "manager_selection_required": "Seleziona un manager o scegli di rimuovere l'assegnazione manager",
+        "reason_required": "Il motivo è richiesto per le assegnazioni manager",
+        "reason_min_length": "Il motivo deve essere di almeno 10 caratteri"
+      },
+      "validation": {
+        "cannot_assign_title": "Impossibile assegnare manager",
+        "circular_hierarchy_title": "Gerarchia circolare rilevata",
+        "circular_hierarchy_message": "Questa assegnazione creerebbe una gerarchia di gestione circolare, che non è consentita.",
+        "warnings_title": "Avvisi",
+        "hierarchy_changes_title": "Cambiamenti gerarchia",
+        "capacity_warning_title": "Avviso capacità manager",
+        "capacity_warning_message": "Il manager selezionato ha già un numero elevato di rapporti diretti. Considera l'efficienza organizzativa.",
+        "assignment_valid_title": "Assegnazione valida",
+        "assignment_valid_message": "Questa assegnazione manager può essere completata senza problemi."
+      },
+      "messages": {
+        "validating": "Validazione assegnazione manager..."
+      }
+    },
+    "role_change_dialog": {
+      "title": "Cambia ruolo utente",
+      "sections": {
+        "user_information": "Informazioni utente",
+        "impact_analysis": "Analisi impatto",
+        "permission_changes": "Cambiamenti permessi"
+      },
+      "fields": {
+        "name": "Nome",
+        "email": "Email",
+        "employee_id": "ID dipendente",
+        "current_role": "Ruolo attuale",
+        "new_role": "Nuovo ruolo",
+        "reason": "Motivo del cambio"
+      },
+      "placeholders": {
+        "reason": "Fornisci un motivo per questo cambio di ruolo..."
+      },
+      "roles": {
+        "employee": "Dipendente",
+        "manager": "Manager",
+        "administrator": "Amministratore"
+      },
+      "errors": {
+        "role_required": "Seleziona un nuovo ruolo",
+        "reason_required": "Il motivo è richiesto per i cambi di ruolo",
+        "reason_min_length": "Il motivo deve essere di almeno 10 caratteri"
+      },
+      "validation": {
+        "cannot_change_title": "Impossibile cambiare ruolo",
+        "warnings_title": "Avvisi",
+        "changes_title": "Cambiamenti che avverranno"
+      },
+      "labels": {
+        "current_permissions": "Permessi attuali",
+        "new_permissions": "Nuovi permessi"
+      },
+      "actions": {
+        "change_role": "Cambia ruolo"
+      },
+      "messages": {
+        "validating": "Validazione cambio ruolo..."
+      }
+    },
+    "user_deletion_dialog": {
+      "title": "Elimina account utente",
+      "warning": {
+        "title": "Questa è un'azione permanente",
+        "message": "Questo eliminerà permanentemente l'account utente e non può essere annullato. Tutti i dati associati saranno archiviati."
+      },
+      "sections": {
+        "user_to_delete": "Utente da eliminare",
+        "impact_title": "Cosa succederà quando questo utente sarà eliminato:"
+      },
+      "labels": {
+        "reports_to": "Riporta a",
+        "travel_requests": "{{count}} richieste di viaggio"
+      },
+      "impacts": {
+        "account_deactivated": {
+          "title": "L'account utente sarà disattivato",
+          "description": "L'utente non potrà più accedere al sistema"
+        },
+        "requests_archived": {
+          "title": "Le richieste di viaggio saranno archiviate",
+          "description": "{{count}} richieste di viaggio saranno conservate per scopi di audit"
+        },
+        "reports_unassigned": {
+          "title": "I rapporti diretti saranno non assegnati",
+          "description": "I dipendenti che riportano a questo manager avranno bisogno di nuove assegnazioni manager"
+        },
+        "audit_preserved": {
+          "title": "Traccia di audit preservata",
+          "description": "Tutti i cambiamenti del profilo e le azioni amministrative saranno archiviate"
+        },
+        "data_retention": {
+          "title": "Conformità ritenzione dati",
+          "description": "I dati utente saranno eliminati logicamente per mantenere la conformità normativa"
+        }
+      },
+      "fields": {
+        "reason": "Motivo dell'eliminazione *"
+      },
+      "placeholders": {
+        "reason": "Fornisci un motivo dettagliato per eliminare questo account utente..."
+      },
+      "hints": {
+        "reason": "Richiesto per scopi di audit e conformità"
+      },
+      "errors": {
+        "reason_required": "Il motivo dell'eliminazione è richiesto",
+        "reason_min_length": "Il motivo deve essere di almeno 20 caratteri per una documentazione appropriata"
+      },
+      "confirmation": {
+        "text": "Capisco che questa azione è permanente e eliminerà l'account di {{name}}"
+      },
+      "safety": {
+        "data_preserved": "I dati saranno preservati per scopi di conformità e audit",
+        "history_backed_up": "La cronologia del profilo e le azioni amministrative sono salvate",
+        "action_logged": "Questa azione sarà registrata e attribuita al tuo account admin"
+      },
+      "actions": {
+        "delete_user": "Elimina utente"
+      },
+      "suggestions": {
+        "inactive_cleanup": "L'utente è stato inattivo per un periodo prolungato e è richiesta la pulizia dell'account",
+        "unused_account": "L'account utente è stato creato ma mai utilizzato - rimozione account inutilizzato"
+      }
+    }
+  },
+  "manager": {
+    "dashboard": {
+      "title": "Dashboard Manager",
+      "subtitle": "Panoramica delle richieste di viaggio, budget e metriche del team",
+      "loading": "Caricamento dati dashboard...",
+      "summary": {
+        "total_employees": "Totale Dipendenti",
+        "active_projects": "Progetti Attivi",
+        "pending_requests": "Richieste in Sospeso",
+        "monthly_budget": "Budget Mensile"
+      },
+      "pending_requests": {
+        "title": "Richieste di Viaggio in Sospeso ({{count}})",
+        "urgent_count": "{{count}} richiesta/e urgente/i",
+        "days_per_week": "{{days}} giorni/settimana",
+        "priority": "priorità {{level}}",
+        "amount_per_month": "CHF {{amount}}/mese",
+        "days_ago": "{{days}} giorni fa"
+      },
+      "priority_levels": {
+        "high": "alta",
+        "medium": "media",
+        "low": "bassa"
+      },
+      "actions": {
+        "view_all_requests": "Visualizza Tutte le Richieste"
+      },
+      "quick_actions": {
+        "pending_approvals": {
+          "title": "Approvazioni in Sospeso",
+          "subtitle": "Rivedi e approva le richieste di viaggio",
+          "button": "Visualizza Richieste"
+        },
+        "employee_management": {
+          "title": "Gestione Dipendenti",
+          "subtitle": "Visualizza e gestisci le informazioni dei dipendenti",
+          "button": "Gestisci Dipendenti"
+        },
+        "project_management": {
+          "title": "Gestione Progetti",
+          "subtitle": "Gestisci progetti e ubicazioni",
+          "button": "Gestisci Progetti"
+        }
+      }
+    },
+    "approvals": {
+      "title": "Approvazioni Richieste di Viaggio",
+      "coming_soon": "Questa funzionalità sarà implementata nell'Epic 3."
+    },
+    "employees": {
+      "title": "Gestione Dipendenti",
+      "coming_soon": "Questa funzionalità sarà implementata nell'Epic 3."
+    },
+    "projects": {
+      "title": "Gestione Progetti",
+      "coming_soon": "Questa funzionalità sarà implementata nella Storia 2.2."
+    },
+    "request_queue": {
+      "title": "Coda Richieste di Viaggio",
+      "stats": {
+        "pending_requests": "Richieste in Sospeso",
+        "urgent_requests": "Richieste Urgenti"
+      },
+      "last_updated": "Ultimo aggiornamento: {{time}}",
+      "tooltips": {
+        "refresh_data": "Aggiorna dati",
+        "view_details": "Visualizza Dettagli",
+        "approve_request": "Approva questa richiesta di viaggio",
+        "reject_request": "Rifiuta questa richiesta di viaggio",
+        "view_full_details": "Visualizza dettagli completi della richiesta"
+      },
+      "filters": {
+        "title": "Filtri",
+        "subtitle": "Filtra e cerca richieste in sospeso",
+        "employee_name": "Nome Dipendente",
+        "search_by_name": "Cerca per nome...",
+        "project": "Progetto",
+        "search_by_project": "Cerca per progetto...",
+        "subproject": "Sottoprogetto",
+        "search_by_location": "Cerca per ubicazione...",
+        "from_date": "Data Inizio",
+        "to_date": "Data Fine",
+        "priority_levels": "Livelli di Priorità",
+        "clear_filters": "Cancella Filtri",
+        "min_allowance": "Indennità Min. (CHF)",
+        "max_allowance": "Indennità Max. (CHF)"
+      },
+      "priority_levels": {
+        "high": "Priorità Alta",
+        "medium": "Priorità Media",
+        "low": "Priorità Bassa"
+      },
+      "table": {
+        "title": "Richieste di Viaggio in Sospeso",
+        "subtitle": "Clicca su una richiesta per vedere i dettagli del dipendente",
+        "columns": {
+          "priority": "Priorità",
+          "employee": "Dipendente",
+          "project": "Progetto",
+          "location": "Ubicazione",
+          "days_per_week": "Giorni/Settimana",
+          "weekly_allowance": "Indennità Settimanale",
+          "submitted": "Inviata",
+          "days_ago": "Giorni Fa",
+          "actions": "Azioni"
+        },
+        "priority_tooltip": "priorità {{level}}"
+      },
+      "loading": {
+        "requests": "Caricamento richieste..."
+      },
+      "no_data": {
+        "title": "Nessuna richiesta in sospeso",
+        "message": "Non ci sono richieste di viaggio che corrispondono ai tuoi filtri attuali."
+      },
+      "employee_panel": {
+        "title": "Dettagli Dipendente",
+        "loading": "Caricamento dettagli dipendente...",
+        "stats": {
+          "current_weekly_total": "Totale Settimanale Attuale",
+          "active_requests": "Richieste Attive",
+          "average_weekly": "Media Settimanale",
+          "requests_this_year": "Richieste quest'Anno"
+        },
+        "performance": {
+          "title": "Panoramica Prestazioni",
+          "approved": "Approvata",
+          "rejected": "Rifiutata",
+          "dept_budget_used": "Budget Dipartimentale Utilizzato",
+          "performance_score": "Punteggio Prestazioni"
+        },
+        "request_details": {
+          "title": "Richiesta Selezionata",
+          "project": "Progetto",
+          "location": "Ubicazione",
+          "days_per_week": "Giorni per Settimana",
+          "weekly_allowance": "Indennità Settimanale",
+          "submitted": "Inviata",
+          "priority": "Priorità",
+          "justification": "Giustificazione"
+        }
+      },
+      "actions": {
+        "approve": "Approva",
+        "approving": "Approvazione in corso...",
+        "reject": "Rifiuta",
+        "rejecting": "Rifiuto in corso...",
+        "view_details": "Visualizza Dettagli"
+      },
+      "messages": {
+        "load_failed": "Caricamento delle richieste in sospeso fallito. Riprova.",
+        "employee_load_failed": "Caricamento dei dettagli del dipendente fallito. Riprova.",
+        "data_refreshed": "Dati aggiornati",
+        "approve_success": "La richiesta di viaggio per {{name}} è stata approvata con successo.",
+        "approve_failed": "Approvazione della richiesta per {{name}} fallita. Riprova.",
+        "reject_success": "La richiesta di viaggio per {{name}} è stata rifiutata.",
+        "reject_failed": "Rifiuto della richiesta per {{name}} fallito. Riprova.",
+        "default_rejection_reason": "Rifiutata dal manager",
+        "justification_detail": "Giustificazione: {{justification}}"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "app_title": "RegularTravelManager",
+      "subtitle": "Accedi al tuo account",
+      "email_label": "Email",
+      "email_placeholder": "Inserisci la tua email",
+      "email_required": "L'email è richiesta",
+      "email_invalid": "Inserisci un'email valida",
+      "password_label": "Password",
+      "password_placeholder": "Inserisci la tua password",
+      "password_required": "La password è richiesta",
+      "password_min_length": "La password deve avere almeno 8 caratteri",
+      "sign_in_button": "Accedi",
+      "signing_in": "Accesso in corso...",
+      "no_account": "Non hai un account?",
+      "create_account": "Crea account",
+      "welcome_back": "Bentornato, {{name}}!",
+      "login_failed": "Accesso fallito. Controlla le tue credenziali e riprova."
+    },
+    "verification": {
+      "verifying_title": "Verifica della tua email",
+      "verifying_message": "Attendere mentre verifichiamo il tuo indirizzo email...",
+      "success_title": "Email verificata!",
+      "success_message": "La tua email è stata verificata con successo! Ora puoi accedere al tuo account.",
+      "continue_login": "Continua all'accesso",
+      "failed_title": "Verifica fallita",
+      "failed_default": "Verifica email fallita. Riprova.",
+      "resend_email": "Invia nuovamente email di verifica",
+      "back_to_registration": "Torna alla registrazione",
+      "go_to_login": "Vai all'accesso",
+      "expired_title": "Link di verifica scaduto",
+      "expired_message": "Il tuo link di verifica è scaduto. Richiedi una nuova email di verifica.",
+      "get_new_link": "Ottieni nuovo link di verifica",
+      "back_to_login": "Torna all'accesso",
+      "invalid_link": "Link di verifica non valido. Controlla la tua email per il link corretto o richiedine uno nuovo.",
+      "invalid_token": "Il link di verifica non è valido. Controlla la tua email per il link corretto.",
+      "email_sent": "Una nuova email di verifica è stata inviata"
+    },
+    "registration": {
+      "staging_notice_title": "Avviso ambiente di test",
+      "staging_notice_message": "Questo è un ambiente di test. La tua email di verifica sarà inviata al nostro amministratore (nissim@buchs.be) che verificherà il tuo account per te. Riceverai una conferma una volta attivato il tuo account.",
+      "creating_account": "Creazione del tuo account...",
+      "creating_account_message": "Attendere mentre elaboriamo la tua registrazione.",
+      "title": "Crea il tuo account",
+      "subtitle": "Unisciti a RegularTravelManager per gestire le tue indennità di viaggio",
+      "first_name": "Nome",
+      "first_name_required": "Il nome è richiesto",
+      "last_name": "Cognome",
+      "last_name_required": "Il cognome è richiesto",
+      "email": "Email",
+      "email_required": "L'email è richiesta",
+      "email_invalid": "Inserisci un'email valida",
+      "password": "Password",
+      "password_hint": "Minimo 12 caratteri con maiuscole, minuscole, numero e carattere speciale",
+      "password_required": "La password è richiesta",
+      "password_min_length": "La password deve avere almeno 12 caratteri",
+      "password_strength": "La password deve contenere maiuscole, minuscole, numero e carattere speciale",
+      "confirm_password": "Conferma password",
+      "confirm_password_required": "Conferma la tua password",
+      "passwords_mismatch": "Le password non corrispondono",
+      "home_address": "Indirizzo di casa",
+      "street_address": "Indirizzo",
+      "street_required": "L'indirizzo è richiesto",
+      "city": "Città",
+      "city_required": "La città è richiesta",
+      "postal_code": "Codice postale",
+      "postal_code_placeholder": "1234",
+      "postal_code_hint": "Codice postale svizzero (4 cifre)",
+      "postal_code_required": "Il codice postale è richiesto",
+      "postal_code_invalid": "Il codice postale svizzero deve avere 4 cifre",
+      "country": "Paese",
+      "country_switzerland": "Svizzera",
+      "accept_terms": "Accetto i",
+      "terms_of_service": "Termini di servizio",
+      "terms_required": "Devi accettare i termini di servizio",
+      "accept_privacy": "Accetto la",
+      "privacy_policy": "Politica sulla privacy",
+      "privacy_required": "Devi accettare la politica sulla privacy",
+      "create_account_button": "Crea account",
+      "creating_account_button": "Creazione account...",
+      "check_email_title": "Controlla la tua email",
+      "resend_email": "Invia nuovamente email",
+      "back_to_form": "Torna al modulo",
+      "complete_title": "Registrazione completata!",
+      "go_to_login": "Vai all'accesso",
+      "failed_title": "Registrazione fallita",
+      "try_again": "Riprova",
+      "staging_success": "Registrazione riuscita! Il nostro amministratore verificherà il tuo account a breve e sarai notificato quando sarà pronto.",
+      "email_verification_sent": "Registrazione riuscita! Controlla la tua email per le istruzioni di verifica.",
+      "error_default": "Registrazione fallita. Riprova.",
+      "error_timeout": "La registrazione sta richiedendo più tempo del previsto. Controlla la tua connessione internet e riprova.",
+      "error_email_exists": "Un account con questo indirizzo email esiste già. Prova ad accedere.",
+      "error_validation": "Controlla le tue informazioni e riprova.",
+      "error_geocoding": "Impossibile verificare il tuo indirizzo. Controlla i dettagli del tuo indirizzo.",
+      "error_connection": "Impossibile connettersi al server. Controlla la tua connessione internet.",
+      "form_invalid": "Compila correttamente tutti i campi richiesti",
+      "email_not_found": "Indirizzo email non trovato. Ricompila il modulo.",
+      "resend_success": "Email di verifica inviata nuovamente con successo",
+      "resend_failed": "Impossibile inviare nuovamente l'email di verifica. Riprova."
+    }
+  },
+  "layout": {
+    "sidenav": {
+      "app_title": "RTFM"
+    },
+    "header": {
+      "app_title": "Gestore Moduli Viaggio Regolari"
+    },
+    "navigation": {
+      "dashboard": "Dashboard",
+      "profile": "Profilo",
+      "address": "Indirizzo",
+      "new_request": "Nuova richiesta",
+      "approvals": "Approvazioni",
+      "employees": "Dipendenti",
+      "projects": "Progetti",
+      "manage_projects": "Gestisci progetti",
+      "manage_users": "Gestisci utenti",
+      "sign_out": "Disconnetti"
+    },
+    "user_menu": {
+      "role": {
+        "employee": "Dipendente",
+        "manager": "Manager",
+        "admin": "Amministratore"
+      },
+      "my_profile": "Il mio profilo",
+      "my_address": "Il mio indirizzo",
+      "settings": "Impostazioni",
+      "sign_out": "Disconnetti"
+    },
+    "page_titles": {
+      "dashboard": "Dashboard",
+      "my_profile": "Il mio profilo",
+      "my_address": "Il mio indirizzo",
+      "travel_request": "Richiesta di viaggio",
+      "approvals": "Approvazioni",
+      "employees": "Dipendenti",
+      "projects": "Progetti",
+      "users": "Utenti",
+      "default": "GestoreModuliViaggioRegolari"
+    }
+  },
+  "unauthorized": {
+    "title": "Accesso negato",
+    "message": "Non hai i permessi per accedere a questa pagina.",
+    "contact_admin": "Contatta il tuo amministratore se pensi che si tratti di un errore.",
+    "actions": {
+      "go_back": "Indietro",
+      "sign_out": "Disconnetti"
+    }
+  },
+  "redirect": {
+    "loading": "Reindirizzamento..."
+  },
+  "errors": {
+    "general": {
+      "unexpected": "Si è verificato un errore imprevisto"
+    },
+    "client": {
+      "general": "Errore: {{message}}"
+    },
+    "http": {
+      "bad_request": "Richiesta non valida. Controlla il tuo input.",
+      "unauthorized": "Non sei autorizzato a eseguire questa azione.",
+      "forbidden": "Accesso vietato. Non hai i permessi.",
+      "not_found": "La risorsa richiesta non è stata trovata.",
+      "server_error": "Errore interno del server. Riprova più tardi."
+    },
+    "404": {
+      "title": "Pagina non trovata",
+      "message": "La pagina che stai cercando non esiste.",
+      "go_home": "Vai alla dashboard"
+    },
+    "500": {
+      "title": "Errore del server",
+      "message": "Qualcosa è andato storto dal nostro lato.",
+      "retry": "Riprova"
+    },
+    "network": {
+      "title": "Errore di connessione",
+      "message": "Controlla la tua connessione internet.",
+      "retry": "Riprova"
+    }
+  }
+}

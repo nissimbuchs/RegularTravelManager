@@ -3,9 +3,9 @@
   <div class="header-content">
     <h1 class="dashboard-title">
       <mat-icon>assignment</mat-icon>
-      My Travel Requests
+      {{ translationService.translateSync('employee.request_dashboard.title') }}
     </h1>
-    <p class="dashboard-subtitle">Track your travel allowance requests and view their status</p>
+    <p class="dashboard-subtitle">{{ translationService.translateSync('employee.request_dashboard.subtitle') }}</p>
   </div>
 
   <div class="header-actions">
@@ -13,15 +13,15 @@
       mat-raised-button
       color="primary"
       routerLink="/employee/request"
-      matTooltip="Submit a new travel request">
+      [matTooltip]="translationService.translateSync('employee.request_dashboard.actions.new_request_tooltip')">
       <mat-icon>add</mat-icon>
-      New Request
+      {{ translationService.translateSync('employee.request_dashboard.actions.new_request') }}
     </button>
 
     <button
       mat-icon-button
       (click)="refreshDashboard()"
-      matTooltip="Refresh dashboard"
+      [matTooltip]="translationService.translateSync('employee.request_dashboard.actions.refresh_tooltip')"
       [disabled]="isLoading">
       <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
     </button>
@@ -34,7 +34,7 @@
     <mat-card-content>
       <div class="card-header">
         <mat-icon class="card-icon">assignment</mat-icon>
-        <span class="card-title">Total Requests</span>
+        <span class="card-title">{{ translationService.translateSync('employee.request_dashboard.summary.total_requests') }}</span>
       </div>
       <div class="card-value">{{ dashboard.totalRequests }}</div>
     </mat-card-content>
@@ -44,7 +44,7 @@
     <mat-card-content>
       <div class="card-header">
         <mat-icon class="card-icon">hourglass_empty</mat-icon>
-        <span class="card-title">Pending</span>
+        <span class="card-title">{{ translationService.translateSync('employee.request_dashboard.summary.pending') }}</span>
       </div>
       <div class="card-value">{{ dashboard.pendingCount }}</div>
     </mat-card-content>
@@ -54,7 +54,7 @@
     <mat-card-content>
       <div class="card-header">
         <mat-icon class="card-icon">check_circle</mat-icon>
-        <span class="card-title">Approved</span>
+        <span class="card-title">{{ translationService.translateSync('employee.request_dashboard.summary.approved') }}</span>
       </div>
       <div class="card-value">{{ dashboard.approvedCount }}</div>
     </mat-card-content>
@@ -64,7 +64,7 @@
     <mat-card-content>
       <div class="card-header">
         <mat-icon class="card-icon">account_balance_wallet</mat-icon>
-        <span class="card-title">Monthly Allowance</span>
+        <span class="card-title">{{ translationService.translateSync('employee.request_dashboard.summary.monthly_allowance') }}</span>
       </div>
       <div class="card-value">{{ formatCurrency(dashboard.totalApprovedAllowance) }}</div>
     </mat-card-content>
@@ -77,32 +77,32 @@
     <form [formGroup]="filterForm" class="filters-form">
       <div class="filter-row">
         <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>Status</mat-label>
+          <mat-label>{{ translationService.translateSync('employee.request_dashboard.filters.status.label') }}</mat-label>
           <mat-select formControlName="status">
-            <mat-option value="">All Statuses</mat-option>
-            <mat-option value="pending">Pending</mat-option>
-            <mat-option value="approved">Approved</mat-option>
-            <mat-option value="rejected">Rejected</mat-option>
-            <mat-option value="withdrawn">Withdrawn</mat-option>
+            <mat-option value="">{{ translationService.translateSync('employee.request_dashboard.filters.status.all') }}</mat-option>
+            <mat-option value="pending">{{ translationService.translateSync('employee.request_dashboard.filters.status.pending') }}</mat-option>
+            <mat-option value="approved">{{ translationService.translateSync('employee.request_dashboard.filters.status.approved') }}</mat-option>
+            <mat-option value="rejected">{{ translationService.translateSync('employee.request_dashboard.filters.status.rejected') }}</mat-option>
+            <mat-option value="withdrawn">{{ translationService.translateSync('employee.request_dashboard.filters.status.withdrawn') }}</mat-option>
           </mat-select>
           <mat-icon matSuffix>filter_list</mat-icon>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>Project Name</mat-label>
-          <input matInput formControlName="projectName" placeholder="Search projects...">
+          <mat-label>{{ translationService.translateSync('employee.request_dashboard.filters.project.label') }}</mat-label>
+          <input matInput formControlName="projectName" [placeholder]="translationService.translateSync('employee.request_dashboard.filters.project.placeholder')">
           <mat-icon matSuffix>search</mat-icon>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>From Date</mat-label>
+          <mat-label>{{ translationService.translateSync('employee.request_dashboard.filters.from_date') }}</mat-label>
           <input matInput [matDatepicker]="startPicker" formControlName="dateRangeStart">
           <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
           <mat-datepicker #startPicker></mat-datepicker>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>To Date</mat-label>
+          <mat-label>{{ translationService.translateSync('employee.request_dashboard.filters.to_date') }}</mat-label>
           <input matInput [matDatepicker]="endPicker" formControlName="dateRangeEnd">
           <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
           <mat-datepicker #endPicker></mat-datepicker>
@@ -112,19 +112,19 @@
           mat-raised-button
           color="primary"
           (click)="applyFilters()"
-          matTooltip="Apply filters"
+          [matTooltip]="translationService.translateSync('employee.request_dashboard.filters.apply_tooltip')"
           class="filter-button">
           <mat-icon>search</mat-icon>
-          Filter
+          {{ translationService.translateSync('employee.request_dashboard.filters.filter') }}
         </button>
 
         <button
           mat-stroked-button
           (click)="clearFilters()"
-          matTooltip="Clear all filters"
+          [matTooltip]="translationService.translateSync('employee.request_dashboard.filters.clear_tooltip')"
           class="clear-button">
           <mat-icon>clear</mat-icon>
-          Clear
+          {{ translationService.translateSync('employee.request_dashboard.filters.clear') }}
         </button>
       </div>
     </form>
@@ -134,7 +134,7 @@
 <!-- Loading Spinner -->
 <div class="loading-container" *ngIf="isLoading">
   <mat-progress-spinner mode="indeterminate" diameter="60"></mat-progress-spinner>
-  <p>Loading your travel requests...</p>
+  <p>{{ translationService.translateSync('employee.request_dashboard.loading') }}</p>
 </div>
 
 <div class="main-content">
@@ -142,14 +142,14 @@
   <div class="table-container" [class.with-panel]="showDetailsPanel">
     <mat-card class="table-card" *ngIf="!isLoading">
       <mat-card-header>
-        <mat-card-title>My Travel Requests</mat-card-title>
-        <mat-card-subtitle>Click on a request to view details</mat-card-subtitle>
+        <mat-card-title>{{ translationService.translateSync('employee.request_dashboard.table.title') }}</mat-card-title>
+        <mat-card-subtitle>{{ translationService.translateSync('employee.request_dashboard.table.subtitle') }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         <div class="table-header">
           <div class="table-actions">
             <span class="total-count" *ngIf="dashboard">
-              Showing {{ dataSource.data.length }} of {{ dashboard.totalRequests }} requests
+              {{ translationService.translateSync('employee.request_dashboard.table.showing', { current: dataSource.data.length, total: dashboard.totalRequests }) }}
             </span>
           </div>
         </div>
@@ -159,7 +159,7 @@
 
             <!-- Status Column -->
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('employee.request_dashboard.table.headers.status') }}</th>
               <td mat-cell *matCellDef="let request">
                 <mat-chip-listbox>
                   <mat-chip-option
@@ -174,7 +174,7 @@
 
             <!-- Project Name Column -->
             <ng-container matColumnDef="projectName">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Project</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('employee.request_dashboard.table.headers.project') }}</th>
               <td mat-cell *matCellDef="let request">
                 <div class="project-info">
                   <span class="project-name">{{ request.projectName }}</span>
@@ -184,7 +184,7 @@
 
             <!-- Subproject Name Column -->
             <ng-container matColumnDef="subProjectName">
-              <th mat-header-cell *matHeaderCellDef>Location</th>
+              <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('employee.request_dashboard.table.headers.location') }}</th>
               <td mat-cell *matCellDef="let request">
                 <div class="subproject-info">
                   <mat-icon class="location-icon">location_on</mat-icon>
@@ -195,7 +195,7 @@
 
             <!-- Days Per Week Column -->
             <ng-container matColumnDef="daysPerWeek">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Days/Week</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('employee.request_dashboard.table.headers.days_week') }}</th>
               <td mat-cell *matCellDef="let request">
                 <div class="days-display">
                   <mat-icon>event</mat-icon>
@@ -206,29 +206,29 @@
 
             <!-- Daily Allowance Column -->
             <ng-container matColumnDef="dailyAllowance">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Daily Allowance</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('employee.request_dashboard.table.headers.daily_allowance') }}</th>
               <td mat-cell *matCellDef="let request">
                 <div class="allowance-display">
                   <span class="amount">{{ formatCurrency(request.dailyAllowance) }}</span>
-                  <span class="unit">per day</span>
+                  <span class="unit">{{ translationService.translateSync('employee.request_dashboard.table.per_day') }}</span>
                 </div>
               </td>
             </ng-container>
 
             <!-- Weekly Allowance Column -->
             <ng-container matColumnDef="weeklyAllowance">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Weekly Total</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('employee.request_dashboard.table.headers.weekly_total') }}</th>
               <td mat-cell *matCellDef="let request">
                 <div class="allowance-display highlighted">
                   <span class="amount">{{ formatCurrency(request.weeklyAllowance) }}</span>
-                  <span class="unit">per week</span>
+                  <span class="unit">{{ translationService.translateSync('employee.request_dashboard.table.per_week') }}</span>
                 </div>
               </td>
             </ng-container>
 
             <!-- Submitted Date Column -->
             <ng-container matColumnDef="submittedDate">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Submitted</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('employee.request_dashboard.table.headers.submitted') }}</th>
               <td mat-cell *matCellDef="let request">
                 <div class="date-display">
                   <mat-icon>schedule</mat-icon>
@@ -239,7 +239,7 @@
 
             <!-- Processed Date Column -->
             <ng-container matColumnDef="processedDate">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Processed</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ translationService.translateSync('employee.request_dashboard.table.headers.processed') }}</th>
               <td mat-cell *matCellDef="let request">
                 <div class="date-display" *ngIf="request.processedDate">
                   <mat-icon>done</mat-icon>
@@ -251,13 +251,13 @@
 
             <!-- Actions Column -->
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <th mat-header-cell *matHeaderCellDef>{{ translationService.translateSync('employee.request_dashboard.table.headers.actions') }}</th>
               <td mat-cell *matCellDef="let request">
                 <div class="action-buttons">
                   <button
                     mat-icon-button
                     (click)="selectRequest(request)"
-                    matTooltip="View details"
+                    [matTooltip]="translationService.translateSync('employee.request_dashboard.table.actions.view_details')"
                     class="details-button">
                     <mat-icon>visibility</mat-icon>
                   </button>
@@ -266,7 +266,7 @@
                     mat-icon-button
                     color="warn"
                     (click)="withdrawRequest(request)"
-                    matTooltip="Withdraw request"
+                    [matTooltip]="translationService.translateSync('employee.request_dashboard.table.actions.withdraw')"
                     *ngIf="canWithdrawRequest(request.status)"
                     class="withdraw-button">
                     <mat-icon>cancel</mat-icon>
@@ -284,11 +284,11 @@
           <!-- No Data Message -->
           <div class="no-data" *ngIf="dataSource.data.length === 0 && !isLoading">
             <mat-icon class="no-data-icon">assignment</mat-icon>
-            <h3>No travel requests found</h3>
-            <p>You haven't submitted any travel requests yet, or they don't match your current filters.</p>
+            <h3>{{ translationService.translateSync('employee.request_dashboard.no_data.title') }}</h3>
+            <p>{{ translationService.translateSync('employee.request_dashboard.no_data.message') }}</p>
             <button mat-raised-button color="primary" routerLink="/employee/request">
               <mat-icon>add</mat-icon>
-              Submit Your First Request
+              {{ translationService.translateSync('employee.request_dashboard.no_data.action') }}
             </button>
           </div>
         </div>
@@ -312,7 +312,7 @@
     <mat-card class="details-card">
       <mat-card-header>
         <mat-card-title>
-          Request Details
+          {{ translationService.translateSync('employee.request_dashboard.details.title') }}
           <button mat-icon-button (click)="closeDetailsPanel()" class="close-button">
             <mat-icon>close</mat-icon>
           </button>
@@ -330,7 +330,7 @@
 
           <div class="request-detail-grid">
             <div class="detail-item">
-              <strong>Status:</strong>
+              <strong>{{ translationService.translateSync('employee.request_dashboard.details.status') }}:</strong>
               <mat-chip-listbox>
                 <mat-chip-option
                   [style]="getStatusChipClass(selectedRequest.status)"
@@ -341,35 +341,35 @@
               </mat-chip-listbox>
             </div>
             <div class="detail-item">
-              <strong>Days per Week:</strong>
+              <strong>{{ translationService.translateSync('employee.request_dashboard.details.days_per_week') }}:</strong>
               <span>{{ selectedRequest.daysPerWeek }}</span>
             </div>
             <div class="detail-item">
-              <strong>Daily Allowance:</strong>
+              <strong>{{ translationService.translateSync('employee.request_dashboard.details.daily_allowance') }}:</strong>
               <span>{{ formatCurrency(selectedRequest.dailyAllowance) }}</span>
             </div>
             <div class="detail-item">
-              <strong>Weekly Allowance:</strong>
+              <strong>{{ translationService.translateSync('employee.request_dashboard.details.weekly_allowance') }}:</strong>
               <span>{{ formatCurrency(selectedRequest.weeklyAllowance) }}</span>
             </div>
             <div class="detail-item">
-              <strong>Submitted:</strong>
+              <strong>{{ translationService.translateSync('employee.request_dashboard.details.submitted') }}:</strong>
               <span>{{ formatDate(selectedRequest.submittedDate) }}</span>
             </div>
             <div class="detail-item" *ngIf="selectedRequest.processedDate">
-              <strong>Processed:</strong>
+              <strong>{{ translationService.translateSync('employee.request_dashboard.details.processed') }}:</strong>
               <span>{{ formatDate(selectedRequest.processedDate) }}</span>
             </div>
             <div class="detail-item" *ngIf="selectedRequest.managerName">
-              <strong>Manager:</strong>
+              <strong>{{ translationService.translateSync('employee.request_dashboard.details.manager') }}:</strong>
               <span>{{ selectedRequest.managerName }}</span>
             </div>
             <div class="detail-item" *ngIf="selectedRequest.calculatedDistance">
-              <strong>Distance:</strong>
+              <strong>{{ translationService.translateSync('employee.request_dashboard.details.distance') }}:</strong>
               <span>{{ selectedRequest.calculatedDistance | number:'1.1-1' }} km</span>
             </div>
             <div class="detail-item justification" *ngIf="selectedRequest.justification">
-              <strong>Justification:</strong>
+              <strong>{{ translationService.translateSync('employee.request_dashboard.details.justification') }}:</strong>
               <span class="justification-text">{{ selectedRequest.justification }}</span>
             </div>
           </div>
@@ -378,9 +378,9 @@
           <div class="action-buttons" *ngIf="canWithdrawRequest(selectedRequest.status)">
             <button mat-raised-button color="warn"
                     (click)="withdrawRequest(selectedRequest)"
-                    matTooltip="Withdraw this travel request">
+                    [matTooltip]="translationService.translateSync('employee.request_dashboard.details.withdraw_tooltip')">
               <mat-icon>cancel</mat-icon>
-              Withdraw Request
+              {{ translationService.translateSync('employee.request_dashboard.details.withdraw_action') }}
             </button>
           </div>
         </div>

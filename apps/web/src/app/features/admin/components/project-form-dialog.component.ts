@@ -15,6 +15,7 @@ import {
   ProjectUpdateRequest,
 } from '../../../core/models/project.model';
 import { ProjectService } from '../../../core/services/project.service';
+import { TranslationService } from '../../../core/services/translation.service';
 
 export interface ProjectFormDialogData {
   title: string;
@@ -48,54 +49,54 @@ export interface ProjectFormDialogData {
     <mat-dialog-content>
       <form [formGroup]="projectForm" class="project-form">
         <mat-form-field appearance="outline">
-          <mat-label>Project Name</mat-label>
-          <input matInput formControlName="name" placeholder="Enter project name" maxlength="255" />
-          <mat-hint>Unique name for the project</mat-hint>
+          <mat-label>{{ translationService.translateSync('admin.projects.dialogs.form.fields.project_name') }}</mat-label>
+          <input matInput formControlName="name" [placeholder]="translationService.translateSync('admin.projects.dialogs.form.placeholders.project_name')" maxlength="255" />
+          <mat-hint>{{ translationService.translateSync('admin.projects.dialogs.form.hints.project_name') }}</mat-hint>
           <mat-error *ngIf="projectForm.get('name')?.hasError('required')">
-            Project name is required
+            {{ translationService.translateSync('admin.projects.dialogs.form.errors.name_required') }}
           </mat-error>
           <mat-error *ngIf="projectForm.get('name')?.hasError('maxlength')">
-            Project name cannot exceed 255 characters
+            {{ translationService.translateSync('admin.projects.dialogs.form.errors.name_max_length') }}
           </mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Description</mat-label>
+          <mat-label>{{ translationService.translateSync('admin.projects.dialogs.form.fields.description') }}</mat-label>
           <textarea
             matInput
             formControlName="description"
-            placeholder="Enter project description (optional)"
+            [placeholder]="translationService.translateSync('admin.projects.dialogs.form.placeholders.description')"
             rows="3"
             maxlength="1000"
           >
           </textarea>
-          <mat-hint>Optional description of the project</mat-hint>
+          <mat-hint>{{ translationService.translateSync('admin.projects.dialogs.form.hints.description') }}</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Default Cost per Kilometer (CHF)</mat-label>
+          <mat-label>{{ translationService.translateSync('admin.projects.dialogs.form.fields.default_cost') }}</mat-label>
           <input
             matInput
             type="number"
             formControlName="defaultCostPerKm"
-            placeholder="0.00"
+            [placeholder]="translationService.translateSync('admin.projects.dialogs.form.placeholders.default_cost')"
             step="0.01"
             min="0.01"
             max="999.99"
           />
           <span matPrefix>CHF&nbsp;</span>
-          <mat-hint>Default rate applied to all subprojects</mat-hint>
+          <mat-hint>{{ translationService.translateSync('admin.projects.dialogs.form.hints.default_cost') }}</mat-hint>
           <mat-error *ngIf="projectForm.get('defaultCostPerKm')?.hasError('required')">
-            Cost per kilometer is required
+            {{ translationService.translateSync('admin.projects.dialogs.form.errors.cost_required') }}
           </mat-error>
           <mat-error *ngIf="projectForm.get('defaultCostPerKm')?.hasError('min')">
-            Cost must be greater than 0
+            {{ translationService.translateSync('admin.projects.dialogs.form.errors.cost_min') }}
           </mat-error>
           <mat-error *ngIf="projectForm.get('defaultCostPerKm')?.hasError('max')">
-            Cost cannot exceed CHF 999.99
+            {{ translationService.translateSync('admin.projects.dialogs.form.errors.cost_max') }}
           </mat-error>
           <mat-error *ngIf="projectForm.get('defaultCostPerKm')?.hasError('pattern')">
-            Please enter a valid decimal number (max 2 decimal places)
+            {{ translationService.translateSync('admin.projects.dialogs.form.errors.cost_pattern') }}
           </mat-error>
         </mat-form-field>
 
@@ -105,22 +106,22 @@ export interface ProjectFormDialogData {
               <mat-icon [color]="projectForm.get('isActive')?.value ? 'primary' : 'warn'">
                 {{ projectForm.get('isActive')?.value ? 'toggle_on' : 'toggle_off' }}
               </mat-icon>
-              {{ projectForm.get('isActive')?.value ? 'Active' : 'Inactive' }}
+              {{ projectForm.get('isActive')?.value ? translationService.translateSync('common.status.active') : translationService.translateSync('common.status.inactive') }}
             </span>
           </mat-slide-toggle>
           <p class="status-hint">
             {{
               projectForm.get('isActive')?.value
-                ? 'Project is available for new travel requests'
-                : 'Project is hidden from new travel requests'
+                ? translationService.translateSync('admin.projects.dialogs.form.status.active_hint')
+                : translationService.translateSync('admin.projects.dialogs.form.status.inactive_hint')
             }}
           </p>
         </div>
 
         <div *ngIf="isEditMode" class="form-section">
-          <h4>Preview</h4>
+          <h4>{{ translationService.translateSync('admin.projects.dialogs.form.sections.preview') }}</h4>
           <div class="cost-preview">
-            <strong>Formatted Cost: </strong>
+            <strong>{{ translationService.translateSync('admin.projects.dialogs.form.labels.formatted_cost') }}: </strong>
             <span class="cost-display">
               {{ formatCostPreview() }}
             </span>
@@ -130,7 +131,7 @@ export interface ProjectFormDialogData {
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close [disabled]="isLoading">Cancel</button>
+      <button mat-button mat-dialog-close [disabled]="isLoading">{{ translationService.translateSync('common.buttons.cancel') }}</button>
       <button
         mat-raised-button
         color="primary"
@@ -139,7 +140,7 @@ export interface ProjectFormDialogData {
       >
         <mat-icon *ngIf="isLoading">hourglass_empty</mat-icon>
         <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
-        {{ isLoading ? 'Saving...' : isEditMode ? 'Update' : 'Create' }}
+        {{ isLoading ? translationService.translateSync('common.actions.saving') : (isEditMode ? translationService.translateSync('common.buttons.update') : translationService.translateSync('common.buttons.create')) }}
       </button>
     </mat-dialog-actions>
   `,
@@ -153,6 +154,7 @@ export class ProjectFormDialogComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private projectService: ProjectService,
+    public translationService: TranslationService,
     private dialogRef: MatDialogRef<ProjectFormDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: ProjectFormDialogData
   ) {
