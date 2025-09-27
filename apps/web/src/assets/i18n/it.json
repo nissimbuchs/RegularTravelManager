@@ -552,6 +552,64 @@
           "message": "Sei sicuro di voler eliminare \"{{projectName}}\"? Questa azione non può essere annullata.",
           "confirm": "Elimina"
         },
+        "subproject_form": {
+          "sections": {
+            "location_details": "Dettagli della posizione",
+            "address_information": "Informazioni indirizzo",
+            "coordinates": "Coordinate",
+            "cost_rate": "Tariffa di costo (Opzionale)"
+          },
+          "fields": {
+            "location_name": "Nome della posizione",
+            "street_address": "Indirizzo",
+            "city": "Città",
+            "postal_code": "Codice postale",
+            "latitude": "Latitudine",
+            "longitude": "Longitudine",
+            "cost_per_km": "Costo personalizzato per chilometro"
+          },
+          "placeholders": {
+            "location_name": "Inserisci il nome della posizione/sottoprogetto",
+            "street_address": "Bahnhofstrasse 1",
+            "city": "Zurigo",
+            "postal_code": "8001",
+            "latitude": "47.3769",
+            "longitude": "8.5417",
+            "cost_per_km": "Lasciare vuoto per ereditare dal progetto"
+          },
+          "hints": {
+            "location_name": "Nome descrittivo per questo luogo di lavoro",
+            "street_address": "Indirizzo completo con numero civico",
+            "latitude_range": "Intervallo latitudine svizzera: 45.818 - 47.808",
+            "longitude_range": "Intervallo longitudine svizzera: 5.956 - 10.492",
+            "cost_per_km": "Lasciare vuoto per utilizzare il valore predefinito del progetto ({{defaultCost}})"
+          },
+          "status": {
+            "geocoded": "Geocodificato",
+            "geocoding_failed": "Geocodifica fallita"
+          },
+          "actions": {
+            "geocoding": "Geocodifica...",
+            "get_coordinates": "Ottieni coordinate",
+            "clear": "Cancella",
+            "apply_coordinates": "Applica coordinate"
+          },
+          "tooltips": {
+            "clear_coordinates": "Cancella coordinate",
+            "toggle_manual_coords": "Attiva/disattiva inserimento manuale coordinate"
+          },
+          "labels": {
+            "effective_rate": "Tariffa effettiva"
+          },
+          "errors": {
+            "location_name_required": "Il nome della posizione è richiesto",
+            "postal_code_pattern": "Inserisci un codice postale svizzero valido (4-5 cifre)",
+            "latitude_bounds": "La latitudine deve essere entro i confini svizzeri",
+            "longitude_bounds": "La longitudine deve essere entro i confini svizzeri",
+            "cost_min": "Il costo deve essere maggiore di 0",
+            "cost_max": "Il costo non può superare CHF 999.99"
+          }
+        },
         "form": {
           "fields": {
             "project_name": "Nome progetto",
@@ -748,64 +806,6 @@
         "location_activate_failed": "Attivazione della posizione fallita",
         "location_deactivate_failed": "Disattivazione della posizione fallita",
         "location_delete_failed": "Eliminazione della posizione fallita"
-      }
-    },
-    "subproject_form": {
-      "sections": {
-        "location_details": "Dettagli della posizione",
-        "address_information": "Informazioni indirizzo",
-        "coordinates": "Coordinate",
-        "cost_rate": "Tariffa di costo (Opzionale)"
-      },
-      "fields": {
-        "location_name": "Nome della posizione",
-        "street_address": "Indirizzo",
-        "city": "Città",
-        "postal_code": "Codice postale",
-        "latitude": "Latitudine",
-        "longitude": "Longitudine",
-        "cost_per_km": "Costo personalizzato per chilometro"
-      },
-      "placeholders": {
-        "location_name": "Inserisci nome posizione/sottoprogetto",
-        "street_address": "Bahnhofstrasse 1",
-        "city": "Zurigo",
-        "postal_code": "8001",
-        "latitude": "47.3769",
-        "longitude": "8.5417",
-        "cost_per_km": "Lasciare vuoto per ereditare dal progetto"
-      },
-      "hints": {
-        "location_name": "Nome descrittivo per questo luogo di lavoro",
-        "street_address": "Indirizzo completo incluso il numero civico",
-        "latitude_range": "Range latitudine svizzera: 45.818 - 47.808",
-        "longitude_range": "Range longitudine svizzera: 5.956 - 10.492",
-        "cost_per_km": "Lasciare vuoto per usare il valore predefinito del progetto ({{defaultCost}})"
-      },
-      "status": {
-        "geocoded": "Geocodificato",
-        "geocoding_failed": "Geocodifica fallita"
-      },
-      "actions": {
-        "geocoding": "Geocodifica...",
-        "get_coordinates": "Ottieni coordinate",
-        "clear": "Cancella",
-        "apply_coordinates": "Applica coordinate"
-      },
-      "tooltips": {
-        "clear_coordinates": "Cancella coordinate",
-        "toggle_manual_coords": "Attiva/disattiva inserimento manuale coordinate"
-      },
-      "labels": {
-        "effective_rate": "Tariffa effettiva"
-      },
-      "errors": {
-        "location_name_required": "Il nome della posizione è richiesto",
-        "postal_code_pattern": "Inserire un codice postale svizzero valido (4-5 cifre)",
-        "latitude_bounds": "La latitudine deve essere entro i confini svizzeri",
-        "longitude_bounds": "La longitudine deve essere entro i confini svizzeri",
-        "cost_min": "Il costo deve essere maggiore di 0",
-        "cost_max": "Il costo non può superare CHF 999.99"
       }
     },
     "user_detail": {

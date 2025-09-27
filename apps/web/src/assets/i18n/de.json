@@ -552,6 +552,64 @@
           "message": "Sind Sie sicher, dass Sie \"{{projectName}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
           "confirm": "Löschen"
         },
+        "subproject_form": {
+          "sections": {
+            "location_details": "Standortdetails",
+            "address_information": "Adressinformationen",
+            "coordinates": "Koordinaten",
+            "cost_rate": "Kostensatz (Optional)"
+          },
+          "fields": {
+            "location_name": "Standortname",
+            "street_address": "Strassenadresse",
+            "city": "Stadt",
+            "postal_code": "Postleitzahl",
+            "latitude": "Breitengrad",
+            "longitude": "Längengrad",
+            "cost_per_km": "Individuelle Kosten pro Kilometer"
+          },
+          "placeholders": {
+            "location_name": "Standort-/Teilprojektname eingeben",
+            "street_address": "Bahnhofstrasse 1",
+            "city": "Zürich",
+            "postal_code": "8001",
+            "latitude": "47.3769",
+            "longitude": "8.5417",
+            "cost_per_km": "Leer lassen, um vom Projekt zu erben"
+          },
+          "hints": {
+            "location_name": "Beschreibender Name für diesen Arbeitsplatz",
+            "street_address": "Vollständige Strassenadresse inklusive Hausnummer",
+            "latitude_range": "Schweizer Breitengrad-Bereich: 45.818 - 47.808",
+            "longitude_range": "Schweizer Längengrad-Bereich: 5.956 - 10.492",
+            "cost_per_km": "Leer lassen, um Projektstandard zu verwenden ({{defaultCost}})"
+          },
+          "status": {
+            "geocoded": "Geokodiert",
+            "geocoding_failed": "Geokodierung fehlgeschlagen"
+          },
+          "actions": {
+            "geocoding": "Geokodierung...",
+            "get_coordinates": "Koordinaten abrufen",
+            "clear": "Löschen",
+            "apply_coordinates": "Koordinaten anwenden"
+          },
+          "tooltips": {
+            "clear_coordinates": "Koordinaten löschen",
+            "toggle_manual_coords": "Manuelle Koordinateneingabe umschalten"
+          },
+          "labels": {
+            "effective_rate": "Effektiver Satz"
+          },
+          "errors": {
+            "location_name_required": "Standortname ist erforderlich",
+            "postal_code_pattern": "Bitte geben Sie eine gültige Schweizer Postleitzahl ein (4-5 Ziffern)",
+            "latitude_bounds": "Breitengrad muss innerhalb der Schweizer Grenzen liegen",
+            "longitude_bounds": "Längengrad muss innerhalb der Schweizer Grenzen liegen",
+            "cost_min": "Kosten müssen grösser als 0 sein",
+            "cost_max": "Kosten können CHF 999.99 nicht überschreiten"
+          }
+        },
         "form": {
           "fields": {
             "project_name": "Projektname",
@@ -748,64 +806,6 @@
         "location_activate_failed": "Aktivierung des Standorts fehlgeschlagen",
         "location_deactivate_failed": "Deaktivierung des Standorts fehlgeschlagen",
         "location_delete_failed": "Löschen des Standorts fehlgeschlagen"
-      }
-    },
-    "subproject_form": {
-      "sections": {
-        "location_details": "Standortdetails",
-        "address_information": "Adressinformationen",
-        "coordinates": "Koordinaten",
-        "cost_rate": "Kostensatz (Optional)"
-      },
-      "fields": {
-        "location_name": "Standortname",
-        "street_address": "Strassenadresse",
-        "city": "Stadt",
-        "postal_code": "Postleitzahl",
-        "latitude": "Breitengrad",
-        "longitude": "Längengrad",
-        "cost_per_km": "Individuelle Kosten pro Kilometer"
-      },
-      "placeholders": {
-        "location_name": "Standort-/Teilprojektname eingeben",
-        "street_address": "Bahnhofstrasse 1",
-        "city": "Zürich",
-        "postal_code": "8001",
-        "latitude": "47.3769",
-        "longitude": "8.5417",
-        "cost_per_km": "Leer lassen, um vom Projekt zu erben"
-      },
-      "hints": {
-        "location_name": "Beschreibender Name für diesen Arbeitsplatz",
-        "street_address": "Vollständige Strassenadresse inklusive Hausnummer",
-        "latitude_range": "Schweizer Breitengrad-Bereich: 45.818 - 47.808",
-        "longitude_range": "Schweizer Längengrad-Bereich: 5.956 - 10.492",
-        "cost_per_km": "Leer lassen, um Projektstandard zu verwenden ({{defaultCost}})"
-      },
-      "status": {
-        "geocoded": "Geokodiert",
-        "geocoding_failed": "Geokodierung fehlgeschlagen"
-      },
-      "actions": {
-        "geocoding": "Geokodierung...",
-        "get_coordinates": "Koordinaten abrufen",
-        "clear": "Löschen",
-        "apply_coordinates": "Koordinaten anwenden"
-      },
-      "tooltips": {
-        "clear_coordinates": "Koordinaten löschen",
-        "toggle_manual_coords": "Manuelle Koordinateneingabe umschalten"
-      },
-      "labels": {
-        "effective_rate": "Effektiver Satz"
-      },
-      "errors": {
-        "location_name_required": "Standortname ist erforderlich",
-        "postal_code_pattern": "Bitte geben Sie eine gültige Schweizer Postleitzahl ein (4-5 Ziffern)",
-        "latitude_bounds": "Breitengrad muss innerhalb der Schweizer Grenzen liegen",
-        "longitude_bounds": "Längengrad muss innerhalb der Schweizer Grenzen liegen",
-        "cost_min": "Kosten müssen grösser als 0 sein",
-        "cost_max": "Kosten können CHF 999.99 nicht überschreiten"
       }
     },
     "user_detail": {
